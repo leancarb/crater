@@ -30,7 +30,7 @@ public class LinternaController : MonoBehaviour
     public Color colorBase = new Color(1f, 0.96f, 0.88f);
     public float anguloBase = 28f;
     public float alcanceBase = 14f;
-    public float intensidadBase = 2.5f;
+    public float intensidadBase = 800f;
 
     [Header("Ajustes")]
     public float demoraDeCambio = 0.8f;

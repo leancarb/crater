@@ -27,6 +27,7 @@ public class JugadorFPS : MonoBehaviour
     Vector3 velocidadActual;
     float caida;
     float pitch;
+    int framesIgnorados = 3;
 
     void Awake()
     {
@@ -50,6 +51,12 @@ public class JugadorFPS : MonoBehaviour
 
     void Mirar()
     {
+        if (framesIgnorados > 0)
+        {
+            framesIgnorados--;
+            return;
+        }
+
         float mx = Input.GetAxisRaw("Mouse X") * sensibilidadX;
         float my = Input.GetAxisRaw("Mouse Y") * sensibilidadY * (invertirY ? 1f : -1f);
 
