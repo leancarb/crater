@@ -20,6 +20,8 @@ public class LinternaController : MonoBehaviour
     public LayerMask capaReceptores = ~0;
     [Tooltip("Capas que bloquean el haz (paredes, piso). Dejar sin los receptores.")]
     public LayerMask capaObstaculos;
+    [Tooltip("Superficies que reflejan el haz (agua). Opcional: dejar en 0 (Nothing) si no se usa.")]
+    public LayerMask capaEspejos;
 
     [Header("Filtros disponibles (arrastrar los ScriptableObject)")]
     public List<FiltroDefinicion> filtros = new List<FiltroDefinicion>();
@@ -30,17 +32,23 @@ public class LinternaController : MonoBehaviour
     public Color colorBase = new Color(1f, 0.96f, 0.88f);
     public float anguloBase = 28f;
     public float alcanceBase = 14f;
-    public float intensidadBase = 2.5f;
+    public float intensidadBase = 800f;
 
     [Header("Ajustes")]
     public float demoraDeCambio = 0.8f;
     public KeyCode teclaEncender = KeyCode.F;
 
+    [Header("Disponibilidad (El Umbral)")]
+    [Tooltip("Si esta tildado, la linterna no responde a ningun input hasta llamar a Recoger().")]
+    public bool requiereRecogerla = false;
+
     // --- estado ---
     public bool Encendida { get; private set; }
     public FiltroDefinicion FiltroActual { get; private set; }
     public bool CambiandoFiltro { get; private set; }
+    public bool Disponible => !requiereRecogerla || yaRecogida;
 
+    bool yaRecogida;
     float finDelCambio;
     AudioSource audioSource;
     readonly Collider[] buffer = new Collider[32];
@@ -63,11 +71,16 @@ public class LinternaController : MonoBehaviour
             CambiandoFiltro = false;
 
         if (Encendida && !CambiandoFiltro)
+        {
             IluminarReceptores();
+            ProbarReflejo();
+        }
     }
 
     void LeerInput()
     {
+        if (!Disponible) return;
+
         if (Input.GetKeyDown(teclaEncender))
             Encender(!Encendida);
 
@@ -126,6 +139,9 @@ public class LinternaController : MonoBehaviour
         else audioSource.Stop();
     }
 
+    /// <summary>Llamar desde un trigger cuando el jugador encuentra la linterna misma (El Umbral).</summary>
+    public void Recoger() => yaRecogida = true;
+
     /// <summary>Llamar desde un trigger cuando el jugador encuentra un filtro.</summary>
     public void Desbloquear(FiltroDefinicion f)
     {
@@ -161,6 +177,40 @@ public class LinternaController : MonoBehaviour
 
             receptor.RecibirLuz(FiltroActual, Time.deltaTime);
         }
+    }
+
+    /// <summary>
+    /// Prueba si el haz (mirando derecho al frente, no en cono) pega en una
+    /// superficie de Capa Espejos antes de tocar un receptor. Si es asi, calcula
+    /// el rebote y sigue de largo en la nueva direccion. A diferencia de
+    /// IluminarReceptores, esto es puntual (apuntar exacto), no un area.
+    /// </summary>
+    void ProbarReflejo()
+    {
+        if (capaEspejos.value == 0) return;
+
+        float alcance = (FiltroActual != null) ? FiltroActual.alcance : alcanceBase;
+
+        if (!Physics.Raycast(transform.position, transform.forward, out var hitEspejo, alcance, capaEspejos))
+            return;
+
+        Vector3 dirReflejada = Vector3.Reflect(transform.forward, hitEspejo.normal);
+        float distanciaRestante = alcance - hitEspejo.distance;
+        if (distanciaRestante <= 0f) return;
+
+        if (!Physics.Raycast(hitEspejo.point, dirReflejada, out var hitReceptor, distanciaRestante,
+                             capaReceptores, QueryTriggerInteraction.Collide))
+            return;
+
+        var receptor = hitReceptor.collider.GetComponentInParent<ReceptorDeLuz>();
+        if (receptor == null) return;
+
+        // linea de vista del tramo reflejado: que no haya nada tapando entre el rebote y el receptor
+        if (Physics.Raycast(hitEspejo.point, dirReflejada, hitReceptor.distance - 0.05f,
+                            capaObstaculos, QueryTriggerInteraction.Ignore))
+            return;
+
+        receptor.RecibirLuz(FiltroActual, Time.deltaTime);
     }
 
     void OnDrawGizmosSelected()

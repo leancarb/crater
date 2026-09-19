@@ -28,9 +28,16 @@ public class AdaptacionOscuridad : MonoBehaviour
     public AudioSource ambienteDeAdaptacion;
     public float volumenMaximo = 0.6f;
 
+    [Header("Sala final (opcional)")]
+    [Tooltip("Progreso de adaptacion (0 a 1) a partir del cual se considera resuelto.")]
+    [Range(0f, 1f)] public float umbralApertura = 0.9f;
+    [Tooltip("Se dispara una sola vez, la primera vez que se llega al umbral. Para abrir la puerta sin codigo.")]
+    public UnityEngine.Events.UnityEvent alAdaptarse;
+
     ColorAdjustments ajustes;
     float progreso;      // 0 = normal, 1 = adaptado
     float aOscuras;
+    bool yaAvisado;
 
     void Start()
     {
@@ -64,6 +71,12 @@ public class AdaptacionOscuridad : MonoBehaviour
 
         if (ambienteDeAdaptacion != null)
             ambienteDeAdaptacion.volume = curva * volumenMaximo;
+
+        if (!yaAvisado && progreso >= umbralApertura)
+        {
+            yaAvisado = true;
+            alAdaptarse?.Invoke();
+        }
     }
 
     /// <summary>Para la ultima sala: saber si el jugador ya vio la puerta.</summary>

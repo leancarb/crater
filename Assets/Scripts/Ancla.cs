@@ -20,7 +20,6 @@ public class Ancla : ReceptorDeLuz
 
     void Awake()
     {
-        canalRequerido = FiltroDefinicion.Canal.Cuerpo;
         if (indicador != null)
         {
             mat = indicador.material;          // instancia propia

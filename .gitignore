@@ -112,3 +112,9 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Plastic SCM (otro sistema de versionado montado en la misma carpeta)
+.plastic/
+
+# Build compilado (99 MB) - no va al repo
+/versions/

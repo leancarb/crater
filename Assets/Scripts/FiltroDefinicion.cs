@@ -18,8 +18,7 @@ public class FiltroDefinicion : ScriptableObject
     public Color color = new Color(0.91f, 0.63f, 0.29f);
     [Range(10f, 60f)] public float anguloCono = 28f;
     [Range(1f, 30f)] public float alcance = 14f;
-    [Range(0.1f, 10f)] public float intensidad = 3f;
-
+    [Range(0.1f, 3000f)] public float intensidad = 800f;
     [Header("Comportamiento")]
     [Tooltip("Segundos que hay que sostener el haz para activar un receptor.")]
     [Range(0f, 3f)] public float tiempoDeCarga = 0.35f;
