@@ -14,10 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FiltroDefinicion
   nombreVisible: CUERPO
   canal: 1
-  color: {r: 0.91, g: 0.63, b: 0.29, a: 1}
+  descripcion: Enciende las anclas de basalto. Dos anclas encendidas tienden un puente
+    de luz.
+  color: {r: 1, g: 0.6, b: 0.24, a: 1}
   anguloCono: 28
-  alcance: 14
-  intensidad: 800
-  tiempoDeCarga: 0.35
-  sonidoAlEquipar: {fileID: 0}
-  zumbido: {fileID: 0}
+  alcance: 15
+  intensidad: 420
+  tiempoDeCarga: 0.4
+  sonidoAlEquipar: {fileID: 8300000, guid: 6f629bae16bbe6a4aa8a58629374216f, type: 3}
+  zumbido: {fileID: 8300000, guid: 96b935c68147ea84d9629bd54f31b680, type: 3}

@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FiltroDefinicion
   nombreVisible: HUECO
   canal: 2
-  color: {r: 0.29, g: 0.36, b: 0.91, a: 1}
+  descripcion: 'Disuelve la materia hueca: rejas y tapas se vuelven atravesables.'
+  color: {r: 0.32, g: 0.45, b: 1, a: 1}
   anguloCono: 28
-  alcance: 14
-  intensidad: 800
-  tiempoDeCarga: 0.35
-  sonidoAlEquipar: {fileID: 0}
-  zumbido: {fileID: 0}
+  alcance: 15
+  intensidad: 420
+  tiempoDeCarga: 0.4
+  sonidoAlEquipar: {fileID: 8300000, guid: 5b523130b9e211342831d02dcfc021e6, type: 3}
+  zumbido: {fileID: 8300000, guid: 0bde266f2a9001c41a270ba3f7fca98c, type: 3}

@@ -1,0 +1,153 @@
+using System.Collections;
+using UnityEngine;
+
+/// <summary>
+/// Autoridad de progresión de la demo. Escucha a la linterna y a las zonas,
+/// avanza de etapa y decide qué indicación mostrar en cada momento.
+/// </summary>
+public class FlujoJuegoCrater : MonoBehaviour
+{
+    public enum Etapa
+    {
+        BuscarLinterna,
+        EncenderLinterna,
+        AbrirUmbral,
+        BuscarCuerpo,
+        UsarCuerpo,
+        BuscarHueco,
+        UsarHueco,
+        Cresta,
+        Epilogo,
+        Finalizado
+    }
+
+    [SerializeField] LinternaController linterna;
+    [SerializeField] InterfazCrater interfaz;
+    [SerializeField] EclipseFinalController eclipse;
+    [SerializeField] Compuerta compuertaUmbral;
+    [SerializeField] bool mostrarTitulo = true;
+
+    public Etapa EtapaActual { get; private set; } = Etapa.BuscarLinterna;
+
+    bool vinculado;
+    bool pistaHuecoMostrada;
+
+    void Start()
+    {
+        Vincular();
+        StartCoroutine(Inicio());
+    }
+
+    void OnDestroy() => Desvincular();
+
+    IEnumerator Inicio()
+    {
+        if (mostrarTitulo && interfaz != null) yield return interfaz.MostrarTitulo();
+        if (EtapaActual == Etapa.BuscarLinterna)
+            interfaz?.MostrarPromptTemporal("Bajá hacia la luz.", 5f);
+    }
+
+    void Vincular()
+    {
+        if (linterna == null || vinculado) return;
+        linterna.AlRecogerLinterna += AlRecogerLinterna;
+        linterna.AlCambiarEncendido += AlCambiarEncendido;
+        linterna.AlDesbloquearFiltro += AlDesbloquearFiltro;
+        linterna.AlEquiparFiltro += AlEquiparFiltro;
+        vinculado = true;
+    }
+
+    void Desvincular()
+    {
+        if (linterna == null || !vinculado) return;
+        linterna.AlRecogerLinterna -= AlRecogerLinterna;
+        linterna.AlCambiarEncendido -= AlCambiarEncendido;
+        linterna.AlDesbloquearFiltro -= AlDesbloquearFiltro;
+        linterna.AlEquiparFiltro -= AlEquiparFiltro;
+        vinculado = false;
+    }
+
+    void AlRecogerLinterna()
+    {
+        EtapaActual = Etapa.EncenderLinterna;
+        interfaz?.MostrarPrompt("F · Encender la linterna");
+    }
+
+    void AlCambiarEncendido(bool encendida)
+    {
+        if (EtapaActual == Etapa.EncenderLinterna && encendida)
+        {
+            if (compuertaUmbral != null && compuertaUmbral.Abierta)
+            {
+                AvanzarABuscarCuerpo();
+                return;
+            }
+            EtapaActual = Etapa.AbrirUmbral;
+            interfaz?.MostrarPrompt("Sostené la luz sobre el ancla para abrir el paso.");
+        }
+        else if (EtapaActual == Etapa.Cresta)
+        {
+            if (encendida) interfaz?.MostrarPrompt("F · Apagar la linterna");
+            else interfaz?.MostrarPromptTemporal("Esperá. Dejá que tus ojos se acostumbren.", 5f);
+        }
+    }
+
+    /// <summary>Conectado al evento 'alAbrirse' de la compuerta del Umbral.</summary>
+    public void NotificarUmbralAbierto()
+    {
+        if (EtapaActual <= Etapa.AbrirUmbral) AvanzarABuscarCuerpo();
+    }
+
+    void AvanzarABuscarCuerpo()
+    {
+        EtapaActual = Etapa.BuscarCuerpo;
+        interfaz?.MostrarPromptTemporal("El paso está abierto. Buscá el filtro ámbar.", 5f);
+    }
+
+    void AlDesbloquearFiltro(FiltroDefinicion filtro)
+    {
+        if (filtro == null) return;
+        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo)
+        {
+            EtapaActual = Etapa.UsarCuerpo;
+            interfaz?.MostrarPrompt("1 · Equipar CUERPO");
+        }
+        else if (filtro.canal == FiltroDefinicion.Canal.Hueco)
+        {
+            EtapaActual = Etapa.UsarHueco;
+            interfaz?.MostrarPrompt("2 · Equipar HUECO");
+        }
+    }
+
+    void AlEquiparFiltro(FiltroDefinicion filtro)
+    {
+        if (filtro == null) return;
+
+        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo && EtapaActual == Etapa.UsarCuerpo)
+        {
+            EtapaActual = Etapa.BuscarHueco;
+            interfaz?.MostrarPromptTemporal(
+                "CUERPO enciende las anclas.\nSostené el haz sobre las dos para tender el puente.", 7f);
+        }
+        else if (filtro.canal == FiltroDefinicion.Canal.Hueco && EtapaActual == Etapa.UsarHueco && !pistaHuecoMostrada)
+        {
+            pistaHuecoMostrada = true;
+            interfaz?.MostrarPromptTemporal(
+                "HUECO disuelve la materia: iluminala y atravesala.\n1 / 2 · Cambiar filtro     Q · Luz blanca", 7f);
+        }
+    }
+
+    /// <summary>Conectado a la zona de entrada de la Cresta.</summary>
+    public void EntrarCresta()
+    {
+        if (EtapaActual >= Etapa.Cresta) return;
+        EtapaActual = Etapa.Cresta;
+        if (linterna != null && linterna.Encendida) interfaz?.MostrarPrompt("F · Apagar la linterna");
+        else interfaz?.MostrarPromptTemporal("Esperá. Dejá que tus ojos se acostumbren.", 5f);
+        eclipse?.HabilitarEnCresta();
+    }
+
+    public void EntrarEpilogo() => EtapaActual = Etapa.Epilogo;
+
+    public void Finalizar() => EtapaActual = Etapa.Finalizado;
+}
