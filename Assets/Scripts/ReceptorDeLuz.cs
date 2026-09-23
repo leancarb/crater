@@ -3,7 +3,7 @@ using UnityEngine.Events;
 
 /// <summary>
 /// Clase base de todo lo que reacciona al haz. No se usa sola:
-/// se usan sus hijas (Ancla, MateriaHueca, RastroFosforescente).
+/// se usan sus hijas (Ancla y MateriaHueca).
 ///
 /// Se encarga de: filtrar por canal, acumular carga, y avisar cuando se pierde la luz.
 /// </summary>
@@ -25,17 +25,27 @@ public abstract class ReceptorDeLuz : MonoBehaviour
 
     float ultimoFrameConLuz = -999f;
     float tiempoDeCargaActual = 0.35f;
+    Collider colliderReceptor;
 
     /// <summary>Punto que la linterna apunta para el chequeo de cono y linea de vista.</summary>
-    public virtual Vector3 PuntoDeImpacto =>
-        GetComponent<Collider>() ? GetComponent<Collider>().bounds.center : transform.position;
+    public virtual Vector3 PuntoDeImpacto
+    {
+        get
+        {
+            if (colliderReceptor == null) TryGetComponent(out colliderReceptor);
+            return colliderReceptor != null ? colliderReceptor.bounds.center : transform.position;
+        }
+    }
+
+    public bool AceptaFiltro(FiltroDefinicion filtro)
+    {
+        return canalRequerido == FiltroDefinicion.Canal.Ninguno
+            || (filtro != null && filtro.canal == canalRequerido);
+    }
 
     public virtual void RecibirLuz(FiltroDefinicion filtro, float delta)
     {
-        if (canalRequerido != FiltroDefinicion.Canal.Ninguno)
-        {
-            if (filtro == null || filtro.canal != canalRequerido) return;
-        }
+        if (!AceptaFiltro(filtro)) return;
 
         tiempoDeCargaActual = (filtro != null) ? Mathf.Max(0.01f, filtro.tiempoDeCarga) : 0.35f;
         ultimoFrameConLuz = Time.time;

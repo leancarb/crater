@@ -82,4 +82,10 @@ public class JugadorFPS : MonoBehaviour
         total.y = caida;
         cc.Move(total * Time.deltaTime);
     }
+
+    public void ReiniciarMovimiento()
+    {
+        velocidadActual = Vector3.zero;
+        caida = -2f;
+    }
 }

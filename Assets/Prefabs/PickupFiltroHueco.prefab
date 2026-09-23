@@ -128,4 +128,4 @@ MonoBehaviour:
   filtro: {fileID: 11400000, guid: 035615c2c9d8d084db596def6128fd93, type: 2}
   objetoVisual: {fileID: 4273258844041635348}
   sonido: {fileID: 0}
-  equiparAlRecoger: 1
+  equiparAlRecoger: 0

@@ -39,6 +39,9 @@ public class AdaptacionOscuridad : MonoBehaviour
     float aOscuras;
     bool yaAvisado;
 
+    public bool Habilitada { get; private set; }
+    public float Progreso => progreso;
+
     void Start()
     {
         var volume = GetComponent<Volume>();
@@ -48,6 +51,12 @@ public class AdaptacionOscuridad : MonoBehaviour
 
     void Update()
     {
+        if (!Habilitada)
+        {
+            ReiniciarVisual();
+            return;
+        }
+
         bool linternaApagada = LinternaController.Instancia == null
                             || !LinternaController.Instancia.Encendida;
 
@@ -81,4 +90,26 @@ public class AdaptacionOscuridad : MonoBehaviour
 
     /// <summary>Para la ultima sala: saber si el jugador ya vio la puerta.</summary>
     public bool EstaAdaptado => progreso > 0.75f;
+
+    public void Habilitar()
+    {
+        Habilitada = true;
+        progreso = 0f;
+        aOscuras = 0f;
+        yaAvisado = false;
+    }
+
+    public void Deshabilitar()
+    {
+        Habilitada = false;
+        ReiniciarVisual();
+    }
+
+    void ReiniciarVisual()
+    {
+        progreso = 0f;
+        aOscuras = 0f;
+        if (ajustes != null) ajustes.postExposure.value = exposicionNormal;
+        if (ambienteDeAdaptacion != null) ambienteDeAdaptacion.volume = 0f;
+    }
 }

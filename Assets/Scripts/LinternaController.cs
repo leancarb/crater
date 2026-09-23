@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -6,7 +7,7 @@ using UnityEngine;
 ///
 /// Reglas:
 ///  - F enciende y apaga.
-///  - 1 / 2 / 3 equipan filtros. Solo uno a la vez. Cambiar tarda 'demoraDeCambio'.
+///  - 1 / 2 equipan CUERPO y HUECO. Solo uno a la vez. Cambiar tarda 'demoraDeCambio'.
 ///  - Cada frame busca los receptores dentro del cono y les avisa que estan iluminados.
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
@@ -47,15 +48,26 @@ public class LinternaController : MonoBehaviour
     public FiltroDefinicion FiltroActual { get; private set; }
     public bool CambiandoFiltro { get; private set; }
     public bool Disponible => !requiereRecogerla || yaRecogida;
+    public bool HayObjetivo { get; private set; }
+    public bool ObjetivoAceptaFiltro { get; private set; }
+    public float CargaObjetivo { get; private set; }
+
+    public event Action<bool> AlCambiarEncendido;
+    public event Action AlRecogerLinterna;
+    public event Action<FiltroDefinicion> AlDesbloquearFiltro;
+    public event Action<FiltroDefinicion> AlEquiparFiltro;
 
     bool yaRecogida;
     float finDelCambio;
     AudioSource audioSource;
     readonly Collider[] buffer = new Collider[32];
+    readonly HashSet<ReceptorDeLuz> receptoresProcesados = new HashSet<ReceptorDeLuz>();
 
     void Awake()
     {
         Instancia = this;
+        filtros.RemoveAll(filtro => filtro == null);
+        filtrosDesbloqueados.RemoveAll(filtro => filtro == null);
         audioSource = GetComponent<AudioSource>();
         audioSource.loop = true;
         if (spot == null) spot = GetComponentInChildren<Light>();
@@ -66,6 +78,10 @@ public class LinternaController : MonoBehaviour
     void Update()
     {
         LeerInput();
+
+        HayObjetivo = false;
+        ObjetivoAceptaFiltro = false;
+        CargaObjetivo = 0f;
 
         if (CambiandoFiltro && Time.time >= finDelCambio)
             CambiandoFiltro = false;
@@ -84,7 +100,7 @@ public class LinternaController : MonoBehaviour
         if (Input.GetKeyDown(teclaEncender))
             Encender(!Encendida);
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < Mathf.Min(2, filtros.Count); i++)
         {
             if (Input.GetKeyDown(KeyCode.Alpha1 + i))
                 IntentarEquipar(i);
@@ -111,6 +127,7 @@ public class LinternaController : MonoBehaviour
         CambiandoFiltro = true;
         finDelCambio = Time.time + demoraDeCambio;
         AplicarFiltro(f);
+        AlEquiparFiltro?.Invoke(f);
 
         if (f != null && f.sonidoAlEquipar != null)
             AudioSource.PlayClipAtPoint(f.sonidoAlEquipar, transform.position);
@@ -133,20 +150,35 @@ public class LinternaController : MonoBehaviour
 
     public void Encender(bool valor)
     {
+        if (Encendida == valor && spot != null && spot.enabled == valor) return;
         Encendida = valor;
         if (spot != null) spot.enabled = valor;
         if (valor && audioSource.clip != null) audioSource.Play();
         else audioSource.Stop();
+        AlCambiarEncendido?.Invoke(valor);
     }
 
     /// <summary>Llamar desde un trigger cuando el jugador encuentra la linterna misma (El Umbral).</summary>
-    public void Recoger() => yaRecogida = true;
+    public void Recoger()
+    {
+        if (yaRecogida) return;
+        yaRecogida = true;
+        AlRecogerLinterna?.Invoke();
+    }
 
     /// <summary>Llamar desde un trigger cuando el jugador encuentra un filtro.</summary>
     public void Desbloquear(FiltroDefinicion f)
     {
         if (f != null && !filtrosDesbloqueados.Contains(f))
+        {
             filtrosDesbloqueados.Add(f);
+            AlDesbloquearFiltro?.Invoke(f);
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (Instancia == this) Instancia = null;
     }
 
     /// <summary>
@@ -161,11 +193,12 @@ public class LinternaController : MonoBehaviour
 
         int cantidad = Physics.OverlapSphereNonAlloc(
             transform.position, alcance, buffer, capaReceptores, QueryTriggerInteraction.Collide);
+        receptoresProcesados.Clear();
 
         for (int i = 0; i < cantidad; i++)
         {
             var receptor = buffer[i].GetComponentInParent<ReceptorDeLuz>();
-            if (receptor == null) continue;
+            if (receptor == null || !receptoresProcesados.Add(receptor)) continue;
 
             Vector3 hacia = receptor.PuntoDeImpacto - transform.position;
             if (Vector3.Angle(transform.forward, hacia) > medio) continue;
@@ -175,7 +208,11 @@ public class LinternaController : MonoBehaviour
                                 capaObstaculos, QueryTriggerInteraction.Ignore))
                 continue;
 
+            HayObjetivo = true;
+            if (!receptor.AceptaFiltro(FiltroActual)) continue;
+            ObjetivoAceptaFiltro = true;
             receptor.RecibirLuz(FiltroActual, Time.deltaTime);
+            CargaObjetivo = Mathf.Max(CargaObjetivo, receptor.Carga);
         }
     }
 

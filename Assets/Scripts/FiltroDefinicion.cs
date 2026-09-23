@@ -8,7 +8,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Filtro", menuName = "Crater/Filtro")]
 public class FiltroDefinicion : ScriptableObject
 {
-    public enum Canal { Ninguno, Cuerpo, Hueco, Rastro }
+    public enum Canal { Ninguno, Cuerpo, Hueco }
 
     [Header("Identidad")]
     public string nombreVisible = "CUERPO";

@@ -126,7 +126,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb6065253fedec94a9b65418d5bd867a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MateriaHueca
-  canalRequerido: 1
+  canalRequerido: 2
   retencion: 2
   alActivarse:
     m_PersistentCalls:

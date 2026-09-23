@@ -33,6 +33,8 @@ public class PuenteLuz : MonoBehaviour
     bool estabaSolido;
     Material[] materiales;
 
+    public bool Solido => estabaSolido;
+
     void Awake()
     {
         if (mallas == null || mallas.Length == 0) mallas = GetComponentsInChildren<MeshRenderer>();
@@ -44,6 +46,7 @@ public class PuenteLuz : MonoBehaviour
             materiales[i] = mallas[i].material;
             materiales[i].EnableKeyword("_EMISSION");
         }
+        foreach (var c in colliders) if (c != null) c.enabled = false;
         AplicarVisibilidad(0f);
     }
 

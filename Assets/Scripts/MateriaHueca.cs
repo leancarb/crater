@@ -20,6 +20,7 @@ public class MateriaHueca : ReceptorDeLuz
     Renderer[] renders;
     Material[] materiales;
     float disolucion;   // 0 solido, 1 atravesable
+    int jugadoresDentro;
 
     void Awake()
     {
@@ -35,7 +36,9 @@ public class MateriaHueca : ReceptorDeLuz
         float objetivo = Activo ? 1f : 0f;
         disolucion = Mathf.MoveTowards(disolucion, objetivo, velocidadDeTransicion * Time.deltaTime);
 
-        bool solido = disolucion < 0.5f;
+        // Nunca reconstruir la materia alrededor del jugador: esperar a que
+        // salga del volumen evita quedar atrapado dentro de la reja.
+        bool solido = disolucion < 0.5f && jugadoresDentro == 0;
         foreach (var c in colliders) if (c != null && !c.isTrigger) c.enabled = solido;
 
         for (int i = 0; i < materiales.Length; i++)
@@ -51,5 +54,20 @@ public class MateriaHueca : ReceptorDeLuz
             if (Activo && !siseo.isPlaying) siseo.Play();
             if (!Activo && siseo.isPlaying) siseo.Stop();
         }
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player")) jugadoresDentro++;
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player")) jugadoresDentro = Mathf.Max(0, jugadoresDentro - 1);
+    }
+
+    void OnDisable()
+    {
+        jugadoresDentro = 0;
     }
 }
