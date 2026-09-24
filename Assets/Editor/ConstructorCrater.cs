@@ -25,6 +25,7 @@ public static partial class ConstructorCrater
     public const string RutaPerfil = "Assets/Settings/CraterVolumeProfile.asset";
     public const string CarpetaPrefabs = "Assets/Prefabs/";
     const string CarpetaMateriales = "Assets/Materials/";
+    const string CarpetaTexturas = "Assets/Materials/Texturas/";
     const string CarpetaModelos = "Assets/Models/CraterKit/";
 
     public const string CapaAncla = "Ancla";
@@ -79,7 +80,7 @@ public static partial class ConstructorCrater
 
     public static void ReconstruirTodo()
     {
-        foreach (var carpeta in new[] { "Assets/Materials", "Assets/Prefabs", "Assets/Scenes", "Assets/Data", "Assets/Data/Filtros", "Assets/Settings" })
+        foreach (var carpeta in new[] { "Assets/Materials", "Assets/Materials/Texturas", "Assets/Prefabs", "Assets/Scenes", "Assets/Data", "Assets/Data/Filtros", "Assets/Settings" })
             AsegurarCarpeta(carpeta);
 
         ConfigurarCapas();
@@ -117,6 +118,7 @@ public static partial class ConstructorCrater
         public Material piso, basalto, basaltoMedio, techo, piedra, metal, metalGastado;
         public Material ambar, motivoLatente, puenteVidrio, puenteBorde, rejaBasalto, rejaSello, cielo, lente;
         public Material adobe, paja, piedraCapilla, tierra;
+        public Material huella, espejo, puertaEclipse, luzEclipse, resplandor, corona, discoSol, discoLuna;
 
         public GameObject prefabJugador, prefabAncla, prefabPuente, prefabReja, prefabFiltro, prefabLinterna;
     }
@@ -177,7 +179,11 @@ public static partial class ConstructorCrater
 
         kit.ambar = Emisivo(Opaco("Ambar", new Color(0.9f, 0.42f, 0.1f), 0.3f), new Color(1f, 0.32f, 0.05f) * 1.6f);
         kit.motivoLatente = Emisivo(Opaco("MotivoLatente", new Color(0.03f, 0.035f, 0.05f), 0.2f), new Color(0.3f, 0.45f, 1f) * 0.22f);
-        kit.cielo = Emisivo(Opaco("CieloOculo", new Color(0.02f, 0.08f, 0.3f), 0f), new Color(0.2f, 0.38f, 1f) * 1.5f);
+        // el óculo muestra el eclipse congelado: sol negro, corona y cielo de noche
+        var texturaEclipse = Textura("OculoEclipse", 512, PixelOculo);
+        kit.cielo = Emisivo(Opaco("CieloOculo", Color.white, 0f), Color.white * 1.8f);
+        kit.cielo.SetTexture("_BaseMap", texturaEclipse);
+        kit.cielo.SetTexture("_EmissionMap", texturaEclipse);
         kit.lente = Emisivo(Opaco("Lente", new Color(1f, 0.9f, 0.7f), 0.8f), Color.white * 2f);
 
         kit.puenteVidrio = Emisivo(Transparente(Opaco("PuenteVidrio", new Color(1f, 0.5f, 0.15f, 0.45f), 0.6f)), new Color(1f, 0.42f, 0.08f));
@@ -189,6 +195,16 @@ public static partial class ConstructorCrater
         kit.paja = Opaco("CapillaTechoPaja", new Color(0.3f, 0.21f, 0.1f), 0.05f);
         kit.piedraCapilla = Opaco("CapillaPiedra", new Color(0.36f, 0.34f, 0.3f), 0.12f);
         kit.tierra = Opaco("CapillaTierra", new Color(0.42f, 0.25f, 0.15f), 0.05f);
+        kit.huella = Opaco("CapillaHuella", new Color(0.33f, 0.2f, 0.12f), 0.03f);
+
+        // el eclipse y la puerta
+        kit.espejo = Opaco("EspejoBasalto", new Color(0.02f, 0.022f, 0.028f), 0.95f, 0.35f);
+        kit.puertaEclipse = Emisivo(Opaco("PuertaEclipse", new Color(0.05f, 0.06f, 0.08f), 0.3f), new Color(0.75f, 0.85f, 1f) * 1.2f);
+        kit.luzEclipse = Emisivo(Opaco("LuzEclipse", new Color(0.8f, 0.85f, 1f), 0f), new Color(0.75f, 0.85f, 1f) * 2.5f);
+        kit.resplandor = Aditivo("Resplandor", Textura("Resplandor", 128, PixelResplandor));
+        kit.corona = Aditivo("CoronaEclipse", Textura("Corona", 256, PixelCorona));
+        kit.discoSol = SinLuz("DiscoSol", new Color(6f, 5.4f, 4.4f));
+        kit.discoLuna = SinLuz("DiscoLuna", new Color(0.004f, 0.004f, 0.006f));
 
         foreach (var guid in AssetDatabase.FindAssets("t:Material", new[] { "Assets/Materials" }))
             Validar(AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid)));
@@ -228,6 +244,109 @@ public static partial class ConstructorCrater
         m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
         EditorUtility.SetDirty(m);
         return m;
+    }
+
+    /// <summary>Sin iluminación: el color es el que se ve (los discos del cielo).</summary>
+    static Material SinLuz(string nombre, Color color)
+    {
+        string ruta = CarpetaMateriales + nombre + ".mat";
+        var shader = Shader.Find("Universal Render Pipeline/Unlit");
+        var m = AssetDatabase.LoadAssetAtPath<Material>(ruta);
+        if (m == null)
+        {
+            m = new Material(shader);
+            AssetDatabase.CreateAsset(m, ruta);
+        }
+        m.shader = shader;
+        m.SetColor(IdBase, color);
+        m.SetFloat("_Surface", 0f);
+        m.SetOverrideTag("RenderType", "Opaque");
+        m.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        m.renderQueue = -1;
+        EditorUtility.SetDirty(m);
+        return m;
+    }
+
+    /// <summary>Sin iluminación, suma luz (destellos, reflejo, corona). El color se cambia en runtime.</summary>
+    static Material Aditivo(string nombre, Texture2D textura)
+    {
+        var m = SinLuz(nombre, Color.white);
+        m.SetTexture("_BaseMap", textura);
+        m.SetFloat("_Surface", 1f);
+        m.SetFloat("_Blend", 2f);   // Additive
+        m.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+        m.SetFloat("_DstBlend", (float)BlendMode.One);
+        m.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+        m.SetFloat("_DstBlendAlpha", (float)BlendMode.One);
+        m.SetFloat("_ZWrite", 0f);
+        m.SetOverrideTag("RenderType", "Transparent");
+        m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        m.renderQueue = (int)RenderQueue.Transparent;
+        m.SetShaderPassEnabled("ShadowCaster", false);
+        m.SetShaderPassEnabled("DepthOnly", false);
+        EditorUtility.SetDirty(m);
+        return m;
+    }
+
+    // ---------------------------------------------------------------- texturas generadas
+
+    static Color PixelResplandor(float u, float v)
+    {
+        float r = Mathf.Sqrt(u * u + v * v);
+        return new Color(1f, 1f, 1f, Mathf.Pow(Mathf.Clamp01(1f - r), 2.4f));
+    }
+
+    static Color PixelCorona(float u, float v)
+    {
+        // el sol ocupa r < 0,29 (el quad mide 3,4 diámetros solares)
+        float r = Mathf.Sqrt(u * u + v * v);
+        float ang = Mathf.Atan2(v, u);
+        const float borde = 0.28f;
+        float rayos = 0.7f + 0.3f * Mathf.Sin(ang * 5f) * Mathf.Sin(ang * 3f + 1f);
+        float a = r < borde ? 1f : Mathf.Exp(-(r - borde) / (0.1f * rayos)) + 0.6f * Mathf.Exp(-(r - borde) / 0.02f);
+        a *= Mathf.Clamp01((1f - r) * 4f);
+        return new Color(1f, 1f, 1f, Mathf.Clamp01(a));
+    }
+
+    static Color PixelOculo(float u, float v)
+    {
+        float r = Mathf.Sqrt(u * u + v * v);
+        float ang = Mathf.Atan2(v, u);
+        const float luna = 0.18f;
+        var cielo = new Color(0.012f, 0.018f, 0.045f);
+        Color c;
+        if (r < luna) c = new Color(0.002f, 0.002f, 0.004f);
+        else
+        {
+            float rayos = 0.75f + 0.25f * Mathf.Sin(ang * 5f) * Mathf.Sin(ang * 3f + 1f);
+            float corona = Mathf.Exp(-(r - luna) / (0.1f * rayos)) * 0.7f + Mathf.Exp(-(r - luna) / 0.015f) * 0.9f;
+            c = cielo + new Color(0.75f, 0.85f, 1f) * corona;
+        }
+        c *= 1f - Mathf.SmoothStep(0f, 1f, (r - 0.9f) / 0.1f);
+        c.a = 1f;
+        return c;
+    }
+
+    /// <summary>Genera una textura cuadrada y la guarda como PNG. 'pixel' recibe coordenadas de -1 a 1.</summary>
+    static Texture2D Textura(string nombre, int tam, Func<float, float, Color> pixel)
+    {
+        string ruta = CarpetaTexturas + nombre + ".png";
+        var tex = new Texture2D(tam, tam, TextureFormat.RGBA32, false);
+        var px = new Color[tam * tam];
+        for (int y = 0; y < tam; y++)
+            for (int x = 0; x < tam; x++)
+                px[y * tam + x] = pixel((x + 0.5f) / tam * 2f - 1f, (y + 0.5f) / tam * 2f - 1f);
+        tex.SetPixels(px);
+        tex.Apply();
+        File.WriteAllBytes(ruta, tex.EncodeToPNG());
+        UnityEngine.Object.DestroyImmediate(tex);
+
+        AssetDatabase.ImportAsset(ruta, ImportAssetOptions.ForceUpdate);
+        var importador = (TextureImporter)AssetImporter.GetAtPath(ruta);
+        importador.wrapMode = TextureWrapMode.Clamp;
+        importador.alphaIsTransparency = true;
+        importador.SaveAndReimport();
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(ruta);
     }
 
     static Material Transparente(Material m)

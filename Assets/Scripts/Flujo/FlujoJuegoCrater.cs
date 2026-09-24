@@ -9,6 +9,7 @@ public class FlujoJuegoCrater : MonoBehaviour
 {
     public enum Etapa
     {
+        Prologo,
         BuscarLinterna,
         EncenderLinterna,
         AbrirUmbral,
@@ -26,8 +27,15 @@ public class FlujoJuegoCrater : MonoBehaviour
     [SerializeField] EclipseFinalController eclipse;
     [SerializeField] Compuerta compuertaUmbral;
     [SerializeField] bool mostrarTitulo = true;
+    [Tooltip("Arrancar en la capilla (prólogo). En false arranca directo en la Explanada.")]
+    [SerializeField] bool empezarEnPrologo = true;
 
     public Etapa EtapaActual { get; private set; } = Etapa.BuscarLinterna;
+
+    void Awake()
+    {
+        if (empezarEnPrologo) EtapaActual = Etapa.Prologo;
+    }
 
     bool vinculado;
     bool pistaHuecoMostrada;
@@ -43,8 +51,17 @@ public class FlujoJuegoCrater : MonoBehaviour
     IEnumerator Inicio()
     {
         if (mostrarTitulo && interfaz != null) yield return interfaz.MostrarTitulo();
+        // en el prólogo no hay indicaciones: la capilla se descubre sola
         if (EtapaActual == Etapa.BuscarLinterna)
             interfaz?.MostrarPromptTemporal("Bajá hacia la luz.", 5f);
+    }
+
+    /// <summary>El jugador cruzó la puerta del cráter del valle y está en la Explanada.</summary>
+    public void IniciarCrater()
+    {
+        if (EtapaActual != Etapa.Prologo) return;
+        EtapaActual = Etapa.BuscarLinterna;
+        interfaz?.MostrarPromptTemporal("Bajá hacia la luz.", 5f);
     }
 
     void Vincular()

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 /// <summary>
 /// HUD mínimo. Se construye en runtime para no depender de referencias frágiles
 /// en la escena: indicaciones, estado de la linterna, mira con barra de carga,
-/// velos de fundido, título, pausa y cierre.
+/// velos de fundido, título, pausa, anillo de diamante y créditos.
 /// </summary>
 public class InterfazCrater : MonoBehaviour
 {
@@ -16,6 +16,7 @@ public class InterfazCrater : MonoBehaviour
     const float DuracionFundidoPrompt = 0.35f;
     static readonly Color ColorApagado = new Color(0.6f, 0.6f, 0.6f);
     static readonly Color ColorBloqueado = new Color(0.8f, 0.2f, 0.15f);
+    static readonly Color ColorTextoSobreBlanco = new Color(0.14f, 0.14f, 0.16f);
 
     Text textoPrompt;
     CanvasGroup grupoPrompt;
@@ -25,6 +26,7 @@ public class InterfazCrater : MonoBehaviour
     Image fondoCarga;
     Image barraCarga;
     Image velo;
+    Image anillo;
     Text textoTitulo;
     Text textoSubtitulo;
     GameObject panelPausa;
@@ -123,16 +125,64 @@ public class InterfazCrater : MonoBehaviour
         yield return Fundir(Color.black, 1f, 0f, 2.5f);
     }
 
-    public IEnumerator MostrarCierre()
+    /// <summary>
+    /// El final del eclipse: un punto de luz que crece desde el centro hasta tapar
+    /// toda la pantalla. Termina con el velo blanco opaco.
+    /// </summary>
+    public IEnumerator AnilloDeDiamante(float duracion)
     {
         OcultarPrompt();
-        yield return Fundir(Color.black, velo.enabled ? velo.color.a : 0f, 1f, 2.5f);
+        var rt = anillo.rectTransform;
+        anillo.enabled = true;
+        for (float t = 0f; t < duracion; t += Time.unscaledDeltaTime)
+        {
+            float k = t / duracion;
+            // empieza como un punto que casi no crece y después explota
+            float tam = Mathf.Lerp(14f, 6000f, Mathf.Pow(k, 2.6f));
+            rt.sizeDelta = new Vector2(tam, tam);
+            anillo.color = new Color(1f, 1f, 1f, Mathf.Clamp01(k * 6f));
+            MostrarVelo(Color.white, Mathf.Pow(k, 3f));
+            yield return null;
+        }
+        MostrarVelo(Color.white, 1f);
+        anillo.enabled = false;
+    }
+
+    /// <summary>Créditos en texto oscuro sobre blanco, una línea por vez.</summary>
+    public IEnumerator MostrarCreditos(string[] lineas)
+    {
+        OcultarPrompt();
+        yield return Fundir(Color.white, velo.enabled ? velo.color.a : 0f, 1f, 1.5f);
+        SombraDeTitulos(false);
+        textoSubtitulo.text = "";
+
+        foreach (string linea in lineas)
+        {
+            textoTitulo.text = linea;
+            textoTitulo.fontSize = linea.Length > 16 ? 40 : 78;
+            textoTitulo.color = new Color(ColorTextoSobreBlanco.r, ColorTextoSobreBlanco.g, ColorTextoSobreBlanco.b, 0f);
+            yield return FundirTexto(textoTitulo, 0f, 1f, 1.2f);
+            yield return new WaitForSeconds(2.8f);
+            yield return FundirTexto(textoTitulo, 1f, 0f, 1.2f);
+        }
+
         textoTitulo.text = "CRÁTER";
-        textoSubtitulo.text = "Proyecto académico · FADU · 2026\n\nR · Volver a empezar     Esc · Salir";
-        StartCoroutine(FundirTexto(textoSubtitulo, 0f, 1f, 2.5f));
+        textoTitulo.fontSize = 78;
+        textoSubtitulo.text = "R · Volver a empezar     Esc · Salir";
+        textoSubtitulo.color = new Color(ColorTextoSobreBlanco.r, ColorTextoSobreBlanco.g, ColorTextoSobreBlanco.b, 0f);
+        StartCoroutine(FundirTexto(textoSubtitulo, 0f, 1f, 2f));
         yield return FundirTexto(textoTitulo, 0f, 1f, 2f);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+    }
+
+    void SombraDeTitulos(bool valor)
+    {
+        foreach (var texto in new[] { textoTitulo, textoSubtitulo })
+        {
+            var sombra = texto.GetComponent<Shadow>();
+            if (sombra != null) sombra.enabled = valor;
+        }
     }
 
     public void MostrarPausa(bool visible)
@@ -286,6 +336,13 @@ public class InterfazCrater : MonoBehaviour
         velo.raycastTarget = false;
         MostrarVelo(Color.black, 0f);
 
+        // anillo de diamante: encima del velo
+        var anilloGO = Crear("AnilloDeDiamante", raiz, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
+        anillo = anilloGO.AddComponent<Image>();
+        anillo.sprite = CrearResplandor();
+        anillo.raycastTarget = false;
+        anillo.enabled = false;
+
         // título / cierre
         textoTitulo = CrearTexto(Crear("Titulo", raiz, new Vector2(0.1f, 0.45f), new Vector2(0.9f, 0.62f)),
             78, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0f));
@@ -339,6 +396,26 @@ public class InterfazCrater : MonoBehaviour
 
     static Sprite circulo;
     static Sprite blanco;
+    static Sprite resplandor;
+
+    /// <summary>Núcleo duro y halo largo: se lee como una estrella, no como un círculo.</summary>
+    static Sprite CrearResplandor()
+    {
+        if (resplandor != null) return resplandor;
+        const int n = 256;
+        var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+        float centro = (n - 1) * 0.5f;
+        for (int y = 0; y < n; y++)
+        for (int x = 0; x < n; x++)
+        {
+            float r = Vector2.Distance(new Vector2(x, y), new Vector2(centro, centro)) / centro;
+            float a = Mathf.Clamp01(Mathf.Pow(Mathf.Clamp01(1f - r), 2.2f) + Mathf.Clamp01(0.35f - r) * 3f);
+            tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+        }
+        tex.Apply();
+        resplandor = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f));
+        return resplandor;
+    }
 
     static Sprite CrearBlanco()
     {

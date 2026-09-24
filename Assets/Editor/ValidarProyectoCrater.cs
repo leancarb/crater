@@ -137,9 +137,15 @@ public static class ValidarProyectoCrater
                 "Falta la compuerta del Umbral o no tiene receptores.", problemas);
             Comprobar(compuertas.All(c => TieneOyentes(c.alAbrirse)), "La compuerta no avisa al flujo del juego.", problemas);
 
+            // Cresta, cruce de la puerta del eclipse, umbral de la capilla, puerta del cráter del valle y lugar del cráter
             var zonas = Todos<ZonaJugador>();
-            Comprobar(zonas.Length == 2 && zonas.All(z => TieneOyentes(z.alEntrar) && z.GetComponent<Collider>().isTrigger),
-                "Las zonas de la Cresta y de la salida tienen que ser triggers conectados.", problemas);
+            Comprobar(zonas.Length == 5 && zonas.All(z => TieneOyentes(z.alEntrar) && z.GetComponent<Collider>().isTrigger),
+                "Tiene que haber 5 zonas (Cresta, cruce, umbral de la capilla, puerta del cráter y lugar del cráter), todas triggers conectados.", problemas);
+
+            Comprobar(Todos<PrologoCapilla>().Length == 1 && Todos<CieloEclipse>().Length == 1,
+                "Falta el prólogo de la capilla o el cielo del eclipse.", problemas);
+            var puertas = Todos<PuertaEclipse>();
+            Comprobar(puertas.Length == 1, "Falta la puerta del eclipse en la Cresta.", problemas);
 
             var adaptacion = Todos<AdaptacionOscuridad>().FirstOrDefault();
             Comprobar(adaptacion != null && adaptacion.GetComponent<Volume>() != null && TieneOyentes(adaptacion.alAdaptarse),

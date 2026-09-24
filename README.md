@@ -1,9 +1,11 @@
 # CRÁTER — vertical slice
 
-Exploración en primera persona dentro de un cráter. La linterna es la única
-herramienta: con luz blanca abre el Umbral, con el filtro **CUERPO** enciende
-anclas de basalto que tienden puentes de luz, y con **HUECO** disuelve rejas.
-Al final hay que apagarla y dejar que los ojos se acostumbren a la oscuridad.
+Exploración en primera persona dentro de un cráter. Desde una capilla, un
+eclipse revela un cráter en el valle que sólo existe mientras dura la totalidad.
+Adentro, la linterna es la única herramienta: con luz blanca abre el Umbral, con
+el filtro **CUERPO** enciende anclas de basalto que tienden puentes de luz, y con
+**HUECO** disuelve rejas. Al final hay que apagarla y dejar que los ojos se
+acostumbren a la oscuridad: así aparece la puerta de salida.
 
 Unity 6000.3 · URP (Forward+) · Input System.
 
@@ -16,17 +18,19 @@ Unity 6000.3 · URP (Forward+) · Input System.
 | Filtro CUERPO / HUECO | 1 / 2 | X / Y |
 | Luz blanca | Q | B |
 | Pausa (R reinicia, X sale) | Esc | Start |
+| Saltar la cinemática (después de verla una vez) | Espacio | — |
 
 ## Recorrido
 
 | Sala | Qué enseña |
 |---|---|
-| 01 Explanada | Inicio al aire libre; rampa hacia abajo |
+| 00 Capilla (prólogo) | De día. Al salir, el eclipse revela el cráter en el valle; su puerta lleva a la Explanada |
+| 01 Explanada | Borde del cráter, bajo la totalidad; rampa hacia abajo |
 | 02 Umbral | Recoger la linterna; sostener la luz sobre un ancla abre la compuerta |
 | 03 Campo | CUERPO: tres puentes (enseñar, barrer con retención, mirar hacia arriba) |
 | 04 Hondonada | HUECO: rejas y zigzag; al final, combinar los dos filtros desde una repisa |
-| 05 Cresta | Apagar la linterna y adaptarse: aparecen tallados ocultos |
-| 06 Capilla | Epílogo de día |
+| 05 Cresta | La pared del fondo sólo refleja el propio foco. Apagar la linterna y adaptarse: aparecen tallados ocultos y la puerta del eclipse |
+| 06 Capilla (epílogo) | Cruzar la puerta: anillo de diamante, blanco y la capilla de día. El cráter ya no está; quedarse donde estaba trae los créditos |
 
 ## Cómo se trabaja
 
