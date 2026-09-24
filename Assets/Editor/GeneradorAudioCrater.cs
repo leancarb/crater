@@ -21,6 +21,7 @@ public static class GeneradorAudioCrater
         public AudioClip zumbidoCuerpo, zumbidoHueco;
         public AudioClip ambienteCrater, vientoOculo, exteriorCapilla;
         public AudioClip pajaros, graveEclipse, anilloDiamante;
+        public AudioClip campana, destelloPuerta, musicaCreditos;
         public AudioClip[] pasos;
     }
 
@@ -52,6 +53,12 @@ public static class GeneradorAudioCrater
         clips.pajaros = Guardar("capilla_pajaros", Pajaros(12f, 101));
         clips.graveEclipse = Guardar("eclipse_grave", Dron(6f, new[] { 55f, 82.5f, 110.5f }, new[] { 0.5f, 0.25f, 0.18f }, 0.4f, 0.02f, 111));
         clips.anilloDiamante = Guardar("anillo_diamante", Tono(1568f, 8f, 0.45f));
+        clips.campana = Guardar("capilla_campana", Campana(196f, 7f, 0.7f));
+        // Mi, La, Do#, Mi agudos: el mismo acorde de las anclas, arriba
+        clips.destelloPuerta = Guardar("puerta_destello", Arpegio(new[] { 1318.51f, 1760f, 2217.46f, 2637.02f }, 0.07f, 2.6f));
+        // La mayor lento: cada frecuencia completa ciclos enteros en 12 s, así el bucle cierra
+        clips.musicaCreditos = Guardar("creditos", Dron(12f, new[] { 110f, 164.75f, 220f, 277.25f, 329.75f },
+            new[] { 0.45f, 0.3f, 0.25f, 0.15f, 0.1f }, 0.35f, 0f, 121));
         for (int i = 0; i < clips.pasos.Length; i++)
             clips.pasos[i] = Guardar($"paso_{i + 1}", Paso(91 + i));
 
@@ -120,7 +127,7 @@ public static class GeneradorAudioCrater
             }
             t0 += 0.5f + (float)azar.NextDouble() * 2f;
         }
-        return Normalizar(s, 0.35f);
+        return Normalizar(s, 0.5f);
     }
 
     static float[] Barrido(float f0, float f1, float duracion, float volumen, int semilla)

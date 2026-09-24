@@ -344,24 +344,8 @@ public static partial class ConstructorCrater
     {
         g.position = new Vector3(300f, 0f, 0f);
 
-        CajaLocal(g, "Piso_Capilla", new Vector3(0f, -0.1f, 0f), new Vector3(8f, 0.2f, 14f), k.piedraCapilla);
-        CajaLocal(g, "Pared_Izq", new Vector3(-4f, 2.2f, 0f), new Vector3(0.35f, 4.5f, 14f), k.adobe);
-        CajaLocal(g, "Pared_Der", new Vector3(4f, 2.2f, 0f), new Vector3(0.35f, 4.5f, 14f), k.adobe);
-        CajaLocal(g, "Pared_Fondo", new Vector3(0f, 2.2f, -7f), new Vector3(8f, 4.5f, 0.35f), k.adobe);
-        CajaLocal(g, "Frente_Izq", new Vector3(-2.6f, 2.2f, 7f), new Vector3(2.8f, 4.5f, 0.35f), k.adobe);
-        CajaLocal(g, "Frente_Der", new Vector3(2.6f, 2.2f, 7f), new Vector3(2.8f, 4.5f, 0.35f), k.adobe);
-        CajaLocal(g, "Dintel", new Vector3(0f, 3.8f, 7f), new Vector3(2.4f, 1.3f, 0.35f), k.adobe);
-        CajaLocal(g, "Techo_Izq", new Vector3(-2f, 5f, 0f), new Vector3(4.8f, 0.35f, 15f), k.paja).transform.localRotation = Quaternion.Euler(0f, 0f, -18f);
-        CajaLocal(g, "Techo_Der", new Vector3(2f, 5f, 0f), new Vector3(4.8f, 0.35f, 15f), k.paja).transform.localRotation = Quaternion.Euler(0f, 0f, 18f);
-        CajaLocal(g, "Atrio", new Vector3(0f, -0.1f, 11f), new Vector3(7f, 0.2f, 8f), k.piedraCapilla);
-        CajaLocal(g, "Terreno", new Vector3(0f, -0.35f, 30f), new Vector3(60f, 0.5f, 50f), k.tierra);
-        CajaLocal(g, "Cerro_A", new Vector3(-16f, 3f, 48f), new Vector3(22f, 7f, 6f), k.tierra);
-        CajaLocal(g, "Cerro_B", new Vector3(14f, 2f, 52f), new Vector3(20f, 5f, 7f), k.tierra);
-        CajaLocal(g, "Cerro_C", new Vector3(-30f, 4f, 30f), new Vector3(6f, 9f, 40f), k.tierra);
-        CajaLocal(g, "Cerro_D", new Vector3(30f, 3f, 28f), new Vector3(6f, 7f, 40f), k.tierra);
-
-        var interior = Luz(g, "Luz_Interior", Vector3.zero, new Color(1f, 0.8f, 0.6f), 90f, 12f, false);
-        interior.transform.localPosition = new Vector3(0f, 3.5f, 1f);
+        ConstruirEdificioCapilla(k, g);
+        ConstruirPaisajeCapilla(k, g);
 
         refs.spawnCapilla = new GameObject("SpawnCapilla").transform;
         refs.spawnCapilla.SetParent(g, false);
@@ -593,9 +577,17 @@ public static partial class ConstructorCrater
         ConfigurarAudio(ambiente, k.audio.ambienteCrater, 0.55f, true, false);
         ambiente.playOnAwake = true;
         var exterior = sistemas.AddComponent<AudioSource>();
-        ConfigurarAudio(exterior, k.audio.exteriorCapilla, 0.5f, true, false);
+        ConfigurarAudio(exterior, k.audio.exteriorCapilla, 0.9f, true, false);
         var pajaros = sistemas.AddComponent<AudioSource>();
-        ConfigurarAudio(pajaros, k.audio.pajaros, 0.5f, true, false);
+        ConfigurarAudio(pajaros, k.audio.pajaros, 0.85f, true, false);
+        var campana = sistemas.AddComponent<AudioSource>();
+        ConfigurarAudio(campana, k.audio.campana, 0.8f, false, false);
+        var revelado = sistemas.AddComponent<AudioSource>();
+        ConfigurarAudio(revelado, k.audio.compuerta, 1f, false, false);
+        var destelloPuerta = sistemas.AddComponent<AudioSource>();
+        ConfigurarAudio(destelloPuerta, k.audio.destelloPuerta, 0.8f, false, false);
+        var musica = sistemas.AddComponent<AudioSource>();
+        ConfigurarAudio(musica, k.audio.musicaCreditos, 0f, true, false);
         var grave = sistemas.AddComponent<AudioSource>();
         ConfigurarAudio(grave, k.audio.graveEclipse, 0f, true, false);
         var tono = sistemas.AddComponent<AudioSource>();
@@ -623,6 +615,8 @@ public static partial class ConstructorCrater
         Asignar(eclipse, "prologo", prologo);
         Asignar(eclipse, "cielo", refs.cielo);
         Asignar(eclipse, "tonoFinal", tono);
+        Asignar(eclipse, "campana", campana);
+        Asignar(eclipse, "musicaCreditos", musica);
         Asignar(refs.jugador.GetComponent<RespawnPorCaida>(), "interfaz", interfaz);
         Asignar(refs.puertaEclipse, "adaptacion", adaptacion);
 
@@ -642,6 +636,9 @@ public static partial class ConstructorCrater
         Asignar(prologo, "zonaEpilogo", refs.zonaFinal.gameObject);
         Asignar(prologo, "pajaros", pajaros);
         Asignar(prologo, "graveEclipse", grave);
+        Asignar(prologo, "campana", campana);
+        Asignar(prologo, "sonidoRevelado", revelado);
+        Asignar(prologo, "sonidoDestello", destelloPuerta);
 
         UnityEventTools.AddPersistentListener(refs.compuertaUmbral.alAbrirse, new UnityAction(flujo.NotificarUmbralAbierto));
         UnityEventTools.AddPersistentListener(refs.zonaCresta.alEntrar, new UnityAction(flujo.EntrarCresta));

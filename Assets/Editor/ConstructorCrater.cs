@@ -118,6 +118,7 @@ public static partial class ConstructorCrater
         public Material piso, basalto, basaltoMedio, techo, piedra, metal, metalGastado;
         public Material ambar, motivoLatente, puenteVidrio, puenteBorde, rejaBasalto, rejaSello, cielo, lente;
         public Material adobe, paja, piedraCapilla, tierra;
+        public Material cal, madera, cardon, pajaBrava, vela;
         public Material huella, espejo, puertaEclipse, luzEclipse, resplandor, corona, discoSol, discoLuna;
 
         public GameObject prefabJugador, prefabAncla, prefabPuente, prefabReja, prefabFiltro, prefabLinterna;
@@ -196,6 +197,11 @@ public static partial class ConstructorCrater
         kit.piedraCapilla = Opaco("CapillaPiedra", new Color(0.36f, 0.34f, 0.3f), 0.12f);
         kit.tierra = Opaco("CapillaTierra", new Color(0.42f, 0.25f, 0.15f), 0.05f);
         kit.huella = Opaco("CapillaHuella", new Color(0.33f, 0.2f, 0.12f), 0.03f);
+        kit.cal = Opaco("CapillaCal", new Color(0.84f, 0.81f, 0.74f), 0.08f);
+        kit.madera = Opaco("CapillaMadera", new Color(0.26f, 0.16f, 0.09f), 0.2f);
+        kit.cardon = Opaco("Cardon", new Color(0.24f, 0.34f, 0.19f), 0.15f);
+        kit.pajaBrava = Opaco("PajaBrava", new Color(0.6f, 0.5f, 0.27f), 0.05f);
+        kit.vela = Emisivo(Opaco("Vela", new Color(0.92f, 0.86f, 0.72f), 0.2f), new Color(1f, 0.6f, 0.25f) * 2.5f);
 
         // el eclipse y la puerta
         kit.espejo = Opaco("EspejoBasalto", new Color(0.02f, 0.022f, 0.028f), 0.95f, 0.35f);

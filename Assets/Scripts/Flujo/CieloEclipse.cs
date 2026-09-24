@@ -6,6 +6,9 @@ using UnityEngine;
 ///
 /// Los discos se reubican cada frame a 'distancia' de la cámara, en la dirección
 /// del sol, así parecen estar en el infinito. La dirección la da la luz del sol.
+///
+/// La luna nueva no se ve de día: sólo su silueta sobre el sol. Por eso se pinta
+/// del color del cielo, y así desaparece en cuanto sale del disco solar.
 /// </summary>
 public class CieloEclipse : MonoBehaviour
 {
@@ -49,6 +52,8 @@ public class CieloEclipse : MonoBehaviour
 
     float progreso;
     bool visible;
+    float ladoLuna = 1f;   // 1 = todavía no pasó, -1 = ya pasó (epílogo)
+    Renderer rendererLuna;
     MaterialPropertyBlock bloque;
     static readonly int IdColor = Shader.PropertyToID("_BaseColor");
 
@@ -60,9 +65,17 @@ public class CieloEclipse : MonoBehaviour
 
     public Vector3 DireccionSol => sol != null ? -sol.transform.forward : Vector3.forward;
 
+    /// <summary>El eclipse ya terminó: día pleno y la luna del otro lado del sol.</summary>
+    public void PonerDespues()
+    {
+        ladoLuna = -1f;
+        Progreso = 0f;
+    }
+
     void Awake()
     {
         bloque = new MaterialPropertyBlock();
+        if (discoLuna != null) rendererLuna = discoLuna.GetComponent<Renderer>();
         Mostrar(false);
     }
 
@@ -107,7 +120,7 @@ public class CieloEclipse : MonoBehaviour
             Vector3 desvio = (lateral * 0.85f - arriba * 0.5f).normalized;
 
             float dist = distancia * 0.96f;
-            float separacion = (1f - progreso) * separacionInicial * tanRadio;
+            float separacion = (1f - progreso) * separacionInicial * tanRadio * ladoLuna;
             discoLuna.position = origen + (d + desvio * separacion).normalized * dist;
             // un poco más grande que el sol: en la totalidad lo tapa entero
             discoLuna.localScale = Vector3.one * (dist * tanRadio * 2f * 1.04f);
@@ -149,6 +162,13 @@ public class CieloEclipse : MonoBehaviour
         RenderSettings.fogDensity = densidadNiebla;
         var cam = Camera.main;
         if (cam != null) cam.backgroundColor = cielo;
+
+        if (rendererLuna != null)
+        {
+            rendererLuna.GetPropertyBlock(bloque);
+            bloque.SetColor(IdColor, cielo);
+            rendererLuna.SetPropertyBlock(bloque);
+        }
 
         if (corona != null)
         {

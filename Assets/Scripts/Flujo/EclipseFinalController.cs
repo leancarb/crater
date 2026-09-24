@@ -38,6 +38,12 @@ public class EclipseFinalController : MonoBehaviour
     [SerializeField] float duracionDestello = 1.5f;
     [SerializeField] float blancoSostenido = 3f;
 
+    [Header("Sonido del epílogo")]
+    [Tooltip("La campana de la capilla: suena al volver.")]
+    [SerializeField] AudioSource campana;
+    [SerializeField] AudioSource musicaCreditos;
+    [SerializeField] float volumenMusica = 0.6f;
+
     [Header("Créditos")]
     [Tooltip("Si el jugador no va al lugar del cráter, los créditos llegan solos.")]
     [SerializeField] float segundosHastaCreditos = 120f;
@@ -132,6 +138,7 @@ public class EclipseFinalController : MonoBehaviour
         EnEpilogo = true;
         yield return new WaitForSeconds(0.6f);
 
+        if (campana != null) campana.PlayDelayed(1.2f);
         if (interfaz != null) yield return interfaz.Fundir(Color.white, 1f, 0f, 3f);
         if (control != null) control.enabled = true;
         flujo?.EntrarEpilogo();
@@ -175,10 +182,24 @@ public class EclipseFinalController : MonoBehaviour
         StartCoroutine(Cierre());
     }
 
+    IEnumerator SubirMusica()
+    {
+        musicaCreditos.volume = 0f;
+        musicaCreditos.Play();
+        for (float t = 0f; t < 6f; t += Time.unscaledDeltaTime)
+        {
+            musicaCreditos.volume = Mathf.Lerp(0f, volumenMusica, t / 6f);
+            yield return null;
+        }
+        musicaCreditos.volume = volumenMusica;
+    }
+
     IEnumerator Cierre()
     {
         var control = jugador != null ? jugador.GetComponent<JugadorFPS>() : null;
         if (control != null) control.enabled = false;
+
+        if (musicaCreditos != null) StartCoroutine(SubirMusica());
 
         // la mirada sube al sol limpio mientras todo se vuelve blanco
         var camara = control != null ? control.camara : null;

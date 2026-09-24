@@ -44,6 +44,13 @@ public class PrologoCapilla : MonoBehaviour
     [SerializeField] AudioSource pajaros;
     [SerializeField] AudioSource graveEclipse;
     [SerializeField] float volumenGrave = 0.5f;
+    [Tooltip("La campana de la espadaña: suena al empezar.")]
+    [SerializeField] AudioSource campana;
+    [SerializeField] float demoraCampana = 4f;
+    [Tooltip("Retumbo de la tierra mientras sube el borde del cráter.")]
+    [SerializeField] AudioSource sonidoRevelado;
+    [Tooltip("El brillo de la puerta.")]
+    [SerializeField] AudioSource sonidoDestello;
 
     [Header("Tiempos (segundos)")]
     [SerializeField] float mirarAlSol = 2.5f;
@@ -76,6 +83,7 @@ public class PrologoCapilla : MonoBehaviour
     float densidadNiebla;
     bool niebla;
 
+    float volumenPajaros;
     float[] alturasVisibles;
     Vector3 escalaFondo;
     Vector3 escalaDestello;
@@ -90,6 +98,7 @@ public class PrologoCapilla : MonoBehaviour
     {
         bloque = new MaterialPropertyBlock();
         GuardarAmbienteDelCrater();
+        volumenPajaros = pajaros != null ? pajaros.volume : 0f;
 
         alturasVisibles = new float[bordes != null ? bordes.Length : 0];
         for (int i = 0; i < alturasVisibles.Length; i++)
@@ -115,6 +124,7 @@ public class PrologoCapilla : MonoBehaviour
         cielo?.Mostrar(true);
         if (cielo != null) cielo.Progreso = 0f;
         if (pajaros != null && !pajaros.isPlaying) pajaros.Play();
+        if (campana != null) campana.PlayDelayed(demoraCampana);
     }
 
     void Update()
@@ -166,6 +176,7 @@ public class PrologoCapilla : MonoBehaviour
         Vector3 objetivo = puerta != null ? puerta.position + Vector3.up * 1.2f : camara.position + Vector3.forward;
         Quaternion haciaCrater = Quaternion.LookRotation(objetivo - camara.position);
         float total = Mathf.Max(bajarMirada, revelado);
+        if (sonidoRevelado != null && !saltar) sonidoRevelado.Play();
         yield return Animar(total, k =>
         {
             float t = k * total;
@@ -174,6 +185,7 @@ public class PrologoCapilla : MonoBehaviour
         });
 
         // 5. el reflejo de la puerta: sube rápido, baja lento
+        if (sonidoDestello != null && !saltar) sonidoDestello.Play();
         yield return Animar(duracionDestello, k =>
         {
             float d = k < 0.18f ? k / 0.18f : 1f - Mathf.SmoothStep(0f, 1f, (k - 0.18f) / 0.82f);
@@ -247,8 +259,8 @@ public class PrologoCapilla : MonoBehaviour
         if (huella != null) huella.SetActive(true);
         if (zonaEpilogo != null) zonaEpilogo.SetActive(true);
         cielo?.Mostrar(true);
-        if (cielo != null) cielo.Progreso = 0f;
-        if (pajaros != null) { pajaros.volume = Mathf.Max(pajaros.volume, 0.5f); pajaros.Play(); }
+        cielo?.PonerDespues();
+        if (pajaros != null) { pajaros.volume = volumenPajaros; pajaros.Play(); }
     }
 
     // ---------------------------------------------------------------- estados

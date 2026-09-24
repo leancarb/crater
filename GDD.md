@@ -1,6 +1,6 @@
 # CRÁTER — Game Design Document
 
-> Versión 0.4 · Vertical slice · Unity 6 (6000.3) + URP (Forward+) · PC, teclado/mouse y joystick
+> Versión 0.5 · Vertical slice · Unity 6 (6000.3) + URP (Forward+) · PC, teclado/mouse y joystick
 >
 > Esta versión del GDD describe el vertical slice con arte modular (rama `crater/linterna-y-final-adaptacion`) más el arco narrativo del eclipse. Los detalles de implementación están en el `README.md`.
 
@@ -44,7 +44,7 @@ El eclipse dura exactamente lo que el jugador permanezca adentro. El cráter es 
 
 ### El eclipse
 
-- **Afuera** se ve en el cielo: el sol, la luna que lo tapa y la corona en la totalidad.
+- **Afuera** se ve en el cielo: el sol y la corona en la totalidad. La luna nueva no se ve de día: sólo su silueta cuando pasa por delante del sol. En el epílogo ya pasó y quedó del otro lado.
 - **Adentro** la totalidad está congelada. Se ve por los **óculos** (Campo y Cresta): sol negro, corona plateada, cielo de noche.
 - **Termina con el anillo de diamante**, el destello real con el que cierra la totalidad: la luz vuelve de golpe, como al prender la luz después de estar a oscuras.
 
@@ -117,7 +117,7 @@ Cada filtro sigue el patrón **Enseñar → Probar → Torcer**.
 
 - **Kit modular low-poly** (Blender): anclas facetadas, rejas, puente, linterna, arquitectura con pilares y motivos tallados (espiral, serpiente escalonada, chakana, rombo).
 - **Paleta:** basalto casi negro; ámbar para CUERPO y los tallados vivos; azul para HUECO y lo latente; plateado frío para todo lo que es eclipse (corona, puerta, óculos).
-- **Capilla:** adobe, techo de paja y piedra, en un valle de tierra entre cerros. Es el único lugar con luz de día.
+- **Capilla:** capilla andina de adobe encalado. Zócalo de piedra, contrafuertes, techo de paja a dos aguas, espadaña con campana y cruz, óculo sobre la puerta. Adentro: vigas, bancos, retablo y velas. Adelante, un atrio con pirca, arco de ingreso y cruz atrial. Alrededor: cardones, paja brava y cerros facetados. Es el único lugar con luz de día.
 - **Post-procesado:** ACES, bloom, viñeta y grano fino. La adaptación usa la exposición.
 
 ## 6. Audio
@@ -126,12 +126,13 @@ Todo el audio se sintetiza en `GeneradorAudioCrater` y se puede reemplazar por W
 
 | Momento | Sonido |
 |---|---|
-| Capilla | Pájaros y viento exterior |
-| Eclipse | Los pájaros se callan de golpe; entra un grave |
+| Capilla | Pájaros y viento exterior; la campana de la espadaña suena al empezar |
+| Eclipse | Los pájaros se callan de golpe; entra un grave; retumbo mientras sube el cráter; brillo agudo cuando destella la puerta |
 | Cráter | Dron ambiente, viento del óculo que sube con la adaptación |
 | Anclas | Cada una un tono; los pares forman intervalos del mismo acorde |
 | Puerta del eclipse | El viento sale de la puerta; retumbo al abrirse |
-| Final | Silencio → tono agudo del anillo de diamante → pájaros |
+| Final | Silencio → tono agudo del anillo de diamante → pájaros y la campana |
+| Créditos | Acorde lento en La mayor, el mismo de las anclas |
 
 ---
 
@@ -147,7 +148,7 @@ Todo el audio se sintetiza en `GeneradorAudioCrater` y se puede reemplazar por W
 - [x] Validador y tests (EditMode y PlayMode del recorrido completo, prólogo incluido)
 
 ### Pendiente
-- [ ] Arte de la capilla (hoy es blockout con los materiales del kit)
+- [x] Arte de la capilla y del valle (low-poly generado por el constructor)
 - [ ] Créditos definitivos (`SISTEMAS` → `EclipseFinalController` → `Creditos`)
 - [ ] Playtest: duración de la cinemática, intensidades del cielo y del reflejo
 - [ ] Audio grabado
