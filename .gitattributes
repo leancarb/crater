@@ -77,14 +77,14 @@ Packages/packages-lock.json linguist-generated
 # 3D models
 *.3dm                   lfs
 *.3ds                   lfs
-*.blend                 lfs
+# *.blend                 lfs   (fuera de LFS: los archivos del proyecto son chicos y así cualquier clon los trae enteros)
 *.blend1                lfs
 *.c4d                   lfs
 *.collada               lfs
 *.dae                   lfs
 *.dxf                   lfs
 *.FBX                   lfs
-*.fbx                   lfs
+# *.fbx                   lfs   (fuera de LFS: los archivos del proyecto son chicos y así cualquier clon los trae enteros)
 *.jas                   lfs
 *.lws                   lfs
 *.lxo                   lfs
@@ -105,7 +105,7 @@ Packages/packages-lock.json linguist-generated
 *.mp3                   lfs
 *.ogg                   lfs
 *.s3m                   lfs
-*.wav                   lfs
+# *.wav                   lfs   (fuera de LFS: los archivos del proyecto son chicos y así cualquier clon los trae enteros)
 *.xm                    lfs
 
 # Video
@@ -128,7 +128,7 @@ Packages/packages-lock.json linguist-generated
 *.jpeg                  lfs
 *.jpg                   lfs
 *.pict                  lfs
-*.png                   lfs
+# *.png                   lfs   (fuera de LFS: los archivos del proyecto son chicos y así cualquier clon los trae enteros)
 *.psd                   lfs
 *.tga                   lfs
 *.tif                   lfs
