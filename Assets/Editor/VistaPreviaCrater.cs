@@ -7,6 +7,11 @@ using UnityEngine.Rendering.Universal;
 /// <summary>
 /// Renderiza vistas fijas del recorrido a Assets/Art/Previews/Unity, con la
 /// linterna encendida. Sirve para revisar la iluminación sin entrar en Play.
+///
+/// CÓMO FUNCIONA
+/// Para cada vista pone una cámara temporal en 'ojo' mirando a 'objetivo', la renderiza
+/// a una textura y la guarda como PNG. Al terminar borra la cámara y vuelve a abrir la
+/// escena, así se descartan los cambios temporales (jugador escondido, cámara extra).
 /// </summary>
 public static class VistaPreviaCrater
 {

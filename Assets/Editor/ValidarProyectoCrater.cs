@@ -13,6 +13,12 @@ using UnityEngine.SceneManagement;
 /// <summary>
 /// Chequeos no destructivos antes de entregar o compilar: que la escena esté
 /// completa, bien conectada y que cada puzzle se pueda resolver desde el piso.
+///
+/// CÓMO FUNCIONA
+/// Abre la escena, junta todos sus objetos y revisa reglas: que existan las piezas
+/// clave, que los eventos tengan a quién avisar, que las anclas estén al alcance de
+/// su puente, etc. Cada regla que falla suma un mensaje a 'problemas'; al final se
+/// escriben en la Consola. No modifica nada. Corre solo después de "Reconstruir todo".
 /// </summary>
 public static class ValidarProyectoCrater
 {

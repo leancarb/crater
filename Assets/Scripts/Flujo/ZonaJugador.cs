@@ -6,6 +6,13 @@ using UnityEngine.Events;
 /// o cuando se queda adentro 'segundosDePermanencia' sin salir.
 /// Poner en: cualquier objeto con Collider marcado como Is Trigger, y conectar
 /// 'alEntrar' desde el Inspector.
+///
+/// CÓMO FUNCIONA
+/// Unity llama a OnTriggerEnter / OnTriggerExit cuando el CharacterController del
+/// jugador entra o sale del collider. Si no hace falta quedarse, dispara al entrar;
+/// si hay 'segundosDePermanencia', cuenta el tiempo adentro en Update y dispara al cumplirlo.
+/// En el juego conectan: la Cresta, el umbral y la puerta del prólogo, el cruce de la
+/// puerta del eclipse y el lugar del cráter en el epílogo.
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public class ZonaJugador : MonoBehaviour

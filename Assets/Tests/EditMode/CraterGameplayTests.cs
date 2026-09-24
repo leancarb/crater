@@ -4,7 +4,15 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 
-/// <summary>Reglas de las mecánicas, sin escena: rápidas y deterministas.</summary>
+/// <summary>
+/// Reglas de las mecánicas, sin escena: rápidas y deterministas.
+///
+/// CÓMO FUNCIONA
+/// Cada [Test] crea los objetos que necesita (un ancla, un puente, un filtro), simula
+/// pasos llamando a Avanzar(delta) en vez de esperar frames reales, y comprueba el
+/// resultado con Assert. [TearDown] borra todo lo creado al terminar cada test.
+/// Se corren desde Window > General > Test Runner > EditMode.
+/// </summary>
 public class CraterGameplayTests
 {
     readonly List<UnityEngine.Object> creados = new List<UnityEngine.Object>();
@@ -16,6 +24,7 @@ public class CraterGameplayTests
         creados.Clear();
     }
 
+    // todo lo que se crea se anota para borrarlo en Limpiar()
     GameObject Crear(string nombre)
     {
         var go = new GameObject(nombre);

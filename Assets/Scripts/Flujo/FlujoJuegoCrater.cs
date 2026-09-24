@@ -4,6 +4,14 @@ using UnityEngine;
 /// <summary>
 /// Autoridad de progresión de la demo. Escucha a la linterna y a las zonas,
 /// avanza de etapa y decide qué indicación mostrar en cada momento.
+///
+/// CÓMO FUNCIONA
+/// Es una máquina de estados: 'EtapaActual' dice en qué parte del juego está el
+/// jugador. Se suscribe a los eventos de la linterna (recoger, encender, desbloquear
+/// y equipar filtros) y cada evento puede hacer avanzar la etapa y mostrar una
+/// indicación. Las zonas y la compuerta llaman a sus métodos públicos a través de
+/// UnityEvents conectados por el constructor (EntrarCresta, NotificarUmbralAbierto...).
+/// El orden del enum importa: se compara con < y >= (por ejemplo "antes de la Cresta").
 /// </summary>
 public class FlujoJuegoCrater : MonoBehaviour
 {
@@ -37,8 +45,8 @@ public class FlujoJuegoCrater : MonoBehaviour
         if (empezarEnPrologo) EtapaActual = Etapa.Prologo;
     }
 
-    bool vinculado;
-    bool pistaHuecoMostrada;
+    bool vinculado;            // ya se suscribió a los eventos de la linterna
+    bool pistaHuecoMostrada;   // la explicación de HUECO sale una sola vez
 
     void Start()
     {
@@ -64,6 +72,10 @@ public class FlujoJuegoCrater : MonoBehaviour
         interfaz?.MostrarPromptTemporal("Bajá hacia la luz.", 5f);
     }
 
+    /// <summary>
+    /// Se suscribe a los eventos de la linterna con +=. Hay que desuscribirse (-=) al
+    /// destruirse; si no, la linterna seguiría llamando a un objeto que ya no existe.
+    /// </summary>
     void Vincular()
     {
         if (linterna == null || vinculado) return;

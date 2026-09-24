@@ -7,6 +7,12 @@ using UnityEngine;
 /// laten cada vez más rápido: el jugador sabe cuánto tiempo le queda.
 ///
 /// Poner en: un objeto con Collider (trigger) en la capa "Ancla".
+///
+/// CÓMO FUNCIONA
+/// Toda la lógica de carga y retención la hereda de ReceptorDeLuz. Esta clase sólo
+/// agrega lo visual (color y brillo de los anillos, luz puntual) y el tono al encenderse.
+/// El puente o la compuerta que depende de ella no la escucha: le pregunta cada
+/// frame si está 'Activo'.
 /// </summary>
 public class Ancla : ReceptorDeLuz
 {
@@ -31,22 +37,29 @@ public class Ancla : ReceptorDeLuz
     /// <summary>Brillo visible de 0 a 1 (carga, o retención cuando ya perdió el haz).</summary>
     public float Nivel { get; private set; }
 
+    // dibuja el estado inicial (apagada) antes del primer frame
     void Start() => AlActualizar(0f);
 
     protected override void AlActualizar(float delta)
     {
+        // mientras se carga, el brillo acompaña a la carga
         float nivel = Carga;
+
+        // activa pero sin luz (en retención): late cada vez más rápido a medida que se agota
         if (Activo && !Recibiendo && retencion > 0f)
         {
-            float r = RetencionRestante;
-            float frecuencia = Mathf.Lerp(16f, 3f, r);
+            float r = RetencionRestante;                     // 1 = recién perdió la luz, 0 = se apaga
+            float frecuencia = Mathf.Lerp(16f, 3f, r);       // late lento al principio, rápido al final
             float pulso = 0.5f + 0.5f * Mathf.Cos(Time.time * frecuencia);
+            // el primer 40 % de la retención no late: sólo baja un poco el brillo
             nivel = Mathf.Lerp(0.35f, 1f, r) * Mathf.Lerp(0.55f, 1f, r > 0.6f ? 1f : pulso);
         }
         Nivel = nivel;
 
+        // ??= crea el bloque la primera vez (AlActualizar puede llamarse antes que Awake de otros)
         bloque ??= new MaterialPropertyBlock();
         Color c = Color.Lerp(colorApagada, colorEncendida, nivel);
+        // nivel² hace que el brillo arranque suave y se dispare al final de la carga
         Color emision = colorEncendida * (0.04f + emisionMaxima * nivel * nivel);
         if (acentos != null)
         {
@@ -60,6 +73,7 @@ public class Ancla : ReceptorDeLuz
             }
         }
 
+        // la luz puntual ilumina el entorno del ancla; apagada no gasta rendimiento
         if (brillo != null)
         {
             brillo.intensity = intensidadLuz * nivel;
@@ -69,7 +83,7 @@ public class Ancla : ReceptorDeLuz
 
     protected override void Activar()
     {
-        base.Activar();
+        base.Activar();   // lo de ReceptorDeLuz: Activo = true y el evento
         if (tono != null) tono.Play();
     }
 }

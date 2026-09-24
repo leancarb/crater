@@ -10,6 +10,12 @@ using UnityEngine.Rendering;
 /// a dos aguas, espadaña con campana y cruz, óculo sobre la puerta. Adelante, el
 /// atrio con pirca, arco de ingreso y cruz atrial. Alrededor, cardones, paja brava
 /// y cerros.
+///
+/// CÓMO FUNCIONA
+/// Todo se arma con piezas simples: cajas (CajaLocal), cilindros y prismas triangulares
+/// (MallaPrisma, una malla creada por código para hastiales y remates). Las medidas
+/// están en metros, en coordenadas locales de la capilla. El paisaje usa un generador
+/// de números al azar con semilla fija: cada reconstrucción da exactamente el mismo valle.
 /// </summary>
 public static partial class ConstructorCrater
 {
@@ -53,6 +59,7 @@ public static partial class ConstructorCrater
         Prisma(edificio, "Hastial_Fondo", new Vector3(0f, AltoMuro, -7f), new Vector3(8.35f, altoHastial, 0.35f), k.cal);
 
         // ---------------------------------------------------------------- techo de paja
+        // cada faldón es una caja inclinada 'PendienteTecho' grados; el alero sobresale del muro
         const float alero = 0.6f;
         float mitad = MitadNave + alero;
         float largoFaldon = mitad / Mathf.Cos(PendienteTecho * Mathf.Deg2Rad);

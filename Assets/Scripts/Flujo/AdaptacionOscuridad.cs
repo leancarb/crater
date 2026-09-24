@@ -10,6 +10,13 @@ using UnityEngine.Rendering.Universal;
 ///
 /// Poner en: el Global Volume. El Volume Profile necesita un Color Adjustments.
 /// Arranca deshabilitada: la habilita el EclipseFinalController al entrar a la Cresta.
+///
+/// CÓMO FUNCIONA
+/// Cuenta el tiempo a oscuras. Pasada la 'demoraInicial', 'progreso' sube de 0 a 1 en
+/// 'tiempoDeAdaptacion' segundos; con la linterna prendida baja rápido a 0.
+/// El progreso, suavizado por una curva, mueve el postExposure del Color Adjustments
+/// (la imagen se aclara, como los ojos acostumbrándose) y el volumen del viento.
+/// Al pasar 'umbralApertura' dispara 'alAdaptarse' una vez: eso abre la puerta del eclipse.
 /// </summary>
 public class AdaptacionOscuridad : MonoBehaviour
 {
@@ -49,6 +56,7 @@ public class AdaptacionOscuridad : MonoBehaviour
     void Start()
     {
         // 'profile' (no 'sharedProfile') crea una copia: el asset no se modifica al jugar
+        // TryGet busca el efecto Color Adjustments dentro del perfil de post-procesado
         var volume = GetComponent<Volume>();
         if (volume != null && volume.profile != null && volume.profile.TryGet(out ajustes))
             ajustes.postExposure.overrideState = true;
@@ -62,6 +70,8 @@ public class AdaptacionOscuridad : MonoBehaviour
         var linterna = LinternaController.Instancia;
         bool linternaApagada = linterna == null || !linterna.Encendida;
 
+        // a oscuras: se adapta despacio. Con luz: se pierde rápido (como en la vida real)
+
         if (linternaApagada)
         {
             aOscuras += Time.deltaTime;
@@ -74,12 +84,14 @@ public class AdaptacionOscuridad : MonoBehaviour
             progreso = Mathf.MoveTowards(progreso, 0f, Time.deltaTime / tiempoDeReseteo);
         }
 
+        // exposición en EV: +1 duplica el brillo de la imagen, +3,2 lo multiplica por ~9
         if (ajustes != null)
             ajustes.postExposure.value = Mathf.Lerp(exposicionNormal, exposicionAdaptada, Curva);
 
         if (ambienteDeAdaptacion != null)
             ambienteDeAdaptacion.volume = Curva * volumenMaximo;
 
+        // una sola vez: aunque después vuelva a prender la linterna, la puerta ya quedó abierta
         if (!yaAvisado && progreso >= umbralApertura)
         {
             yaAvisado = true;

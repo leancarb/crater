@@ -7,6 +7,17 @@ using UnityEngine.UI;
 /// HUD mínimo. Se construye en runtime para no depender de referencias frágiles
 /// en la escena: indicaciones, estado de la linterna, mira con barra de carga,
 /// velos de fundido, título, pausa, anillo de diamante y créditos.
+///
+/// CÓMO FUNCIONA
+/// En Awake crea un Canvas con todas las piezas (textos, imágenes) por código.
+/// El Canvas escala con la pantalla tomando 1920×1080 como referencia.
+///  - Indicación (prompt): texto abajo que aparece y desaparece con un fundido.
+///  - Estado de la linterna: se actualiza cada frame leyendo LinternaController.
+///  - Velo: una imagen que cubre toda la pantalla; cambiando su color y alfa se
+///    hacen los fundidos a negro o a blanco.
+/// Los métodos que devuelven IEnumerator son corrutinas: se usan con
+/// 'yield return' (o StartCoroutine) y duran varios frames.
+/// Usan tiempo "unscaled" para seguir funcionando aunque el juego esté en pausa.
 /// </summary>
 public class InterfazCrater : MonoBehaviour
 {
@@ -18,8 +29,9 @@ public class InterfazCrater : MonoBehaviour
     static readonly Color ColorBloqueado = new Color(0.8f, 0.2f, 0.15f);
     static readonly Color ColorTextoSobreBlanco = new Color(0.14f, 0.14f, 0.16f);
 
+    // piezas del Canvas, creadas en Construir()
     Text textoPrompt;
-    CanvasGroup grupoPrompt;
+    CanvasGroup grupoPrompt;   // CanvasGroup permite fundir el alfa de todo un bloque de UI
     Text textoEstado;
     Text textoFiltros;
     Image mira;
@@ -31,8 +43,10 @@ public class InterfazCrater : MonoBehaviour
     Text textoSubtitulo;
     GameObject panelPausa;
 
+    // se guarda la corrutina en curso para cortarla si llega otra indicación
     Coroutine rutinaPrompt;
     Coroutine rutinaDestello;
+    // último texto puesto: reasignar el mismo texto cada frame reconstruye la malla sin necesidad
     string ultimoEstado;
     string ultimosFiltros;
 
@@ -46,12 +60,14 @@ public class InterfazCrater : MonoBehaviour
 
     // ---------------------------------------------------------------- indicaciones
 
+    /// <summary>Indicación fija, hasta que llegue otra u OcultarPrompt().</summary>
     public void MostrarPrompt(string mensaje)
     {
         if (rutinaPrompt != null) StopCoroutine(rutinaPrompt);
         rutinaPrompt = StartCoroutine(CambiarPrompt(mensaje, -1f));
     }
 
+    /// <summary>Indicación que se va sola después de 'segundos'.</summary>
     public void MostrarPromptTemporal(string mensaje, float segundos = 4f)
     {
         if (rutinaPrompt != null) StopCoroutine(rutinaPrompt);
@@ -66,6 +82,7 @@ public class InterfazCrater : MonoBehaviour
 
     public string PromptActual => grupoPrompt != null && grupoPrompt.alpha > 0f ? textoPrompt.text : "";
 
+    // si había otra indicación, primero se desvanece; después aparece la nueva
     IEnumerator CambiarPrompt(string mensaje, float segundos)
     {
         if (grupoPrompt.alpha > 0f && textoPrompt.text != mensaje) yield return FundirPrompt(0f);
@@ -88,6 +105,7 @@ public class InterfazCrater : MonoBehaviour
 
     // ---------------------------------------------------------------- velos
 
+    /// <summary>Cubre la pantalla con un color. alfa 0 = nada, 1 = pantalla llena.</summary>
     public void MostrarVelo(Color color, float alfa)
     {
         color.a = Mathf.Clamp01(alfa);
@@ -95,6 +113,7 @@ public class InterfazCrater : MonoBehaviour
         velo.enabled = color.a > 0.001f;
     }
 
+    /// <summary>Anima el velo de 'desde' a 'hasta' en 'duracion' segundos.</summary>
     public IEnumerator Fundir(Color color, float desde, float hasta, float duracion)
     {
         for (float t = 0f; t < duracion; t += Time.unscaledDeltaTime)
@@ -114,6 +133,7 @@ public class InterfazCrater : MonoBehaviour
 
     // ---------------------------------------------------------------- pantallas
 
+    /// <summary>Pantalla negra con "CRÁTER" que se abre al juego. La usa FlujoJuegoCrater al empezar.</summary>
     public IEnumerator MostrarTitulo()
     {
         MostrarVelo(Color.black, 1f);
@@ -208,6 +228,7 @@ public class InterfazCrater : MonoBehaviour
 
     // ---------------------------------------------------------------- estado de la linterna
 
+    /// <summary>Estado arriba a la derecha y mira con barra de carga en el centro.</summary>
     void ActualizarLinterna()
     {
         if (linterna == null) return;
@@ -254,10 +275,12 @@ public class InterfazCrater : MonoBehaviour
             ultimosFiltros = filtros;
         }
 
+        // la mira se agranda y toma el color del haz cuando apunta a un receptor
         bool apuntando = linterna.Encendida && linterna.HayObjetivo;
         mira.color = apuntando ? Color.Lerp(color, Color.white, 0.2f) : new Color(1f, 1f, 1f, linterna.Encendida ? 0.45f : 0.2f);
         mira.rectTransform.localScale = Vector3.one * (apuntando ? 1.6f : 1f);
 
+        // barra: se ve mientras carga, o en rojo si el filtro no sirve para ese receptor
         bool mostrarCarga = apuntando && linterna.CargaObjetivo > 0f && linterna.CargaObjetivo < 1f
                             || (apuntando && !linterna.ObjetivoAceptaFiltro);
         fondoCarga.gameObject.SetActive(mostrarCarga);
@@ -266,6 +289,7 @@ public class InterfazCrater : MonoBehaviour
         barraCarga.color = linterna.ObjetivoAceptaFiltro ? color : ColorBloqueado;
     }
 
+    /// <summary>"1 CUERPO     2 HUECO" con colores (rich text); el filtro puesto a color pleno.</summary>
     string DescribirFiltros()
     {
         var sb = new StringBuilder();
@@ -283,6 +307,7 @@ public class InterfazCrater : MonoBehaviour
 
     // ---------------------------------------------------------------- construcción
 
+    /// <summary>Arma el Canvas entero. Las posiciones son anclas relativas (0 a 1) de la pantalla.</summary>
     void Construir()
     {
         var canvasGO = new GameObject("HUD_CRATER", typeof(Canvas), typeof(CanvasScaler));
@@ -365,6 +390,7 @@ public class InterfazCrater : MonoBehaviour
         panelPausa.SetActive(false);
     }
 
+    /// <summary>Un objeto de UI que ocupa el rectángulo entre anclaMin y anclaMax (fracciones de la pantalla).</summary>
     static GameObject Crear(string nombre, Transform padre, Vector2 anclaMin, Vector2 anclaMax)
     {
         var go = new GameObject(nombre, typeof(RectTransform));
@@ -429,6 +455,7 @@ public class InterfazCrater : MonoBehaviour
         return blanco;
     }
 
+    /// <summary>Círculo de 32 px con borde suave, para la mira.</summary>
     static Sprite CrearCirculo()
     {
         if (circulo != null) return circulo;

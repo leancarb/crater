@@ -9,6 +9,13 @@ using UnityEngine.TestTools;
 /// Recorre la escena real de punta a punta como lo haría un jugador: camina con
 /// el CharacterController, apunta la linterna y cruza cada puzzle. Si alguien
 /// mueve una pieza del nivel y un puzzle deja de poder resolverse, falla acá.
+///
+/// CÓMO FUNCIONA
+/// Es un [UnityTest]: una corrutina que corre en Play, frame a frame. Carga la escena
+/// real, acelera el tiempo ×2 y "juega": camina moviendo el CharacterController hacia
+/// puntos del recorrido, apunta la cámara a las anclas y rejas, equipa filtros y espera.
+/// Después de cada tramo comprueba con Assert que la etapa del juego avanzó.
+/// Se corre desde Window > General > Test Runner > PlayMode.
 /// </summary>
 public class RecorridoCraterTests
 {
@@ -132,6 +139,7 @@ public class RecorridoCraterTests
 
     // ------------------------------------------------------------------ acciones
 
+    /// <summary>Camina en línea recta hacia 'destino' (sólo x y z). Falla si en 'limite' segundos no llega.</summary>
     IEnumerator Caminar(Vector3 destino, float limite = 30f)
     {
         for (float t = 0f; t < limite; t += Time.deltaTime)
@@ -145,6 +153,7 @@ public class RecorridoCraterTests
         Assert.Fail($"no se pudo llegar a {destino}: el jugador quedó en {jugador.transform.position}");
     }
 
+    /// <summary>Mantiene la mirada (y la linterna) sobre un receptor durante 'segundos'.</summary>
     IEnumerator Iluminar(ReceptorDeLuz receptor, float segundos)
     {
         for (float t = 0f; t < segundos; t += Time.deltaTime)

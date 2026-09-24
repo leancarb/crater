@@ -7,6 +7,11 @@ using UnityEngine;
 /// - Apagada: aparece un contorno tenue, que crece con la adaptación.
 /// - Al completar la adaptación (EclipseFinalController llama a Abrir) la hoja
 ///   desaparece y queda el paso abierto hacia la luz del eclipse.
+///
+/// CÓMO FUNCIONA
+/// Cada frame calcula una 'Visibilidad' objetivo según la linterna y la adaptación, se
+/// acerca a ella de a poco y la usa como brillo (emisión) del contorno. La 'hoja' es un
+/// bloque con el mismo material de la pared, con collider: al abrir se desactiva y deja pasar.
 /// </summary>
 public class PuertaEclipse : MonoBehaviour
 {
@@ -49,11 +54,13 @@ public class PuertaEclipse : MonoBehaviour
         float adaptado = adaptacion != null && adaptacion.Habilitada ? adaptacion.Curva : 0f;
         bool habilitada = adaptacion != null && adaptacion.Habilitada;
 
+        // qué tan visible debería estar el contorno
         float objetivo;
         if (Abierta) objetivo = 1f;
         else if (!habilitada || luz) objetivo = 0f;
         else objetivo = Mathf.Max(bordeMinimo, adaptado);
 
+        // aparece lento (como los ojos adaptándose) y se esconde rápido al prender la luz
         float velocidad = objetivo > Visibilidad ? velocidadAparicion : velocidadDesaparicion;
         Visibilidad = Mathf.MoveTowards(Visibilidad, objetivo, velocidad * Time.deltaTime);
         AplicarContorno(Visibilidad);

@@ -6,6 +6,15 @@ using UnityEngine;
 /// eclipse; cruzarla trae el anillo de diamante, el blanco y la capilla de día.
 /// En el epílogo el cráter ya no está; los créditos llegan al quedarse en el lugar
 /// donde estaba o después de un rato.
+///
+/// CÓMO FUNCIONA
+///  1. HabilitarEnCresta (lo llama el flujo al entrar a la Cresta) enciende la adaptación.
+///  2. La adaptación dispara AlCompletarAdaptacion: se abre la PuertaEclipse.
+///  3. La zona detrás de la puerta llama a CruzarPuerta: silencio, anillo de diamante,
+///     blanco, y el jugador se teletransporta a la capilla (x = 300) con luz de día.
+///  4. En el epílogo, la zona del lugar del cráter (o el reloj de 2 minutos) llama a
+///     CerrarDemo: la cámara sube al sol, fundido a blanco, créditos y la pantalla final.
+/// Las esperas se hacen con corrutinas (IEnumerator + yield).
 /// </summary>
 public class EclipseFinalController : MonoBehaviour
 {
@@ -55,6 +64,7 @@ public class EclipseFinalController : MonoBehaviour
         "Gracias por jugar",
     };
 
+    // banderas para que cada paso ocurra una sola vez aunque lo llamen de nuevo
     bool habilitado;
     bool transicionIniciada;
     bool cerrado;
@@ -99,7 +109,7 @@ public class EclipseFinalController : MonoBehaviour
         var cc = jugador != null ? jugador.GetComponent<CharacterController>() : null;
         if (control != null) control.enabled = false;
 
-        // silencio total: viento, zumbido, pasos
+        // silencio total: viento, zumbido, pasos. El tono final ignora esta pausa (ignoreListenerPause)
         AudioListener.pause = true;
         yield return new WaitForSecondsRealtime(silencio);
 
@@ -113,11 +123,12 @@ public class EclipseFinalController : MonoBehaviour
         else yield return new WaitForSecondsRealtime(duracionDestello);
         yield return new WaitForSecondsRealtime(blancoSostenido);
 
+        // con la pantalla ya blanca, el jugador se muda a la capilla sin que se note
         if (cc != null) cc.enabled = false;
         if (linterna != null)
         {
             linterna.Encender(false);
-            linterna.enabled = false;
+            linterna.enabled = false;   // en el epílogo no hay linterna
         }
 
         if (jugador != null && spawnCapilla != null)
@@ -144,6 +155,7 @@ public class EclipseFinalController : MonoBehaviour
         flujo?.EntrarEpilogo();
     }
 
+    /// <summary>Luz, ambiente, niebla, fondo y sonido del exterior de día.</summary>
     public void AplicarAmbienteDeDia()
     {
         if (luzDelCrater != null) luzDelCrater.enabled = false;
@@ -217,7 +229,7 @@ public class EclipseFinalController : MonoBehaviour
 
         if (interfaz != null) yield return interfaz.MostrarCreditos(creditos);
 
-        // pantalla final: R vuelve a empezar, Esc sale
+        // pantalla final: R vuelve a empezar, Esc sale. Espera para siempre (hasta que se elija)
         while (true)
         {
             if (EntradaCrater.Presionada(UnityEngine.InputSystem.Key.R)) PausaCrater.ReiniciarEscena();

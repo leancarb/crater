@@ -7,6 +7,15 @@ using UnityEngine.Events;
 ///
 /// Se encarga de: filtrar por canal, acumular carga, retener la activación
 /// unos segundos después de perder la luz, y avisar cuando cambia de estado.
+///
+/// CÓMO FUNCIONA
+///  1. La linterna, cada frame, llama a RecibirLuz() en cada receptor que ilumina.
+///  2. Si el filtro es el correcto, la 'Carga' sube de 0 a 1 en 'tiempoDeCarga' segundos.
+///  3. Al llegar a 1 se activa (Activo = true) y dispara 'alActivarse'.
+///  4. Si deja de recibir luz, primero espera 'retencion' segundos (sigue activo),
+///     después la carga baja al doble de velocidad y, en 0, se desactiva.
+/// Las hijas redefinen AlActualizar() para dibujarse (brillo, transparencia, etc.).
+/// Es 'abstract': Unity no deja ponerla sola en un objeto.
 /// </summary>
 public abstract class ReceptorDeLuz : MonoBehaviour
 {
@@ -23,12 +32,14 @@ public abstract class ReceptorDeLuz : MonoBehaviour
     public Transform puntoDeImpacto;
 
     [Header("Eventos (opcional, para conectar sin código)")]
+    // se pueden conectar desde el Inspector a cualquier método público (como un botón de UI)
     public UnityEvent alActivarse = new UnityEvent();
     public UnityEvent alDesactivarse = new UnityEvent();
 
+    // estado que leen las hijas, la interfaz y los puentes/compuertas
     public bool Activo { get; private set; }
     public float Carga { get; private set; }          // 0 a 1
-    public bool Recibiendo { get; private set; }
+    public bool Recibiendo { get; private set; }      // recibió luz en el último paso
 
     /// <summary>1 mientras recibe luz o recién la pierde, baja a 0 cuando se agota la retención.</summary>
     public float RetencionRestante
@@ -43,10 +54,11 @@ public abstract class ReceptorDeLuz : MonoBehaviour
 
     public Vector3 PuntoDeImpacto => puntoDeImpacto != null ? puntoDeImpacto.position : transform.position;
 
-    float tiempoDeCarga = TiempoDeCargaLuzBlanca;
-    float sinLuz;
-    bool luzPendiente;
+    float tiempoDeCarga = TiempoDeCargaLuzBlanca;   // se toma del último filtro que lo iluminó
+    float sinLuz;                                   // segundos desde que perdió el haz
+    bool luzPendiente;                              // la linterna lo iluminó desde el último Avanzar()
 
+    /// <summary>¿Este filtro (o la luz blanca, si es null) activa a este receptor?</summary>
     public bool AceptaFiltro(FiltroDefinicion filtro)
     {
         return canalRequerido == FiltroDefinicion.Canal.Ninguno
@@ -61,6 +73,7 @@ public abstract class ReceptorDeLuz : MonoBehaviour
         tiempoDeCarga = filtro != null ? Mathf.Max(0.01f, filtro.tiempoDeCarga) : TiempoDeCargaLuzBlanca;
         luzPendiente = true;
         sinLuz = 0f;
+        // delta / tiempoDeCarga: en 'tiempoDeCarga' segundos de luz la carga llega a 1
         Carga = Mathf.Clamp01(Carga + delta / tiempoDeCarga);
 
         if (!Activo && Carga >= 1f) Activar();
@@ -71,15 +84,18 @@ public abstract class ReceptorDeLuz : MonoBehaviour
     /// <summary>
     /// Un paso de simulación. Se usa una bandera en vez del reloj para saber si
     /// recibió luz: así no depende del orden de ejecución ni de los FPS.
+    /// Es público para que los tests puedan simular pasos sin esperar frames.
     /// </summary>
     public void Avanzar(float delta)
     {
+        // "recibí luz desde el paso anterior" pasa a ser el estado de este paso
         Recibiendo = luzPendiente;
         luzPendiente = false;
 
         if (!Recibiendo)
         {
             sinLuz += delta;
+            // mientras dure la retención, un receptor activo no pierde carga
             bool retenido = Activo && sinLuz < retencion;
             if (!retenido)
             {
@@ -95,6 +111,7 @@ public abstract class ReceptorDeLuz : MonoBehaviour
     /// <summary>Gancho para las hijas. Se llama todos los frames.</summary>
     protected virtual void AlActualizar(float delta) { }
 
+    // 'virtual': las hijas pueden sumar comportamiento (por ejemplo un sonido) llamando a base.Activar()
     protected virtual void Activar()
     {
         Activo = true;
@@ -107,6 +124,7 @@ public abstract class ReceptorDeLuz : MonoBehaviour
         alDesactivarse?.Invoke();
     }
 
+    // dibuja en la vista Scene (sólo en el editor) el punto al que apunta la linterna
     protected virtual void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.cyan;

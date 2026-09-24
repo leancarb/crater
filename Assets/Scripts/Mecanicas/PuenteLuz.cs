@@ -9,6 +9,12 @@ using UnityEngine;
 /// alguna ancla está por agotarse, el puente parpadea como aviso.
 ///
 /// Poner en: el objeto raíz del puente (con sus mallas y un Collider).
+///
+/// CÓMO FUNCIONA
+/// Cada frame revisa si TODAS sus anclas están activas. Si lo están, 'Visibilidad'
+/// sube hacia 1 (aparece); si no, baja hacia 0 (se disuelve). Con la visibilidad
+/// por encima de 'umbralSolido' se prende el collider y se puede pisar.
+/// La visibilidad se dibuja como transparencia + emisión con un MaterialPropertyBlock.
 /// </summary>
 public class PuenteLuz : MonoBehaviour
 {
@@ -38,7 +44,7 @@ public class PuenteLuz : MonoBehaviour
     static readonly int IdBase = Shader.PropertyToID("_BaseColor");
     static readonly int IdEmision = Shader.PropertyToID("_EmissionColor");
 
-    public float Visibilidad { get; private set; }
+    public float Visibilidad { get; private set; }   // 0 = no está, 1 = completo
     public bool Solido { get; private set; }
 
     MaterialPropertyBlock bloque;
@@ -59,6 +65,7 @@ public class PuenteLuz : MonoBehaviour
         }
         bloque = new MaterialPropertyBlock();
 
+        // arranca invisible y sin collider: si no, se podría pisar un puente que no se ve
         Solido = false;
         foreach (var c in colliders) if (c != null) c.enabled = false;
         AplicarVisibilidad(0f);
@@ -66,10 +73,12 @@ public class PuenteLuz : MonoBehaviour
 
     void Update() => Avanzar(Time.deltaTime);
 
+    /// <summary>Un paso de simulación (público para los tests).</summary>
     public void Avanzar(float delta)
     {
         if (coloresBase == null) Inicializar();
 
+        // existe sólo si todas las anclas están activas; 'aviso' es la retención más corta
         bool deberiaExistir = anclas.Count > 0;
         float aviso = 1f;
         foreach (var a in anclas)
@@ -78,11 +87,13 @@ public class PuenteLuz : MonoBehaviour
             aviso = Mathf.Min(aviso, a.RetencionRestante);
         }
 
+        // aparece más rápido de lo que se disuelve
         float velocidad = deberiaExistir
             ? 1f / Mathf.Max(0.01f, tiempoDeAparicion)
             : 1f / Mathf.Max(0.01f, tiempoDeDisolucion);
         Visibilidad = Mathf.MoveTowards(Visibilidad, deberiaExistir ? 1f : 0f, velocidad * delta);
 
+        // en el último 35 % de la retención el puente parpadea, cada vez más rápido
         float parpadeo = 1f;
         if (deberiaExistir && aviso < 0.35f)
             parpadeo = 0.45f + 0.55f * (0.5f + 0.5f * Mathf.Cos(Time.time * Mathf.Lerp(22f, 8f, aviso / 0.35f)));
@@ -106,6 +117,7 @@ public class PuenteLuz : MonoBehaviour
         {
             var r = mallas[i];
             if (r == null) continue;
+            // invisible del todo: se apaga el renderer (no se dibuja nada)
             r.enabled = v > 0.001f;
             if (!r.enabled) continue;
 
@@ -118,6 +130,7 @@ public class PuenteLuz : MonoBehaviour
         }
     }
 
+    // en la vista Scene, líneas naranjas hacia las anclas que lo sostienen
     void OnDrawGizmos()
     {
         Gizmos.color = new Color(1f, 0.55f, 0.2f, 0.8f);

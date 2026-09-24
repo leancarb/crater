@@ -10,6 +10,12 @@ using UnityEngine;
 ///
 /// Poner en: un objeto vacío en el centro de la cara de la pared, con el eje azul
 /// (forward) entrando en la pared.
+///
+/// CÓMO FUNCIONA
+/// Cada frame proyecta la posición de la cámara sobre el plano de la pared ('pie').
+/// Si cae dentro de la pared y la linterna está prendida, pone ahí un quad brillante
+/// (el reflejo) y una luz de rebote, con intensidad según qué tan de frente y qué tan
+/// cerca se apunta. No es un espejo real (sería caro): es el efecto que se vería.
 /// </summary>
 public class ParedEspejo : MonoBehaviour
 {
@@ -60,8 +66,10 @@ public class ParedEspejo : MonoBehaviour
             return;
         }
 
+        // producto punto: 1 si la linterna apunta derecho a la pared, 0 si apunta de costado
         float deFrente = Mathf.Clamp01(Vector3.Dot(linterna.transform.forward, -normal));
         float cercania = Mathf.Clamp01(1f - distancia / linterna.AlcanceActual);   // el haz va y vuelve
+        // la potencia hace que el reflejo sólo sea fuerte muy de frente
         float k = Mathf.Pow(deFrente, concentracion) * cercania;
         Encandilamiento = k;
         Color color = linterna.ColorActual;

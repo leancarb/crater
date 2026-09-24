@@ -9,6 +9,12 @@ using UnityEngine;
 ///
 /// La luna nueva no se ve de día: sólo su silueta sobre el sol. Por eso se pinta
 /// del color del cielo, y así desaparece en cuanto sale del disco solar.
+///
+/// CÓMO FUNCIONA
+/// Al cambiar 'Progreso' (Aplicar) se interpolan entre día y totalidad: la intensidad y el
+/// color del sol, la luz ambiente, la niebla y el fondo de la cámara. En LateUpdate
+/// (Posicionar) se acomodan los discos: el sol y la corona en la dirección del sol, la
+/// luna corrida según el progreso. Mostrar(false) apaga todo el exterior (dentro del cráter).
 /// </summary>
 public class CieloEclipse : MonoBehaviour
 {
@@ -102,6 +108,8 @@ public class CieloEclipse : MonoBehaviour
 
         Vector3 origen = cam.transform.position;
         Vector3 d = DireccionSol;
+        // tamaño aparente: a distancia D, un objeto de radio D·tan(θ/2) se ve con un ángulo θ.
+        // Así el sol se ve igual de grande sin importar a qué distancia se lo ponga
         float tanRadio = Mathf.Tan(diametroAngular * 0.5f * Mathf.Deg2Rad);
 
         if (discoSol != null)
@@ -113,19 +121,23 @@ public class CieloEclipse : MonoBehaviour
         if (discoLuna != null)
         {
             // la luna llega en diagonal, desde abajo a la derecha
+            // dos ejes perpendiculares a la dirección del sol, para correr la luna "sobre el cielo"
             Vector3 lateral = Vector3.Cross(Vector3.up, d);
             if (lateral.sqrMagnitude < 0.001f) lateral = Vector3.right;
             lateral.Normalize();
             Vector3 arriba = Vector3.Cross(d, lateral).normalized;
             Vector3 desvio = (lateral * 0.85f - arriba * 0.5f).normalized;
 
+            // un poco más cerca que el sol: así lo tapa (queda delante en profundidad)
             float dist = distancia * 0.96f;
+            // progreso 1 = centrada sobre el sol; 0 = corrida 'separacionInicial' radios
             float separacion = (1f - progreso) * separacionInicial * tanRadio * ladoLuna;
             discoLuna.position = origen + (d + desvio * separacion).normalized * dist;
             // un poco más grande que el sol: en la totalidad lo tapa entero
             discoLuna.localScale = Vector3.one * (dist * tanRadio * 2f * 1.04f);
         }
 
+        // la corona va detrás del sol, siempre mirando a la cámara (billboard)
         if (corona != null)
         {
             float dist = distancia * 1.03f;
@@ -151,6 +163,7 @@ public class CieloEclipse : MonoBehaviour
             sol.color = Color.Lerp(solTotalidad, solDia, luz);
         }
 
+        // luz ambiente en tres tonos: cielo (arriba), horizonte y suelo (abajo)
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
         RenderSettings.ambientSkyColor = Color.Lerp(ambienteCieloTotalidad, ambienteCieloDia, luz);
         RenderSettings.ambientEquatorColor = Color.Lerp(ambienteHorizonteTotalidad, ambienteHorizonteDia, luz);
@@ -172,6 +185,7 @@ public class CieloEclipse : MonoBehaviour
 
         if (corona != null)
         {
+            // la corona sólo aparece en el último 5 % del eclipse (la totalidad)
             float c = Mathf.SmoothStep(0f, 1f, (progreso - 0.95f) / 0.05f);
             corona.enabled = c > 0.001f;
             Color col = colorCorona * intensidadCorona;

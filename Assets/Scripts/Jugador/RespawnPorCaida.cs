@@ -3,6 +3,12 @@ using UnityEngine;
 /// <summary>
 /// Devuelve al jugador al último suelo estable cuando cae fuera del recorrido.
 /// Los puentes de luz no se guardan como punto seguro porque pueden desaparecer.
+///
+/// CÓMO FUNCIONA
+/// Mientras el jugador está parado sobre algo firme (no un puente) durante medio
+/// segundo, guarda esa posición como "punto seguro" (cada 0,35 s como máximo).
+/// Si cae por debajo de 'alturaDeCaida', lo teletransporta al último punto seguro
+/// y muestra un destello negro con un aviso.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class RespawnPorCaida : MonoBehaviour
@@ -16,8 +22,8 @@ public class RespawnPorCaida : MonoBehaviour
     JugadorFPS movimiento;
     Vector3 ultimoPuntoSeguro;
     Quaternion ultimaRotacionSegura;
-    float tiempoEnSuelo;
-    float proximoRegistro;
+    float tiempoEnSuelo;       // cuánto hace que está parado en el piso sin interrupción
+    float proximoRegistro;     // no guardar más seguido que 'intervaloDeRegistro'
     readonly RaycastHit[] impactos = new RaycastHit[8];
 
     public Vector3 UltimoPuntoSeguro => ultimoPuntoSeguro;
@@ -31,12 +37,14 @@ public class RespawnPorCaida : MonoBehaviour
 
     void Update()
     {
+        // se cayó del recorrido
         if (transform.position.y < alturaDeCaida)
         {
             Respawn();
             return;
         }
 
+        // en el aire (o durante una cinemática) no se cuenta tiempo en el piso
         if (controlador == null || !controlador.enabled || !controlador.isGrounded)
         {
             tiempoEnSuelo = 0f;
@@ -51,6 +59,7 @@ public class RespawnPorCaida : MonoBehaviour
         proximoRegistro = Time.time + intervaloDeRegistro;
     }
 
+    /// <summary>Tira un rayo hacia abajo y revisa qué hay debajo: un puente no cuenta como firme.</summary>
     bool EstaSobreSuperficiePermanente()
     {
         Vector3 origen = transform.position + Vector3.up * 0.3f;
@@ -82,6 +91,8 @@ public class RespawnPorCaida : MonoBehaviour
     /// <summary>También puede llamarse desde volúmenes de muerte.</summary>
     public void Respawn()
     {
+        // el CharacterController pisa cualquier cambio de posición mientras está prendido:
+        // se apaga, se mueve el objeto y se vuelve a prender
         bool estabaHabilitado = controlador != null && controlador.enabled;
         if (controlador != null) controlador.enabled = false;
 
@@ -91,7 +102,7 @@ public class RespawnPorCaida : MonoBehaviour
             movimiento.ReiniciarMovimiento();
             movimiento.Orientar(ultimaRotacionSegura);
         }
-        Physics.SyncTransforms();
+        Physics.SyncTransforms();   // que la física se entere de la posición nueva ya
 
         if (controlador != null) controlador.enabled = estabaHabilitado;
         tiempoEnSuelo = 0f;

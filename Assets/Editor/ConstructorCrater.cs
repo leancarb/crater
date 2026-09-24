@@ -16,6 +16,16 @@ using UnityEngine.Rendering.Universal;
 /// Es idempotente: se puede correr las veces que haga falta y siempre deja el
 /// proyecto en el mismo estado. Para cambiar el nivel se edita
 /// ConstructorCrater.Nivel.cs y se vuelve a correr "Crater > Reconstruir todo".
+///
+/// CÓMO FUNCIONA
+/// Es un script de editor (carpeta Editor): no va en el juego compilado, sólo agrega
+/// menús a Unity. Está partido en varios archivos con 'partial class':
+///  - ConstructorCrater.cs          materiales, texturas, render, post-procesado, prefabs
+///  - ConstructorCrater.Nivel.cs    la escena: salas, puzzles, luces, sistemas
+///  - ConstructorCrater.Capilla.cs  la capilla y su valle
+/// ReconstruirTodo() los llama en orden y guarda todo como assets. Como cada paso
+/// pisa lo anterior, correrlo dos veces da el mismo resultado (es idempotente).
+/// La clase 'Kit' lleva de un paso al siguiente todo lo creado (materiales, prefabs...).
 /// </summary>
 public static partial class ConstructorCrater
 {
@@ -78,6 +88,7 @@ public static partial class ConstructorCrater
 
     // ================================================================== orquestación
 
+    /// <summary>El orden importa: los prefabs usan los materiales, y la escena usa los prefabs.</summary>
     public static void ReconstruirTodo()
     {
         foreach (var carpeta in new[] { "Assets/Materials", "Assets/Materials/Texturas", "Assets/Prefabs", "Assets/Scenes", "Assets/Data", "Assets/Data/Filtros", "Assets/Settings" })
@@ -217,6 +228,10 @@ public static partial class ConstructorCrater
         AssetDatabase.SaveAssets();
     }
 
+    /// <summary>
+    /// Material URP/Lit opaco guardado en Assets/Materials. Si ya existe se reutiliza (así
+    /// no cambian las referencias) y se le vuelven a poner todos los valores.
+    /// </summary>
     static Material Opaco(string nombre, Color color, float suavidad, float metalico = 0f)
     {
         string ruta = CarpetaMateriales + nombre + ".mat";
@@ -355,6 +370,7 @@ public static partial class ConstructorCrater
         return AssetDatabase.LoadAssetAtPath<Texture2D>(ruta);
     }
 
+    /// <summary>Convierte un material en transparente (alfa): lo usan puentes y rejas para desvanecerse.</summary>
     static Material Transparente(Material m)
     {
         m.SetFloat("_Surface", 1f);
@@ -373,6 +389,7 @@ public static partial class ConstructorCrater
         return m;
     }
 
+    /// <summary>Hace que el material emita luz propia (brilla en la oscuridad y dispara el bloom).</summary>
     static Material Emisivo(Material m, Color emision)
     {
         m.SetColor(IdEmision, emision);
@@ -394,6 +411,7 @@ public static partial class ConstructorCrater
 
     // ================================================================== render
 
+    /// <summary>Ajustes del pipeline URP: HDR (para el bloom), distancia de sombras, antialiasing y Forward+.</summary>
     static void ConfigurarRender()
     {
         foreach (var ruta in new[] { "Assets/Settings/PC_RPAsset.asset", "Assets/Settings/Mobile_RPAsset.asset" })
@@ -416,6 +434,10 @@ public static partial class ConstructorCrater
         }
     }
 
+    /// <summary>
+    /// El post-procesado: tonemapping ACES, bloom, ajustes de color (su exposición la
+    /// mueve la adaptación a la oscuridad), viñeta y grano de película.
+    /// </summary>
     static VolumeProfile CrearPerfilVolumen()
     {
         AssetDatabase.DeleteAsset(RutaPerfil);
@@ -468,6 +490,7 @@ public static partial class ConstructorCrater
         kit.prefabLinterna = GuardarPrefab(CrearRecogibleLinterna(kit), "Recogible_Linterna");
     }
 
+    /// <summary>Guarda el objeto armado como prefab (.prefab) y borra la copia temporal de la escena.</summary>
     static GameObject GuardarPrefab(GameObject raiz, string nombre)
     {
         try
@@ -480,6 +503,10 @@ public static partial class ConstructorCrater
         }
     }
 
+    /// <summary>
+    /// El jugador: CharacterController + JugadorFPS + respawn; cámara hija con post-procesado;
+    /// y la linterna (Spot Light + LinternaController) hija de la cámara, para que apunte a donde se mira.
+    /// </summary>
     static GameObject CrearJugador(Kit kit)
     {
         var raiz = new GameObject("Jugador") { tag = "Player" };
@@ -555,6 +582,10 @@ public static partial class ConstructorCrater
         return raiz;
     }
 
+    /// <summary>
+    /// Ancla: modelo del kit + un trigger esférico grande (lo detecta el haz) + una cápsula
+    /// sólida (para no atravesarla) + luz y sonido. Va en la capa "Ancla".
+    /// </summary>
     static GameObject CrearAncla(Kit kit)
     {
         var raiz = new GameObject("Ancla");
@@ -616,6 +647,10 @@ public static partial class ConstructorCrater
         return raiz;
     }
 
+    /// <summary>
+    /// Reja: collider sólido (bloquea el paso) + trigger más grande (detecta al jugador
+    /// adentro, ver MateriaHueca). Va en la capa "Receptor".
+    /// </summary>
     static GameObject CrearReja(Kit kit)
     {
         // Módulo de 6 m de ancho. Los pasillos anchos usan dos, uno al lado del otro.
@@ -731,6 +766,10 @@ public static partial class ConstructorCrater
 
     // ================================================================== proyecto
 
+    /// <summary>
+    /// Capas de física: la linterna sólo busca receptores en "Ancla" y "Receptor", y las
+    /// paredes (Default) le cortan la línea de vista.
+    /// </summary>
     static void ConfigurarCapas()
     {
         var gestor = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
@@ -759,6 +798,7 @@ public static partial class ConstructorCrater
 
     // ================================================================== utilidades
 
+    /// <summary>Copia un modelo FBX del kit dentro de 'padre', sin vínculo al archivo y sin colliders.</summary>
     static GameObject Instanciar(GameObject modelo, Transform padre, string nombre)
     {
         var instancia = (GameObject)PrefabUtility.InstantiatePrefab(modelo, padre);
@@ -772,6 +812,7 @@ public static partial class ConstructorCrater
         return instancia;
     }
 
+    /// <summary>Asigna materiales a cada pieza de un modelo; 'material' decide según el nombre de la pieza.</summary>
     static void Pintar(GameObject raiz, Func<Renderer, Material> material)
     {
         foreach (var r in raiz.GetComponentsInChildren<Renderer>(true))
@@ -807,6 +848,10 @@ public static partial class ConstructorCrater
         return fuente;
     }
 
+    /// <summary>
+    /// Deja una fuente de audio lista. 'espacial' = suena desde su posición en el mundo
+    /// (baja con la distancia); si no, suena igual en todos lados (música, ambiente).
+    /// </summary>
     static void ConfigurarAudio(AudioSource fuente, AudioClip clip, float volumen, bool bucle, bool espacial)
     {
         fuente.clip = clip;

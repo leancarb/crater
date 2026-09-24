@@ -18,6 +18,13 @@ using UnityEngine.SceneManagement;
 ///   04 Hondonada   z  30 …  68.5 filtro HUECO: rejas, zigzag y la combinación de ambos filtros
 ///   05 Cresta      z 68.5 … 99   apagar la linterna, adaptarse y cruzar la puerta del eclipse
 ///   06 Capilla     x = 300       prólogo (el eclipse abre el cráter en el valle) y epílogo de día
+///
+/// CÓMO FUNCIONA
+/// Cada sala se arma con cajas (Caja: esquina mínima y máxima en metros), prefabs
+/// (anclas, puentes, rejas) y luces. La capilla está lejos (x = 300) para que nunca se
+/// vea desde el cráter: el paso de un lugar al otro es un teletransporte tapado por
+/// un fundido. Al final, ConstruirSistemas crea los objetos de lógica y conecta
+/// referencias (Asignar) y eventos (UnityEventTools) entre ellos.
 /// </summary>
 public static partial class ConstructorCrater
 {
@@ -548,6 +555,11 @@ public static partial class ConstructorCrater
 
     // ================================================================== sistemas
 
+    /// <summary>
+    /// Crea los objetos de lógica (interfaz, pausa, flujo, eclipse, prólogo, audio global)
+    /// y los conecta entre sí. 'Asignar' escribe un campo privado [SerializeField] por su
+    /// nombre, como si se arrastrara la referencia en el Inspector.
+    /// </summary>
     static void ConstruirSistemas(Kit k, Referencias refs)
     {
         var linterna = refs.jugador.GetComponentInChildren<LinternaController>();
@@ -785,6 +797,7 @@ public static partial class ConstructorCrater
     }
 
     /// <summary>Caja definida por sus esquinas mínima y máxima, en coordenadas de mundo.</summary>
+    // ejemplo: Caja(g, "Piso", -6, -0.3f, 0, 6, 0, 10, k.piso) = piso de 12 × 10 m con la cara de arriba en y = 0
     static GameObject Caja(Transform padre, string nombre, float x0, float y0, float z0, float x1, float y1, float z1, Material m)
     {
         return Bloque(padre, nombre, new Vector3((x0 + x1) / 2f, (y0 + y1) / 2f, (z0 + z1) / 2f),

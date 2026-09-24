@@ -7,6 +7,13 @@ using UnityEngine;
 /// Sintetiza todos los sonidos de la demo y los guarda como WAV en Assets/Audio/Generado.
 /// Es determinista: correrlo dos veces da los mismos archivos. Cuando haya sonido
 /// grabado de verdad, alcanza con reemplazar el WAV manteniendo el nombre.
+///
+/// CÓMO FUNCIONA
+/// Cada sonido es un arreglo de muestras (float de -1 a 1, 44100 por segundo) que se
+/// calcula con fórmulas: senos para tonos (Campana, Tono, Dron), ruido filtrado para
+/// viento y siseos, barridos de frecuencia para puentes y pájaros. Después se escribe
+/// como WAV (EscribirWav) y se importa como AudioClip. Las semillas fijas del azar
+/// hacen que siempre salga el mismo sonido.
 /// </summary>
 public static class GeneradorAudioCrater
 {
@@ -67,6 +74,7 @@ public static class GeneradorAudioCrater
 
     // ------------------------------------------------------------------ síntesis
 
+    /// <summary>Campana: suma de parciales (armónicos no enteros) que se apagan a distinto ritmo.</summary>
     static float[] Campana(float f, float duracion, float volumen)
     {
         float[] parciales = { 1f, 2f, 2.76f, 5.4f };
@@ -162,6 +170,7 @@ public static class GeneradorAudioCrater
         return Normalizar(s, volumen);
     }
 
+    /// <summary>Viento: ruido blanco pasado dos veces por un filtro pasa-bajos, con ráfagas lentas.</summary>
     static float[] Viento(float duracion, int semilla, float volumen = 0.45f, float corteHz = 500f)
     {
         var azar = new System.Random(semilla);
@@ -181,6 +190,7 @@ public static class GeneradorAudioCrater
         return Normalizar(s, volumen);
     }
 
+    /// <summary>Dron: varias senoidales sostenidas con un trémolo lento (ambiente, zumbidos, música).</summary>
     static float[] Dron(float duracion, float[] frecuencias, float[] amplitudes, float volumen, float ruido, int semilla)
     {
         var azar = new System.Random(semilla);
@@ -277,6 +287,7 @@ public static class GeneradorAudioCrater
         return r;
     }
 
+    /// <summary>Escala todo para que el punto más alto valga 'pico' (controla el volumen final).</summary>
     static float[] Normalizar(float[] s, float pico)
     {
         float max = 0.0001f;
@@ -305,6 +316,7 @@ public static class GeneradorAudioCrater
         return AssetDatabase.LoadAssetAtPath<AudioClip>(ruta);
     }
 
+    /// <summary>WAV PCM de 16 bits, mono: una cabecera fija de 44 bytes y después las muestras.</summary>
     static void EscribirWav(string ruta, float[] muestras)
     {
         using var flujo = new FileStream(ruta, FileMode.Create);

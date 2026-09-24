@@ -15,6 +15,12 @@ using UnityEngine.Rendering;
 ///
 /// Guarda el ambiente del cráter tal como lo dejó el constructor y lo restaura
 /// al entrar. Después de verla una vez, la cinemática se salta con Espacio.
+///
+/// CÓMO FUNCIONA
+/// Mientras dura la cinemática, JugadorFPS está apagado y este script mueve la cámara
+/// directamente. El cráter del valle existe en la escena desde el principio: sólo está
+/// escondido (el borde bajo tierra, el fondo con escala 0). "Revelarlo" es animar esas
+/// posiciones y escalas. Si ya se vio una vez (se guarda en PlayerPrefs), se puede saltar.
 /// </summary>
 public class PrologoCapilla : MonoBehaviour
 {
@@ -145,6 +151,11 @@ public class PrologoCapilla : MonoBehaviour
         StartCoroutine(Cinematica());
     }
 
+    /// <summary>
+    /// La cinemática en pasos. Cada paso es un Animar(duración, k => ...), donde k va
+    /// de 0 a 1 a lo largo de la duración. Si el jugador salta, cada Animar termina de
+    /// golpe con k = 1, así el estado final siempre queda bien aplicado.
+    /// </summary>
     IEnumerator Cinematica()
     {
         Reproduciendo = true;
@@ -279,7 +290,7 @@ public class PrologoCapilla : MonoBehaviour
             for (int i = 0; i < bordes.Length; i++)
             {
                 if (bordes[i] == null) continue;
-                // las piezas suben en ola, no todas juntas
+                // las piezas suben en ola, no todas juntas: cada una arranca con un retraso según su índice
                 float retraso = bordes.Length > 1 ? (float)i / (bordes.Length - 1) * 0.35f : 0f;
                 float k = Suave(Mathf.Clamp01((r - retraso) / 0.65f));
                 Vector3 p = bordes[i].position;
@@ -338,6 +349,10 @@ public class PrologoCapilla : MonoBehaviour
         if (cc != null) cc.enabled = true;
     }
 
+    /// <summary>
+    /// La escena se guarda con la iluminación del interior del cráter. Antes de pisarla
+    /// con la del día se copia acá, para devolverla al entrar a la Explanada.
+    /// </summary>
     void GuardarAmbienteDelCrater()
     {
         modoAmbiente = RenderSettings.ambientMode;
@@ -366,6 +381,7 @@ public class PrologoCapilla : MonoBehaviour
 
     // ---------------------------------------------------------------- utilidades
 
+    /// <summary>Llama a 'paso' cada frame con k de 0 a 1. Termina en k = 1 (también si se salta).</summary>
     IEnumerator Animar(float duracion, Action<float> paso)
     {
         for (float t = 0f; t < duracion && !saltar; t += Time.deltaTime)
