@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2bfda106851e9d4a8eea010dbed7f4c, type: 3}
+  m_Name: Filtro_Cuerpo
+  m_EditorClassIdentifier: Assembly-CSharp::FiltroDefinicion
+  nombreVisible: CUERPO
+  canal: 1
+  descripcion: Enciende las anclas de basalto. Dos anclas encendidas tienden un puente
+    de luz.
+  color: {r: 1, g: 0.6, b: 0.24, a: 1}
+  anguloCono: 28
+  alcance: 15
+  intensidad: 420
+  tiempoDeCarga: 0.4
+  sonidoAlEquipar: {fileID: 8300000, guid: 6f629bae16bbe6a4aa8a58629374216f, type: 3}
+  zumbido: {fileID: 8300000, guid: 96b935c68147ea84d9629bd54f31b680, type: 3}

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2bfda106851e9d4a8eea010dbed7f4c, type: 3}
+  m_Name: Filtro_Hueco
+  m_EditorClassIdentifier: Assembly-CSharp::FiltroDefinicion
+  nombreVisible: HUECO
+  canal: 2
+  descripcion: 'Disuelve la materia hueca: rejas y tapas se vuelven atravesables.'
+  color: {r: 0.32, g: 0.45, b: 1, a: 1}
+  anguloCono: 28
+  alcance: 15
+  intensidad: 420
+  tiempoDeCarga: 0.4
+  sonidoAlEquipar: {fileID: 8300000, guid: 5b523130b9e211342831d02dcfc021e6, type: 3}
+  zumbido: {fileID: 8300000, guid: 0bde266f2a9001c41a270ba3f7fca98c, type: 3}
