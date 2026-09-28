@@ -9,8 +9,8 @@ using UnityEngine;
 /// CÓMO FUNCIONA
 /// Cuando el jugador (tag "Player") entra al trigger, Unity llama a OnTriggerEnter.
 /// Ahí se le avisa a la linterna: Recoger() si es la linterna, Desbloquear() si es
-/// un filtro. La linterna dispara sus eventos y el FlujoJuegoCrater muestra la
-/// indicación que corresponde. Después el objeto se esconde y apaga su collider.
+/// un filtro. La linterna dispara sus eventos y el FlujoJuegoCrater avanza de
+/// etapa. Después el objeto se esconde y apaga su collider.
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public class Recogible : MonoBehaviour

@@ -1,23 +1,22 @@
-using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Autoridad de progresión de la demo. Escucha a la linterna y a las zonas,
-/// avanza de etapa y decide qué indicación mostrar en cada momento.
+/// Autoridad de progresión de la demo. Escucha a la linterna y a las zonas y
+/// avanza de etapa. En esta versión no muestra indicaciones: la etapa actual se
+/// puede ver en el Inspector (objeto SISTEMAS) mientras se juega.
 ///
 /// CÓMO FUNCIONA
 /// Es una máquina de estados: 'EtapaActual' dice en qué parte del juego está el
 /// jugador. Se suscribe a los eventos de la linterna (recoger, encender, desbloquear
-/// y equipar filtros) y cada evento puede hacer avanzar la etapa y mostrar una
-/// indicación. Las zonas y la compuerta llaman a sus métodos públicos a través de
-/// UnityEvents conectados por el constructor (EntrarCresta, NotificarUmbralAbierto...).
-/// El orden del enum importa: se compara con < y >= (por ejemplo "antes de la Cresta").
+/// y equipar filtros) y cada evento puede hacer avanzar la etapa. Las zonas y la
+/// compuerta llaman a sus métodos públicos a través de UnityEvents conectados por
+/// el constructor (EntrarCresta, NotificarUmbralAbierto).
+/// El orden del enum importa: se compara con <= y >= (por ejemplo "antes de la Cresta").
 /// </summary>
 public class FlujoJuegoCrater : MonoBehaviour
 {
     public enum Etapa
     {
-        Prologo,
         BuscarLinterna,
         EncenderLinterna,
         AbrirUmbral,
@@ -26,51 +25,28 @@ public class FlujoJuegoCrater : MonoBehaviour
         BuscarHueco,
         UsarHueco,
         Cresta,
-        Epilogo,
         Finalizado
     }
 
     [SerializeField] LinternaController linterna;
-    [SerializeField] InterfazCrater interfaz;
     [SerializeField] EclipseFinalController eclipse;
     [SerializeField] Compuerta compuertaUmbral;
-    [SerializeField] bool mostrarTitulo = true;
-    [Tooltip("Arrancar en la capilla (prólogo). En false arranca directo en la Explanada.")]
-    [SerializeField] bool empezarEnPrologo = true;
 
-    public Etapa EtapaActual { get; private set; } = Etapa.BuscarLinterna;
+    [Tooltip("Sólo lectura: se ve cómo avanza mientras se juega.")]
+    [SerializeField] Etapa etapaVisible;
 
-    void Awake()
+    public Etapa EtapaActual
     {
-        if (empezarEnPrologo) EtapaActual = Etapa.Prologo;
+        get => etapa;
+        private set { etapa = value; etapaVisible = value; }
     }
 
-    bool vinculado;            // ya se suscribió a los eventos de la linterna
-    bool pistaHuecoMostrada;   // la explicación de HUECO sale una sola vez
+    Etapa etapa = Etapa.BuscarLinterna;
+    bool vinculado;   // ya se suscribió a los eventos de la linterna
 
-    void Start()
-    {
-        Vincular();
-        StartCoroutine(Inicio());
-    }
+    void Start() => Vincular();
 
     void OnDestroy() => Desvincular();
-
-    IEnumerator Inicio()
-    {
-        if (mostrarTitulo && interfaz != null) yield return interfaz.MostrarTitulo();
-        // en el prólogo no hay indicaciones: la capilla se descubre sola
-        if (EtapaActual == Etapa.BuscarLinterna)
-            interfaz?.MostrarPromptTemporal("Bajá hacia la luz.", 5f);
-    }
-
-    /// <summary>El jugador cruzó la puerta del cráter del valle y está en la Explanada.</summary>
-    public void IniciarCrater()
-    {
-        if (EtapaActual != Etapa.Prologo) return;
-        EtapaActual = Etapa.BuscarLinterna;
-        interfaz?.MostrarPromptTemporal("Bajá hacia la luz.", 5f);
-    }
 
     /// <summary>
     /// Se suscribe a los eventos de la linterna con +=. Hay que desuscribirse (-=) al
@@ -96,87 +72,42 @@ public class FlujoJuegoCrater : MonoBehaviour
         vinculado = false;
     }
 
-    void AlRecogerLinterna()
-    {
-        EtapaActual = Etapa.EncenderLinterna;
-        interfaz?.MostrarPrompt("F · Encender la linterna");
-    }
+    void AlRecogerLinterna() => EtapaActual = Etapa.EncenderLinterna;
 
     void AlCambiarEncendido(bool encendida)
     {
-        if (EtapaActual == Etapa.EncenderLinterna && encendida)
-        {
-            if (compuertaUmbral != null && compuertaUmbral.Abierta)
-            {
-                AvanzarABuscarCuerpo();
-                return;
-            }
-            EtapaActual = Etapa.AbrirUmbral;
-            interfaz?.MostrarPrompt("Sostené la luz sobre el ancla para abrir el paso.");
-        }
-        else if (EtapaActual == Etapa.Cresta)
-        {
-            if (encendida) interfaz?.MostrarPrompt("F · Apagar la linterna");
-            else interfaz?.MostrarPromptTemporal("Esperá. Dejá que tus ojos se acostumbren.", 5f);
-        }
+        if (EtapaActual != Etapa.EncenderLinterna || !encendida) return;
+        // si la compuerta ya estaba abierta (no debería, pero por las dudas) se saltea esa etapa
+        EtapaActual = compuertaUmbral != null && compuertaUmbral.Abierta ? Etapa.BuscarCuerpo : Etapa.AbrirUmbral;
     }
 
     /// <summary>Conectado al evento 'alAbrirse' de la compuerta del Umbral.</summary>
     public void NotificarUmbralAbierto()
     {
-        if (EtapaActual <= Etapa.AbrirUmbral) AvanzarABuscarCuerpo();
-    }
-
-    void AvanzarABuscarCuerpo()
-    {
-        EtapaActual = Etapa.BuscarCuerpo;
-        interfaz?.MostrarPromptTemporal("El paso está abierto. Buscá el filtro ámbar.", 5f);
+        if (EtapaActual <= Etapa.AbrirUmbral) EtapaActual = Etapa.BuscarCuerpo;
     }
 
     void AlDesbloquearFiltro(FiltroDefinicion filtro)
     {
         if (filtro == null) return;
-        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo)
-        {
-            EtapaActual = Etapa.UsarCuerpo;
-            interfaz?.MostrarPrompt("1 · Equipar CUERPO");
-        }
-        else if (filtro.canal == FiltroDefinicion.Canal.Hueco)
-        {
-            EtapaActual = Etapa.UsarHueco;
-            interfaz?.MostrarPrompt("2 · Equipar HUECO");
-        }
+        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo) EtapaActual = Etapa.UsarCuerpo;
+        else if (filtro.canal == FiltroDefinicion.Canal.Hueco) EtapaActual = Etapa.UsarHueco;
     }
 
     void AlEquiparFiltro(FiltroDefinicion filtro)
     {
-        if (filtro == null) return;
-
-        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo && EtapaActual == Etapa.UsarCuerpo)
-        {
+        // equipar CUERPO por primera vez: lo siguiente es buscar HUECO
+        if (filtro != null && filtro.canal == FiltroDefinicion.Canal.Cuerpo && EtapaActual == Etapa.UsarCuerpo)
             EtapaActual = Etapa.BuscarHueco;
-            interfaz?.MostrarPromptTemporal(
-                "CUERPO enciende las anclas.\nSostené el haz sobre las dos para tender el puente.", 7f);
-        }
-        else if (filtro.canal == FiltroDefinicion.Canal.Hueco && EtapaActual == Etapa.UsarHueco && !pistaHuecoMostrada)
-        {
-            pistaHuecoMostrada = true;
-            interfaz?.MostrarPromptTemporal(
-                "HUECO disuelve la materia: iluminala y atravesala.\n1 / 2 · Cambiar filtro     Q · Luz blanca", 7f);
-        }
     }
 
-    /// <summary>Conectado a la zona de entrada de la Cresta.</summary>
+    /// <summary>Conectado a la zona de entrada de la Cresta: ahí empieza la adaptación.</summary>
     public void EntrarCresta()
     {
         if (EtapaActual >= Etapa.Cresta) return;
         EtapaActual = Etapa.Cresta;
-        if (linterna != null && linterna.Encendida) interfaz?.MostrarPrompt("F · Apagar la linterna");
-        else interfaz?.MostrarPromptTemporal("Esperá. Dejá que tus ojos se acostumbren.", 5f);
         eclipse?.HabilitarEnCresta();
     }
-
-    public void EntrarEpilogo() => EtapaActual = Etapa.Epilogo;
 
     public void Finalizar() => EtapaActual = Etapa.Finalizado;
 }

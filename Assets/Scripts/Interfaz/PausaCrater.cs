@@ -2,8 +2,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Pausa con Esc: congela el tiempo, silencia el audio y libera el cursor.
-/// En pausa: Esc sigue, R reinicia, X sale. Fuera de pausa, un clic vuelve a
+/// Pausa con Esc: congela el tiempo, silencia el audio, oscurece la pantalla y
+/// libera el cursor (no hay menú). En pausa: Esc sigue, R reinicia, X sale. Fuera de pausa, un clic vuelve a
 /// capturar el mouse si el sistema lo soltó.
 ///
 /// CÓMO FUNCIONA
@@ -15,7 +15,7 @@ public class PausaCrater : MonoBehaviour
 {
     public static bool EnPausa { get; private set; }
 
-    [SerializeField] InterfazCrater interfaz;
+    [SerializeField] Fundidos fundidos;
     [Tooltip("Pausar automáticamente si la ventana pierde el foco.")]
     public bool pausarAlPerderFoco = true;
 
@@ -63,7 +63,7 @@ public class PausaCrater : MonoBehaviour
         Time.timeScale = 0f;
         AudioListener.pause = true;
         CapturarCursor(false);
-        interfaz?.MostrarPausa(true);
+        fundidos?.MostrarVelo(Color.black, 0.55f);   // sin menú: la pantalla sólo se oscurece
     }
 
     public void Reanudar()
@@ -72,7 +72,7 @@ public class PausaCrater : MonoBehaviour
         Time.timeScale = 1f;
         AudioListener.pause = false;
         CapturarCursor(true);
-        interfaz?.MostrarPausa(false);
+        fundidos?.MostrarVelo(Color.black, 0f);
     }
 
     /// <summary>Vuelve a cargar la escena desde cero (todo vuelve a su estado inicial).</summary>

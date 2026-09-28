@@ -143,13 +143,10 @@ public static class ValidarProyectoCrater
                 "Falta la compuerta del Umbral o no tiene receptores.", problemas);
             Comprobar(compuertas.All(c => TieneOyentes(c.alAbrirse)), "La compuerta no avisa al flujo del juego.", problemas);
 
-            // Cresta, cruce de la puerta del eclipse, umbral de la capilla, puerta del cráter del valle y lugar del cráter
+            // la entrada a la Cresta y el cruce de la puerta del eclipse
             var zonas = Todos<ZonaJugador>();
-            Comprobar(zonas.Length == 5 && zonas.All(z => TieneOyentes(z.alEntrar) && z.GetComponent<Collider>().isTrigger),
-                "Tiene que haber 5 zonas (Cresta, cruce, umbral de la capilla, puerta del cráter y lugar del cráter), todas triggers conectados.", problemas);
-
-            Comprobar(Todos<PrologoCapilla>().Length == 1 && Todos<CieloEclipse>().Length == 1,
-                "Falta el prólogo de la capilla o el cielo del eclipse.", problemas);
+            Comprobar(zonas.Length == 2 && zonas.All(z => TieneOyentes(z.alEntrar) && z.GetComponent<Collider>().isTrigger),
+                "Tiene que haber 2 zonas (Cresta y cruce de la puerta), las dos triggers conectados.", problemas);
             var puertas = Todos<PuertaEclipse>();
             Comprobar(puertas.Length == 1, "Falta la puerta del eclipse en la Cresta.", problemas);
 
@@ -158,8 +155,8 @@ public static class ValidarProyectoCrater
                 "La adaptación a la oscuridad falta, no está en el Volume o no dispara el final.", problemas);
 
             Comprobar(Todos<FlujoJuegoCrater>().Length == 1 && Todos<EclipseFinalController>().Length == 1 &&
-                      Todos<InterfazCrater>().Length == 1 && Todos<PausaCrater>().Length == 1,
-                "Faltan sistemas (flujo, eclipse, interfaz o pausa).", problemas);
+                      Todos<Fundidos>().Length == 1 && Todos<PausaCrater>().Length == 1,
+                "Faltan sistemas (flujo, eclipse, fundidos o pausa).", problemas);
         }
         finally
         {

@@ -8,7 +8,7 @@ using UnityEngine;
 /// Mientras el jugador está parado sobre algo firme (no un puente) durante medio
 /// segundo, guarda esa posición como "punto seguro" (cada 0,35 s como máximo).
 /// Si cae por debajo de 'alturaDeCaida', lo teletransporta al último punto seguro
-/// y muestra un destello negro con un aviso.
+/// y tapa el salto con un parpadeo a negro.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class RespawnPorCaida : MonoBehaviour
@@ -16,7 +16,7 @@ public class RespawnPorCaida : MonoBehaviour
     [SerializeField] float alturaDeCaida = -10f;
     [SerializeField] float tiempoEstableRequerido = 0.5f;
     [SerializeField] float intervaloDeRegistro = 0.35f;
-    [SerializeField] InterfazCrater interfaz;
+    [SerializeField] Fundidos fundidos;
 
     CharacterController controlador;
     JugadorFPS movimiento;
@@ -107,10 +107,7 @@ public class RespawnPorCaida : MonoBehaviour
         if (controlador != null) controlador.enabled = estabaHabilitado;
         tiempoEnSuelo = 0f;
 
-        if (interfaz != null)
-        {
-            interfaz.Destello(Color.black, 0.9f);
-            interfaz.MostrarPromptTemporal("Volviste al último punto seguro.", 2.5f);
-        }
+        // un parpadeo a negro tapa el salto de posición
+        if (fundidos != null) fundidos.Destello(Color.black, 0.9f);
     }
 }

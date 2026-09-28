@@ -26,7 +26,6 @@ public class RecorridoCraterTests
     JugadorFPS fps;
     LinternaController linterna;
     FlujoJuegoCrater flujo;
-    PrologoCapilla prologo;
 
     [UnitySetUp]
     public IEnumerator Cargar()
@@ -38,7 +37,6 @@ public class RecorridoCraterTests
         fps = jugador.GetComponent<JugadorFPS>();
         linterna = LinternaController.Instancia;
         flujo = Object.FindFirstObjectByType<FlujoJuegoCrater>();
-        prologo = Object.FindFirstObjectByType<PrologoCapilla>();
         Time.timeScale = 2f;
     }
 
@@ -55,20 +53,7 @@ public class RecorridoCraterTests
         var cuerpo = linterna.filtros[0];
         var hueco = linterna.filtros[1];
 
-        // Prólogo: salir de la capilla dispara el eclipse; la puerta del cráter lleva a la Explanada
-        Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Prologo));
-        Assert.That(jugador.transform.position.x, Is.EqualTo(300f).Within(1f), "el jugador no empieza en la capilla");
-        yield return Caminar(new Vector3(300f, 0f, 8.2f));
-        yield return Esperar(0.2f);
-        Assert.That(prologo.Reproduciendo, Is.True, "salir de la capilla no disparó la cinemática");
-        for (float t = 0f; t < 40f && prologo.Reproduciendo; t += Time.deltaTime) yield return null;
-        Assert.That(prologo.Reproduciendo, Is.False, "la cinemática del eclipse no terminó");
-        yield return Caminar(new Vector3(300f, 0f, 33.6f));
-        for (float t = 0f; t < 15f && flujo.EtapaActual == FlujoJuegoCrater.Etapa.Prologo; t += Time.deltaTime) yield return null;
-        Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.BuscarLinterna), "la puerta del cráter no llevó a la Explanada");
-        Assert.That(jugador.transform.position.x, Is.EqualTo(0f).Within(1f));
-        while (!cc.enabled || !prologo.EnElCrater) yield return null;
-        yield return Esperar(3f);   // termina el fundido
+        Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.BuscarLinterna));
 
         // Explanada y rampa
         yield return Caminar(new Vector3(0f, 0f, -18f));
@@ -123,18 +108,9 @@ public class RecorridoCraterTests
         for (float t = 0f; t < 25f && !puerta.Abierta; t += Time.deltaTime) yield return null;
         Assert.That(puerta.Abierta, Is.True, "la adaptación no abrió la puerta del eclipse");
 
-        // cruzar la puerta: anillo de diamante, blanco y capilla
+        // cruzar la puerta termina la demo (anillo de diamante, blanco y vuelve a empezar)
         yield return Caminar(new Vector3(0f, 0f, 100.9f));
-        for (float t = 0f; t < 30f && flujo.EtapaActual != FlujoJuegoCrater.Etapa.Epilogo; t += Time.deltaTime)
-            yield return null;
-        Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Epilogo), "cruzar la puerta no llevó a la capilla");
-        Assert.That(jugador.transform.position.x, Is.EqualTo(300f).Within(1f));
-
-        // Epílogo: el cráter ya no está; quedarse en su lugar trae los créditos
-        yield return Caminar(new Vector3(300f, 0f, 34f));
-        for (float t = 0f; t < 12f && flujo.EtapaActual != FlujoJuegoCrater.Etapa.Finalizado; t += Time.deltaTime)
-            yield return null;
-        Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Finalizado), "quedarse en el lugar del cráter no cerró la demo");
+        Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Finalizado), "cruzar la puerta no terminó la demo");
     }
 
     // ------------------------------------------------------------------ acciones

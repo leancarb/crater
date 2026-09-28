@@ -53,12 +53,12 @@ public class LinternaController : MonoBehaviour
     public AudioClip sonidoEncender;
     public AudioClip sonidoApagar;
 
-    // --- estado (lo leen la interfaz, la adaptación, la puerta, los tests) ---
+    // --- estado (lo leen la adaptación, la puerta, el reflejo, los tests) ---
     public bool Encendida { get; private set; }
     public FiltroDefinicion FiltroActual { get; private set; }
     public bool CambiandoFiltro { get; private set; }
     public bool Disponible => !requiereRecogerla || yaRecogida;
-    // datos del último frame para la mira de la interfaz: ¿apunto a algo?, ¿lo acepta?, ¿cuánto cargó?
+    // datos del último frame: ¿apunto a algo?, ¿lo acepta?, ¿cuánto cargó? (se ven en el Inspector)
     public bool HayObjetivo { get; private set; }
     public bool ObjetivoAceptaFiltro { get; private set; }
     public float CargaObjetivo { get; private set; }
@@ -173,7 +173,7 @@ public class LinternaController : MonoBehaviour
         spot.range = AlcanceActual;
     }
 
-    /// <summary>Prende o apaga. Avisa con AlCambiarEncendido (lo escuchan el flujo y la interfaz).</summary>
+    /// <summary>Prende o apaga. Avisa con AlCambiarEncendido (lo escucha el flujo).</summary>
     public void Encender(bool valor)
     {
         if (valor && !Disponible) return;

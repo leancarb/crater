@@ -29,7 +29,6 @@ public static class VistaPreviaCrater
         ("07_Zigzag", new Vector3(-3f, 1.62f, 47.5f), new Vector3(3f, 1.5f, 54f), true),
         ("08_Repisa", new Vector3(0f, 1.62f, 59f), new Vector3(0f, 1f, 67f), true),
         ("09_Cresta", new Vector3(0f, 1.62f, 77f), new Vector3(0f, 3f, 98f), false),
-        ("10_Capilla", new Vector3(300f, 1.62f, -4.5f), new Vector3(300f, 1.5f, 10f), false),
     };
 
     [MenuItem("Crater/Renderizar vistas previas", priority = 30)]

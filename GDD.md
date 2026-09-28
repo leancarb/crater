@@ -4,6 +4,8 @@
 >
 > Esta versión del GDD describe el vertical slice con arte modular (rama `crater/linterna-y-final-adaptacion`) más el arco narrativo del eclipse. Los detalles de implementación están en el `README.md`.
 
+>
+> **Rama `claude/demo-clase`:** versión recortada para mostrar las mecánicas en clase. Sin interfaz, sin prólogo ni epílogo: empieza en la Explanada y termina en la puerta del eclipse. Ver el `README.md` de esta rama.
 ---
 
 ## 1. Concepto

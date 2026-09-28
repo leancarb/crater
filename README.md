@@ -1,13 +1,19 @@
-# CRÁTER — vertical slice
+# CRÁTER — demo de mecánicas (versión para clase)
 
-Exploración en primera persona dentro de un cráter. Desde una capilla, un
-eclipse revela un cráter en el valle que sólo existe mientras dura la totalidad.
-Adentro, la linterna es la única herramienta: con luz blanca abre el Umbral, con
-el filtro **CUERPO** enciende anclas de basalto que tienden puentes de luz, y con
-**HUECO** disuelve rejas. Al final hay que apagarla y dejar que los ojos se
-acostumbren a la oscuridad: así aparece la puerta de salida.
+Rama `claude/demo-clase`: sólo el juego, sin interfaz. Empieza en la Explanada y
+termina al cruzar la puerta del eclipse; después vuelve a empezar solo.
+
+Sin HUD: no hay textos, mira, barra de carga ni título. Todo se comunica con luz,
+color y sonido. El estado de la progresión se puede ver en el Inspector, en el
+objeto `SISTEMAS` → `FlujoJuegoCrater` → *Etapa Visible*.
 
 Unity 6000.3 · URP (Forward+) · Input System.
+
+## Cómo abrirlo
+
+1. Abrir el proyecto y esperar a que compile.
+2. **Crater › Reconstruir todo** (genera la escena de esta versión).
+3. Play.
 
 ## Controles
 
@@ -17,22 +23,29 @@ Unity 6000.3 · URP (Forward+) · Input System.
 | Linterna | F | RB |
 | Filtro CUERPO / HUECO | 1 / 2 | X / Y |
 | Luz blanca | Q | B |
-| Pausa (R reinicia, X sale) | Esc | Start |
-| Saltar la cinemática (después de verla una vez) | Espacio | — |
+| Pausa (la pantalla se oscurece; R reinicia, X sale) | Esc | Start |
 
-## Recorrido
+## Guión para mostrar en clase
 
-| Sala | Qué enseña |
-|---|---|
-| 00 Capilla (prólogo) | De día. Al salir, el eclipse revela el cráter en el valle; su puerta lleva a la Explanada |
-| 01 Explanada | Borde del cráter, bajo la totalidad; rampa hacia abajo |
-| 02 Umbral | Recoger la linterna; sostener la luz sobre un ancla abre la compuerta |
-| 03 Campo | CUERPO: tres puentes (enseñar, barrer con retención, mirar hacia arriba) |
-| 04 Hondonada | HUECO: rejas y zigzag; al final, combinar los dos filtros desde una repisa |
-| 05 Cresta | La pared del fondo sólo refleja el propio foco. Apagar la linterna y adaptarse: aparecen tallados ocultos y la puerta del eclipse |
-| 06 Capilla (epílogo) | Cruzar la puerta: anillo de diamante, blanco y la capilla de día. El cráter ya no está; quedarse donde estaba trae los créditos |
+| Sala | Qué se muestra | Script |
+|---|---|---|
+| 01 Explanada | Controlador en primera persona: sin salto ni carrera, cabeceo y pasos | `JugadorFPS` |
+| 02 Umbral | Recoger la linterna. Luz blanca sostenida sobre el ancla: la **carga** sube y la compuerta se hunde | `Recogible`, `LinternaController`, `Ancla`, `Compuerta` |
+| 03 Campo | Filtro **CUERPO**. Enseñar: dos anclas juntas tienden un puente. Probar: anclas separadas, hay que barrer y cruzar con la **retención** (el ancla late cada vez más rápido y el puente parpadea antes de irse). Torcer: anclas en el techo | `ReceptorDeLuz`, `Ancla`, `PuenteLuz` |
+| 03 Campo (arriba) | Óculo: el eclipse congelado en el cielo | `ConstructorCrater` (textura generada) |
+| 04 Hondonada | Filtro **HUECO**. Rejas que se disuelven mientras se las ilumina; zigzag; al final, puente con CUERPO y reja con HUECO desde una repisa | `MateriaHueca` |
+| (cualquier fosa) | Caerse devuelve al último suelo firme | `RespawnPorCaida` |
+| 05 Cresta | La pared del fondo sólo devuelve el **reflejo** del propio foco. Apagar la linterna: la exposición sube de a poco (**adaptación a la oscuridad**), aparecen tallados ocultos y la puerta | `ParedEspejo`, `AdaptacionOscuridad`, `PuertaEclipse` |
+| Final | Cruzar la puerta: silencio, **anillo de diamante**, blanco y vuelve a empezar | `EclipseFinalController`, `Fundidos` |
 
-## Cómo se trabaja
+Ideas para mostrar:
+
+- Iluminar un ancla con el filtro equivocado: no pasa nada (cada receptor tiene un canal).
+- Encender un puente y soltar el haz: contar los segundos de retención.
+- Pararse dentro de una reja disuelta y soltar el haz: no se cierra encima del jugador.
+- En la Cresta, prender la linterna a mitad de la adaptación: se pierde en un segundo.
+
+## Cómo está hecho
 
 La escena, los prefabs, los materiales, el audio y el post-procesado **se generan
 desde código**. No se editan a mano: se cambia el código y se reconstruye.
@@ -48,7 +61,9 @@ Dónde tocar:
 - `Assets/Editor/ConstructorCrater.cs` — materiales, prefabs, render y post-procesado.
 - `Assets/Editor/GeneradorAudioCrater.cs` — sonidos sintetizados (reemplazables por WAV grabados con el mismo nombre).
 - `Assets/Data/Filtros/` — los dos filtros (color, cono, alcance, tiempo de carga).
-- `Assets/Scripts/` — el juego: `Jugador`, `Linterna`, `Mecanicas`, `Flujo`, `Interfaz`.
+- `Assets/Scripts/` — el juego: `Jugador`, `Linterna`, `Mecanicas`, `Flujo`, `Interfaz` (sólo fundidos).
+
+Cada script tiene una sección **CÓMO FUNCIONA** en el encabezado.
 
 ## Tests
 
@@ -62,3 +77,8 @@ Desde **Window › General › Test Runner**:
 
 El kit modular está en `Assets/Art/Blender` (ver su README) y se exporta a
 `Assets/Models/CraterKit`. El constructor usa esos FBX directamente.
+
+## La versión completa
+
+La rama `claude/stoic-rubin-qn1pj9` tiene el juego completo: interfaz, prólogo en la
+capilla con la cinemática del eclipse, epílogo y créditos (ver `GDD.md`).

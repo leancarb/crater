@@ -22,7 +22,6 @@ using UnityEngine.Rendering.Universal;
 /// menús a Unity. Está partido en varios archivos con 'partial class':
 ///  - ConstructorCrater.cs          materiales, texturas, render, post-procesado, prefabs
 ///  - ConstructorCrater.Nivel.cs    la escena: salas, puzzles, luces, sistemas
-///  - ConstructorCrater.Capilla.cs  la capilla y su valle
 /// ReconstruirTodo() los llama en orden y guarda todo como assets. Como cada paso
 /// pisa lo anterior, correrlo dos veces da el mismo resultado (es idempotente).
 /// La clase 'Kit' lleva de un paso al siguiente todo lo creado (materiales, prefabs...).
@@ -128,9 +127,7 @@ public static partial class ConstructorCrater
 
         public Material piso, basalto, basaltoMedio, techo, piedra, metal, metalGastado;
         public Material ambar, motivoLatente, puenteVidrio, puenteBorde, rejaBasalto, rejaSello, cielo, lente;
-        public Material adobe, paja, piedraCapilla, tierra;
-        public Material cal, madera, cardon, pajaBrava, vela;
-        public Material huella, espejo, puertaEclipse, luzEclipse, resplandor, corona, discoSol, discoLuna;
+        public Material espejo, puertaEclipse, luzEclipse, resplandor;
 
         public GameObject prefabJugador, prefabAncla, prefabPuente, prefabReja, prefabFiltro, prefabLinterna;
     }
@@ -203,25 +200,11 @@ public static partial class ConstructorCrater
         kit.rejaBasalto = Transparente(Opaco("RejaBasalto", new Color(0.085f, 0.09f, 0.11f, 1f), 0.2f));
         kit.rejaSello = Emisivo(Transparente(Opaco("RejaSello", new Color(0.1f, 0.25f, 1f, 0.35f), 0.5f)), new Color(0.08f, 0.22f, 1f) * 0.9f);
 
-        kit.adobe = Opaco("CapillaAdobe", new Color(0.62f, 0.4f, 0.24f), 0.15f);
-        kit.paja = Opaco("CapillaTechoPaja", new Color(0.3f, 0.21f, 0.1f), 0.05f);
-        kit.piedraCapilla = Opaco("CapillaPiedra", new Color(0.36f, 0.34f, 0.3f), 0.12f);
-        kit.tierra = Opaco("CapillaTierra", new Color(0.42f, 0.25f, 0.15f), 0.05f);
-        kit.huella = Opaco("CapillaHuella", new Color(0.33f, 0.2f, 0.12f), 0.03f);
-        kit.cal = Opaco("CapillaCal", new Color(0.84f, 0.81f, 0.74f), 0.08f);
-        kit.madera = Opaco("CapillaMadera", new Color(0.26f, 0.16f, 0.09f), 0.2f);
-        kit.cardon = Opaco("Cardon", new Color(0.24f, 0.34f, 0.19f), 0.15f);
-        kit.pajaBrava = Opaco("PajaBrava", new Color(0.6f, 0.5f, 0.27f), 0.05f);
-        kit.vela = Emisivo(Opaco("Vela", new Color(0.92f, 0.86f, 0.72f), 0.2f), new Color(1f, 0.6f, 0.25f) * 2.5f);
-
         // el eclipse y la puerta
         kit.espejo = Opaco("EspejoBasalto", new Color(0.02f, 0.022f, 0.028f), 0.95f, 0.35f);
         kit.puertaEclipse = Emisivo(Opaco("PuertaEclipse", new Color(0.05f, 0.06f, 0.08f), 0.3f), new Color(0.75f, 0.85f, 1f) * 1.2f);
         kit.luzEclipse = Emisivo(Opaco("LuzEclipse", new Color(0.8f, 0.85f, 1f), 0f), new Color(0.75f, 0.85f, 1f) * 2.5f);
         kit.resplandor = Aditivo("Resplandor", Textura("Resplandor", 128, PixelResplandor));
-        kit.corona = Aditivo("CoronaEclipse", Textura("Corona", 256, PixelCorona));
-        kit.discoSol = SinLuz("DiscoSol", new Color(6f, 5.4f, 4.4f));
-        kit.discoLuna = SinLuz("DiscoLuna", new Color(0.004f, 0.004f, 0.006f));
 
         foreach (var guid in AssetDatabase.FindAssets("t:Material", new[] { "Assets/Materials" }))
             Validar(AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid)));
@@ -288,7 +271,7 @@ public static partial class ConstructorCrater
         return m;
     }
 
-    /// <summary>Sin iluminación, suma luz (destellos, reflejo, corona). El color se cambia en runtime.</summary>
+    /// <summary>Sin iluminación, suma luz (el reflejo de la pared espejo). El color se cambia en runtime.</summary>
     static Material Aditivo(string nombre, Texture2D textura)
     {
         var m = SinLuz(nombre, Color.white);
@@ -315,18 +298,6 @@ public static partial class ConstructorCrater
     {
         float r = Mathf.Sqrt(u * u + v * v);
         return new Color(1f, 1f, 1f, Mathf.Pow(Mathf.Clamp01(1f - r), 2.4f));
-    }
-
-    static Color PixelCorona(float u, float v)
-    {
-        // el sol ocupa r < 0,29 (el quad mide 3,4 diámetros solares)
-        float r = Mathf.Sqrt(u * u + v * v);
-        float ang = Mathf.Atan2(v, u);
-        const float borde = 0.28f;
-        float rayos = 0.7f + 0.3f * Mathf.Sin(ang * 5f) * Mathf.Sin(ang * 3f + 1f);
-        float a = r < borde ? 1f : Mathf.Exp(-(r - borde) / (0.1f * rayos)) + 0.6f * Mathf.Exp(-(r - borde) / 0.02f);
-        a *= Mathf.Clamp01((1f - r) * 4f);
-        return new Color(1f, 1f, 1f, Mathf.Clamp01(a));
     }
 
     static Color PixelOculo(float u, float v)

@@ -36,7 +36,7 @@ public abstract class ReceptorDeLuz : MonoBehaviour
     public UnityEvent alActivarse = new UnityEvent();
     public UnityEvent alDesactivarse = new UnityEvent();
 
-    // estado que leen las hijas, la interfaz y los puentes/compuertas
+    // estado que leen las hijas y los puentes/compuertas
     public bool Activo { get; private set; }
     public float Carga { get; private set; }          // 0 a 1
     public bool Recibiendo { get; private set; }      // recibió luz en el último paso

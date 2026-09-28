@@ -22,7 +22,7 @@ public class FiltroDefinicion : ScriptableObject
     public enum Canal { Ninguno, Cuerpo, Hueco }
 
     [Header("Identidad")]
-    // lo que muestra la interfaz arriba a la derecha
+    // nombre del filtro (para el Inspector y los tests)
     public string nombreVisible = "CUERPO";
     public Canal canal = Canal.Cuerpo;
     [TextArea] public string descripcion;
