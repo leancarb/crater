@@ -49,6 +49,7 @@ function rng(seed) { // mulberry32
 const AMBER = [0.91, 0.63, 0.29];          // Filtro_Cuerpo / Ancla colorEncendida
 const BLUE  = [0.29, 0.357, 0.91];         // Filtro_Hueco
 const OCULO = [0.788, 0.443, 0.29];        // Mat_Oculo emission
+const GLOW  = [1.0, 0.42, 0.06];            // ambar saturado para lo que brilla (anclas, rocas)
 const ECL   = [0.78, 0.83, 0.93];          // plateado frio: corona, puerta, oculos (GDD 5)
 const WARM  = [1, 0.96, 0.88];             // LinternaController colorBase
 const ASH   = [0.30, 0.27, 0.24];
@@ -98,14 +99,20 @@ for (let k = 0; k < 4; k++) {
 }
 
 // ------------------------------------------------------------------ geometria
-function quad(Q, p0, p1, p2, p3, o) {
-  const c = V((p0.x + p1.x + p2.x + p3.x) / 4, (p0.y + p1.y + p2.y + p3.y) / 4, (p0.z + p1.z + p2.z + p3.z) / 4);
-  const n = vnorm(vcross(vsub(p2, p0), vsub(p3, p1)));
-  const j = o.jit ?? 0.28, k = 1 - j + 2 * j * hash(c.x, c.y, c.z);
-  const q = { p: [p0, p1, p2, p3], c, n, alb: [o.alb[0] * k, o.alb[1] * k, o.alb[2] * k],
-              em: o.em ? o.em.slice() : [0, 0, 0], a: o.a ?? 1, upd: o.upd, i: o.i, off: null };
+function poly(Q, pts, o) {
+  let nx = 0, ny = 0, nz = 0, cx = 0, cy = 0, cz = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i], b = pts[(i + 1) % pts.length];
+    nx += (a.y - b.y) * (a.z + b.z); ny += (a.z - b.z) * (a.x + b.x); nz += (a.x - b.x) * (a.y + b.y);
+    cx += a.x; cy += a.y; cz += a.z;
+  }
+  const k = pts.length, c = V(cx / k, cy / k, cz / k), n = vnorm(V(nx, ny, nz));
+  const j = o.jit ?? 0.08, f = 1 - j + 2 * j * hash(c.x, c.y, c.z);
+  const q = { p: pts, c, n, alb: [o.alb[0] * f, o.alb[1] * f, o.alb[2] * f], em: o.em ? o.em.slice() : [0, 0, 0],
+              a: o.a ?? 1, upd: o.upd, i: o.i, off: null, layer: o.layer ?? 1, noSpot: o.noSpot };
   Q.push(q); return q;
 }
+const quad = (Q, p0, p1, p2, p3, o) => poly(Q, [p0, p1, p2, p3], o);
 function subdivide(prof, tile) {
   const pts = [];
   for (let i = 0; i < prof.length - 1; i++) {
@@ -175,6 +182,35 @@ function box(Q, cx, cy, cz, sx, sy, sz, o) {
   return out;
 }
 
+// prisma de base irregular con la tapa cortada en plano inclinado (monolitos, columnas)
+function prism(Q, cx, cz, r, sides, y0, h, slope, o) {
+  const R = rng(o.seed || 7), a0 = R() * 6.283, sa = R() * 6.283, B = [], T = [];
+  for (let i = 0; i < sides; i++) {
+    const a = a0 + i / sides * 6.283 + (R() - 0.5) * 0.4, rr = r * (0.8 + 0.4 * R());
+    const x = cx + Math.cos(a) * rr, z = cz + Math.sin(a) * rr;
+    B.push(V(x, y0, z)); T.push(V(x, h + slope * ((x - cx) * Math.cos(sa) + (z - cz) * Math.sin(sa)), z));
+  }
+  for (let i = 0; i < sides; i++) { const i1 = (i + 1) % sides; poly(Q, [B[i], B[i1], T[i1], T[i]], o); }
+  poly(Q, T, o);
+}
+// caja rotada en el plano xz
+function obox(Q, cx, cz, ang, w, d, y0, y1, o) {
+  const ux = Math.cos(ang), uz = Math.sin(ang), vx = -uz, vz = ux;
+  const P = (a, b, y) => V(cx + ux * a * w / 2 + vx * b * d / 2, y, cz + uz * a * w / 2 + vz * b * d / 2);
+  const B = [P(-1, -1, y0), P(1, -1, y0), P(1, 1, y0), P(-1, 1, y0)], T = [P(-1, -1, y1), P(1, -1, y1), P(1, 1, y1), P(-1, 1, y1)];
+  for (let i = 0; i < 4; i++) { const i1 = (i + 1) % 4; poly(Q, [B[i], B[i1], T[i1], T[i]], o); }
+  poly(Q, T, o);
+}
+// roca facetada: icosaedro con vertices desplazados. Devuelve las caras (con q.on, normal hacia afuera)
+function icosa(Q, c, r, seed, o) {
+  const t = (1 + Math.sqrt(5)) / 2, R = rng(seed);
+  const vs = [[-1, t, 0], [1, t, 0], [-1, -t, 0], [1, -t, 0], [0, -1, t], [0, 1, t], [0, -1, -t], [0, 1, -t], [t, 0, -1], [t, 0, 1], [-t, 0, -1], [-t, 0, 1]]
+    .map(v => { const k = r * (0.8 + 0.35 * R()) / Math.hypot(v[0], v[1], v[2]); return V(c.x + v[0] * k * (o.sx || 1), c.y + v[1] * k * (o.sy || 1), c.z + v[2] * k); });
+  const F = [[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11], [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+             [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9], [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]];
+  return F.map(f => { const q = poly(Q, [vs[f[0]], vs[f[1]], vs[f[2]]], o); q.on = vnorm(vsub(q.c, c)); return q; });
+}
+
 // ------------------------------------------------------------------ camara y proyeccion
 const cam = { p: V(0, 1.6, 0), yaw: 0, pitch: 0, roll: 0, fov: 1.05 };
 let CT = null;
@@ -216,9 +252,14 @@ const rgb = c => 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
 const rgba = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a.toFixed(3) + ')';
 
 // luz sobre un punto (para quads y particulas)
-function lightAt(px, py, pz, n, L, out) {
+function lightAt(px, py, pz, n, L, out, noSpot) {
   for (const l of L) {
     if (l.int <= 0) continue;
+    if (l.par) { // luz direccional: solo ilumina las caras que la miran
+      const dd = n ? -(n.x * l.d.x + n.y * l.d.y + n.z * l.d.z) : 0.5; if (dd <= 0) continue;
+      out[0] += l.col[0] * l.int * dd; out[1] += l.col[1] * l.int * dd; out[2] += l.col[2] * l.int * dd; continue;
+    }
+    if (noSpot && l.dir) continue;
     const dx = px - l.p.x, dy = py - l.p.y, dz = pz - l.p.z, d = Math.hypot(dx, dy, dz) || 1e-3;
     if (d > l.range) continue;
     const ix = dx / d, iy = dy / d, iz = dz / d;
@@ -237,25 +278,30 @@ function renderWorld(Q, L, env) {
   for (const q of Q) {
     if (q.upd) q.upd(q);
     if (q.a < 0.004) continue;
-    const off = q.off, cs = [toCam(q.p[0], off), toCam(q.p[1], off), toCam(q.p[2], off), toCam(q.p[3], off)];
+    const off = q.off, cs = q.p.map(p => toCam(p, off));
     let front = 0; for (const c of cs) if (c[2] >= NEAR) front++;
     if (!front) continue;
-    let poly = front < 4 ? clipNear(cs) : cs;
-    // descarte lateral grosero
+    const pl = front < cs.length ? clipNear(cs) : cs;
     let l = 0, r = 0, u = 0, dn = 0;
-    const sp = poly.map(c => { const s = toScr(c[0], c[1], c[2]); if (s[0] < -40) l++; if (s[0] > W + 40) r++; if (s[1] < -40) u++; if (s[1] > H + 40) dn++; return s; });
+    const sp = pl.map(c => { const s = toScr(c[0], c[1], c[2]); if (s[0] < -40) l++; if (s[0] > W + 40) r++; if (s[1] < -40) u++; if (s[1] > H + 40) dn++; return s; });
     if (l === sp.length || r === sp.length || u === sp.length || dn === sp.length) continue;
     const cx = q.c.x + (off ? off.x : 0), cy = q.c.y + (off ? off.y : 0), cz = q.c.z + (off ? off.z : 0);
+    // normal girada hacia la camara: en solidos convexos las caras visibles son las que la miran
+    let n = q.n; if (n.x * (cam.p.x - cx) + n.y * (cam.p.y - cy) + n.z * (cam.p.z - cz) < 0) n = V(-n.x, -n.y, -n.z);
     acc[0] = amb[0]; acc[1] = amb[1]; acc[2] = amb[2];
-    lightAt(cx, cy, cz, q.n, L, acc);
+    lightAt(cx, cy, cz, n, L, acc, q.noSpot);
     const dist = Math.hypot(cx - cam.p.x, cy - cam.p.y, cz - cam.p.z), fk = Math.exp(-dist * fog);
     const col = tone((q.alb[0] * acc[0] + q.em[0]) * fk + fc[0] * (1 - fk), (q.alb[1] * acc[1] + q.em[1]) * fk + fc[1] * (1 - fk),
                      (q.alb[2] * acc[2] + q.em[2]) * fk + fc[2] * (1 - fk), E, sat);
-    list.push({ d: (cs[0][2] + cs[1][2] + cs[2][2] + cs[3][2]) / 4, sp, col, a: q.a });
+    let d = 0; for (const c of cs) d += c[2];
+    list.push({ d: d / cs.length, layer: q.layer, sp, col, a: q.a });
   }
-  list.sort((a, b) => b.d - a.d);
+  // capas: 0 piso, 0.5 marcas en el piso, 1 todo lo demas. Entre el piso y los objetos va env.onFloor (la mancha del haz)
+  list.sort((a, b) => a.layer - b.layer || b.d - a.d);
   g.lineJoin = 'round';
+  let floorDone = false;
   for (const it of list) {
+    if (!floorDone && it.layer >= 1) { floorDone = true; if (env.onFloor) env.onFloor(); }
     const s = it.sp; g.beginPath(); g.moveTo(s[0][0], s[0][1]);
     for (let i = 1; i < s.length; i++) g.lineTo(s[i][0], s[i][1]);
     g.closePath();
@@ -264,6 +310,46 @@ function renderWorld(Q, L, env) {
     if (it.a < 1) { g.globalAlpha = it.a; g.fill(); g.globalAlpha = 1; }
     else { g.strokeStyle = c; g.lineWidth = 0.7; g.fill(); g.stroke(); }
   }
+  if (!floorDone && env.onFloor) env.onFloor();
+}
+
+// mancha nitida del haz sobre el piso: el borde del cono intersectado con el plano y = y0
+function floorPool(Lt, y0, alpha) {
+  if (!Lt || Lt.int <= 0) return;
+  const d = Lt.dir, u = vnorm(vcross(d, Math.abs(d.y) > 0.9 ? V(1, 0, 0) : V(0, 1, 0))), w = vcross(u, d), half = Math.acos(Lt.cosO);
+  const cs = [];
+  for (let k = 0; k < 36; k++) {
+    const a = k / 36 * 6.283, r = vnorm(vadd(vmul(d, Math.cos(half)), vmul(vadd(vmul(u, Math.cos(a)), vmul(w, Math.sin(a))), Math.sin(half))));
+    let t = Lt.range; if (r.y < -1e-3) t = Math.min(t, (y0 - Lt.p.y) / r.y);
+    const q = vadd(Lt.p, vmul(r, t)); q.y = y0; cs.push(toCam(q));
+  }
+  const pl = clipNear(cs); if (pl.length < 3) return;
+  const sp = pl.map(c => toScr(c[0], c[1], c[2])), col = Lt.col.map(v => v * 255 | 0);
+  const flat = vnorm(V(d.x, 0, d.z)), a0 = proj(V(Lt.p.x + flat.x * 2, y0, Lt.p.z + flat.z * 2)), a1 = proj(V(Lt.p.x + flat.x * Lt.range, y0, Lt.p.z + flat.z * Lt.range));
+  let fill = rgba(col, alpha);
+  if (a0 && a1) { const gr = g.createLinearGradient(a0[0], a0[1], a1[0], a1[1]); gr.addColorStop(0, rgba(col, alpha)); gr.addColorStop(1, rgba(col, alpha * 0.55)); fill = gr; }
+  g.fillStyle = fill; g.beginPath(); sp.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill();
+}
+// volumen del haz: una cuna translucida plana, de cara a la camara
+function beamVolume(p0, p1, r0, r1, col, alpha) {
+  const d = vnorm(vsub(p1, p0)), toC = vnorm(vsub(cam.p, vmul(vadd(p0, p1), 0.5))), s2 = vnorm(vcross(d, toC));
+  const pl = clipNear([vadd(p0, vmul(s2, r0)), vadd(p1, vmul(s2, r1)), vsub(p1, vmul(s2, r1)), vsub(p0, vmul(s2, r0))].map(p => toCam(p)));
+  if (pl.length < 3) return;
+  const sp = pl.map(c => toScr(c[0], c[1], c[2]));
+  g.fillStyle = rgba(col.map(v => v * 255 | 0), alpha);
+  g.beginPath(); sp.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill();
+}
+// anillos concentricos del ancla encendida, en el plano de la cara que recibe el haz
+function glyphRings(c, nrm, r, k) {
+  if (k <= 0) return;
+  const s0 = proj(c); if (!s0) return;
+  const u = vnorm(vcross(nrm, Math.abs(nrm.y) > 0.9 ? V(1, 0, 0) : V(0, 1, 0))), w = vcross(u, nrm), lw = Math.max(0.8, CT.f * 0.05 * r / s0[2]);
+  g.globalCompositeOperation = 'lighter';
+  for (const rr of [r, r * 0.62]) {
+    const pts = []; for (let i = 0; i <= 40; i++) { const a = i / 40 * 6.283; pts.push(vadd(c, vadd(vmul(u, Math.cos(a) * rr), vmul(w, Math.sin(a) * rr)))); }
+    polyline(pts, lw * 3.5, 'rgb(232,161,74)', 0.3 * k); polyline(pts, lw, 'rgb(255,214,150)', k);
+  }
+  g.globalCompositeOperation = 'source-over';
 }
 
 // linterna: spot desde un poco abajo y a la derecha del ojo
@@ -317,7 +403,7 @@ function polyline(pts, lw, color, alpha) {
 
 // ------------------------------------------------------------------ estado por frame
 const S = { audio: null, grain: 0.05, flash: 0 };
-function resetS() { S.audio = { drone: 0.3, wind: 0.1, hum: 0, humF: 110, birds: 0 }; S.grain = 0.05; S.flash = 0; }
+function resetS() { S.audio = { drone: 0.3, wind: 0.1, hum: 0, humF: 110, birds: 0 }; S.grain = 0.035; S.flash = 0; }
 const walkBob = (z, amp = 1) => ({ y: 0.028 * amp * MOTION * Math.sin(z * 6.2), roll: 0.006 * amp * MOTION * Math.sin(z * 3.1) });
 
 // ================================================================== ESCENAS
@@ -369,7 +455,7 @@ const SUN_DIR = vnorm(V(0, Math.sin(0.34), Math.cos(0.34))), CRATER_C = V(0, 0, 
 const STV = { rise: 0 };
 const W_VALLE = (() => {
   const Q = [];
-  grid(Q, V(-120, 0, -60), V(240, 0, 0), V(0, 0, 260), 24, 26, { alb: PASTO, amp: 1.4, jit: 0.22 });
+  grid(Q, V(-120, 0, -60), V(240, 0, 0), V(0, 0, 260), 24, 26, { alb: PASTO, amp: 1.4, jit: 0.06 });
   // capilla andina: zocalo, nave encalada, techo de paja a dos aguas, espadana con cruz
   box(Q, 0, 0.4, -15.5, 6.4, 0.8, 11.4, { alb: PIEDRA, jit: 0.15 });
   box(Q, 0, 2.65, -15.5, 6, 3.7, 11, { alb: ADOBE, jit: 0.05 });
@@ -390,12 +476,12 @@ const W_VALLE = (() => {
   // cardones
   const R = rng(31);
   for (let i = 0; i < 14; i++) {
-    const x = (R() < 0.5 ? -1 : 1) * (9 + R() * 40), z = -30 + R() * 90, h = 2 + R() * 3.5, c = { alb: [0.2, 0.27, 0.15], jit: 0.2 };
+    const x = (R() < 0.5 ? -1 : 1) * (9 + R() * 40), z = -30 + R() * 90, h = 2 + R() * 3.5, c = { alb: [0.2, 0.27, 0.15], jit: 0.05 };
     box(Q, x, h / 2, z, 0.45, h, 0.45, c);
     if (R() < 0.7) { const ah = h * (0.45 + R() * 0.3); box(Q, x + 0.5, ah, z, 0.6, 0.3, 0.3, c); box(Q, x + 0.7, ah + 0.6, z, 0.3, 1.2, 0.3, c); }
   }
   // el borde del crater, que sube cuando empieza la totalidad
-  revolve(Q, [[15, -2], [18.5, 6.5], [22, 4.5], [27, -2]], 40, { alb: ROCK, amp: 1.6, tile: 2.2, cx: CRATER_C.x, cz: CRATER_C.z,
+  revolve(Q, [[15, -2], [18.5, 6.5], [22, 4.5], [27, -2]], 40, { alb: ROCK, amp: 1.6, tile: 2.2, jit: 0.05, cx: CRATER_C.x, cz: CRATER_C.z,
     upd: q => { q.a = STV.rise > 0.01 ? 1 : 0; q.off = V(0, (STV.rise - 1) * 8.5, 0); } });
   return Q;
 })();
@@ -428,14 +514,6 @@ function valle(prog) {
   renderWorld(W_VALLE, L, env);
   return { day, tot };
 }
-function rCapilla(lt) {
-  cam.p = V(lerp(7.5, 5.2, lt / 7), 1.6, lerp(6, 3.2, lt / 7)); cam.fov = 1.05; cam.roll = 0;
-  const d = vsub(V(0, 3.4, -14), cam.p);
-  cam.yaw = Math.atan2(d.x, d.z) + 0.01 * hh(lt * 0.3); cam.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z)) + 0.008 * hh(lt * 0.4);
-  setCam();
-  valle(smooth(4, 7, lt) * 0.35);
-  S.audio = { drone: 0, wind: 0.12, hum: 0, humF: 110, birds: 1 };
-}
 function rEclipse(lt) {
   const prog = clamp(lt / 5.2);
   STV.rise = ease(clamp((lt - 5.8) / 3));
@@ -459,116 +537,200 @@ function rEclipse(lt) {
   S.audio = { drone: 0.4 * v.tot, wind: 0.12 + 0.1 * v.tot, hum: 0, humF: 110, birds: prog < 1 ? 1 : 0 };
 }
 
-// ---- 2. Tunel de ceniza: se enciende la linterna ---------------------------
-const PT = [[-1.7, 0], [1.7, 0], [1.85, 1.8], [1.5, 2.6], [0.8, 3.1], [0, 3.25], [-0.8, 3.1], [-1.5, 2.6], [-1.85, 1.8], [-1.7, 0]];
-const W_TUNEL = (() => {
-  const Q = []; extrude(Q, PT, -2, 42, { alb: ASH, amp: 0.2, tile: 0.42 });
-  const R = rng(4);
-  for (let i = 0; i < 18; i++) { const s = 0.15 + R() * 0.45; box(Q, (R() - 0.5) * 2.6, s * 0.35, 2 + R() * 30, s, s * 0.7, s * 1.2, { alb: ROCK }); }
-  return Q;
-})();
-function rTunel(lt) {
-  const z = 0.5 + Math.max(0, lt - 1.4) * 0.85, b = walkBob(z, lt > 1.4 ? 1 : 0);
-  cam.p = V(0.05 * hh(lt * 0.4), 1.62 + b.y, z);
-  cam.yaw = 0.08 * hh(lt * 0.6); cam.pitch = -0.04 + 0.03 * hh(lt * 0.5 + 3); cam.roll = b.roll; cam.fov = 1.05;
-  setCam();
-  const on = lt >= 0.8;
-  const flick = lt < 1.15 ? (hash(Math.floor(lt * 40), 1, 2) > 0.4 ? 1 : 0.1) : 1;
-  const L = on ? [flashlight(FILTROS.none, flick, 0.05 * hh(lt * 0.9 + 1), -0.02)] : [];
-  const env = { amb: [0.0012, 0.0011, 0.0013], fog: 0.055 };
-  renderWorld(W_TUNEL, L, env);
-  if (on) { haze(L[0]); motes(160, 3, (i, a, b2, c) => V((a - 0.5) * 3, 0.3 + b2 * 2.7, cam.p.z + 0.4 + ((c * 8 + lt * 0.06) % 8)), L, env, 0.9); }
-  S.audio = { drone: 0.35, wind: 0.14, hum: 0, humF: 110 };
-}
-
-// ---- placas y titulos --------------------------------------------------------
+// ---- placas ------------------------------------------------------------------
 function rBlack() { S.audio = { drone: 0.2, wind: 0.05, hum: 0, humF: 110 }; }
 
-// ---- 4. CUERPO: anclas y puente de luz -------------------------------------
-const PC = [[-6, -12], [-6, 0], [-6.3, 2.5], [-5.8, 5], [-4, 6.8], [-1.5, 7.6], [1.5, 7.6], [4, 6.8], [5.8, 5], [6.3, 2.5], [6, 0], [6, -12]];
-const ST4 = { a: 0, b: 0, bridge: 0 };
-const W_CUERPO = (() => {
-  const Q = [];
-  extrude(Q, PC, -3, 30, { alb: ROCK, amp: 0.45, tile: 0.9 });
-  grid(Q, V(-6, 0, -3), V(12, 0, 0), V(0, 0, 9), 18, 13, { alb: ASH, amp: 0.1 });
-  grid(Q, V(-6, 0, 15), V(12, 0, 0), V(0, 0, 15), 18, 20, { alb: ASH, amp: 0.1 });
-  grid(Q, V(-6, 0, 6), V(12, 0, 0), V(0, -12, 0), 16, 14, { alb: ROCK, amp: 0.35 });
-  grid(Q, V(-6, -12, 15), V(12, 0, 0), V(0, 12, 0), 16, 14, { alb: ROCK, amp: 0.35 });
-  const ancla = (x, z, k) => {
-    box(Q, x, 0.6, z, 0.42, 1.2, 0.42, { alb: ROCK, jit: 0.1 });
-    box(Q, x, 1.45, z, 0.5, 0.5, 0.5, { alb: ANCLA_OFF, jit: 0.05, upd: q => {
-      const c = ST4[k], col = [0, 1, 2].map(i => lerp(ANCLA_OFF[i], AMBER[i], c));
-      q.alb = col; q.em = col.map(v => v * (0.02 + 1.3 * c)); } });
-  };
-  ancla(-5, 16.5, 'a'); ancla(5, 17.5, 'b');
-  for (let i = 0; i < 12; i++) {
-    const z0 = 6 + i * 0.75;
-    for (let s = 0; s < 2; s++) {
-      quad(Q, V(-0.95 + s * 0.95, 0.02, z0), V(s * 0.95, 0.02, z0), V(s * 0.95, 0.02, z0 + 0.75), V(-0.95 + s * 0.95, 0.02, z0 + 0.75),
-        { alb: [0.5, 0.35, 0.16], jit: 0.12, i, upd: q => {
-          const v = clamp(ST4.bridge * 1.5 - q.i / 12 * 0.5);
-          q.a = v * 0.82; q.em = AMBER.map(c => c * (0.35 + 0.5 * v) * v); } });
-    }
+// ---- El Umbral: sala circular con el oculo y la linterna en el piso ---------
+const STARS = (() => { const R = rng(55), out = []; while (out.length < 110) { const x = R() * 2 - 1, z = R() * 2 - 1; if (x * x + z * z < 0.92) out.push([x * 5, z * 5, R()]); } return out; })();
+const W_UMBRAL = (() => {
+  const Q = [], DARK = [0.14, 0.14, 0.15], STONE = [0.52, 0.5, 0.46], BENCH = [0.3, 0.29, 0.27];
+  const ring = (prof, alb, extra = {}) => revolve(Q, prof, 24, { alb, amp: 0, tile: 100, jit: 0.06, ...extra });
+  ring([[0.3, 0], [12, 0]], [0.08, 0.08, 0.09], { layer: 0, noSpot: true, jit: 0.12 });
+  ring([[5.4, 0.01], [6.2, 0.01]], [0.34, 0.34, 0.35], { layer: 0.5, noSpot: true });
+  ring([[0.3, 0.012], [2.4, 0.012]], [0.42, 0.42, 0.43], { layer: 0.5, noSpot: true });
+  ring([[8.8, 0.01], [9.3, 0.01]], [0.24, 0.24, 0.25], { layer: 0.5, noSpot: true });
+  ring([[9.6, 0], [9.6, 0.5]], BENCH); ring([[9.6, 0.5], [10.8, 0.5]], BENCH);
+  ring([[10.8, 0.5], [10.8, 1.0]], BENCH); ring([[10.8, 1.0], [12, 1.0]], BENCH);
+  ring([[12, 1.0], [12, 9.2]], DARK);
+  ring([[11.6, 8.6], [11.6, 9.4]], [0.36, 0.35, 0.33]); ring([[11.6, 9.4], [12, 9.4]], [0.36, 0.35, 0.33]);
+  ring([[12, 9.4], [8.5, 11.8], [5, 13.6]], DARK.map(v => v * 0.9));
+  ring([[5, 13.6], [5, 15]], STONE);
+  for (let k = 0; k < 8; k++) {
+    const a = k / 8 * 6.283 + Math.PI / 8;
+    obox(Q, Math.cos(a) * 11.4, Math.sin(a) * 11.4, a + Math.PI / 2, 0.9, 0.8, 1.0, 9.2, { alb: STONE, jit: 0.05 });
+    const b = k / 8 * 6.283, dA = 0.05, R2 = 11.75;   // puerta oscura entre pilastras
+    quad(Q, V(Math.cos(b - dA) * R2, 1.0, Math.sin(b - dA) * R2), V(Math.cos(b + dA) * R2, 1.0, Math.sin(b + dA) * R2),
+            V(Math.cos(b + dA) * R2, 3.4, Math.sin(b + dA) * R2), V(Math.cos(b - dA) * R2, 3.4, Math.sin(b - dA) * R2), { alb: [0.015, 0.015, 0.015], jit: 0 });
   }
+  box(Q, 0, 0.09, 0, 0.5, 0.16, 0.16, { alb: [0.24, 0.24, 0.25], jit: 0.05 });    // la linterna
+  box(Q, 0.3, 0.12, 0, 0.14, 0.24, 0.24, { alb: [0.2, 0.2, 0.21], jit: 0.05 });
   return Q;
 })();
-function rCuerpo(lt) {
-  const walk = ease(clamp((lt - 6) / 5)), z = 2 + walk * 7.5, b = walkBob(z, walk > 0 && walk < 1 ? 1 : 0);
-  cam.p = V(0.04 * hh(lt * 0.3), 1.62 + b.y, z); cam.roll = b.roll; cam.fov = 1.1;
-  cam.yaw = key(lt, [[0, 0.1], [1.8, 0], [3.0, -0.34], [3.6, -0.34], [5.0, 0], [11, 0]]) + 0.03 * hh(lt * 0.7);
-  cam.pitch = key(lt, [[0, -0.12], [5, -0.03], [6.2, -0.05], [8.2, -0.5], [9.4, -0.48], [11, -0.14]]) + 0.02 * hh(lt * 0.6 + 2);
+function rUmbral(lt) {
+  const tilt = ease(clamp((lt - 0.5) / 3.6));
+  cam.p = V(0.05 * hh(lt * 0.2), 1.7, -9 + 1.2 * ease(clamp(lt / 6.2))); cam.roll = 0; cam.fov = 1.15;
+  cam.yaw = 0.01 * hh(lt * 0.3); cam.pitch = lerp(0.98, -0.17, tilt);
   setCam();
-  ST4.a = clamp((lt - 3.0) / 0.35); ST4.b = clamp((lt - 4.6) / 0.35); ST4.bridge = clamp((lt - 4.95) / 1.1);
-  const bs = beamState(lt, 1.2, 'none', 'cuerpo');
-  const L = [flashlight(bs.F, bs.mul, 0.04 * hh(lt + 5), -0.02)];
-  L.push({ p: V(-5, 1.45, 16.5), col: AMBER, int: 1.1 * ST4.a, k: 0.25, range: 8 });
-  L.push({ p: V(5, 1.45, 17.5), col: AMBER, int: 1.1 * ST4.b, k: 0.25, range: 8 });
-  L.push({ p: V(0, 0.4, 10.5), col: AMBER, int: 0.9 * ST4.bridge, k: 0.1, range: 12 });
-  const env = { amb: [0.0012, 0.0011, 0.0012], fog: 0.03 };
-  renderWorld(W_CUERPO, L, env);
-  if (ST4.bridge > 0) { // bordes del puente
-    const len = 9 * clamp(ST4.bridge * 1.3), c = 'rgb(255,196,120)';
-    g.globalCompositeOperation = 'lighter';
-    for (const x of [-0.95, 0.95]) {
-      polyline([V(x, 0.03, 6), V(x, 0.03, 6 + len)], 3, 'rgba(232,161,74,0.35)', ST4.bridge);
-      polyline([V(x, 0.03, 6), V(x, 0.03, 6 + len)], 1, c, ST4.bridge);
-    }
-    g.globalCompositeOperation = 'source-over';
+  // cielo nocturno por el oculo
+  const rim = []; for (let i = 0; i < 48; i++) { const a = i / 48 * 6.283; rim.push(proj(V(Math.cos(a) * 5, 15, Math.sin(a) * 5))); }
+  const ctr = proj(V(0, 15.05, 0));
+  if (ctr && rim.every(Boolean)) {
+    const R = Math.max(...rim.map(p => Math.hypot(p[0] - ctr[0], p[1] - ctr[1])));
+    const gr = g.createRadialGradient(ctr[0], ctr[1], 0, ctr[0], ctr[1], R);
+    gr.addColorStop(0, '#1a3688'); gr.addColorStop(1, '#0c1d56');
+    g.fillStyle = gr; g.beginPath(); rim.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill();
+    for (const [x, z, b] of STARS) { const sp = proj(V(x, 15.04, z)); if (!sp) continue; const sz = b > 0.85 ? 1.6 : 1;
+      g.fillStyle = 'rgba(235,240,255,' + (0.45 + 0.55 * b) + ')'; g.fillRect(sp[0], sp[1], sz, sz); }
   }
-  haze(L[0]);
-  motes(200, 5, (i, a, b2, c) => V((a - 0.5) * 11, -5 + b2 * 10 + Math.sin(lt * 0.3 + i) * 0.3, cam.p.z + 0.5 + ((c * 15 + lt * 0.1) % 15)), L, env, 0.7);
-  S.audio = { drone: 0.4, wind: 0.2, hum: lt > 1.2 ? 0.1 : 0, humF: 110 };
+  const moon = { par: true, d: vnorm(V(0.25, -1, 0.35)), col: [0.78, 0.82, 0.95], int: 0.52 };
+  const L = [moon];
+  let F = null;
+  if (lt >= 4.4) {
+    const fl = lt < 4.6 ? (hash(Math.floor(lt * 40), 3, 3) > 0.4 ? 1 : 0.15) : 1;
+    F = { p: V(0.42, 0.12, 0), dir: vnorm(V(0.55, -0.012, 1)), col: WARM, int: 5 * fl, k: 0.1, range: 16,
+          cosO: Math.cos(14 * Math.PI / 180), cosI: Math.cos(8 * Math.PI / 180), cosS: Math.cos(30 * Math.PI / 180), ang: 28 };
+    L.push(F);
+  }
+  renderWorld(W_UMBRAL, L, { amb: [0.012, 0.012, 0.016], fog: 0.008, onFloor: () => floorPool(F, 0.015, 0.5 * (F ? F.int / 5 : 0)) });
+  S.audio = { drone: 0.34, wind: 0.22, hum: 0, humF: 110 };
 }
 
-// ---- 5. HUECO: la reja cede ------------------------------------------------
-const PT2 = PT.map(([x, y]) => [x * 1.12, y * 1.12]);
-const ceilAt = x => { let best = 0; for (let i = 0; i < PT2.length - 1; i++) { const a = PT2[i], b = PT2[i + 1];
-  if (a[1] < 1 || b[1] < 1) continue; const lo2 = Math.min(a[0], b[0]), hi = Math.max(a[0], b[0]);
-  if (x >= lo2 && x <= hi && hi > lo2) best = Math.max(best, lerp(a[1], b[1], (x - a[0]) / (b[0] - a[0]))); } return best || 2; };
-const ST5 = { dis: 0 };
-const W_HUECO = (() => {
-  const Q = []; extrude(Q, PT2, -2, 40, { alb: ASH, amp: 0.2, tile: 0.48 });
-  const reja = { alb: [0.2, 0.165, 0.13], jit: 0.15, upd: q => {
-    const d = ST5.dis; q.a = lerp(1, 0.15, d); q.em = BLUE.map(c => c * (0.25 * d + 1.6 * d * (1 - d))); } };
-  for (let x = -1.82; x <= 1.83; x += 0.26) { const h = ceilAt(x) - 0.05; box(Q, x, h / 2, 9, 0.07, h, 0.07, reja); }
-  for (const [y, w] of [[0.7, 3.9], [1.6, 3.9], [2.5, 3.3]]) box(Q, 0, y, 9, w, 0.07, 0.08, reja);
-  const R = rng(9);
-  for (let i = 0; i < 16; i++) { const s = 0.15 + R() * 0.5; box(Q, (R() - 0.5) * 2.8, s * 0.35, 1 + R() * 34, s, s * 0.7, s * 1.2, { alb: ROCK }); }
+// ---- La sala de los monolitos -----------------------------------------------
+const W_SALA = (() => {
+  const Q = [], R = rng(41), CREAM = [0.66, 0.64, 0.6];
+  grid(Q, V(-16, 0, -4), V(32, 0, 0), V(0, 0, 56), 8, 14, { alb: [0.22, 0.21, 0.2], layer: 0, noSpot: true, jit: 0.06 });
+  for (let i = 0; i < 14; i++) {
+    const side = i % 2 ? 1 : -1, x = side * (3.2 + R() * 4), z = 2 + i * 3.1 + R() * 2, h = 0.25 + R() * 0.5;
+    box(Q, x, h / 2, z, 3 + R() * 3, h, 2 + R() * 3, { alb: [0.27, 0.26, 0.25], jit: 0.05 });
+  }
+  for (let i = 0; i < 8; i++) for (const side of [-1, 1]) {
+    prism(Q, side * (6.5 + R() * 3.5), 5 + i * 5.5 + R() * 2, 1.2 + R() * 1.1, R() < 0.5 ? 4 : 5, 0, 10 + R() * 16, (R() - 0.5) * 1.6,
+      { alb: CREAM, jit: 0.04, seed: 100 + i * 2 + (side > 0 ? 1 : 0) });
+  }
+  for (let st = 0; st < 8; st++) box(Q, 0, (st + 1) * 0.1, 39 + st * 0.55, 6, (st + 1) * 0.2, 0.55, { alb: [0.3, 0.29, 0.27], jit: 0.03 });
+  box(Q, 0, 0.8, 46.5, 10, 1.6, 6, { alb: [0.3, 0.29, 0.27], jit: 0.03 });
+  box(Q, 0, 3.8, 47.6, 3.6, 4.4, 1.2, { alb: [0.2, 0.19, 0.18], jit: 0.03 });
+  quad(Q, V(-0.75, 1.62, 46.98), V(0.75, 1.62, 46.98), V(0.75, 4.3, 46.98), V(-0.75, 4.3, 46.98), { alb: [0.01, 0.01, 0.01], jit: 0, em: AMBER.map(v => v * 0.04) });
+  const frame = { alb: AMBER, em: AMBER.map(v => v * 0.55), jit: 0 };
+  box(Q, -0.85, 2.96, 46.94, 0.12, 2.7, 0.08, frame); box(Q, 0.85, 2.96, 46.94, 0.12, 2.7, 0.08, frame); box(Q, 0, 4.36, 46.94, 1.82, 0.12, 0.08, frame);
+  // rocas flotantes: las caras de abajo brillan en ambar
+  [[-6.8, 6.6, 15, 1.2], [7.4, 7.8, 18, 1.0], [-2.6, 6.2, 21, 0.32], [2.4, 7.4, 25, 0.3], [-2.1, 4.1, 29, 0.3], [3.3, 3.8, 32, 0.42], [-6.5, 9, 30, 0.8]]
+    .forEach(([x, y, z, r], k) => icosa(Q, V(x, y, z), r, 60 + k, { alb: [0.06, 0.055, 0.05], jit: 0.03 })
+      .forEach(q => { if (q.on.y < -0.45) q.em = GLOW.map(v => v * 0.5); }));
   return Q;
 })();
-function rHueco(lt) {
-  const walk = ease(clamp((lt - 3.1) / 6.2)), z = 3.2 + walk * 10.5, b = walkBob(z, walk > 0 && walk < 1 ? 1 : 0);
-  cam.p = V(0.05 * hh(lt * 0.4), 1.62 + b.y, z); cam.roll = b.roll; cam.fov = 1.05;
-  cam.yaw = 0.07 * hh(lt * 0.55); cam.pitch = -0.03 + 0.025 * hh(lt * 0.6 + 1);
+function rSala(lt) {
+  cam.p = V(0.5, 1.6, 1.5 + lt * 1.3); cam.roll = 0.004 * hh(lt); cam.fov = 1.2;
+  cam.yaw = -0.03 + 0.012 * hh(lt * 0.5); cam.pitch = 0.05 + 0.01 * hh(lt * 0.4 + 2);
   setCam();
-  ST5.dis = clamp((lt - 2.55) * 4);
-  const bs = beamState(lt, 1.4, 'none', 'hueco');
-  const L = [flashlight(bs.F, bs.mul, 0.04 * hh(lt + 2), -0.02)];
-  const env = { amb: [0.0011, 0.0011, 0.0014], fog: 0.035 };
-  renderWorld(W_HUECO, L, env);
-  haze(L[0], 0.09);
-  motes(180, 8, (i, a, b2, c) => V((a - 0.5) * 3.4, 0.3 + b2 * 3, cam.p.z + 0.4 + ((c * 10 + lt * 0.06) % 10)), L, env, 0.9);
-  S.audio = { drone: 0.36, wind: 0.14, hum: lt > 1.4 ? 0.11 : 0, humF: 82.4 };
+  const key = { par: true, d: vnorm(V(0.55, -0.5, 0.65)), col: [1, 0.96, 0.9], int: 1.0 };
+  const F = flashlight(FILTROS.cuerpo, 1, -0.015, -0.02); F.range = 34;
+  renderWorld(W_SALA, [key, F], { amb: [0.004, 0.004, 0.005], fog: 0.01, onFloor: () => floorPool(F, 0.012, 0.7) });
+  const dp = proj(V(0, 3, 46.9));
+  if (dp) { g.globalCompositeOperation = 'lighter'; const R = CT.f * 3 / dp[2], gr = g.createRadialGradient(dp[0], dp[1], 0, dp[0], dp[1], R);
+    gr.addColorStop(0, 'rgba(232,161,74,0.35)'); gr.addColorStop(1, 'rgba(232,161,74,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, H); g.globalCompositeOperation = 'source-over'; }
+  S.audio = { drone: 0.34, wind: 0.12, hum: 0.1, humF: 110 };
+}
+
+// ---- CUERPO de cerca: el haz enciende el ancla -------------------------------
+const ANCLA_A = V(0, 2.3, 6.2), LAMP_A = V(-10, 2.6, 1.2), TO_LAMP_A = vnorm(vsub(LAMP_A, ANCLA_A));
+const STA = { k: 0 };
+const W_ANCLA = (() => {
+  const Q = [], BR = [0.2, 0.15, 0.1];
+  prism(Q, 0.5, 8.4, 1.9, 5, -8, 14, 0.8, { alb: BR, seed: 201 });
+  prism(Q, -2.0, 7.7, 1.1, 4, -8, 11, -1, { alb: BR, seed: 202 });
+  prism(Q, 2.3, 7.5, 1.2, 5, -8, 12.5, 1.2, { alb: BR, seed: 203 });
+  prism(Q, -0.4, 6.9, 0.85, 4, -8, 1.0, 0.5, { alb: BR, seed: 204 });
+  prism(Q, 0.8, 6.8, 0.75, 4, 3.7, 12, 0.5, { alb: BR, seed: 205 });
+  icosa(Q, ANCLA_A, 1.05, 77, { alb: [0.07, 0.06, 0.05], jit: 0.03, sy: 1.35 }).forEach(q => {
+    q.upd = q2 => { const d = q2.on.x * TO_LAMP_A.x + q2.on.y * TO_LAMP_A.y + q2.on.z * TO_LAMP_A.z;
+      q2.em = d > 0.2 ? GLOW.map(v => v * (0.03 + 0.9 * STA.k) * d * d) : [0, 0, 0]; };
+  });
+  return Q;
+})();
+function rAnclaA(lt) {
+  const push = ease(clamp(lt / 3.4));
+  cam.p = V(-1.9 + 0.3 * push, 2.4, -0.4 + 0.9 * push); cam.roll = 0; cam.fov = 1.05;
+  const tg = V(-0.7, 2.5, 6.2), d = vsub(tg, cam.p);
+  cam.yaw = Math.atan2(d.x, d.z) + 0.008 * hh(lt); cam.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
+  setCam();
+  STA.k = clamp((lt - 0.9) / 0.35);                 // carga real del receptor: 0,35 s
+  const on = lt >= 0.3 ? (lt < 0.45 ? 0.5 : 1) : 0;
+  const L = [{ p: LAMP_A, dir: vmul(TO_LAMP_A, -1), col: AMBER, int: 3.5 * on, k: 0.02, range: 25,
+               cosO: Math.cos(6 * Math.PI / 180), cosI: Math.cos(3.5 * Math.PI / 180) },
+             { p: ANCLA_A, col: AMBER, int: 0.45 * STA.k, k: 0.8, range: 5 }];
+  renderWorld(W_ANCLA, L, { amb: [0.003, 0.0025, 0.002], fog: 0.01 });
+  if (on) beamVolume(LAMP_A, vadd(ANCLA_A, vmul(TO_LAMP_A, 0.9)), 0.12, 0.55, AMBER, 0.32 * on);
+  glyphRings(vadd(ANCLA_A, vmul(TO_LAMP_A, 0.98)), TO_LAMP_A, 0.42, smooth(1.2, 1.5, lt));
+  S.audio = { drone: 0.3, wind: 0.08, hum: on ? 0.1 : 0, humF: 110 };
+}
+
+// ---- CUERPO: el puente entre dos anclas --------------------------------------
+const ANCLA_PA = V(-5.2, 6.9, 25.3), ANCLA_PB = V(4.4, 5.1, 10.1), LAMP_B = V(9, 3, 2.5);
+const PA = V(-4.5, 6.1, 24.6), PB = V(3.6, 4.5, 10.9);
+const STB = { b: 0, br: 0 };
+const W_PUENTE = (() => {
+  const Q = [], BR = [0.17, 0.13, 0.09];
+  prism(Q, -6.4, 26.4, 1.9, 5, -30, 9.5, 1, { alb: BR, seed: 301 });
+  prism(Q, -4.3, 27.6, 1.3, 4, -30, 7.2, -0.8, { alb: BR, seed: 302 });
+  prism(Q, -7.8, 24.2, 1.0, 4, -30, 11, 0.6, { alb: BR, seed: 303 });
+  prism(Q, 5.6, 10.6, 1.8, 5, -30, 7.5, 1.2, { alb: BR, seed: 311 });
+  prism(Q, 7.3, 12.8, 1.2, 4, -30, 9.5, -1, { alb: BR, seed: 312 });
+  prism(Q, 4.3, 8.4, 1.0, 5, -30, 3.8, 0.5, { alb: BR, seed: 313 });
+  [[-1, 34, 1.4, 4], [4, 30, 1.1, 6], [9, 22, 1.3, 3], [-10, 16, 1.5, 5], [1.2, 20, 0.9, -2]]
+    .forEach(([x, z, r, h], k) => prism(Q, x, z, r, 4 + k % 2, -30, h, 0.8, { alb: BR.map(v => v * 0.8), seed: 320 + k }));
+  const toB = vnorm(vsub(PB, ANCLA_PA)), toL = vnorm(vsub(LAMP_B, ANCLA_PB));
+  icosa(Q, ANCLA_PA, 0.85, 91, { alb: [0.07, 0.06, 0.05], jit: 0.03 }).forEach(q => {
+    const d = q.on.x * toB.x + q.on.y * toB.y + q.on.z * toB.z; q.em = d > 0.2 ? GLOW.map(v => v * 0.9 * d * d) : [0, 0, 0]; });
+  icosa(Q, ANCLA_PB, 1.0, 92, { alb: [0.07, 0.06, 0.05], jit: 0.03 }).forEach(q => {
+    q.upd = q2 => { const d = q2.on.x * toL.x + q2.on.y * toL.y + q2.on.z * toL.z; q2.em = d > 0.2 ? GLOW.map(v => v * (0.03 + 0.9 * STB.b) * d * d) : [0, 0, 0]; }; });
+  return Q;
+})();
+const BRIDGE = (() => {
+  const R = rng(17), N = 9, D = vsub(PB, PA), S2 = vmul(vnorm(vcross(D, V(0, 1, 0))), 1.1), Lr = [], Rr = [], tris = [];
+  for (let i = 0; i <= N; i++) {
+    const c = vadd(PA, vmul(D, i / N)), j = () => V((R() - 0.5) * 0.25, (R() - 0.5) * 0.18, (R() - 0.5) * 0.25);
+    Lr.push(vadd(vsub(c, S2), j())); Rr.push(vadd(vadd(c, S2), j()));
+  }
+  for (let i = 0; i < N; i++) { tris.push([Lr[i], Rr[i], Lr[i + 1]]); tris.push([Rr[i], Rr[i + 1], Lr[i + 1]]); }
+  return tris;
+})();
+function rAnclaB(lt) {
+  cam.p = V(0.8, 11, 1.2 + lt * 0.3); cam.roll = 0; cam.fov = 1.1;
+  const d = vsub(V(-1.6, 4.2, 20), cam.p);
+  cam.yaw = Math.atan2(d.x, d.z) + 0.006 * hh(lt); cam.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
+  setCam();
+  STB.b = clamp((lt - 0.6) / 0.35); STB.br = clamp((lt - 1.0) / 1.8);
+  const toL = vnorm(vsub(LAMP_B, ANCLA_PB)), on = lt >= 0.2 ? 1 : 0;
+  const mid = vmul(vadd(PA, PB), 0.5);
+  const L = [{ p: LAMP_B, dir: vmul(toL, -1), col: AMBER, int: 6 * on, k: 0.02, range: 25,
+               cosO: Math.cos(8 * Math.PI / 180), cosI: Math.cos(4 * Math.PI / 180), cosS: Math.cos(18 * Math.PI / 180) },
+             { p: ANCLA_PA, col: AMBER, int: 1.4, k: 0.25, range: 9 },
+             { p: ANCLA_PB, col: AMBER, int: 1.4 * STB.b, k: 0.25, range: 9 },
+             { p: mid, col: AMBER, int: 1.2 * STB.br, k: 0.03, range: 14 }];
+  renderWorld(W_PUENTE, L, { amb: [0.003, 0.0025, 0.002], fog: 0.012 });
+  if (on) beamVolume(LAMP_B, vadd(ANCLA_PB, vmul(toL, 1.0)), 0.3, 0.7, AMBER, 0.3);
+  // paneles triangulados que se arman de A hacia B
+  const n = BRIDGE.length;
+  for (let j = 0; j < n; j++) {
+    const v = clamp(STB.br * (n + 4) - j, 0, 1); if (v <= 0) continue;
+    const ps = BRIDGE[j].map(proj); if (ps.some(q => !q)) continue;
+    g.beginPath(); ps.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]))); g.closePath();
+    g.fillStyle = 'rgba(232,161,74,' + (0.5 * v) + ')'; g.fill();
+    g.strokeStyle = 'rgba(255,208,140,' + (0.95 * v) + ')'; g.lineWidth = 1.2; g.stroke();
+  }
+  // fragmentos que flotan en el frente del puente
+  if (STB.br > 0 && STB.br < 1) {
+    const front = vadd(PA, vmul(vsub(PB, PA), Math.min(1, STB.br * 1.1)));
+    for (let i = 0; i < 30; i++) {
+      const q = proj(vadd(front, V((hash(i, 1, 2) - 0.5) * 3, (hash(i, 2, 3) - 0.4) * 2 + lt * 0.3 * hash(i, 4, 4), (hash(i, 3, 1) - 0.5) * 3)));
+      if (!q) continue; const sz = clamp(CT.f * 0.08 / q[2], 1, 4);
+      g.fillStyle = 'rgba(245,175,85,' + (0.5 + 0.5 * hash(i, 5, 5)) + ')'; g.fillRect(q[0], q[1], sz, sz);
+    }
+  }
+  glyphRings(vadd(ANCLA_PA, vmul(vnorm(vsub(PB, ANCLA_PA)), 0.84)), vnorm(vsub(PB, ANCLA_PA)), 0.34, 1);
+  glyphRings(vadd(ANCLA_PB, vmul(toL, 0.98)), toL, 0.4, smooth(0.95, 1.2, lt));
+  S.audio = { drone: 0.36, wind: 0.1, hum: on ? 0.1 : 0, humF: 110 };
 }
 
 // ---- 6. La Cresta: pared espejo, oscuridad y la puerta del eclipse --------
@@ -661,23 +823,6 @@ function rDiamante(lt) {
   S.audio = { drone: 0, wind: 0, hum: 0, humF: 110 };
 }
 
-// ---- 8. Montaje ------------------------------------------------------------
-const CUTS = [['cuerpo', 4.4, 0.6], ['hueco', 2.2, 0.55], ['eclipse', 5.9, 0.5], ['adapt', 6.8, 0.45], ['cuerpo', 5.9, 0.4],
-              ['hueco', 3.6, 0.35], ['capilla', 3.0, 0.32], ['adapt', 8.2, 0.3], ['eclipse', 4.3, 0.28], ['cuerpo', 3.0, 0.25]];
-const CUT_LEAD = 0.4; // silencio en negro antes del primer golpe
-const CUT_T = (() => { let t = CUT_LEAD; return CUTS.map(c => { const s = t; t += c[2]; return s; }); })();
-const MONTAGE_LEN = CUT_T[CUT_T.length - 1] + CUTS[CUTS.length - 1][2];
-function rMontaje(lt) {
-  if (lt < CUT_LEAD) { S.audio = { drone: 0, wind: 0, hum: 0, humF: 110 }; return; }
-  let i = CUT_T.length - 1; while (i > 0 && CUT_T[i] > lt) i--;
-  if (lt < MONTAGE_LEN) {
-    const [id, t0] = CUTS[i], k = lt - CUT_T[i];
-    SC[id].render(t0 + k);
-    S.flash = Math.max(S.flash, 0.22 * Math.exp(-k * 14));
-  }
-  S.audio = { drone: 0.5, wind: 0.15, hum: 0, humF: 110 };
-}
-
 // ---- 9. Cierre -------------------------------------------------------------
 function rFinal(lt) {
   const gl = g.createRadialGradient(W / 2, H * 0.42, 0, W / 2, H * 0.42, H * 0.7);
@@ -740,25 +885,20 @@ function oCoda(lt) {
 function rCard() { S.audio = { drone: 0, wind: 0, hum: 0, humF: 110 }; } // silencio antes del golpe
 
 // ------------------------------------------------------------------ linea de tiempo
-// Cada escena del teaser llama al render original con su propio mapa de tiempo:
-// asi se acorta sin tocar las cargas reales (0,35 s) ni la demora de cambio de filtro (0,8 s).
-const mapCuerpo = lt => (lt < 5.2 ? lt + 0.9 : 6.1 + (lt - 5.2) * 1.6);   // anclas a tiempo real, la caminata mas rapida
-const mapHueco  = lt => (lt < 2.9 ? lt + 0.6 : 3.5 + (lt - 2.9) * 2.6);
-const mapAdapt  = lt => (lt < 2.4 ? lt + 0.6 : 3.0 + (lt - 2.4) * 1.515); // apaga en 2,4 s; la adaptacion tarda ~6 s
+const mapAdapt = lt => (lt < 1.8 ? lt + 1.2 : 3.0 + (lt - 1.8) * 1.8);   // apaga en 1,8 s; la puerta se abre a los ~5,4 s
 const card = dur => ({ dur, render: rCard, card: true });
 const SC = {
-  capilla: { dur: 5,   render: lt => rCapilla(lt * 1.4), fadeIn: 1.2 },
-  eclipse: { dur: 7,   render: lt => rEclipse(lt * 1.5), fadeOut: 0.6 },
-  placa1:  card(2.8),
-  tunel:   { dur: 4,   render: rTunel, fadeOut: 0.3 },
-  cuerpo:  { dur: 7,   render: lt => rCuerpo(mapCuerpo(lt)), fadeIn: 0.3, fadeOut: 0.3 },
-  hueco:   { dur: 5,   render: lt => rHueco(mapHueco(lt)), fadeIn: 0.3, fadeOut: 0.3 },
-  placa2:  card(3.2),
-  adapt:   { dur: 9,   render: lt => rAdapt(mapAdapt(lt)), fadeIn: 0.3, fadeOut: 0.4 },
-  montaje: { dur: MONTAGE_LEN + 0.15, render: rMontaje },
-  diamante:{ dur: 3,   render: lt => rDiamante(lt * 1.4), fadeIn: 0.4 },
-  final:   { dur: 5,   render: rFinal, over: oFinal },
-  coda:    { dur: 2,   render: rBlack, over: oCoda },
+  eclipse: { dur: 5.2, render: lt => rEclipse(2.0 + lt * 1.4), fadeIn: 0.8, fadeOut: 0.5 },
+  placa1:  card(2.6),
+  umbral:  { dur: 6.2, render: rUmbral, fadeIn: 0.6, fadeOut: 0.3 },
+  sala:    { dur: 5,   render: rSala, fadeIn: 0.3, fadeOut: 0.3 },
+  anclaA:  { dur: 3.4, render: rAnclaA, fadeIn: 0.2 },
+  anclaB:  { dur: 4.4, render: rAnclaB, fadeOut: 0.4 },
+  placa2:  card(2.8),
+  adapt:   { dur: 6.5, render: lt => rAdapt(mapAdapt(lt)), fadeIn: 0.3, fadeOut: 0.4 },
+  diamante:{ dur: 2.2, render: lt => rDiamante(1.2 + lt * 1.2), fadeIn: 0.3 },
+  final:   { dur: 4,   render: rFinal, over: lt => oFinal(lt * 1.25) },
+  coda:    { dur: 1.6, render: rBlack, over: lt => oCoda(lt * 1.25) },
 };
 const ORDER = Object.keys(SC);
 let TOTAL = 0; for (const id of ORDER) { SC[id].start = TOTAL; TOTAL += SC[id].dur; }
@@ -768,7 +908,7 @@ const CUES = [];
 const cue = (id, t0, t1, text, style) => CUES.push({ t0: SC[id].start + t0, t1: SC[id].start + t1, text, style });
 cue('placa1', 0.35, SC.placa1.dur - 0.1, 'Cuando el sol se apaga,\naparece un cráter.', 'card');
 cue('placa2', 0.35, SC.placa2.dur - 0.1, 'Pero hay una puerta\nque la luz no deja ver.', 'card');
-cue('adapt', 0.3, 2.35, 'Apagala.', 'big');
+cue('adapt', 0.2, 1.75, 'Apagala.', 'big');
 
 function drawCue(c, t) {
   const a = smooth(c.t0, c.t0 + 0.5, t) * (1 - smooth(c.t1 - 0.5, c.t1, t)); if (a <= 0) return;
@@ -943,29 +1083,26 @@ const AU = {
 
 const EVENTS = [];
 const at = (id, t, fn) => EVENTS.push({ t: SC[id].start + t, fn });
-at('capilla', 2.4, () => AU.bell());
-at('eclipse', 5.2 / 1.5, () => AU.grave());                 // totalidad: se callan los pajaros
-at('eclipse', 5.8 / 1.5, () => AU.rumble(2.2));             // sube el borde del crater
-at('eclipse', 8.8 / 1.5, () => { AU.tone(1318.5, 4, 0.09); AU.tone(1975.5, 3, 0.05); });
+at('eclipse', (5.2 - 2) / 1.4, () => AU.grave());               // totalidad: se callan los pajaros
+at('eclipse', (5.8 - 2) / 1.4, () => AU.rumble(2.2));           // sube el borde del crater
+at('eclipse', (8.8 - 2) / 1.4, () => { AU.tone(1318.5, 4, 0.09); AU.tone(1975.5, 3, 0.05); });
 for (const id of ORDER) if (SC[id].card) at(id, 0.3, () => AU.boom(0.7));
-at('tunel', 0.8, () => AU.click());
-at('cuerpo', 1.2 - 0.9, () => AU.equip());
-at('cuerpo', 3.35 - 0.9, () => AU.tone(220));
-at('cuerpo', 4.95 - 0.9, () => AU.tone(277.18));
-at('cuerpo', 5.0 - 0.9, () => { AU.tone(329.63, 5, 0.16); AU.tone(440, 5, 0.1); AU.swell(4); });
-at('hueco', 1.4 - 0.6, () => AU.equip());
-at('hueco', 2.55 - 0.6, () => AU.hiss(1));
-at('adapt', 2.4, () => AU.click());
-at('adapt', 2.4 + (9.4 - 3.0) / 1.515, () => { AU.boom(0.55); AU.swell(3); });
-CUTS.forEach((c, i) => at('montaje', CUT_T[i], () => (i === 0 ? AU.boom(0.9) : AU.hit())));
-at('diamante', 1.7 / 1.4, () => { AU.tone(1760, 3, 0.12); AU.tone(2637, 2.5, 0.06); });
+at('umbral', 0.2, () => AU.swell(5));
+at('umbral', 4.4, () => AU.click());
+at('anclaA', 0.3, () => AU.click());
+at('anclaA', 1.25, () => AU.tone(220));
+at('anclaB', 0.95, () => AU.tone(277.18));
+at('anclaB', 1.0, () => { AU.tone(329.63, 5, 0.16); AU.tone(440, 5, 0.1); AU.swell(4); });
+at('adapt', 1.8, () => AU.click());
+at('adapt', 1.8 + (9.4 - 3.0) / 1.8, () => { AU.boom(0.55); AU.swell(3); });
+at('diamante', (1.7 - 1.2) / 1.2, () => { AU.tone(1760, 3, 0.12); AU.tone(2637, 2.5, 0.06); });
 at('final', 0.05, () => AU.boom(1.1));
-at('final', 2.2, () => { AU.tone(110, 5, 0.18); AU.tone(164.8, 5, 0.1); });
-at('coda', 0.25, () => AU.click());
+at('final', 1.8, () => { AU.tone(110, 5, 0.18); AU.tone(164.8, 5, 0.1); });
+at('coda', 0.2, () => AU.click());
 EVENTS.sort((a, b) => a.t - b.t);
 
 // ------------------------------------------------------------------ reproduccion
-let T = SC.final.start + 3.6, playing = false, last = 0, started = false;
+let T = SC.final.start + 3.2, playing = false, last = 0, started = false;
 const $ = id => document.getElementById(id);
 const ui = { start: $('start'), end: $('end'), bar: $('bar'), fill: $('fill'), pause: $('btn-pause'), mute: $('btn-mute'), restart: $('btn-restart'), replay: $('btn-replay') };
 

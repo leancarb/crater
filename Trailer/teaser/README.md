@@ -1,23 +1,28 @@
 # CRATER — teaser
 
-Versión corta del tráiler (~58 s), en JavaScript puro con canvas 2D y WebAudio, sin dependencias.
+Teaser de ~44 s, en JavaScript puro con canvas 2D y WebAudio, sin dependencias.
 Abrir `index.html` y tocar **Ver tráiler**: el sonido necesita ese clic.
 
-Sigue el GDD v0.5 con la estructura del tráiler de *Silo*:
+Estética low-poly de facetas grandes y sombreado plano:
+- piedra clara contra negro;
+- el haz como una cuña translúcida, con su mancha nítida en el piso;
+- anclas de roca facetada con anillos;
+- puente de paneles triangulados.
 
-1. La capilla de día.
-2. El eclipse: sube el cráter y destella la puerta.
-3. Placa sobre negro.
-4. El túnel: se enciende la linterna.
-5. CUERPO: las anclas y el puente de luz.
-6. HUECO: la reja.
-7. Placa sobre negro.
-8. La Cresta: la pared espejo, "Apagala." y la puerta plateada.
-9. Montaje.
-10. Anillo de diamante.
-11. Título.
-12. PRÓXIMAMENTE.
+Sigue el GDD v0.5:
 
-Reutiliza las escenas de `../trailer.js` con un mapa de tiempo por escena (`SC` en `teaser.js`).
-Así se acorta sin cambiar la carga real de los receptores (0,35 s) ni la demora de cambio de filtro (0,8 s).
-Las placas están en `CUES`.
+1. El eclipse: sube el cráter y destella la puerta.
+2. Placa sobre negro.
+3. El Umbral: sala circular con el óculo estrellado y la linterna en el piso, que se enciende.
+4. La sala de los monolitos.
+5. CUERPO: el haz enciende un ancla y aparece el puente entre dos anclas.
+6. Placa sobre negro.
+7. La Cresta: la pared espejo, "Apagala." y la puerta plateada.
+8. Anillo de diamante.
+9. Título.
+10. PRÓXIMAMENTE.
+
+Sin montaje de repaso al final.
+
+`drawFrame(t)` depende solo de `t`. Los tiempos por escena están en `SC` y las placas en `CUES`.
+Las anclas cargan en 0,35 s, como en el juego.
