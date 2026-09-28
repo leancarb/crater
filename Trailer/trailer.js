@@ -823,7 +823,7 @@ function drawFrame(t) {
   m.drawImage(lo, VR.x, VR.y, VR.w, VR.h);
   // grano
   m.save(); m.beginPath(); m.rect(VR.x, VR.y, VR.w, VR.h); m.clip();
-  const gc = GRAIN[Math.floor(t * 24) % 4], pat = m.createPattern(gc, 'repeat');
+  const gc = GRAIN[Math.max(0, Math.floor(t * 24)) % 4], pat = m.createPattern(gc, 'repeat');
   m.translate(Math.random() * 192, Math.random() * 192);
   m.globalCompositeOperation = 'screen'; m.globalAlpha = S.grain; m.fillStyle = pat; m.fillRect(-192, -192, CW + 384, CH + 384);
   m.restore();
@@ -974,7 +974,8 @@ const ui = { start: $('start'), end: $('end'), bar: $('bar'), fill: $('fill'), p
 
 function loop(now) {
   if (!playing) return;
-  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  // el timestamp de rAF puede ser anterior a performance.now() del clic: dt nunca negativo
+  const dt = clamp((now - last) / 1000, 0, 0.1); last = now;
   const prev = T; T += dt;
   for (const e of EVENTS) if (e.t > prev && e.t <= T) e.fn();
   if (T >= TOTAL) { T = TOTAL - 0.001; drawFrame(T); finish(); return; }
