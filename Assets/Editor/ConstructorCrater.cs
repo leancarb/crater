@@ -58,17 +58,32 @@ public static partial class ConstructorCrater
     }
 
     [MenuItem("Crater/Construir demo Windows", priority = 20)]
-    public static void ConstruirWindows()
+    public static void ConstruirWindows() =>
+        Construir("Builds/Windows/CRATER.exe", BuildTarget.StandaloneWindows64);
+
+    /// <summary>
+    /// Genera CRATER.app para macOS (Intel y Apple Silicon). Se puede hacer desde Windows:
+    /// sólo hace falta instalar el módulo "Mac Build Support (Mono)" en Unity Hub.
+    /// La app no está firmada: en la Mac, abrirla con clic derecho › Abrir.
+    /// </summary>
+    [MenuItem("Crater/Construir demo Mac", priority = 21)]
+    public static void ConstruirMac() =>
+        Construir("Builds/Mac/CRATER.app", BuildTarget.StandaloneOSX);
+
+    /// <summary>Valida el proyecto y compila la escena para la plataforma dada.</summary>
+    static void Construir(string ruta, BuildTarget plataforma)
     {
         ValidarProyectoCrater.ValidarDesdeLineaDeComandos();
 
-        const string carpeta = "Builds/Windows";
-        Directory.CreateDirectory(carpeta);
+        if (!BuildPipeline.IsBuildTargetSupported(BuildPipeline.GetBuildTargetGroup(plataforma), plataforma))
+            throw new BuildFailedException($"Falta el módulo de {plataforma}: instalalo en Unity Hub › Installs › Add modules.");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(ruta));
         var opciones = new BuildPlayerOptions
         {
             scenes = new[] { RutaEscena },
-            locationPathName = carpeta + "/CRATER.exe",
-            target = BuildTarget.StandaloneWindows64,
+            locationPathName = ruta,
+            target = plataforma,
             options = BuildOptions.None
         };
 

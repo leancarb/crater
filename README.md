@@ -56,6 +56,7 @@ desde código**. No se editan a mano: se cambia el código y se reconstruye.
 - **Crater › Validar proyecto** — chequea que cada puzzle esté conectado y al alcance del haz.
 - **Crater › Renderizar vistas previas** — guarda capturas en `Assets/Art/Previews/Unity`.
 - **Crater › Construir demo Windows** — valida y compila en `Builds/Windows`.
+- **Crater › Construir demo Mac** — valida y compila `Builds/Mac/CRATER.app` (requiere el módulo *Mac Build Support* de Unity Hub; se puede hacer desde Windows).
 
 Dónde tocar:
 
