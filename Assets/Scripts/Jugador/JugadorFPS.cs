@@ -11,8 +11,7 @@ using UnityEngine;
 ///  - Mover: arma la dirección con los ejes del cuerpo y la suaviza (arranque y frenada
 ///    con peso). La gravedad se acumula en 'caida' y todo se aplica con cc.Move(), que
 ///    resuelve las colisiones con paredes y pisos.
-///  - Cabecear: la cámara sube y baja con el paso, y en cada pisada suena un paso.
-/// Las cinemáticas lo apagan (enabled = false) y usan MirarHacia / Orientar al terminar.
+/// Otros scripts pueden apagarlo (enabled = false) y usar MirarHacia / Orientar.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class JugadorFPS : MonoBehaviour
@@ -30,29 +29,16 @@ public class JugadorFPS : MonoBehaviour
     public float limiteVertical = 85f;
     public bool invertirY;
 
-    [Header("Cabeceo al caminar")]
-    public float amplitudCabeceo = 0.035f;
-    [Tooltip("Pasos por segundo a velocidad máxima.")]
-    public float pasosPorSegundo = 1.8f;
-
-    [Header("Pasos")]
-    public AudioSource fuentePasos;
-    public AudioClip[] pasos;
-
     CharacterController cc;
     Vector3 velocidadActual;   // velocidad horizontal suavizada
-    Vector3 camaraBase;        // posición local de la cámara sin cabeceo
     float caida;               // velocidad vertical (negativa = cayendo)
     float pitch;               // inclinación vertical de la cámara, en grados
-    float ciclo;               // fase del paso: avanza con la velocidad
     int framesIgnorados = 3;
-    int ultimoPaso;
 
     void Awake()
     {
         cc = GetComponent<CharacterController>();
         if (camara == null && Camera.main != null) camara = Camera.main.transform;
-        if (camara != null) camaraBase = camara.localPosition;
     }
 
     void Update()
@@ -94,37 +80,6 @@ public class JugadorFPS : MonoBehaviour
         Vector3 total = velocidadActual;
         total.y = caida;
         cc.Move(total * delta);
-
-        Cabecear(delta);
-    }
-
-    void Cabecear(float delta)
-    {
-        if (camara == null) return;
-
-        // 0 = quieto, 1 = caminando a velocidad máxima (en el aire no hay cabeceo)
-        float rapidez = cc.isGrounded ? Mathf.Clamp01(new Vector2(velocidadActual.x, velocidadActual.z).magnitude / velocidad) : 0f;
-        ciclo += rapidez * pasosPorSegundo * Mathf.PI * delta;
-
-        // la cabeza baja en cada paso (|sen|) y se mece un poco de costado (cos)
-        float onda = Mathf.Sin(ciclo);
-        camara.localPosition = camaraBase + new Vector3(
-            Mathf.Cos(ciclo) * amplitudCabeceo * 0.5f * rapidez,
-            -Mathf.Abs(onda) * amplitudCabeceo * rapidez,
-            0f);
-
-        // un paso cada medio ciclo, justo cuando la cabeza toca el punto más bajo
-        int paso = Mathf.FloorToInt(ciclo / Mathf.PI);
-        if (paso != ultimoPaso)
-        {
-            ultimoPaso = paso;
-            if (rapidez > 0.3f && fuentePasos != null && pasos != null && pasos.Length > 0)
-            {
-                // altura y clip al azar: dos pasos nunca suenan idénticos
-                fuentePasos.pitch = Random.Range(0.92f, 1.08f);
-                fuentePasos.PlayOneShot(pasos[Random.Range(0, pasos.Length)], Mathf.Lerp(0.5f, 1f, rapidez));
-            }
-        }
     }
 
     void AplicarPitch()
@@ -132,7 +87,7 @@ public class JugadorFPS : MonoBehaviour
         if (camara != null) camara.localRotation = Quaternion.Euler(pitch, 0f, 0f);
     }
 
-    /// <summary>Gira cuerpo y cámara para mirar un punto del mundo. Útil para cinemáticas y tests.</summary>
+    /// <summary>Gira cuerpo y cámara para mirar un punto del mundo. Útil para los tests.</summary>
     public void MirarHacia(Vector3 punto)
     {
         Vector3 ojo = camara != null ? camara.position : transform.position;

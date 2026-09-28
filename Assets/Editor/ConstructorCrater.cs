@@ -97,11 +97,9 @@ public static partial class ConstructorCrater
 
         var kit = new Kit { audio = GeneradorAudioCrater.GenerarTodo() };
         kit.cuerpo = ConfigurarFiltro(RutaFiltroCuerpo, "CUERPO", FiltroDefinicion.Canal.Cuerpo,
-            new Color(1f, 0.6f, 0.24f), "Enciende las anclas de basalto. Dos anclas encendidas tienden un puente de luz.",
-            kit.audio.equiparCuerpo, kit.audio.zumbidoCuerpo);
+            new Color(1f, 0.6f, 0.24f), "Enciende las anclas de basalto. Dos anclas encendidas tienden un puente de luz.");
         kit.hueco = ConfigurarFiltro(RutaFiltroHueco, "HUECO", FiltroDefinicion.Canal.Hueco,
-            new Color(0.32f, 0.45f, 1f), "Disuelve la materia hueca: rejas y tapas se vuelven atravesables.",
-            kit.audio.equiparHueco, kit.audio.zumbidoHueco);
+            new Color(0.32f, 0.45f, 1f), "Disuelve la materia hueca: rejas y tapas se vuelven atravesables.");
 
         CargarModelos(kit);
         CrearMateriales(kit);
@@ -135,7 +133,7 @@ public static partial class ConstructorCrater
     // ================================================================== datos
 
     static FiltroDefinicion ConfigurarFiltro(string ruta, string nombre, FiltroDefinicion.Canal canal, Color color,
-                                             string descripcion, AudioClip alEquipar, AudioClip zumbido)
+                                             string descripcion)
     {
         var filtro = AssetDatabase.LoadAssetAtPath<FiltroDefinicion>(ruta);
         if (filtro == null)
@@ -151,8 +149,6 @@ public static partial class ConstructorCrater
         filtro.alcance = 15f;
         filtro.intensidad = 420f;
         filtro.tiempoDeCarga = 0.4f;
-        filtro.sonidoAlEquipar = alEquipar;
-        filtro.zumbido = zumbido;
         EditorUtility.SetDirty(filtro);
         return filtro;
     }
@@ -489,11 +485,7 @@ public static partial class ConstructorCrater
         cc.slopeLimit = 50f;
         cc.skinWidth = 0.04f;
 
-        var fuentePasos = raiz.AddComponent<AudioSource>();
-        ConfigurarAudio(fuentePasos, null, 0.45f, false, false);
         var fps = raiz.AddComponent<JugadorFPS>();
-        fps.fuentePasos = fuentePasos;
-        fps.pasos = kit.audio.pasos;
         raiz.AddComponent<RespawnPorCaida>();
 
         var camaraGO = new GameObject("Camara") { tag = "MainCamera" };
@@ -519,8 +511,6 @@ public static partial class ConstructorCrater
         spot.shadows = LightShadows.Soft;
         spot.shadowNearPlane = 0.2f;
         spot.enabled = false;
-        var fuenteLinterna = linternaGO.AddComponent<AudioSource>();
-        ConfigurarAudio(fuenteLinterna, null, 0.5f, true, false);
         var linterna = linternaGO.AddComponent<LinternaController>();
         linterna.spot = spot;
         linterna.capaReceptores = LayerMask.GetMask(CapaAncla, CapaReceptor);
@@ -529,8 +519,6 @@ public static partial class ConstructorCrater
         linterna.requiereRecogerla = true;
         linterna.intensidadBase = 420f;
         linterna.alcanceBase = 15f;
-        linterna.sonidoEncender = kit.audio.linternaEncender;
-        linterna.sonidoApagar = kit.audio.linternaApagar;
         spot.range = linterna.alcanceBase;
         spot.spotAngle = linterna.anguloBase;
         spot.color = linterna.colorBase;
@@ -692,10 +680,6 @@ public static partial class ConstructorCrater
         recogible.visual = visual.transform;
         recogible.tintables = lente.GetComponentsInChildren<Renderer>(true).Where(r => r.name.Contains("Lens")).ToArray();
         recogible.brillo = CrearLuzHija(raiz.transform, "Brillo", new Vector3(0f, 1.1f, 0f), Color.white, 3f, 4.5f);
-        recogible.sonido = raiz.AddComponent<AudioSource>();
-        ConfigurarAudio(recogible.sonido, kit.audio.recoger, 0.8f, false, false);
-        recogible.flotacion = 0.08f;
-        recogible.giro = 50f;
 
         PonerCapa(raiz, LayerMask.NameToLayer("Ignore Raycast"));
         return raiz;
@@ -720,10 +704,6 @@ public static partial class ConstructorCrater
         var recogible = raiz.AddComponent<Recogible>();
         recogible.visual = visual.transform;
         recogible.brillo = CrearLuzHija(raiz.transform, "Brillo", new Vector3(0f, 0.5f, 0f), new Color(1f, 0.7f, 0.4f), 2.5f, 3.5f);
-        recogible.sonido = raiz.AddComponent<AudioSource>();
-        ConfigurarAudio(recogible.sonido, kit.audio.recoger, 0.8f, false, false);
-        recogible.flotacion = 0f;
-        recogible.giro = 0f;
 
         PonerCapa(raiz, LayerMask.NameToLayer("Ignore Raycast"));
         return raiz;

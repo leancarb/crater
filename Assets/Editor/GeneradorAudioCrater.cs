@@ -24,10 +24,7 @@ public static class GeneradorAudioCrater
     {
         public AudioClip[] tonosAncla;
         public AudioClip puenteAparecer, puenteDisolver, siseoReja, compuerta;
-        public AudioClip recoger, linternaEncender, linternaApagar, equiparCuerpo, equiparHueco;
-        public AudioClip zumbidoCuerpo, zumbidoHueco;
         public AudioClip ambienteCrater, vientoOculo, anilloDiamante;
-        public AudioClip[] pasos;
     }
 
     public static Clips GenerarTodo()
@@ -37,7 +34,7 @@ public static class GeneradorAudioCrater
 
         // La, Do#, Mi, La: cada par de anclas suena como un intervalo del mismo acorde
         float[] notas = { 220f, 277.18f, 329.63f, 440f, 554.37f, 659.25f };
-        var clips = new Clips { tonosAncla = new AudioClip[notas.Length], pasos = new AudioClip[4] };
+        var clips = new Clips { tonosAncla = new AudioClip[notas.Length] };
         for (int i = 0; i < notas.Length; i++)
             clips.tonosAncla[i] = Guardar($"ancla_tono_{i + 1}", Campana(notas[i], 3.2f, 0.55f));
 
@@ -45,18 +42,9 @@ public static class GeneradorAudioCrater
         clips.puenteDisolver = Guardar("puente_disolver", Barrido(640f, 140f, 0.7f, 0.4f, 12));
         clips.siseoReja = Guardar("reja_siseo", Bucle(Ruido(2f, 0.25f, 0.18f, 21), 0.25f));
         clips.compuerta = Guardar("compuerta_piedra", Retumbo(3.2f, 31));
-        clips.recoger = Guardar("recoger", Arpegio(new[] { 440f, 554.37f, 659.25f, 880f }, 0.11f, 1.6f));
-        clips.linternaEncender = Guardar("linterna_encender", Click(2400f, 0.35f, 41));
-        clips.linternaApagar = Guardar("linterna_apagar", Click(1700f, 0.3f, 42));
-        clips.equiparCuerpo = Guardar("filtro_cuerpo_equipar", Campana(329.63f, 0.9f, 0.4f));
-        clips.equiparHueco = Guardar("filtro_hueco_equipar", Campana(493.88f, 0.9f, 0.4f));
-        clips.zumbidoCuerpo = Guardar("filtro_cuerpo_zumbido", Dron(4f, new[] { 55f, 110f, 165.25f }, new[] { 0.5f, 0.25f, 0.08f }, 0.12f, 0f, 51));
-        clips.zumbidoHueco = Guardar("filtro_hueco_zumbido", Dron(4f, new[] { 73.5f, 147f }, new[] { 0.35f, 0.18f }, 0.1f, 0.05f, 52));
         clips.ambienteCrater = Guardar("ambiente_crater", Dron(12f, new[] { 41.25f, 61.75f, 82.5f }, new[] { 0.4f, 0.22f, 0.12f }, 0.35f, 0.04f, 61));
         clips.vientoOculo = Guardar("viento_oculo", Bucle(Viento(10f, 71), 1f));
         clips.anilloDiamante = Guardar("anillo_diamante", Tono(1568f, 8f, 0.45f));
-        for (int i = 0; i < clips.pasos.Length; i++)
-            clips.pasos[i] = Guardar($"paso_{i + 1}", Paso(91 + i));
 
         return clips;
     }
@@ -187,48 +175,6 @@ public static class GeneradorAudioCrater
             s[i] = env * (lp2 * 30f + 0.25f * Mathf.Sin(2f * Mathf.PI * 38f * t) + crujido);
         }
         return Normalizar(s, 0.6f);
-    }
-
-    static float[] Arpegio(float[] notas, float separacion, float duracion)
-    {
-        var s = new float[(int)(duracion * Muestreo)];
-        for (int n = 0; n < notas.Length; n++)
-        {
-            var nota = Campana(notas[n], duracion - separacion * n, 1f);
-            int inicio = (int)(separacion * n * Muestreo);
-            for (int i = 0; i < nota.Length && inicio + i < s.Length; i++) s[inicio + i] += nota[i] * 0.5f;
-        }
-        return Normalizar(s, 0.5f);
-    }
-
-    static float[] Click(float f, float volumen, int semilla)
-    {
-        var azar = new System.Random(semilla);
-        var s = new float[(int)(0.06f * Muestreo)];
-        for (int i = 0; i < s.Length; i++)
-        {
-            float t = i / (float)Muestreo;
-            float env = Mathf.Exp(-t / 0.008f);
-            s[i] = env * (0.6f * Mathf.Sin(2f * Mathf.PI * f * t) + 0.4f * (float)(azar.NextDouble() * 2 - 1));
-        }
-        return Normalizar(s, volumen);
-    }
-
-    static float[] Paso(int semilla)
-    {
-        var azar = new System.Random(semilla);
-        var s = new float[(int)(0.16f * Muestreo)];
-        float lp = 0f;
-        float corte = 0.05f + (float)azar.NextDouble() * 0.04f;
-        for (int i = 0; i < s.Length; i++)
-        {
-            float t = i / (float)Muestreo;
-            float blanco = (float)(azar.NextDouble() * 2 - 1);
-            lp += corte * (blanco - lp);
-            float env = Mathf.Clamp01(t / 0.004f) * Mathf.Exp(-t / 0.035f);
-            s[i] = env * (lp * 3f + 0.3f * Mathf.Sin(2f * Mathf.PI * 70f * t));
-        }
-        return Normalizar(s, 0.35f);
     }
 
     /// <summary>Funde el final con el principio para que el bucle no haga click.</summary>

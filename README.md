@@ -4,7 +4,9 @@ Rama `claude/demo-clase`: sólo el juego, sin interfaz. Empieza en la Explanada 
 termina al cruzar la puerta del eclipse; después vuelve a empezar solo.
 
 Sin HUD: no hay textos, mira, barra de carga ni título. Todo se comunica con luz,
-color y sonido. El estado de la progresión se puede ver en el Inspector, en el
+color y el sonido de los puzzles. También es más austera: los filtros no suenan ni
+zumban, los objetos para recoger están quietos, la linterna en la mano no se balancea
+y el jugador no cabecea ni hace ruido de pasos. El estado de la progresión se puede ver en el Inspector, en el
 objeto `SISTEMAS` → `FlujoJuegoCrater` → *Etapa Visible*.
 
 Unity 6000.3 · URP (Forward+) · Input System.
@@ -29,7 +31,7 @@ Unity 6000.3 · URP (Forward+) · Input System.
 
 | Sala | Qué se muestra | Script |
 |---|---|---|
-| 01 Explanada | Controlador en primera persona: sin salto ni carrera, cabeceo y pasos | `JugadorFPS` |
+| 01 Explanada | Controlador en primera persona: caminar y mirar, sin salto ni carrera | `JugadorFPS` |
 | 02 Umbral | Recoger la linterna. Luz blanca sostenida sobre el ancla: la **carga** sube y la compuerta se hunde | `Recogible`, `LinternaController`, `Ancla`, `Compuerta` |
 | 03 Campo | Filtro **CUERPO**. Enseñar: dos anclas juntas tienden un puente. Probar: anclas separadas, hay que barrer y cruzar con la **retención** (el ancla late cada vez más rápido y el puente parpadea antes de irse). Torcer: anclas en el techo | `ReceptorDeLuz`, `Ancla`, `PuenteLuz` |
 | 03 Campo (arriba) | Óculo: el eclipse congelado en el cielo | `ConstructorCrater` (textura generada) |

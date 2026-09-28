@@ -37,9 +37,4 @@ public class FiltroDefinicion : ScriptableObject
     [Header("Comportamiento")]
     [Tooltip("Segundos que hay que sostener el haz para activar un receptor.")]
     [Range(0.05f, 3f)] public float tiempoDeCarga = 0.35f;
-
-    [Header("Sonido")]
-    public AudioClip sonidoAlEquipar;
-    [Tooltip("Zumbido continuo mientras este filtro está puesto y la linterna encendida.")]
-    public AudioClip zumbido;
 }

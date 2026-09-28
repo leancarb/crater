@@ -21,7 +21,6 @@ using UnityEngine;
 /// AlEquiparFiltro, etc.) o consultan las propiedades de estado.
 /// 'Instancia' da acceso a la única linterna desde cualquier script (patrón singleton).
 /// </summary>
-[RequireComponent(typeof(AudioSource))]
 public class LinternaController : MonoBehaviour
 {
     public static LinternaController Instancia { get; private set; }
@@ -49,10 +48,6 @@ public class LinternaController : MonoBehaviour
     [Tooltip("Si está tildado, la linterna no responde hasta llamar a Recoger().")]
     public bool requiereRecogerla = true;
 
-    [Header("Sonido")]
-    public AudioClip sonidoEncender;
-    public AudioClip sonidoApagar;
-
     // --- estado (lo leen la adaptación, la puerta, el reflejo, los tests) ---
     public bool Encendida { get; private set; }
     public FiltroDefinicion FiltroActual { get; private set; }
@@ -75,7 +70,6 @@ public class LinternaController : MonoBehaviour
 
     bool yaRecogida;
     float finDelCambio;
-    AudioSource audioSource;
     // buffer fijo para OverlapSphereNonAlloc: no crea basura en memoria cada frame
     readonly Collider[] buffer = new Collider[32];
     // un receptor puede tener varios colliders: se procesa una sola vez por frame
@@ -88,7 +82,6 @@ public class LinternaController : MonoBehaviour
         filtros.RemoveAll(filtro => filtro == null);
         filtrosDesbloqueados.RemoveAll(filtro => filtro == null);
         if (spot == null) spot = GetComponentInChildren<Light>();
-        audioSource = GetComponent<AudioSource>();
         AplicarFiltro(null);
         Encendida = false;
         if (spot != null) spot.enabled = false;
@@ -111,13 +104,9 @@ public class LinternaController : MonoBehaviour
         if (CambiandoFiltro && Time.time >= finDelCambio)
             CambiandoFiltro = false;
 
-        // durante el cambio de filtro la luz baja casi a cero: el cambio se ve y se siente
+        // durante el cambio de filtro la luz queda casi apagada: así se ve que está cambiando
         if (spot != null)
-        {
-            // MoveTowards: la intensidad se acerca al objetivo de a poco, sin saltos
-            float objetivo = CambiandoFiltro ? IntensidadActual * 0.08f : IntensidadActual;
-            spot.intensity = Mathf.MoveTowards(spot.intensity, objetivo, IntensidadActual * 6f * Time.deltaTime);
-        }
+            spot.intensity = CambiandoFiltro ? IntensidadActual * 0.08f : IntensidadActual;
 
         if (Encendida && !CambiandoFiltro)
             IluminarReceptores(Time.deltaTime);
@@ -154,12 +143,6 @@ public class LinternaController : MonoBehaviour
         finDelCambio = Time.time + demoraDeCambio;
         AplicarFiltro(f);
         AlEquiparFiltro?.Invoke(f);
-
-        if (audioSource == null) audioSource = GetComponent<AudioSource>();
-        if (audioSource == null) return;
-        if (f != null && f.sonidoAlEquipar != null) audioSource.PlayOneShot(f.sonidoAlEquipar);
-        audioSource.clip = f != null ? f.zumbido : null;
-        ActualizarZumbido();
     }
 
     /// <summary>Copia los valores del filtro (o de la luz blanca) al Spot Light.</summary>
@@ -179,31 +162,8 @@ public class LinternaController : MonoBehaviour
         if (valor && !Disponible) return;
         if (Encendida == valor) return;
         Encendida = valor;
-        if (spot != null)
-        {
-            spot.enabled = valor;
-            if (valor) spot.intensity = IntensidadActual * 0.3f;   // arranque con un pequeño parpadeo
-        }
-
-        if (audioSource == null) audioSource = GetComponent<AudioSource>();
-        if (audioSource != null)
-        {
-            var click = valor ? sonidoEncender : sonidoApagar;
-            if (click != null) audioSource.PlayOneShot(click);
-            ActualizarZumbido();
-        }
+        if (spot != null) spot.enabled = valor;
         AlCambiarEncendido?.Invoke(valor);
-    }
-
-    /// <summary>El zumbido del filtro suena en bucle sólo con la linterna encendida.</summary>
-    void ActualizarZumbido()
-    {
-        audioSource.loop = true;
-        if (Encendida && audioSource.clip != null)
-        {
-            if (!audioSource.isPlaying) audioSource.Play();
-        }
-        else if (audioSource.isPlaying) audioSource.Stop();
     }
 
     /// <summary>Llamar cuando el jugador encuentra la linterna misma (El Umbral).</summary>
