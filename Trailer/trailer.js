@@ -3,13 +3,15 @@
  * Motor 3D minimo en canvas 2D (poligonos + painter's algorithm + luces spot),
  * sonido sintetizado con WebAudio. Sin dependencias.
  *
+ * Sigue el GDD v0.5 (capilla, eclipse, crater, CUERPO, HUECO, Cresta) y la
+ * estructura del trailer de Silo: placas de texto sobre negro con un golpe grave,
+ * planos lentos que se aceleran, el titulo recien al final y un cierre despues.
+ *
  * Las mecanicas que se muestran salen de Assets/Scripts:
- *   LinternaController  -> haz con cono, alcance y color por filtro, demora de cambio 0.8 s
+ *   LinternaController  -> haz con cono, alcance y color por filtro, demora de cambio
  *   Ancla + PuenteLuz   -> CUERPO: dos anclas encendidas sostienen un puente
  *   MateriaHueca        -> HUECO: la reja baja a 15 % de opacidad y se atraviesa
- *   RastroFosforescente -> RASTRO: brilla 8 s despues de apagar, curva pow(t, 0.45)
- *   AdaptacionOscuridad -> con la linterna apagada sube la exposicion, al encender se pierde
- *   Lente               -> alineacion ojo -> diafragma -> lente, sostenida 2.2 s
+ *   AdaptacionOscuridad -> con la linterna apagada sube la exposicion y aparece la puerta
  */
 (() => {
 'use strict';
@@ -49,8 +51,8 @@ function rng(seed) { // mulberry32
 // ------------------------------------------------------------------ paleta (de los assets del juego)
 const AMBER = [0.91, 0.63, 0.29];          // Filtro_Cuerpo / Ancla colorEncendida
 const BLUE  = [0.29, 0.357, 0.91];         // Filtro_Hueco
-const BONE  = [0.93, 0.918, 0.886];        // Filtro_Rastro / colorDelRastro
 const OCULO = [0.788, 0.443, 0.29];        // Mat_Oculo emission
+const ECL   = [0.78, 0.83, 0.93];          // plateado frio: corona, puerta, oculos (GDD 5)
 const WARM  = [1, 0.96, 0.88];             // LinternaController colorBase
 const ASH   = [0.30, 0.27, 0.24];
 const ROCK  = [0.21, 0.195, 0.185];
@@ -60,7 +62,6 @@ const FILTROS = {
   none:   { col: WARM,  ang: 28, range: 14, int: 5.0 },
   cuerpo: { col: AMBER, ang: 45, range: 14, int: 5.5 },
   hueco:  { col: BLUE,  ang: 55, range: 30, int: 8.0 },
-  rastro: { col: BONE,  ang: 32, range: 14, int: 5.0 },
 };
 const DEMORA_CAMBIO = 0.8;
 
@@ -142,7 +143,7 @@ function revolve(Q, prof, segs, o) {
   for (let k = 0; k < segs; k++) {
     const a = k / segs * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a), row = [];
     for (const [r, y, nr, ny] of pts) {
-      const p = V(r * ca, y, r * sa), d = disp(p) * amp * (1 - 0.7 * Math.abs(ny));
+      const p = V(r * ca + (o.cx || 0), y, r * sa + (o.cz || 0)), d = disp(p) * amp * (1 - 0.7 * Math.abs(ny));
       row.push(V(p.x + nr * ca * d, y + ny * d, p.z + nr * sa * d));
     }
     G.push(row);
@@ -234,7 +235,7 @@ function lightAt(px, py, pz, n, L, out) {
 }
 
 function renderWorld(Q, L, env) {
-  const amb = env.amb, E = env.E ?? 1, sat = env.sat ?? 1, fog = env.fog ?? 0.04;
+  const amb = env.amb, E = env.E ?? 1, sat = env.sat ?? 1, fog = env.fog ?? 0.04, fc = env.fogCol || [0, 0, 0];
   const list = [], acc = [0, 0, 0];
   for (const q of Q) {
     if (q.upd) q.upd(q);
@@ -251,7 +252,8 @@ function renderWorld(Q, L, env) {
     acc[0] = amb[0]; acc[1] = amb[1]; acc[2] = amb[2];
     lightAt(cx, cy, cz, q.n, L, acc);
     const dist = Math.hypot(cx - cam.p.x, cy - cam.p.y, cz - cam.p.z), fk = Math.exp(-dist * fog);
-    const col = tone((q.alb[0] * acc[0] + q.em[0]) * fk, (q.alb[1] * acc[1] + q.em[1]) * fk, (q.alb[2] * acc[2] + q.em[2]) * fk, E, sat);
+    const col = tone((q.alb[0] * acc[0] + q.em[0]) * fk + fc[0] * (1 - fk), (q.alb[1] * acc[1] + q.em[1]) * fk + fc[1] * (1 - fk),
+                     (q.alb[2] * acc[2] + q.em[2]) * fk + fc[2] * (1 - fk), E, sat);
     list.push({ d: (cs[0][2] + cs[1][2] + cs[2][2] + cs[3][2]) / 4, sp, col, a: q.a });
   }
   list.sort((a, b) => b.d - a.d);
@@ -318,10 +320,148 @@ function polyline(pts, lw, color, alpha) {
 
 // ------------------------------------------------------------------ estado por frame
 const S = { audio: null, grain: 0.05, flash: 0 };
-function resetS() { S.audio = { drone: 0.3, wind: 0.1, hum: 0, humF: 110 }; S.grain = 0.05; S.flash = 0; }
+function resetS() { S.audio = { drone: 0.3, wind: 0.1, hum: 0, humF: 110, birds: 0 }; S.grain = 0.05; S.flash = 0; }
 const walkBob = (z, amp = 1) => ({ y: 0.028 * amp * MOTION * Math.sin(z * 6.2), roll: 0.006 * amp * MOTION * Math.sin(z * 3.1) });
 
 // ================================================================== ESCENAS
+// ---- el sol y el eclipse (2D, en el cielo) --------------------------------
+function corona(x, y, r, a = 1) {
+  g.globalCompositeOperation = 'lighter';
+  const gr = g.createRadialGradient(x, y, r * 0.95, x, y, r * 3.4);
+  gr.addColorStop(0, 'rgba(225,235,255,' + 0.95 * a + ')'); gr.addColorStop(0.18, 'rgba(190,205,240,' + 0.45 * a + ')');
+  gr.addColorStop(1, 'rgba(160,180,230,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, r * 3.4, 0, 6.283); g.fill();
+  g.lineCap = 'round';
+  for (let i = 0; i < 46; i++) {
+    const an = i / 46 * 6.283 + hash(i, 4, 4) * 0.12, len = r * (1.25 + 2.3 * Math.pow(hash(i, 5, 5), 2));
+    g.strokeStyle = 'rgba(215,228,255,' + (0.1 + 0.18 * hash(i, 6, 6)) * a + ')'; g.lineWidth = Math.max(0.6, r * 0.05);
+    g.beginPath(); g.moveTo(x + Math.cos(an) * r, y + Math.sin(an) * r); g.lineTo(x + Math.cos(an) * len, y + Math.sin(an) * len); g.stroke();
+  }
+  g.globalCompositeOperation = 'source-over';
+  g.fillStyle = '#000'; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill();
+  g.strokeStyle = 'rgba(240,246,255,' + 0.9 * a + ')'; g.lineWidth = Math.max(1, r * 0.04);
+  g.beginPath(); g.arc(x, y, r, 0, 6.283); g.stroke();
+}
+// prog: 0 sol entero, 1 totalidad. La luna no se ve de dia: se pinta del color del cielo.
+function sunDisk(x, y, r, prog, skyCss) {
+  if (prog >= 1) { corona(x, y, r); return; }
+  const off = (1 - prog) * 2.1 * r, visible = clamp(off / (2.1 * r));
+  g.fillStyle = '#fffaf0'; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill();
+  g.fillStyle = skyCss; g.beginPath(); g.arc(x + off, y - off * 0.3, r * 1.03, 0, 6.283); g.fill();
+  g.globalCompositeOperation = 'lighter';
+  const gl = g.createRadialGradient(x, y, r * 0.6, x, y, r * 9);
+  gl.addColorStop(0, 'rgba(255,250,235,' + 0.6 * (0.15 + 0.85 * visible) + ')'); gl.addColorStop(1, 'rgba(255,250,235,0)');
+  g.fillStyle = gl; g.fillRect(0, 0, W, H);
+  g.globalCompositeOperation = 'source-over';
+}
+function bead(x, y, r, k) { // anillo de diamante
+  if (k <= 0) return;
+  const bx = x + Math.cos(-0.75) * r, by = y + Math.sin(-0.75) * r, R = r * (0.4 + 5 * k * k);
+  g.globalCompositeOperation = 'lighter';
+  const gr = g.createRadialGradient(bx, by, 0, bx, by, R);
+  gr.addColorStop(0, 'rgba(255,255,255,' + Math.min(1, 0.4 + k) + ')'); gr.addColorStop(0.2, 'rgba(240,246,255,' + 0.6 * k + ')'); gr.addColorStop(1, 'rgba(220,230,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  g.fillStyle = 'rgba(255,255,255,' + 0.7 * k + ')';
+  g.fillRect(bx - R * 1.6, by - 0.7, R * 3.2, 1.4); g.fillRect(bx - 0.7, by - R * 1.2, 1.4, R * 2.4);
+  g.globalCompositeOperation = 'source-over';
+}
+
+// ---- 0. La capilla y el valle (prologo del GDD) ---------------------------
+const ADOBE = [0.82, 0.8, 0.74], PIEDRA = [0.42, 0.39, 0.35], PAJA = [0.55, 0.45, 0.28], PASTO = [0.38, 0.34, 0.24];
+const SUN_DIR = vnorm(V(0, Math.sin(0.34), Math.cos(0.34))), CRATER_C = V(0, 0, 78);
+const STV = { rise: 0 };
+const W_VALLE = (() => {
+  const Q = [];
+  grid(Q, V(-120, 0, -60), V(240, 0, 0), V(0, 0, 260), 24, 26, { alb: PASTO, amp: 1.4, jit: 0.22 });
+  // capilla andina: zocalo, nave encalada, techo de paja a dos aguas, espadana con cruz
+  box(Q, 0, 0.4, -15.5, 6.4, 0.8, 11.4, { alb: PIEDRA, jit: 0.15 });
+  box(Q, 0, 2.65, -15.5, 6, 3.7, 11, { alb: ADOBE, jit: 0.05 });
+  quad(Q, V(-3.3, 4.5, -21.3), V(-3.3, 4.5, -9.7), V(0, 6.8, -9.7), V(0, 6.8, -21.3), { alb: PAJA, jit: 0.15 });
+  quad(Q, V(3.3, 4.5, -9.7), V(3.3, 4.5, -21.3), V(0, 6.8, -21.3), V(0, 6.8, -9.7), { alb: PAJA, jit: 0.15 });
+  quad(Q, V(-3, 4.5, -9.98), V(3, 4.5, -9.98), V(0, 6.8, -9.98), V(0, 6.8, -9.98), { alb: ADOBE, jit: 0.03 });
+  box(Q, 0, 7.6, -10.1, 2.2, 1.8, 0.6, { alb: ADOBE, jit: 0.04 });
+  quad(Q, V(-0.3, 7.2, -9.78), V(0.3, 7.2, -9.78), V(0.3, 8.0, -9.78), V(-0.3, 8.0, -9.78), { alb: [0.05, 0.045, 0.04], jit: 0 });
+  box(Q, 0, 8.95, -10.1, 0.12, 0.9, 0.12, { alb: [0.3, 0.25, 0.2] }); box(Q, 0, 9.1, -10.1, 0.55, 0.12, 0.12, { alb: [0.3, 0.25, 0.2] });
+  quad(Q, V(-0.7, 0.8, -9.96), V(0.7, 0.8, -9.96), V(0.7, 3.1, -9.96), V(-0.7, 3.1, -9.96), { alb: [0.06, 0.05, 0.04], jit: 0 });
+  quad(Q, V(0, 3.6, -9.96), V(0.35, 3.95, -9.96), V(0, 4.3, -9.96), V(-0.35, 3.95, -9.96), { alb: [0.06, 0.05, 0.04], jit: 0 });
+  for (const x of [-3.35, 3.35]) box(Q, x, 1.5, -10.4, 0.9, 3, 1.3, { alb: ADOBE, jit: 0.05 });
+  // atrio: pirca, arco de ingreso, cruz atrial
+  for (const x of [-5, 5]) box(Q, x, 0.45, -3, 6.4, 0.9, 0.6, { alb: PIEDRA, jit: 0.2 });
+  for (const x of [-1.6, 1.6]) box(Q, x, 1.3, -3, 0.6, 2.6, 0.6, { alb: ADOBE, jit: 0.05 });
+  box(Q, 0, 2.8, -3, 3.8, 0.5, 0.6, { alb: ADOBE, jit: 0.05 });
+  box(Q, 4.2, 1.6, -6.5, 0.16, 3.2, 0.16, { alb: [0.3, 0.25, 0.2] }); box(Q, 4.2, 2.6, -6.5, 1.1, 0.16, 0.16, { alb: [0.3, 0.25, 0.2] });
+  // cardones
+  const R = rng(31);
+  for (let i = 0; i < 14; i++) {
+    const x = (R() < 0.5 ? -1 : 1) * (9 + R() * 40), z = -30 + R() * 90, h = 2 + R() * 3.5, c = { alb: [0.2, 0.27, 0.15], jit: 0.2 };
+    box(Q, x, h / 2, z, 0.45, h, 0.45, c);
+    if (R() < 0.7) { const ah = h * (0.45 + R() * 0.3); box(Q, x + 0.5, ah, z, 0.6, 0.3, 0.3, c); box(Q, x + 0.7, ah + 0.6, z, 0.3, 1.2, 0.3, c); }
+  }
+  // el borde del crater, que sube cuando empieza la totalidad
+  revolve(Q, [[15, -2], [18.5, 6.5], [22, 4.5], [27, -2]], 40, { alb: ROCK, amp: 1.6, tile: 2.2, cx: CRATER_C.x, cz: CRATER_C.z,
+    upd: q => { q.a = STV.rise > 0.01 ? 1 : 0; q.off = V(0, (STV.rise - 1) * 8.5, 0); } });
+  return Q;
+})();
+const lerp3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+const css3 = c => 'rgb(' + (c[0] * 255 | 0) + ',' + (c[1] * 255 | 0) + ',' + (c[2] * 255 | 0) + ')';
+function valle(prog) {
+  const day = 1 - smooth(0.5, 1, prog), tot = smooth(0.92, 1, prog);
+  // cielo: de dia claro, en la totalidad noche con el horizonte encendido en 360
+  const top = lerp3([0.02, 0.03, 0.07], [0.55, 0.66, 0.78], day), hor = lerp3(lerp3([0.2, 0.2, 0.26], [0.36, 0.2, 0.12], tot), [0.86, 0.86, 0.83], day);
+  const hp = proj(vadd(cam.p, V(Math.sin(cam.yaw) * 2000, 0, Math.cos(cam.yaw) * 2000)));
+  const hy = hp ? hp[1] : H * 0.6, sky = g.createLinearGradient(0, hy - H * 1.2, 0, hy);
+  sky.addColorStop(0, css3(top)); sky.addColorStop(1, css3(hor));
+  g.fillStyle = sky; g.fillRect(0, 0, W, H);
+  const sp = proj(vadd(cam.p, vmul(SUN_DIR, 1000)));
+  if (sp) sunDisk(sp[0], sp[1], CT.f * 0.03, prog, css3(lerp3(top, hor, clamp((sp[1] - (hy - H * 1.2)) / (H * 1.2)))));
+  // cerros facetados lejanos
+  const mc = css3(lerp3([0.03, 0.03, 0.05], [0.55, 0.58, 0.6], day));
+  g.fillStyle = mc; g.strokeStyle = mc; g.lineWidth = 0.8;
+  for (let i = 0; i < 90; i++) {
+    const a0 = i / 90 * 6.283, a1 = (i + 1) / 90 * 6.283, hgt = a => 30 + 38 * Math.abs(Math.sin(a * 3.1)) + 16 * Math.sin(a * 7.3 + 1);
+    const P = [V(Math.sin(a0) * 700, -40, Math.cos(a0) * 700), V(Math.sin(a1) * 700, -40, Math.cos(a1) * 700),
+               V(Math.sin(a1) * 700, hgt(a1), Math.cos(a1) * 700), V(Math.sin(a0) * 700, hgt(a0), Math.cos(a0) * 700)].map(proj);
+    if (P.some(q => !q)) continue;
+    g.beginPath(); P.forEach((q, k) => (k ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]))); g.closePath(); g.fill(); g.stroke();
+  }
+  const L = [{ p: vmul(SUN_DIR, 3000), col: [1, 0.97, 0.9], int: 1.35 * day, k: 0, range: 9000 },
+             { p: vmul(SUN_DIR, 3000), col: ECL, int: 0.05 * tot, k: 0, range: 9000 }];
+  const env = { amb: lerp3([0.006, 0.007, 0.012], [0.32, 0.33, 0.36], day), fog: 0.006,
+                fogCol: lerp3([0.012, 0.012, 0.02], [0.75, 0.77, 0.78], day) };
+  renderWorld(W_VALLE, L, env);
+  return { day, tot };
+}
+function rCapilla(lt) {
+  cam.p = V(lerp(7.5, 5.2, lt / 7), 1.6, lerp(6, 3.2, lt / 7)); cam.fov = 1.05; cam.roll = 0;
+  const d = vsub(V(0, 3.4, -14), cam.p);
+  cam.yaw = Math.atan2(d.x, d.z) + 0.01 * hh(lt * 0.3); cam.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z)) + 0.008 * hh(lt * 0.4);
+  setCam();
+  valle(smooth(4, 7, lt) * 0.35);
+  S.audio = { drone: 0, wind: 0.12, hum: 0, humF: 110, birds: 1 };
+}
+function rEclipse(lt) {
+  const prog = clamp(lt / 5.2);
+  STV.rise = ease(clamp((lt - 5.8) / 3));
+  cam.p = V(0.05 * hh(lt * 0.2), 1.6, -1.5); cam.fov = 1.12; cam.roll = 0;
+  cam.yaw = 0.015 * hh(lt * 0.3); cam.pitch = key(lt, [[0, 0.32], [5.4, 0.32], [7.4, 0.1], [10.5, 0.07]]);
+  setCam();
+  const v = valle(prog);
+  // destella el contorno de la puerta en el centro del crater
+  const k = smooth(8.8, 9.1, lt) * (0.35 + 0.65 * Math.exp(-Math.max(0, lt - 9.1) * 2.5));
+  const dp = proj(vadd(CRATER_C, V(0, 1.2, 0)));
+  if (k > 0 && dp) {
+    g.globalCompositeOperation = 'lighter';
+    const R = CT.f / dp[2] * 12, gr = g.createRadialGradient(dp[0], dp[1], 0, dp[0], dp[1], R);
+    gr.addColorStop(0, 'rgba(235,242,255,' + k + ')'); gr.addColorStop(0.15, 'rgba(200,215,245,' + 0.5 * k + ')'); gr.addColorStop(1, 'rgba(180,200,240,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(240,246,255,' + 0.8 * k + ')'; g.fillRect(dp[0] - R * 0.9, dp[1] - 0.5, R * 1.8, 1);
+    const arch = []; for (let i = 0; i <= 16; i++) { const a = Math.PI - i / 16 * Math.PI; arch.push(V(CRATER_C.x + Math.cos(a) * 1.2, 2.2 + Math.sin(a) * 1.2, CRATER_C.z)); }
+    polyline([V(-1.2, 0, CRATER_C.z), ...arch, V(1.2, 0, CRATER_C.z)], 1.2, 'rgb(240,246,255)', k);
+    g.globalCompositeOperation = 'source-over';
+  }
+  S.audio = { drone: 0.4 * v.tot, wind: 0.12 + 0.1 * v.tot, hum: 0, humF: 110, birds: prog < 1 ? 1 : 0 };
+}
+
 // ---- 1. El oculo -----------------------------------------------------------
 const W_OCULO = (() => {
   const Q = [];
@@ -337,20 +477,19 @@ function rOculo(lt) {
   cam.pitch = lerp(1.02, -0.05, ease(clamp((lt - 1.0) / 6.4)));
   cam.yaw = 0.05 * hh(lt * 0.3); cam.roll = 0.01 * hh(lt * 0.25 + 4); cam.fov = 1.0;
   setCam();
-  const sun = { p: V(0, 24, 0), dir: V(0, -1, 0), col: [1.0, 0.56, 0.32], int: 2.6, k: 0.0015, range: 70,
+  const sun = { p: V(0, 24, 0), dir: V(0, -1, 0), col: ECL, int: 1.9, k: 0.0015, range: 70,
                 cosO: Math.cos(0.4), cosI: Math.cos(0.17) };
-  const L = [sun, { p: V(0, 21, 0), col: OCULO, int: 0.05, k: 0.0005, range: 60 }], env = { amb: [0.009, 0.008, 0.009], fog: 0.01 };
+  const L = [sun, { p: V(0, 21, 0), col: ECL, int: 0.05, k: 0.0005, range: 60 }], env = { amb: [0.009, 0.008, 0.009], fog: 0.01 };
   // cielo tras el oculo
   const ring = []; for (let i = 0; i < 40; i++) { const a = i / 40 * 6.283; ring.push(proj(V(Math.cos(a) * 6.4, 22.2, Math.sin(a) * 6.4))); }
   const ctr = proj(V(0, 22.6, 0));
   if (ctr && ring.every(Boolean)) {
     const R = Math.hypot(ring[0][0] - ctr[0], ring[0][1] - ctr[1]) * 1.2;
     const gl = g.createRadialGradient(ctr[0], ctr[1], 0, ctr[0], ctr[1], R * 3);
-    gl.addColorStop(0, 'rgba(201,113,74,0.35)'); gl.addColorStop(1, 'rgba(201,113,74,0)');
+    gl.addColorStop(0, 'rgba(170,190,235,0.22)'); gl.addColorStop(1, 'rgba(170,190,235,0)');
     g.fillStyle = gl; g.fillRect(0, 0, W, H);
-    const gr = g.createRadialGradient(ctr[0], ctr[1], 0, ctr[0], ctr[1], R);
-    gr.addColorStop(0, '#fff3e2'); gr.addColorStop(0.45, '#ffc98f'); gr.addColorStop(1, '#c9714a');
-    g.fillStyle = gr; g.beginPath(); ring.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fill();
+    g.save(); g.fillStyle = '#060a18'; g.beginPath(); ring.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fill(); g.clip();
+    corona(ctr[0], ctr[1], R * 0.24); g.restore();
   }
   renderWorld(W_OCULO, L, env);
   // columna de luz
@@ -360,7 +499,7 @@ function rOculo(lt) {
     const P = [V(Math.cos(a0) * 6, 22, Math.sin(a0) * 6), V(Math.cos(a1) * 6, 22, Math.sin(a1) * 6),
                V(Math.cos(a1) * 9.6, 0, Math.sin(a1) * 9.6), V(Math.cos(a0) * 9.6, 0, Math.sin(a0) * 9.6)].map(proj);
     if (P.some(p => !p)) continue;
-    g.fillStyle = 'rgba(255,150,95,0.022)'; g.beginPath(); P.forEach((p, k) => k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.fill();
+    g.fillStyle = 'rgba(185,200,240,0.02)'; g.beginPath(); P.forEach((p, k) => k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.fill();
   }
   g.globalCompositeOperation = 'source-over';
   motes(320, 7, (i, a, b, c) => {
@@ -392,7 +531,7 @@ function rTunel(lt) {
   S.audio = { drone: 0.35, wind: 0.14, hum: 0, humF: 110 };
 }
 
-// ---- 3 / 10. Titulos --------------------------------------------------------
+// ---- placas y titulos --------------------------------------------------------
 function rBlack() { S.audio = { drone: 0.2, wind: 0.05, hum: 0, humF: 110 }; }
 
 // ---- 4. CUERPO: anclas y puente de luz -------------------------------------
@@ -482,197 +621,100 @@ function rHueco(lt) {
   S.audio = { drone: 0.36, wind: 0.14, hum: lt > 1.4 ? 0.11 : 0, humF: 82.4 };
 }
 
-// ---- 6. RASTRO: la escritura que queda -------------------------------------
-const GLY = (() => {
-  const R = rng(23), out = [];
-  for (const y of [1.15, 1.85, 2.55, 3.25]) for (let x = -5.6; x <= 5.61; x += 0.66) {
-    if (R() < 0.12) continue;
-    const strokes = [], n = 2 + Math.floor(R() * 3), P = (i, j) => V(x + (i - 1) * 0.2, y + (j - 1) * 0.2, 5.97);
-    for (let s = 0; s < n; s++) {
-      let i = Math.floor(R() * 3), j = Math.floor(R() * 3); const line = [P(i, j)];
-      for (let k = 0; k < 1 + Math.floor(R() * 2); k++) { i = clamp(i + Math.floor(R() * 3) - 1, 0, 2); j = clamp(j + Math.floor(R() * 3) - 1, 0, 2); line.push(P(i, j)); }
-      if (line.length > 1) strokes.push(line);
-    }
-    out.push({ c: V(x, y, 5.97), strokes, last: -99 });
-  }
-  return out;
-})();
-const W_RASTRO = (() => {
-  const Q = [];
-  grid(Q, V(-7, 0, -3), V(14, 0, 0), V(0, 0, 9), 16, 10, { alb: ASH, amp: 0.1 });
-  grid(Q, V(-7, 0, 6), V(14, 0, 0), V(0, 4.6, 0), 40, 13, { alb: [0.34, 0.31, 0.28], amp: 0.1 });
-  grid(Q, V(-7, 0, -3), V(0, 0, 9), V(0, 4.6, 0), 10, 6, { alb: ROCK, amp: 0.2 });
-  grid(Q, V(7, 0, -3), V(0, 4.6, 0), V(0, 0, 9), 6, 10, { alb: ROCK, amp: 0.2 });
-  grid(Q, V(-7, 4.6, -3), V(0, 0, 9), V(14, 0, 0), 8, 14, { alb: ROCK, amp: 0.15 });
-  return Q;
-})();
-function camRastro(t) {
-  const back = ease(clamp((t - 6.4) / 4.6));
-  const yaw = key(t, [[0, -0.12], [1.9, -0.82], [6.1, 0.82], [7.5, 0.3], [11.5, 0.0]]);
-  const pitch = t > 1.9 && t < 6.1 ? 0.09 + 0.15 * Math.sin((t - 1.9) * 3.4) : key(t, [[0, 0.05], [1.9, 0.09], [6.1, 0.09], [8, 0.1]]);
-  return { p: V(0, 1.65, 0.2 - 1.4 * back), yaw: yaw + 0.02 * hh(t), pitch };
-}
-function rRastro(lt) {
-  // simulacion: cada glifo guarda la ultima vez que el haz RASTRO lo toco
-  for (const gl of GLY) gl.last = -99;
-  for (let t = 1.8; t <= Math.min(lt, 6.3); t += 1 / 30) {
-    const c = camRastro(t), dir = fwdOf(c.yaw, c.pitch), cosHalf = Math.cos(16 * Math.PI / 180);
-    for (const gl of GLY) { const d = vnorm(vsub(gl.c, c.p)); if (d.x * dir.x + d.y * dir.y + d.z * dir.z > cosHalf) gl.last = t; }
-  }
-  const c = camRastro(lt);
-  cam.p = c.p; cam.yaw = c.yaw; cam.pitch = c.pitch; cam.roll = 0; cam.fov = 1.1; setCam();
-  let sum = 0;
-  for (const gl of GLY) { const rest = 8 - (lt - gl.last); gl.b = rest > 0 ? Math.pow(clamp(rest / 8), 0.45) * 2.2 : 0; sum += gl.b; }
-  const on = lt < 6.3, bs = beamState(lt, 1.0, 'none', 'rastro');
-  const L = on ? [flashlight(bs.F, bs.mul, 0.03 * hh(lt + 7), -0.02)] : [];
-  L.push({ p: V(0, 2.2, 5.3), col: BONE, int: 0.035 * sum, k: 0.1, range: 9 });
-  const env = { amb: [0.001, 0.001, 0.0011], fog: 0.03 };
-  renderWorld(W_RASTRO, L, env);
-  g.globalCompositeOperation = 'lighter';
-  for (const gl of GLY) {
-    if (gl.b < 0.01) continue;
-    const s = proj(gl.c); if (!s) continue;
-    const col = tone(BONE[0] * gl.b, BONE[1] * gl.b, BONE[2] * gl.b, 1, 1), lw = 0.045 * CT.f / s[2];
-    for (const st of gl.strokes) { polyline(st, lw * 3, rgb(col), 0.16 * Math.min(1, gl.b)); polyline(st, lw, rgb(col), Math.min(1, gl.b * 0.8)); }
-  }
-  g.globalCompositeOperation = 'source-over';
-  if (on) haze(L[0]);
-  S.audio = { drone: 0.3, wind: 0.12, hum: on && lt > 1.0 ? 0.1 : 0, humF: 146.8 };
-}
-
-// ---- 7. Adaptacion a la oscuridad ------------------------------------------
+// ---- 6. La Cresta: pared espejo, oscuridad y la puerta del eclipse --------
 const W_ADAPT = (() => {
   const Q = [];
   grid(Q, V(-10, 0, -2), V(20, 0, 0), V(0, 0, 14), 20, 14, { alb: ASH, amp: 0.15 });
-  grid(Q, V(-10, 0, 12), V(20, 0, 0), V(0, 14, 0), 28, 18, { alb: [0.31, 0.29, 0.27], amp: 0.12 });
+  grid(Q, V(-10, 0, 12), V(20, 0, 0), V(0, 14, 0), 28, 18, { alb: [0.13, 0.125, 0.12], amp: 0.02, jit: 0.08 }); // basalto pulido
   grid(Q, V(-10, 0, -2), V(0, 0, 14), V(0, 14, 0), 12, 11, { alb: ROCK, amp: 0.4 });
   grid(Q, V(10, 0, -2), V(0, 14, 0), V(0, 0, 14), 11, 12, { alb: ROCK, amp: 0.4 });
   grid(Q, V(-10, 14, -2), V(0, 0, 14), V(20, 0, 0), 8, 12, { alb: ROCK, amp: 0.3 });
   for (const x of [-7.5, 7.5]) for (const z of [2.5, 6.5, 10.5]) box(Q, x, 7, z, 1.1, 14, 1.1, { alb: [0.26, 0.24, 0.22], jit: 0.12 });
   return Q;
 })();
+const WALL_Z = 12, DOOR_R = 2.4, DOOR_TOP = 6.4;
+const archPts = (r, top, z) => { const p = [V(-r, 0.3, z), V(-r, top, z)];
+  for (let i = 1; i < 18; i++) { const a = Math.PI - i / 18 * Math.PI; p.push(V(Math.cos(a) * r, top + Math.sin(a) * r, z)); }
+  p.push(V(r, top, z), V(r, 0.3, z)); return p; };
+// tallados latentes (azul) y el contorno de la puerta (plateado): espiral, serpiente escalonada, chakana, rombo
 const DOOR = (() => {
-  const Z = 11.95, arch = (r, top) => { const p = [V(-r, 0.3, Z), V(-r, top, Z)];
-    for (let i = 1; i < 18; i++) { const a = Math.PI - i / 18 * Math.PI; p.push(V(Math.cos(a) * r, top + Math.sin(a) * r, Z)); }
-    p.push(V(r, top, Z), V(r, 0.3, Z)); return p; };
-  const lines = [{ pts: arch(2.4, 6.4), em: 0.0034, col: BONE }, { pts: arch(2.95, 6.4), em: 0.0026, col: BONE },
-                 { pts: arch(3.5, 6.4), em: 0.0018, col: BONE }, { pts: [V(0, 0.3, Z), V(0, 7.6, Z)], em: 0.009, col: OCULO }];
-  const eye = [], iris = [];
-  for (let i = 0; i <= 32; i++) { const a = i / 32 * 6.283; eye.push(V(Math.cos(a) * 2.1, 10.7 + Math.sin(a) * 0.85 * Math.abs(Math.sin(a)) * Math.sign(Math.sin(a)), Z)); iris.push(V(Math.cos(a) * 0.5, 10.7 + Math.sin(a) * 0.5, Z)); }
-  lines.push({ pts: eye, em: 0.003, col: BONE }, { pts: iris, em: 0.008, col: OCULO });
-  for (let i = 0; i < 9; i++) { const a = Math.PI * (0.12 + i / 8 * 0.76); lines.push({ pts: [V(Math.cos(a) * 2.5, 10.7 + Math.sin(a) * 1.1, Z), V(Math.cos(a) * 3.4, 10.7 + Math.sin(a) * 1.9, Z)], em: 0.002, col: BONE }); }
-  lines.push({ pts: [V(-9.8, 0.4, Z), V(9.8, 0.4, Z)], em: 0.0015, col: BONE });
+  const Z = WALL_Z - 0.05, lines = [];
+  lines.push({ pts: archPts(DOOR_R, DOOR_TOP, Z), em: 0.0032, col: ECL }, { pts: archPts(2.95, DOOR_TOP, Z), em: 0.0024, col: ECL });
+  const espiral = (cx, cy, s2) => { const p = []; for (let i = 0; i <= 70; i++) { const a = i / 70 * 4.5 * Math.PI, r = s2 * i / 70; p.push(V(cx + Math.cos(a) * r, cy + Math.sin(a) * r, Z)); } return p; };
+  lines.push({ pts: espiral(-5.6, 4.4, 1.2), em: 0.003, col: BLUE }, { pts: espiral(5.6, 4.4, 1.2), em: 0.003, col: BLUE });
+  const chak = [[1, 3], [1, 2], [2, 2], [2, 1], [3, 1], [3, -1], [2, -1], [2, -2], [1, -2], [1, -3], [-1, -3], [-1, -2], [-2, -2], [-2, -1], [-3, -1], [-3, 1], [-2, 1], [-2, 2], [-1, 2], [-1, 3], [1, 3]];
+  lines.push({ pts: chak.map(([x, y]) => V(x * 0.42, 10.4 + y * 0.42, Z)), em: 0.0034, col: BLUE });
+  const circ = []; for (let i = 0; i <= 24; i++) { const a = i / 24 * 6.283; circ.push(V(Math.cos(a) * 0.35, 10.4 + Math.sin(a) * 0.35, Z)); }
+  lines.push({ pts: circ, em: 0.006, col: ECL });
+  const escal = (x0, x1, y) => { const p = []; let up = false; for (let x = x0; x <= x1 + 1e-6; x += 0.55) { p.push(V(x, y + (up ? 0.5 : 0), Z)); up = !up; p.push(V(x, y + (up ? 0.5 : 0), Z)); } return p; };
+  lines.push({ pts: escal(-9.4, -3.6, 1.1), em: 0.0028, col: BLUE }, { pts: escal(3.6, 9.4, 1.1), em: 0.0028, col: BLUE });
+  for (const x of [-5.6, 5.6]) for (const s2 of [0.7, 0.35]) lines.push({ pts: [V(x, 7.9 + s2, Z), V(x + s2, 7.9, Z), V(x, 7.9 - s2, Z), V(x - s2, 7.9, Z), V(x, 7.9 + s2, Z)], em: 0.003, col: BLUE });
+  lines.push({ pts: [V(-9.8, 0.4, Z), V(9.8, 0.4, Z)], em: 0.0015, col: ECL });
   return lines;
 })();
-function adaptProgress(lt) {
-  if (lt < 11.6) return clamp((lt - 4.0) / 6.5);         // demora y adaptacion lenta
-  return clamp(1 - (lt - 11.6) / 1.2);                    // al encender se pierde rapido
-}
+// GDD 3.4: apagada, tras una demora la exposicion sube; al 90 % se abre la puerta
+const adaptProgress = lt => clamp((lt - 4.0) / 6.0);
 function rAdapt(lt) {
-  const push = ease(clamp((lt - 3.5) / 8));
-  cam.p = V(0, 1.65, 1 - 2 * push); cam.fov = 1.2; cam.roll = 0;
-  cam.yaw = (lt < 3 ? 0.22 * Math.sin(lt * 1.1) : 0) + 0.03 * hh(lt * 0.4);
-  cam.pitch = key(lt, [[0, 0.06], [3, 0.1], [10.5, 0.3], [14, 0.3]]) + 0.015 * hh(lt * 0.5);
+  const back = ease(clamp((lt - 3.5) / 6)), fwd = ease(clamp((lt - 10.2) / 2.8));
+  cam.p = V(0, 1.65, 1 - 1.5 * back + 3.2 * fwd); cam.fov = 1.2; cam.roll = 0;
+  cam.yaw = (lt < 3 ? 0.16 * Math.sin(lt * 1.2) : 0) + 0.03 * hh(lt * 0.4);
+  cam.pitch = key(lt, [[0, 0.06], [3, 0.08], [10, 0.26], [13, 0.2]]) + 0.015 * hh(lt * 0.5);
   setCam();
-  const p = adaptProgress(lt), curve = smooth(0, 1, p);
-  const on = lt < 3.0 || lt >= 11.6;
+  const p = adaptProgress(lt), curve = smooth(0, 1, p), open = smooth(0.9, 1, p) * smooth(9.4, 10.6, lt);
+  const on = lt < 3.0;
   const L = on ? [flashlight(FILTROS.none, 1, 0.04 * hh(lt + 3), -0.02)] : [];
-  L.push({ p: V(0, 3, 11.5), col: OCULO, int: 0.004, k: 0.01, range: 22 });
+  L.push({ p: V(0, 3, 11.5), col: ECL, int: 0.004 + 0.4 * open, k: 0.02, range: 22 });
   const E = Math.pow(2, 5 * curve), sat = lerp(1, 0.22, curve);
   const env = { amb: [0.0035, 0.0036, 0.0042], fog: 0.02, E, sat };
   renderWorld(W_ADAPT, L, env);
   g.globalCompositeOperation = 'lighter';
+  // pared espejo: con la linterna prendida devuelve el reflejo encandilante del propio foco
+  if (on) {
+    const img = proj(V(L[0].p.x, L[0].p.y, 2 * WALL_Z - L[0].p.z));
+    if (img) {
+      const R = CT.f * 1.3 / img[2], gr = g.createRadialGradient(img[0], img[1], 0, img[0], img[1], R * 4);
+      gr.addColorStop(0, 'rgba(255,250,238,1)'); gr.addColorStop(0.08, 'rgba(255,244,222,0.85)'); gr.addColorStop(0.3, 'rgba(255,236,205,0.18)'); gr.addColorStop(1, 'rgba(255,236,205,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    }
+  }
   for (const ln of DOOR) {
     const c = tone(ln.col[0] * ln.em, ln.col[1] * ln.em, ln.col[2] * ln.em, E, sat); if (c[0] + c[1] + c[2] < 3) continue;
-    const s = proj(ln.pts[0]); if (!s) continue; const lw = 0.07 * CT.f / s[2];
+    const s0 = proj(ln.pts[0]); if (!s0) continue; const lw = 0.07 * CT.f / s0[2];
     polyline(ln.pts, lw * 4, rgb(c), 0.18); polyline(ln.pts, lw, rgb(c), 0.95);
+  }
+  // adaptado, la hoja desaparece: detras, la luz plateada del eclipse
+  if (open > 0) {
+    const P = archPts(DOOR_R, DOOR_TOP, WALL_Z - 0.06).map(proj), c = proj(V(0, 3.4, WALL_Z));
+    if (c && P.every(Boolean)) {
+      const R = CT.f * 6 / c[2], gr = g.createRadialGradient(c[0], c[1], 0, c[0], c[1], R);
+      gr.addColorStop(0, 'rgba(240,246,255,' + 0.95 * open + ')'); gr.addColorStop(1, 'rgba(170,190,235,' + 0.35 * open + ')');
+      g.fillStyle = gr; g.beginPath(); P.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]))); g.closePath(); g.fill();
+      const halo = g.createRadialGradient(c[0], c[1], 0, c[0], c[1], R * 2.4);
+      halo.addColorStop(0, 'rgba(200,215,250,' + 0.25 * open + ')'); halo.addColorStop(1, 'rgba(200,215,250,0)');
+      g.fillStyle = halo; g.fillRect(0, 0, W, H);
+    }
   }
   g.globalCompositeOperation = 'source-over';
   if (on) haze(L[0]);
   S.grain = 0.05 + 0.16 * curve;
-  S.audio = { drone: 0.26 * (1 - 0.5 * curve), wind: 0.05 + curve * 0.6, hum: 0, humF: 110 };
+  S.audio = { drone: 0.26 * (1 - 0.5 * curve), wind: 0.05 + curve * 0.6 + open * 0.2, hum: 0, humF: 110 };
 }
 
-// ---- 8. La lente ------------------------------------------------------------
-const ST8 = { open: 0 };
-const W_LENTE = (() => {
-  const Q = [];
-  grid(Q, V(-4, 0, -1), V(8, 0, 0), V(0, 0, 14), 12, 20, { alb: ASH, amp: 0.08 });
-  grid(Q, V(-4, 0, -1), V(0, 0, 14), V(0, 4, 0), 18, 6, { alb: ROCK, amp: 0.2 });
-  grid(Q, V(4, 0, -1), V(0, 4, 0), V(0, 0, 14), 6, 18, { alb: ROCK, amp: 0.2 });
-  grid(Q, V(-4, 4, -1), V(0, 0, 14), V(8, 0, 0), 12, 8, { alb: ROCK, amp: 0.1 });
-  grid(Q, V(-4, 0, 13), V(8, 0, 0), V(0, 4, 0), 10, 5, { alb: ROCK, amp: 0.2 });
-  const plate = (dir) => ({ alb: [0.16, 0.15, 0.14], jit: 0.12, upd: q => { const k = ease(ST8.open); q.off = V(dir[0] * k * 2.2, dir[1] * k * 2.2, 0); } });
-  grid(Q, V(-4, 0, 6), V(3.8, 0, 0), V(0, 4, 0), 8, 8, plate([-1, 0]));
-  grid(Q, V(0.2, 0, 6), V(3.8, 0, 0), V(0, 4, 0), 8, 8, plate([1, 0]));
-  grid(Q, V(-0.2, 1.82, 6), V(0.4, 0, 0), V(0, 2.18, 0), 1, 4, plate([0, 1]));
-  grid(Q, V(-0.2, 0, 6), V(0.4, 0, 0), V(0, 1.42, 0), 1, 3, plate([0, -1]));
-  box(Q, 0, 0.8, 10.2, 0.25, 1.6, 0.25, { alb: ROCK }); // soporte de la lente
-  return Q;
-})();
-const LENS = V(0, 1.62, 10), HOLE = V(0, 1.62, 6), HOLE_R = 0.2;
-const lensX = lt => key(lt, [[0, -1.8], [2.6, 0.5], [3.7, -0.14], [4.6, 0.03], [5.3, 0.0], [9, 0.0]]);
-// misma cuenta que Lente.CalcularAlineacionCruda
-function alignRaw(eye) {
-  const d = vnorm(vsub(LENS, eye)), t = (HOLE.z - eye.z) / d.z, pt = vadd(eye, vmul(d, t));
-  return clamp(1 - Math.hypot(pt.x - HOLE.x, pt.y - HOLE.y) / HOLE_R);
-}
-const LENS_SIM = (() => { // AlineacionSuave (MoveTowards 2/s) + sostenido 2.2 s
-  const out = [], dt = 1 / 60; let s = 0, held = 0, tR = null;
-  for (let t = 0; t <= 9; t += dt) {
-    s += clamp(alignRaw(V(lensX(t), 1.62, 2)) - s, -2 * dt, 2 * dt);
-    if (tR === null) { held = s > 0.55 ? held + dt : 0; if (held > 2.2) tR = t; }
-    out.push(s);
-  }
-  return { smooth: out, tR: tR ?? 6.4 };
-})();
-function rLente(lt) {
-  const x = lensX(lt);
-  cam.p = V(x, 1.62, 2); cam.yaw = Math.atan2(-x, 4) + 0.01 * hh(lt); cam.pitch = 0.005 * hh(lt + 1); cam.roll = 0; cam.fov = 1.0;
-  setCam();
-  const tR = LENS_SIM.tR, al = LENS_SIM.smooth[Math.min(LENS_SIM.smooth.length - 1, Math.floor(lt * 60))];
-  const bloom = clamp((lt - tR) / 1.4);
-  ST8.open = clamp((lt - tR - 0.3) / 1.6);
-  const L = [flashlight(FILTROS.none, 0.7, 0.02 * hh(lt + 9), -0.04)];
-  L.push({ p: vadd(LENS, V(0, 0, -0.2)), col: BONE, int: 0.4 * al + 3 * bloom, k: 0.2, range: 12 });
-  const env = { amb: [0.001, 0.001, 0.0011], fog: 0.03 };
-  renderWorld(W_LENTE, L, env);
-  // la lente solo se ve a traves del agujero (hasta que el diafragma se abre)
-  const hole = [V(-0.2, 1.42, 5.99), V(0.2, 1.42, 5.99), V(0.2, 1.82, 5.99), V(-0.2, 1.82, 5.99)].map(proj);
-  const ls = proj(LENS);
-  if (ls && hole.every(Boolean)) {
-    const r = 0.3 * CT.f / ls[2];
-    g.save();
-    if (ST8.open < 0.05) { g.beginPath(); hole.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.clip(); }
-    g.globalCompositeOperation = 'lighter';
-    const gr = g.createRadialGradient(ls[0], ls[1], 0, ls[0], ls[1], r * (1 + 2 * al));
-    gr.addColorStop(0, 'rgba(255,246,228,1)'); gr.addColorStop(0.35, 'rgba(240,200,150,0.7)'); gr.addColorStop(1, 'rgba(201,113,74,0)');
-    g.fillStyle = gr; g.fillRect(0, 0, W, H);
-    g.restore();
-    const ring = []; for (let i = 0; i <= 32; i++) { const a = i / 32 * 6.283; ring.push(V(Math.cos(a) * HOLE_R, 1.62 + Math.sin(a) * HOLE_R, 5.985)); }
-    polyline(ring, 1, 'rgba(237,234,226,0.35)', 1 - ST8.open);
-    if (al > 0.3) { // destello horizontal
-      g.globalCompositeOperation = 'lighter';
-      const k = (al - 0.3) / 0.7, fl = g.createLinearGradient(ls[0] - W * 0.4, 0, ls[0] + W * 0.4, 0);
-      fl.addColorStop(0, 'rgba(232,161,74,0)'); fl.addColorStop(0.5, 'rgba(255,230,190,' + (0.5 * k) + ')'); fl.addColorStop(1, 'rgba(232,161,74,0)');
-      g.fillStyle = fl; g.fillRect(0, ls[1] - 1.2, W, 2.4);
-      g.globalCompositeOperation = 'source-over';
-    }
-    if (bloom > 0) { // onda de resolucion
-      g.globalCompositeOperation = 'lighter';
-      g.strokeStyle = 'rgba(255,220,170,' + (0.8 * (1 - bloom)) + ')'; g.lineWidth = 2 + 6 * (1 - bloom);
-      g.beginPath(); g.arc(ls[0], ls[1], bloom * W * 0.8, 0, 6.283); g.stroke();
-      g.globalCompositeOperation = 'source-over';
-    }
-  }
-  S.flash = 0.35 * Math.exp(-(lt - tR) * 3) * (lt > tR ? 1 : 0) + smooth(8.1, 8.9, lt);
-  S.audio = { drone: 0.3 + 0.2 * bloom, wind: 0.08, hum: 0, humF: 110 };
+// ---- 7. Anillo de diamante --------------------------------------------------
+function rDiamante(lt) {
+  const x = W / 2, y = H * 0.48, r = H * 0.1;
+  const a = smooth(0, 1.2, lt);
+  corona(x, y, r, a);
+  bead(x, y, r, smooth(1.7, 3.3, lt));
+  g.fillStyle = '#000'; g.beginPath(); g.arc(x, y, r * 0.99, 0, 6.283); g.fill();
+  S.flash = smooth(2.7, 3.7, lt);
+  S.audio = { drone: 0, wind: 0, hum: 0, humF: 110 };
 }
 
-// ---- 9. Montaje ------------------------------------------------------------
-const CUTS = [['cuerpo', 5.3, 0.85], ['hueco', 2.45, 0.75], ['rastro', 6.9, 0.7], ['oculo', 6.4, 0.6], ['adapt', 10.3, 0.6],
-              ['cuerpo', 8.6, 0.5], ['hueco', 5.2, 0.45], ['rastro', 4.2, 0.42], ['lente', 5.9, 0.4], ['tunel', 3.2, 0.36],
-              ['cuerpo', 5.7, 0.32], ['adapt', 9.6, 0.3], ['rastro', 7.6, 0.3], ['hueco', 2.7, 0.28]];
+// ---- 8. Montaje ------------------------------------------------------------
+const CUTS = [['cuerpo', 5.3, 0.85], ['hueco', 2.45, 0.75], ['eclipse', 9.0, 0.7], ['oculo', 5.6, 0.6], ['adapt', 10.4, 0.6],
+              ['cuerpo', 8.6, 0.5], ['hueco', 5.2, 0.45], ['capilla', 3.0, 0.42], ['adapt', 1.5, 0.4], ['tunel', 3.2, 0.36],
+              ['cuerpo', 5.7, 0.32], ['eclipse', 6.2, 0.3], ['adapt', 11.5, 0.3], ['hueco', 2.7, 0.28]];
 const CUT_T = (() => { let t = 0; return CUTS.map(c => { const s = t; t += c[2]; return s; }); })();
 const MONTAGE_LEN = CUT_T[CUT_T.length - 1] + CUTS[CUTS.length - 1][2];
 function rMontaje(lt) {
@@ -685,11 +727,11 @@ function rMontaje(lt) {
   S.audio = { drone: 0.5, wind: 0.15, hum: 0, humF: 110 };
 }
 
-// ---- 10. Cierre ------------------------------------------------------------
+// ---- 9. Cierre -------------------------------------------------------------
 function rFinal(lt) {
   const gl = g.createRadialGradient(W / 2, H * 0.42, 0, W / 2, H * 0.42, H * 0.7);
-  const a = smooth(0, 2, lt) * (1 - smooth(11, 12.5, lt));
-  gl.addColorStop(0, 'rgba(201,113,74,' + (0.12 * a) + ')'); gl.addColorStop(1, 'rgba(201,113,74,0)');
+  const a = smooth(0, 2, lt) * (1 - smooth(7.6, 9, lt));
+  gl.addColorStop(0, 'rgba(170,190,235,' + (0.1 * a) + ')'); gl.addColorStop(1, 'rgba(170,190,235,0)');
   g.fillStyle = gl; g.fillRect(0, 0, W, H);
   g.globalCompositeOperation = 'lighter';
   for (let i = 0; i < 140; i++) {
@@ -697,7 +739,7 @@ function rFinal(lt) {
     g.fillStyle = 'rgba(237,214,180,' + (0.12 + 0.3 * hash(i, 5, 5)) * a + ')'; g.fillRect(x, y, 1.2, 1.2);
   }
   g.globalCompositeOperation = 'source-over';
-  S.audio = { drone: 0.4 * (1 - smooth(10, 12.5, lt)), wind: 0.12, hum: 0, humF: 110 };
+  S.audio = { drone: 0.4 * (1 - smooth(7, 9, lt)), wind: 0.12, hum: 0, humF: 110 };
 }
 
 // ------------------------------------------------------------------ titulos (alta resolucion)
@@ -723,77 +765,84 @@ function drawTitle(text, cx, cy, size, track, alpha, hot, glow) {
 }
 function ring(cx, cy, r, a) {
   const gr = m.createRadialGradient(cx, cy, r * 0.85, cx, cy, r * 1.25);
-  gr.addColorStop(0, 'rgba(201,113,74,0)'); gr.addColorStop(0.3, 'rgba(201,113,74,' + 0.18 * a + ')'); gr.addColorStop(1, 'rgba(201,113,74,0)');
+  gr.addColorStop(0, 'rgba(170,190,235,0)'); gr.addColorStop(0.3, 'rgba(170,190,235,' + 0.16 * a + ')'); gr.addColorStop(1, 'rgba(170,190,235,0)');
   m.fillStyle = gr; m.beginPath(); m.arc(cx, cy, r * 1.3, 0, 6.283); m.fill();
-  m.strokeStyle = 'rgba(232,161,74,' + 0.45 * a + ')'; m.lineWidth = Math.max(1, DPR);
+  m.strokeStyle = 'rgba(225,235,255,' + 0.5 * a + ')'; m.lineWidth = Math.max(1, DPR);
   m.beginPath(); m.arc(cx, cy, r, 0, 6.283); m.stroke();
-}
-function oTitulo1(lt) {
-  const a = smooth(0, 0.12, lt) * (1 - smooth(2.1, 3, lt)), cx = VR.x + VR.w / 2, cy = VR.y + VR.h / 2;
-  ring(cx, cy, VR.h * (0.26 + lt * 0.015), a);
-  drawTitle('CRATER', cx, cy, VR.h * 0.19, 0.36 + lt * 0.03, a,
-    { x: VR.x + VR.w * lerp(0.22, 0.8, ease(clamp(lt / 2.4))), y: cy, r: VR.h * 0.42 }, 'rgba(232,161,74,0.9)');
 }
 function oFinal(lt) {
   const u = VR.h / 100, cx = VR.x + VR.w / 2, cy = VR.y + VR.h * 0.44;
-  const out = 1 - smooth(11, 12.4, lt), a = smooth(0.1, 1.3, lt) * out;
-  ring(cx, cy, VR.h * (0.27 + 0.02 * smooth(0, 12, lt)), a);
-  drawTitle('CRATER', cx, cy, u * 17, lerp(0.95, 0.42, ease(clamp(lt / 5))), a,
-    { x: VR.x + VR.w * lerp(0.2, 0.5, ease(clamp((lt - 0.4) / 3))), y: cy, r: VR.h * (0.3 + 2.5 * smooth(2.8, 5, lt)) }, 'rgba(232,161,74,0.8)');
-  const t1 = smooth(3.4, 4.6, lt) * out;
+  const out = 1 - smooth(7.6, 9, lt), a = smooth(0.05, 0.9, lt) * out;
+  ring(cx, cy, VR.h * (0.27 + 0.02 * smooth(0, 9, lt)), a);
+  drawTitle('CRATER', cx, cy, u * 17, lerp(0.95, 0.42, ease(clamp(lt / 4.5))), a,
+    { x: VR.x + VR.w * lerp(0.2, 0.5, ease(clamp((lt - 0.3) / 2.8))), y: cy, r: VR.h * (0.3 + 2.5 * smooth(2.4, 4.4, lt)) }, 'rgba(232,161,74,0.8)');
+  const t1 = smooth(3.0, 4.2, lt) * out;
   if (t1 > 0) { m.fillStyle = 'rgba(237,234,226,' + t1 + ')'; m.font = 'italic 400 ' + (u * 5) + 'px ' + SERIF; m.textAlign = 'center'; m.textBaseline = 'middle';
     m.fillText('Lo que la luz tapa.', cx, cy + u * 15 + (1 - t1) * u); }
-  const t2 = smooth(5.2, 6.2, lt) * out;
+  const t2 = smooth(4.6, 5.6, lt) * out;
   if (t2 > 0) {
-    const segW = VR.w * 0.07, gap = VR.w * 0.035, y = cy + u * 24;
-    [['CUERPO', AMBER], ['HUECO', BLUE], ['RASTRO', BONE]].forEach(([name, c], i) => {
-      const x = cx + (i - 1) * (segW + gap), col = c.map(v => v * 255 | 0);
-      m.fillStyle = rgba(col, t2); m.fillRect(x - segW / 2, y, segW * smooth(5.2 + i * 0.15, 6 + i * 0.15, lt), Math.max(1.5, u * 0.3));
-      m.font = '400 ' + (u * 1.7) + 'px ' + MONO; m.fillStyle = rgba(col, 0.8 * t2); spaced(m, name, x, y + u * 3.2, u * 0.5);
+    const segW = VR.w * 0.08, gap = VR.w * 0.05, y = cy + u * 24;
+    [['CUERPO', AMBER], ['HUECO', BLUE]].forEach(([name, c], i) => {
+      const x = cx + (i - 0.5) * (segW + gap), col = c.map(v => v * 255 | 0);
+      m.fillStyle = rgba(col, t2); m.fillRect(x - segW / 2, y, segW * smooth(4.6 + i * 0.15, 5.4 + i * 0.15, lt), Math.max(1.5, u * 0.3));
+      m.font = '400 ' + (u * 1.7) + 'px ' + MONO; m.fillStyle = rgba(col, 0.85 * t2); spaced(m, name, x, y + u * 3.2, u * 0.5);
     });
   }
-  const t3 = smooth(6.8, 7.8, lt) * out;
-  if (t3 > 0) { m.font = '400 ' + (u * 2) + 'px ' + MONO; m.fillStyle = 'rgba(237,234,226,' + 0.75 * t3 + ')'; m.textBaseline = 'middle';
-    spaced(m, 'PRÓXIMAMENTE', cx, VR.y + VR.h - VR.bar - u * 6, u * 0.9); }
+}
+// despues del titulo: un clic de linterna en la oscuridad y la fecha
+function oCoda(lt) {
+  const u = VR.h / 100, a = smooth(1.5, 2.4, lt) * (1 - smooth(4.6, 5.5, lt));
+  if (a <= 0) return;
+  m.font = '400 ' + (u * 2.2) + 'px ' + MONO; m.fillStyle = 'rgba(237,234,226,' + 0.8 * a + ')'; m.textBaseline = 'middle';
+  spaced(m, 'PRÓXIMAMENTE', VR.x + VR.w / 2, VR.y + VR.h / 2, u * 1.1);
 }
 
 // ------------------------------------------------------------------ linea de tiempo
+// Estructura tipo Silo: plano, placa sobre negro con golpe, plano... y el titulo al final.
+const card = dur => ({ dur, render: rBlack, card: true });
 const SC = {
-  oculo:   { dur: 8,    render: rOculo,   fadeIn: 2.0, fadeOut: 0.5 },
-  tunel:   { dur: 7,    render: rTunel,   fadeIn: 0,   fadeOut: 0 },
-  titulo1: { dur: 3,    render: rBlack,   over: oTitulo1 },
-  cuerpo:  { dur: 11,   render: rCuerpo,  fadeIn: 0.5, fadeOut: 0.5 },
-  hueco:   { dur: 9.5,  render: rHueco,   fadeIn: 0.4, fadeOut: 0.5 },
-  rastro:  { dur: 11.5, render: rRastro,  fadeIn: 0.4, fadeOut: 0.8 },
-  adapt:   { dur: 14,   render: rAdapt,   fadeIn: 0.3, fadeOut: 0.9 },
-  lente:   { dur: 9,    render: rLente,   fadeIn: 0.5, fadeOut: 0 },
-  montaje: { dur: MONTAGE_LEN + 0.9, render: rMontaje },
-  final:   { dur: 12.5, render: rFinal,   over: oFinal },
+  capilla: { dur: 7,    render: rCapilla, fadeIn: 1.6, fadeOut: 0 },
+  eclipse: { dur: 10.5, render: rEclipse, fadeIn: 0,   fadeOut: 0.8 },
+  placa1:  card(3.4),
+  oculo:   { dur: 7,    render: rOculo,   fadeIn: 1.2, fadeOut: 0.5 },
+  placa2:  card(3.4),
+  tunel:   { dur: 6.5,  render: rTunel,   fadeIn: 0,   fadeOut: 0.3 },
+  placa3:  card(2.2),
+  cuerpo:  { dur: 11,   render: rCuerpo,  fadeIn: 0.4, fadeOut: 0.4 },
+  placa4:  card(2.2),
+  hueco:   { dur: 9.5,  render: rHueco,   fadeIn: 0.4, fadeOut: 0.4 },
+  placa5:  card(3.6),
+  adapt:   { dur: 13,   render: rAdapt,   fadeIn: 0.3, fadeOut: 0.5 },
+  montaje: { dur: MONTAGE_LEN + 0.5, render: rMontaje },
+  diamante:{ dur: 4.2,  render: rDiamante, fadeIn: 0.6 },
+  final:   { dur: 9,    render: rFinal,   over: oFinal },
+  coda:    { dur: 5.5,  render: rBlack,   over: oCoda },
 };
 const ORDER = Object.keys(SC);
 let TOTAL = 0; for (const id of ORDER) { SC[id].start = TOTAL; TOTAL += SC[id].dur; }
-const sceneAt = t => { for (let i = ORDER.length - 1; i >= 0; i--) { const s = SC[ORDER[i]]; if (t >= s.start) return [s, t - s.start]; } return [SC.oculo, 0]; };
+const sceneAt = t => { for (let i = ORDER.length - 1; i >= 0; i--) { const s = SC[ORDER[i]]; if (t >= s.start) return [s, t - s.start]; } return [SC[ORDER[0]], 0]; };
 
 const CUES = [];
 const cue = (id, t0, t1, text, style = 'line', extra = {}) => CUES.push({ t0: SC[id].start + t0, t1: SC[id].start + t1, text, style, ...extra });
-cue('oculo', 1.8, 4.7, 'Al fondo del cráter');
-cue('oculo', 4.6, 7.7, 'la luz apenas llega.');
-cue('tunel', 3.2, 6.4, 'Llevás una sola.');
+const placa = (id, text) => cue(id, 0.25, SC[id].dur - 0.1, text, 'card');
+placa('placa1', 'Cuando el sol se apaga,\naparece un cráter.');
+placa('placa2', 'Existe solo\nmientras dura el eclipse.');
+placa('placa3', 'La luz sostiene.');
+placa('placa4', 'La luz atraviesa.');
+placa('placa5', 'Pero hay una puerta\nque la luz no deja ver.');
 cue('cuerpo', 1.2, 10.6, 'CUERPO', 'hud', { n: 'I', col: AMBER });
-cue('cuerpo', 6.8, 10.3, 'La luz sostiene.');
 cue('hueco', 1.4, 9.1, 'HUECO', 'hud', { n: 'II', col: BLUE });
-cue('hueco', 4.0, 7.8, 'La luz atraviesa.');
-cue('rastro', 1.0, 11.0, 'RASTRO', 'hud', { n: 'III', col: BONE });
-cue('rastro', 7.0, 10.6, 'La luz recuerda.');
 cue('adapt', 0.9, 3.0, 'Apagala.', 'big');
-cue('adapt', 8.0, 11.3, 'Y mirá lo que tapaba.');
-cue('lente', 0.8, 4.5, 'Hay un solo lugar\ndesde donde se ve.');
 
 function drawCue(c, t) {
   const a = smooth(c.t0, c.t0 + 0.6, t) * (1 - smooth(c.t1 - 0.6, c.t1, t)); if (a <= 0) return;
   const u = VR.h / 100, cx = VR.x + VR.w / 2;
   m.textBaseline = 'middle'; m.textAlign = 'center';
-  if (c.style === 'line') {
+  if (c.style === 'card') {
+    const lines = c.text.split('\n'), lh = u * 7.2, y0 = VR.y + VR.h / 2 - (lines.length - 1) * lh / 2;
+    m.font = '400 ' + (u * 5.4) + 'px ' + SERIF; m.fillStyle = 'rgba(237,234,226,' + a + ')';
+    lines.forEach((l, i) => m.fillText(l, cx, y0 + i * lh));
+  } else if (c.style === 'line') {
     const lines = c.text.split('\n'), y0 = VR.y + VR.h - VR.bar - u * 13 - (lines.length - 1) * u * 6.5;
     m.font = 'italic 400 ' + (u * 5.6) + 'px ' + SERIF; m.fillStyle = 'rgba(237,234,226,' + a + ')';
     m.shadowColor = 'rgba(0,0,0,0.8)'; m.shadowBlur = u * 2;
@@ -884,6 +933,32 @@ const AU = {
     this.wind.gain.setTargetAtTime(a.wind, now, 0.4);
     this.hum.gain.setTargetAtTime(a.hum * 0.5, now, 0.08);
     this.humO.frequency.setTargetAtTime(a.humF, now, 0.05); this.humO2.frequency.setTargetAtTime(a.humF * 2.01, now, 0.05);
+    if (a.birds && Math.random() < a.birds * 0.045) this.chirp();
+  },
+  chirp() { // pajaros de la capilla
+    const C = this.C, t0 = C.currentTime, f0 = 2300 + Math.random() * 2000, n = 2 + Math.floor(Math.random() * 4), vol = 0.02 + Math.random() * 0.03;
+    for (let i = 0; i < n; i++) {
+      const t = t0 + i * (0.08 + Math.random() * 0.05), o = C.createOscillator(), gg = C.createGain();
+      o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * (1.25 + Math.random() * 0.4), t + 0.05);
+      this.env(gg, t, 0.006, vol, 0.06); o.connect(gg); gg.connect(this.master); gg.connect(this.rev); o.start(t); o.stop(t + 0.1);
+    }
+  },
+  bell() { // campana de la espadana
+    const C = this.C; if (!C) return; const t = C.currentTime;
+    [[1, 0.2, 6], [2.0, 0.08, 4], [2.76, 0.07, 3], [5.4, 0.03, 1.5]].forEach(([k, v, d]) => {
+      const o = C.createOscillator(); o.frequency.value = 311 * k; const gg = C.createGain(); this.env(gg, t, 0.004, v, d);
+      o.connect(gg); gg.connect(this.master); gg.connect(this.rev); o.start(t); o.stop(t + d + 0.1); });
+  },
+  rumble(dur) { // el crater sube
+    if (!this.C) return; const t = this.C.currentTime, [gg] = this.src(dur + 0.3, 'lowpass', 110, 1.5);
+    gg.gain.setValueAtTime(0.0001, t); gg.gain.exponentialRampToValueAtTime(0.9, t + dur * 0.6); gg.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    gg.connect(this.master); gg.connect(this.rev);
+  },
+  grave() { // entra la totalidad
+    if (!this.C) return; const C = this.C, t = C.currentTime;
+    [41.2, 61.7].forEach((f, i) => { const o = C.createOscillator(); o.frequency.value = f; const gg = C.createGain();
+      gg.gain.setValueAtTime(0.0001, t); gg.gain.exponentialRampToValueAtTime(i ? 0.18 : 0.4, t + 1.5); gg.gain.exponentialRampToValueAtTime(0.0001, t + 7);
+      o.connect(gg); gg.connect(this.master); o.start(t); o.stop(t + 7.1); });
   },
   env(node, t, a, peak, d) { const gg = node.gain; gg.cancelScheduledValues(t); gg.setValueAtTime(0.0001, t); gg.exponentialRampToValueAtTime(peak, t + a); gg.exponentialRampToValueAtTime(0.0001, t + a + d); },
   src(dur, type, freq, q) {
@@ -945,30 +1020,30 @@ const AU = {
 
 const EVENTS = [];
 const at = (id, t, fn) => EVENTS.push({ t: SC[id].start + t, fn });
+at('capilla', 3.6, () => AU.bell());
+at('eclipse', 5.2, () => AU.grave());                 // se callan los pajaros
+at('eclipse', 5.8, () => AU.rumble(3.2));
+at('eclipse', 8.8, () => { AU.tone(1318.5, 5, 0.09); AU.tone(1975.5, 4, 0.05); });
+for (const id of ORDER) if (SC[id].card) at(id, 0.05, () => AU.boom(0.6));
 at('oculo', 0.2, () => AU.swell(7));
 at('tunel', 0.8, () => AU.click());
-at('tunel', 5.4, () => AU.riser(1.6));
-at('titulo1', 0, () => AU.boom(1));
 at('cuerpo', 1.2, () => AU.equip());
 at('cuerpo', 3.35, () => AU.tone(220));
 at('cuerpo', 4.95, () => AU.tone(277.18));
 at('cuerpo', 5.0, () => { AU.tone(329.63, 6, 0.16); AU.tone(440, 6, 0.1); AU.swell(5); });
 at('hueco', 1.4, () => AU.equip());
 at('hueco', 2.55, () => AU.hiss(1.1));
-at('rastro', 1.0, () => AU.equip());
-at('rastro', 6.3, () => AU.click());
-at('rastro', 6.5, () => AU.tone(587.3, 7, 0.07));
 at('adapt', 3.0, () => AU.click());
-at('adapt', 11.6, () => { AU.click(); AU.hit(); });
-at('lente', LENS_SIM.tR, () => { AU.tone(440, 6, 0.14); AU.tone(554.37, 6, 0.1); AU.tone(659.25, 6, 0.1); AU.tone(880, 5, 0.06); AU.boom(0.5); });
-at('lente', 7.7, () => AU.riser(1.25));
+at('adapt', 9.4, () => { AU.boom(0.55); AU.swell(4); });  // retumbo al abrirse la puerta
 CUTS.forEach((c, i) => at('montaje', CUT_T[i], () => (i === 0 ? AU.boom(0.9) : AU.hit())));
-at('final', 0.1, () => AU.boom(1.1));
-at('final', 3.4, () => { AU.tone(110, 9, 0.18); AU.tone(164.8, 9, 0.1); });
+at('diamante', 1.7, () => { AU.tone(1760, 4, 0.12); AU.tone(2637, 3, 0.06); });
+at('final', 0.05, () => AU.boom(1.1));
+at('final', 3.0, () => { AU.tone(110, 8, 0.18); AU.tone(164.8, 8, 0.1); });
+at('coda', 1.0, () => AU.click());
 EVENTS.sort((a, b) => a.t - b.t);
 
 // ------------------------------------------------------------------ reproduccion
-let T = SC.final.start + 6.5, playing = false, last = 0, started = false;
+let T = SC.final.start + 6, playing = false, last = 0, started = false;
 const $ = id => document.getElementById(id);
 const ui = { start: $('start'), end: $('end'), bar: $('bar'), fill: $('fill'), pause: $('btn-pause'), mute: $('btn-mute'), restart: $('btn-restart'), replay: $('btn-replay') };
 
@@ -1008,6 +1083,7 @@ let idle; const wake = () => { document.body.classList.add('ui-awake'); clearTim
 window.addEventListener('pointermove', wake); window.addEventListener('pointerdown', wake);
 window.addEventListener('resize', resize);
 
+{ const n = document.getElementById('dur'); if (n) n.textContent = Math.floor(TOTAL / 60) + ':' + String(Math.round(TOTAL % 60)).padStart(2, '0') + ' · con sonido'; }
 const fontsReady = document.fonts ? Promise.all([`400 40px ${DISPLAY}`, `italic 400 40px ${SERIF}`, `400 20px ${MONO}`, `500 20px ${MONO}`]
   .map(f => document.fonts.load(f).catch(() => null))) : Promise.resolve();
 resize();
