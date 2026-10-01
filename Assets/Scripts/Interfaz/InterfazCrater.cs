@@ -404,7 +404,7 @@ public class InterfazCrater : MonoBehaviour
         CrearTexto(Crear("Controles", panelPausa.transform, new Vector2(0.15f, 0.1f), new Vector2(0.85f, 0.38f)),
             22, TextAnchor.UpperCenter, new Color(0.75f, 0.75f, 0.75f)).text =
             "W / S · Elegir opción      A / D · Cambiar\n\n" +
-            "WASD · Moverse      Mouse · Mirar\n" +
+            "WASD · Moverse      Shift · Correr      Mouse · Mirar\n" +
             "F · Linterna      1 / 2 · Filtros      Q · Luz blanca\n\n" +
             "Esc · Seguir      R · Reiniciar      X · Salir";
         panelPausa.SetActive(false);
