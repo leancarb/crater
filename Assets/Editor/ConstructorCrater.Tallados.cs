@@ -86,6 +86,12 @@ public static partial class ConstructorCrater
             }
             default: Anillo(v, 0.25f, 0.31f, 16); Rayos(v, 0.35f, 0.5f, 12, 0.05f); break;
         }
+        // de los dos lados: se ve desde donde se lo mire (sin depender de hacia dónde mira)
+        int n = v.Count;
+        for (int i = 0; i < n; i += 3)
+        {
+            v.Add(v[i]); v.Add(v[i + 2]); v.Add(v[i + 1]);
+        }
         var uvs = new List<Vector2>();
         foreach (var _ in v) uvs.Add(new Vector2(0.5f, 0.5f));
         hecha = GuardarMalla(CrearMalla("Figura_" + figura, v, uvs));
@@ -237,6 +243,14 @@ public static partial class ConstructorCrater
         refs.vistaSoles = Vista("Vista_Soles", new Vector3(-3.5f, 2.3f, 20.5f), new Vector3(-6.9f, 2.4f, z));
         refs.vistaLunas = Vista("Vista_Lunas", new Vector3(3.5f, 2.3f, 20.5f), new Vector3(6.9f, 2.4f, z));
         refs.vistaPuerta = Vista("Vista_Puerta", new Vector3(0f, 2.6f, 20f), new Vector3(0f, 3.6f, z));
+
+        // el vuelo de la cámara pasa por cada atajo: un punto del lado del ala y uno de la rotonda
+        Transform Punto(string nombre, Vector3 p) => Vista(nombre, p, p + Vector3.forward);
+        refs.caminos = new[]
+        {
+            Punto("Camino_Oeste_Ala", new Vector3(-13.4f, 1.8f, 24.75f)), Punto("Camino_Oeste_Rotonda", new Vector3(-10.4f, 2f, 24.75f)),
+            Punto("Camino_Este_Ala", new Vector3(13.4f, 1.8f, 24.75f)), Punto("Camino_Este_Rotonda", new Vector3(10.4f, 2f, 24.75f)),
+        };
     }
 
     /// <summary>Lunas a la izquierda y soles a la derecha de la escalera (hijos de cada tramo de pared).</summary>
@@ -393,5 +407,60 @@ public static partial class ConstructorCrater
         Menhir(k, arte, "Menhir_E1_A", new Vector3(34.4f, 0f, -5.4f), new Vector3(-0.7f, 0f, 0.7f).normalized, sello);
         Menhir(k, arte, "Menhir_E1_B", new Vector3(21.6f, 0f, -5.4f), new Vector3(0.7f, 0f, 0.7f).normalized, sello);
         Menhir(k, arte, "Menhir_E2", new Vector3(34.8f, 0f, 19.8f), new Vector3(-0.7f, 0f, -0.7f).normalized, sello);
+    }
+}
+
+public static partial class ConstructorCrater
+{
+    /// <summary>
+    /// Que ningún tallado quede tapado. Recorre todo lo que brilla como tallado (ámbar,
+    /// latentes, lunas, eclipse) y, si un módulo de arquitectura lo tapa, saca ese
+    /// módulo. Si alguno queda metido adentro de una pared, lo avisa en la Consola.
+    /// </summary>
+    static void DespejarTallados(Kit k)
+    {
+        var deTallado = new HashSet<Material> { k.ambar, k.motivoLatente, k.tallaLuna, k.tallaEclipse };
+        var escena = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        var tallados = new List<Renderer>();
+        var modulos = new List<Transform>();
+        var paredes = new List<Collider>();
+        foreach (var raiz in escena.GetRootGameObjects())
+        {
+            foreach (var r in raiz.GetComponentsInChildren<Renderer>(true))
+            {
+                // los aros de las anclas, compuertas y recogibles también son ámbar: no son tallados
+                if (r.GetComponentInParent<ReceptorDeLuz>() != null || r.GetComponentInParent<Compuerta>() != null
+                    || r.GetComponentInParent<Recogible>() != null || r.GetComponentInParent<LinternaController>() != null) continue;
+                if (r.sharedMaterial != null && deTallado.Contains(r.sharedMaterial)) tallados.Add(r);
+            }
+            var arquitectura = raiz.transform.Find("ArquitecturaModular");
+            if (arquitectura != null) foreach (Transform m in arquitectura) modulos.Add(m);
+            foreach (var c in raiz.GetComponentsInChildren<BoxCollider>(true))
+                if (!c.isTrigger && c.GetComponent<Renderer>() != null) paredes.Add(c);
+        }
+
+        int sacados = 0;
+        foreach (var t in tallados)
+        {
+            var b = t.bounds;
+            foreach (var m in modulos.ToArray())
+            {
+                if (m == null) continue;
+                foreach (var pieza in m.GetComponentsInChildren<Renderer>())
+                {
+                    var pb = pieza.bounds;
+                    pb.Expand(-0.06f);
+                    if (!pb.Intersects(b)) continue;
+                    modulos.Remove(m);
+                    Object.DestroyImmediate(m.gameObject);
+                    sacados++;
+                    break;
+                }
+            }
+            foreach (var c in paredes)
+                if (c != null && c.bounds.Contains(b.center) && !t.transform.IsChildOf(c.transform))
+                    Debug.LogWarning($"[CRÁTER] El tallado {t.name} quedó adentro de {c.name}.", t);
+        }
+        if (sacados > 0) Debug.Log($"[CRÁTER] Se sacaron {sacados} módulos de arquitectura que tapaban tallados.");
     }
 }

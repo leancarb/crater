@@ -210,7 +210,7 @@ public static partial class ConstructorCrater
 
         kit.puenteVidrio = Emisivo(Transparente(Opaco("PuenteVidrio", new Color(1f, 0.5f, 0.15f, 0.45f), 0.6f)), new Color(1f, 0.42f, 0.08f));
         kit.puenteBorde = Emisivo(Transparente(Opaco("PuenteBorde", new Color(1f, 0.62f, 0.25f, 0.95f), 0.4f)), new Color(1f, 0.42f, 0.08f));
-        kit.rejaBasalto = Transparente(Opaco("RejaBasalto", new Color(0.085f, 0.09f, 0.11f, 1f), 0.2f));
+        kit.rejaBasalto = Emisivo(Transparente(Opaco("RejaBasalto", new Color(ColorLuna.r, ColorLuna.g, ColorLuna.b, 0.55f), 0.6f)), ColorLuna * 0.6f);
         kit.rejaSello = Emisivo(Transparente(Opaco("RejaSello", new Color(0.35f, 0.5f, 1f, 0.35f), 0.5f)), new Color(0.35f, 0.5f, 1f) * 0.9f);
         kit.tallaLuna = Emisivo(Opaco("TalladoLuna", ColorLuna * 0.6f, 0.3f), ColorLuna * 1.8f);
         kit.tallaEclipse = Emisivo(Opaco("TalladoEclipse", new Color(0.85f, 0.9f, 1f), 0.3f), new Color(0.8f, 0.88f, 1f) * 2f);
@@ -682,7 +682,10 @@ public static partial class ConstructorCrater
         var visual = Instanciar(kit.modeloReja, raiz.transform, "Visual");
         visual.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
         visual.transform.localScale = new Vector3(6f / 5.59f, 1f, 1f);
-        Pintar(visual, r => r.name.Contains("BlueSeal") ? kit.rejaSello : kit.rejaBasalto);
+        // sin el panel azul: sólo las barras, de vidrio de luna translúcido
+        foreach (var r in visual.GetComponentsInChildren<Renderer>(true))
+            if (r.name.Contains("BlueSeal")) UnityEngine.Object.DestroyImmediate(r.gameObject);
+        Pintar(visual, _ => kit.rejaBasalto);
 
         var solido = raiz.AddComponent<BoxCollider>();
         solido.center = new Vector3(0f, 2.3f, 0f);
@@ -705,7 +708,7 @@ public static partial class ConstructorCrater
         materia.puntoDeImpacto = centro.transform;
         materia.solidos = new Collider[] { solido };
         materia.renderers = visual.GetComponentsInChildren<Renderer>(true);
-        materia.sellos = materia.renderers.Where(r => r.name.Contains("BlueSeal")).ToArray();
+        materia.sellos = materia.renderers;   // todas las barras brillan con la carga
         materia.siseo = siseo;
 
         PonerCapa(raiz, LayerMask.NameToLayer(CapaReceptor));

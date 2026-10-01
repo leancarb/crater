@@ -26,7 +26,7 @@ public class MateriaHueca : ReceptorDeLuz
     public Collider[] solidos;
     [Tooltip("Renderers que se desvanecen. Vacío = todos.")]
     public Renderer[] renderers;
-    [Tooltip("Sello azul: brilla más a medida que se carga.")]
+    [Tooltip("Lo que brilla más a medida que se carga (las barras).")]
     public Renderer[] sellos;
     public Color colorSello = new Color(0.35f, 0.5f, 1f);   // azul de luna
 
@@ -71,9 +71,11 @@ public class MateriaHueca : ReceptorDeLuz
         // avanza hacia 1 si está activa, hacia 0 si no
         Disolucion = Mathf.MoveTowards(Disolucion, Activo ? 1f : 0f, velocidadDeTransicion * delta);
 
-        // Nunca reconstruir la materia alrededor del jugador: esperar a que
-        // salga del volumen evita quedar atrapado dentro de la reja.
-        bool solido = Disolucion < 0.5f && jugadoresDentro == 0;
+        // Nunca reconstruir la materia alrededor del jugador: si está disuelta y el
+        // jugador está adentro, espera a que salga. Pero si ya está sólida, sigue
+        // sólida aunque el jugador esté pegado a ella (antes se abría sola al acercarse).
+        bool quiereSolido = Disolucion < 0.5f;
+        bool solido = quiereSolido && (Solido || jugadoresDentro == 0);
         if (solido != Solido)
         {
             Solido = solido;
@@ -95,7 +97,7 @@ public class MateriaHueca : ReceptorDeLuz
             bloque.SetColor(IdBase, c);
             // el sello azul muestra el progreso: brilla con la carga antes de disolverse
             if (System.Array.IndexOf(sellos, r) >= 0)
-                bloque.SetColor(IdEmision, colorSello * Mathf.Lerp(0.9f, 4f, Mathf.Max(Mathf.Max(Carga, Disolucion), pulsoTapada)) * alfa);
+                bloque.SetColor(IdEmision, colorSello * Mathf.Lerp(0.6f, 3f, Mathf.Max(Mathf.Max(Carga, Disolucion), pulsoTapada)) * alfa);
             r.SetPropertyBlock(bloque);
         }
 

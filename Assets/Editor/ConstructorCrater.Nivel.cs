@@ -59,6 +59,7 @@ public static partial class ConstructorCrater
         public Compuerta cierreCresta, puertaSellos, atajoOeste, atajoEste;
         public HiloDeTallados hiloSoles, hiloLunas, hiloEclipse;
         public Transform vistaSoles, vistaLunas, vistaPuerta;
+        public Transform[] caminos;
         public ReceptorDeLuz selloOeste, selloEste;
         public AperturaTecho techoCresta;
     }
@@ -84,6 +85,7 @@ public static partial class ConstructorCrater
         ConstruirCapilla(kit, Grupo(nivel, "06_Capilla"), refs);
         Vestir(kit, arte);
         ConstruirSistemas(kit, refs);
+        DespejarTallados(kit);
         FacetarEscena(kit);
 
         EditorSceneManager.SaveScene(escena, RutaEscena);
@@ -602,6 +604,7 @@ public static partial class ConstructorCrater
         AsignarLista(cinematica, "sellos", new Object[] { refs.selloOeste, refs.selloEste });
         AsignarLista(cinematica, "hilos", new Object[] { refs.hiloSoles, refs.hiloLunas });
         AsignarLista(cinematica, "vistas", new Object[] { refs.vistaSoles, refs.vistaLunas });
+        AsignarLista(cinematica, "caminos", refs.caminos);
         Asignar(cinematica, "eclipse", refs.hiloEclipse);
         Asignar(cinematica, "vistaFinal", refs.vistaPuerta);
         Asignar(cinematica, "puerta", refs.puertaSellos);

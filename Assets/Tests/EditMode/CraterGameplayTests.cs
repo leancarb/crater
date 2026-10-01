@@ -220,6 +220,26 @@ public class CraterGameplayTests
     }
 
     [Test]
+    public void MateriaHuecaSolidaNoSeAbreAlAcercarse()
+    {
+        var go = Crear("Materia");
+        var solido = go.AddComponent<BoxCollider>();
+        var trigger = go.AddComponent<BoxCollider>();
+        trigger.isTrigger = true;
+        var materia = go.AddComponent<MateriaHueca>();
+        materia.canalRequerido = FiltroDefinicion.Canal.Hueco;
+
+        var jugador = Crear("Jugador");
+        jugador.tag = "Player";
+        var colliderJugador = jugador.AddComponent<CapsuleCollider>();
+        materia.Avanzar(0.1f);
+        Invocar(materia, "OnTriggerEnter", colliderJugador);   // se pega a la reja sin iluminarla
+        for (int i = 0; i < 5; i++) materia.Avanzar(0.2f);
+
+        Assert.That(solido.enabled, Is.True, "una reja sólida no se abre sólo por acercarse");
+    }
+
+    [Test]
     public void MateriaHuecaNoSeCierraSobreElJugador()
     {
         var go = Crear("Materia");
