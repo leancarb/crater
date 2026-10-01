@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -22,6 +23,7 @@ using UnityEngine.Rendering.Universal;
 /// menús a Unity. Está partido en varios archivos con 'partial class':
 ///  - ConstructorCrater.cs          materiales, texturas, render, post-procesado, prefabs
 ///  - ConstructorCrater.Nivel.cs    la escena: salas, puzzles, luces, sistemas
+///  - ConstructorCrater.Facetado.cs la estética low-poly: caras planas e irregulares
 /// ReconstruirTodo() los llama en orden y guarda todo como assets. Como cada paso
 /// pisa lo anterior, correrlo dos veces da el mismo resultado (es idempotente).
 /// La clase 'Kit' lleva de un paso al siguiente todo lo creado (materiales, prefabs...).
@@ -118,6 +120,7 @@ public static partial class ConstructorCrater
 
         CargarModelos(kit);
         CrearMateriales(kit);
+        PrepararFacetado(kit);
         ConfigurarRender();
         kit.perfil = CrearPerfilVolumen();
         CrearPrefabs(kit);
@@ -141,6 +144,9 @@ public static partial class ConstructorCrater
         public Material piso, basalto, basaltoMedio, techo, piedra, metal, metalGastado;
         public Material ambar, motivoLatente, puenteVidrio, puenteBorde, rejaBasalto, rejaSello, cielo, lente;
         public Material espejo, puertaEclipse, luzEclipse, resplandor;
+
+        // estética low-poly (ver ConstructorCrater.Facetado.cs)
+        public HashSet<Material> piedraFacetada, facetables;
 
         public GameObject prefabJugador, prefabAncla, prefabPuente, prefabReja, prefabFiltro, prefabLinterna;
     }
@@ -180,6 +186,7 @@ public static partial class ConstructorCrater
 
     static GameObject CargarModelo(string nombre)
     {
+        ImportarConCarasPlanas(CarpetaModelos + nombre);
         var modelo = AssetDatabase.LoadAssetAtPath<GameObject>(CarpetaModelos + nombre);
         if (modelo == null) throw new InvalidOperationException("No se encontró el modelo " + nombre);
         return modelo;
@@ -677,6 +684,7 @@ public static partial class ConstructorCrater
         pedestal.transform.localPosition = new Vector3(0f, 0.06f, 0f);
         pedestal.transform.localScale = new Vector3(0.8f, 0.06f, 0.8f);
         pedestal.GetComponent<Renderer>().sharedMaterial = kit.basaltoMedio;
+        Facetar(kit, pedestal);
 
         // el "filtro" es la lente del kit de la linterna, suelta y flotando
         var visual = new GameObject("Visual");

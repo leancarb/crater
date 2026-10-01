@@ -58,6 +58,7 @@ public static partial class ConstructorCrater
         ConstruirCresta(kit, Grupo(nivel, "05_Cresta"), refs);
         Vestir(kit, arte);
         ConstruirSistemas(kit, refs);
+        FacetarEscena(kit);
 
         EditorSceneManager.SaveScene(escena, RutaEscena);
     }
