@@ -3,8 +3,9 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// La capilla y su valle. Coordenadas locales al grupo 06_Capilla (x = 300):
-/// la nave va de z -7 a 7, la puerta mira a +z y el cráter del valle está en z 34.
+/// La capilla y su valle. Coordenadas locales al grupo 06_Capilla, que está arriba
+/// del nivel (ver ConstructorCrater.Pozo.cs): la nave va de z -7 a 7, la puerta mira
+/// a +z y el cráter del valle (la boca del pozo de la Explanada) está en z 34.
 ///
 /// Capilla andina de adobe encalado: zócalo de piedra, contrafuertes, techo de paja
 /// a dos aguas, espadaña con campana y cruz, óculo sobre la puerta. Adelante, el
@@ -175,10 +176,27 @@ public static partial class ConstructorCrater
     static void ConstruirPaisajeCapilla(Kit k, Transform g)
     {
         var paisaje = Grupo(g, "Paisaje");
-        CajaLocal(paisaje, "Terreno", new Vector3(0f, -0.35f, 30f), new Vector3(60f, 0.5f, 50f), k.tierra);
-        // el piso sigue más allá del terreno jugable, sin colisión
-        var llano = CajaLocal(paisaje, "Llano", new Vector3(0f, -0.4f, 30f), new Vector3(420f, 0.4f, 420f), k.tierra);
-        Object.DestroyImmediate(llano.GetComponent<Collider>());
+        // el terreno jugable: una sola malla con el agujero del cráter (es también su collider)
+        var terreno = new GameObject("Terreno");
+        terreno.transform.SetParent(paisaje, false);
+        var malla = MallaSueloConHueco("Terreno_ConHueco", -30f, 30f, 5f, 55f, -0.1f, CraterEnLaCapilla, RadioPozo + 0.3f);
+        terreno.AddComponent<MeshFilter>().sharedMesh = malla;
+        terreno.AddComponent<MeshRenderer>().sharedMaterial = k.tierra;
+        terreno.AddComponent<MeshCollider>().sharedMesh = malla;
+        Estatico(terreno);
+
+        // el piso sigue más allá, sin colisión: un marco alrededor del terreno, metido 5 m
+        // debajo de él para que no queden rendijas. Abajo está el nivel: no hace sombra
+        void Llano(string nombre, float x0, float x1, float z0, float z1)
+        {
+            var llano = CajaLocal(paisaje, nombre, new Vector3((x0 + x1) / 2f, -0.4f, (z0 + z1) / 2f), new Vector3(x1 - x0, 0.4f, z1 - z0), k.tierra);
+            Object.DestroyImmediate(llano.GetComponent<Collider>());
+            llano.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+        }
+        Llano("Llano_Norte", -210f, 210f, 50f, 240f);
+        Llano("Llano_Sur", -210f, 210f, -180f, 10f);
+        Llano("Llano_Oeste", -210f, -25f, 10f, 50f);
+        Llano("Llano_Este", 25f, 210f, 10f, 50f);
 
         var azar = new System.Random(23);
         float Azar(float min, float max) => min + (float)azar.NextDouble() * (max - min);
@@ -202,18 +220,22 @@ public static partial class ConstructorCrater
         Cerro("Cerro_D", new Vector3(31f, 0f, 28f), 7f, 7f, 40f, true);
         Cerro("Cerro_E", new Vector3(0f, 0f, -15f), 34f, 5f, 6f, true);
 
-        // horizonte: cordones lejanos, sin colisión
+        // horizonte: cordones lejanos, sin colisión. Ninguno encima del nivel, que está abajo
         for (float ang = 0f; ang < 360f; ang += Azar(14f, 22f))
         {
             float r = Azar(95f, 150f);
             var pos = new Vector3(Mathf.Sin(ang * Mathf.Deg2Rad) * r, 0f, 25f + Mathf.Cos(ang * Mathf.Deg2Rad) * r);
-            Cerro($"Horizonte_{ang:000}", pos, Azar(30f, 55f), Azar(18f, 42f), Azar(14f, 24f), false);
+            float ancho = Azar(30f, 55f), alto = Azar(18f, 42f), fondo = Azar(14f, 24f);
+            Vector3 mundo = g.TransformPoint(pos);
+            float alcance = Mathf.Max(ancho, fondo) * 0.6f;
+            bool sobreElNivel = Mathf.Abs(mundo.x) < 14f + alcance && mundo.z > -50f - alcance && mundo.z < 104f + alcance;
+            if (!sobreElNivel) Cerro($"Horizonte_{ang:000}", pos, ancho, alto, fondo, false);
         }
 
         // cardones y paja brava, fuera del camino y del cráter
         bool Libre(Vector3 p) =>
             Mathf.Abs(p.x) > 5.5f &&                                        // camino y capilla
-            Vector3.Distance(p, new Vector3(0f, 0f, 34f)) > 11f &&          // cráter
+            Vector3.Distance(p, CraterEnLaCapilla) > RadioPozo + 3.5f &&     // cráter
             !(Mathf.Abs(p.x) < 6f && p.z < 17f);                            // atrio
         int cardones = 0, intentos = 0;
         while (cardones < 16 && intentos++ < 200)

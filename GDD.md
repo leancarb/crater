@@ -27,7 +27,7 @@
 
 ### Premisa
 
-El protagonista está en una **capilla**, de día. Empieza un **eclipse total de sol** y su luz revela un **cráter** en el valle que no estaba ahí: sólo existe mientras dura la totalidad. En su centro destella el contorno de una **puerta**.
+El protagonista está en una **capilla**, de día. Empieza un **eclipse total de sol** y su luz revela un **cráter** en el valle que no estaba ahí: sólo existe mientras dura la totalidad. En su borde destella el contorno de una **puerta**.
 
 El eclipse dura exactamente lo que el jugador permanezca adentro. El cráter es un espacio metafórico/onírico: no se explica, se atraviesa.
 
@@ -35,16 +35,16 @@ El eclipse dura exactamente lo que el jugador permanezca adentro. El cráter es 
 
 | Momento | Qué pasa | Qué siente el jugador |
 |---|---|---|
-| **Prólogo** | Capilla de día. Al salir, empieza el eclipse (cinemática sin control): se callan los pájaros, sube el cráter, destella la puerta. | Curiosidad, extrañeza. |
-| **Descenso** | La puerta del cráter lleva a la Explanada, en su borde. Una rampa baja al Umbral, donde está la linterna. | Descubrimiento. |
+| **Prólogo** | Capilla de día. Al salir, empieza el eclipse (cinemática sin control): se callan los pájaros, aparecen las estrellas, la tierra se abre en un pozo, sube el borde del cráter y destella la puerta. | Curiosidad, extrañeza. |
+| **Descenso** | Sin cortes: se cruza la puerta y se baja caminando por una rampa que rodea el pozo hasta la Explanada, en el fondo. Un túnel sigue al Umbral, donde está la linterna. | Descubrimiento. |
 | **Aprendizaje** | El Campo entrega CUERPO; la Hondonada, HUECO. | Dominio, asombro. |
-| **La oscuridad** | En la Cresta, la pared del fondo sólo devuelve el reflejo del propio foco. Al apagar la linterna y esperar, aparecen tallados ocultos y la puerta. | Revelación. |
-| **Final** | Al cruzar la puerta, silencio y el **anillo de diamante**: todo se vuelve blanco. El jugador aparece en la capilla, de día. | Cierre sereno. |
+| **La oscuridad** | Al entrar a la Cresta, una losa cierra el corredor a la espalda: no hay vuelta. La pared del fondo sólo devuelve el reflejo del propio foco. Al apagar la linterna y esperar, aparecen tallados ocultos. | Revelación, encierro. |
+| **Final** | Adaptado a la oscuridad, el techo se abre y entra la luz blanca del fin del eclipse hasta inundarlo todo. Silencio, **anillo de diamante**, y el jugador aparece en la capilla, de día. | Cierre sereno. |
 | **Epílogo** | El cráter ya no está: sólo queda pasto aplastado. Quedarse ahí (o esperar un rato) trae los créditos. | Pérdida suave, confirmación. |
 
 ### El eclipse
 
-- **Afuera** se ve en el cielo: el sol y la corona en la totalidad. La luna nueva no se ve de día: sólo su silueta cuando pasa por delante del sol. En el epílogo ya pasó y quedó del otro lado.
+- **Afuera** se ve en el cielo: el sol y la corona en la totalidad, con estrellas, la Vía Láctea y el horizonte encendido en 360° como un atardecer. La luna nueva no se ve de día: sólo su silueta cuando pasa por delante del sol. En el epílogo ya pasó y quedó del otro lado.
 - **Adentro** la totalidad está congelada. Se ve por los **óculos** (Campo y Cresta): sol negro, corona plateada, cielo de noche.
 - **Termina con el anillo de diamante**, el destello real con el que cierra la totalidad: la luz vuelve de golpe, como al prender la luz después de estar a oscuras.
 
@@ -82,12 +82,13 @@ La herramienta que nos permite ver también define lo que vemos. La linterna ens
 
 ### 3.4 Adaptación a la oscuridad
 
-Sólo en la Cresta. Con la linterna apagada, tras 3 s la exposición sube durante 10 s; encenderla la pierde en 1,2 s. El viento del óculo sube con la adaptación. Al 90 % se abre la puerta del eclipse.
+Sólo en la Cresta. Con la linterna apagada, tras 3 s la exposición sube durante 10 s; encenderla la pierde en 1,2 s. El viento del óculo sube con la adaptación. Al 90 % se abre el techo.
 
-### 3.5 La pared espejo y la puerta
+### 3.5 La pared espejo, el encierro y el techo
 
 - La pared del fondo de la Cresta es basalto pulido. **Con la linterna prendida** devuelve un reflejo encandilante del propio foco (del color del filtro), como una ventana de noche.
-- **Con la linterna apagada**, el reflejo desaparece y se insinúa el contorno de la puerta, que crece con la adaptación.
+- **Con la linterna apagada**, el reflejo desaparece y aparecen los tallados latentes.
+- Al entrar a la Cresta, una losa sube del piso y cierra el corredor.
 - Adaptado, la hoja desaparece y detrás se ve la luz plateada del eclipse. Cruzarla es el final.
 
 ---
@@ -103,12 +104,12 @@ Cada filtro sigue el patrón **Enseñar → Probar → Torcer**.
 
 | Sala | Contenido |
 |---|---|
-| **00 Capilla (prólogo)** | Libre, sin indicaciones. Al cruzar el umbral: cinemática del eclipse (~18 s). El cráter aparece en el valle, frente a la capilla; se entra por un hueco del borde hasta la puerta del centro. |
-| **01 Explanada** | Borde del cráter, bajo la totalidad. Rampa hacia abajo. |
+| **00 Capilla (prólogo)** | Libre, sin indicaciones. Al cruzar el umbral: cinemática del eclipse (~18 s). El cráter se abre en el valle, frente a la capilla: es un pozo y el resto del nivel está bajo tierra. La puerta está en el borde, del lado de la capilla. |
+| **01 Explanada** | El fondo del pozo, bajo la totalidad. Se llega por la rampa que rodea el pozo; un túnel baja al Umbral. |
 | **02 Umbral** | La linterna. Sostener la luz blanca sobre un ancla abre la compuerta. |
 | **03 Campo** | CUERPO. Enseñar: dos anclas juntas. Probar: anclas separadas, barrer y cruzar con la retención. Torcer: anclas en el techo, hay que levantar la mirada. Óculo con el eclipse. |
 | **04 Hondonada** | HUECO. Enseñar: una reja. Probar: zigzag. Torcer: puente con CUERPO hasta una repisa y reja con HUECO desde ahí. |
-| **05 Cresta** | Apagar la linterna. Tallados latentes y la puerta del eclipse en la pared espejo. Óculo grande con el eclipse. |
+| **05 Cresta** | Se cierra a la espalda. Apagar la linterna: tallados latentes y la pared espejo. El techo se abre y entra la luz blanca. |
 | **06 Capilla (epílogo)** | De día, sin linterna. El cráter no está; en su lugar, pasto aplastado. Quedarse 5 s ahí, o esperar 2 min, trae los créditos. |
 
 ---
@@ -130,7 +131,7 @@ Todo el audio se sintetiza en `GeneradorAudioCrater` y se puede reemplazar por W
 | Eclipse | Los pájaros se callan de golpe; entra un grave; retumbo mientras sube el cráter; brillo agudo cuando destella la puerta |
 | Cráter | Dron ambiente, viento del óculo que sube con la adaptación |
 | Anclas | Cada una un tono; los pares forman intervalos del mismo acorde |
-| Puerta del eclipse | El viento sale de la puerta; retumbo al abrirse |
+| Techo de la Cresta | Retumbo al abrirse; después, silencio |
 | Final | Silencio → tono agudo del anillo de diamante → pájaros y la campana |
 | Créditos | Acorde lento en La mayor, el mismo de las anclas |
 
@@ -143,7 +144,9 @@ Todo el audio se sintetiza en `GeneradorAudioCrater` y se puede reemplazar por W
 - [x] Filtros CUERPO y HUECO con sus puzzles
 - [x] Prólogo en la capilla: cielo con el eclipse, cinemática, cráter del valle
 - [x] Óculos con el eclipse congelado
-- [x] Pared espejo y puerta del eclipse en la Cresta
+- [x] Pared espejo, encierro y techo que se abre en la Cresta
+- [x] Entrada continua: el cráter es un pozo en el valle
+- [x] Cielo estrellado en la totalidad
 - [x] Anillo de diamante, epílogo sin cráter y créditos
 - [x] Validador y tests (EditMode y PlayMode del recorrido completo, prólogo incluido)
 

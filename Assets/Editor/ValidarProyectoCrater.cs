@@ -138,20 +138,21 @@ public static class ValidarProyectoCrater
                 Comprobar(LayerMask.LayerToName(ancla.gameObject.layer) == ConstructorCrater.CapaAncla,
                     $"{ancla.name} no está en la capa Ancla.", problemas);
 
+            // la del Umbral (la abren sus receptores) y el cierre de la Cresta (lo cierra la zona)
             var compuertas = Todos<Compuerta>();
-            Comprobar(compuertas.Length == 1 && compuertas[0].receptores.Count > 0,
-                "Falta la compuerta del Umbral o no tiene receptores.", problemas);
-            Comprobar(compuertas.All(c => TieneOyentes(c.alAbrirse)), "La compuerta no avisa al flujo del juego.", problemas);
+            var umbral = compuertas.Where(c => c.receptores.Count > 0).ToArray();
+            Comprobar(compuertas.Length == 2 && umbral.Length == 1,
+                "Tienen que estar la compuerta del Umbral (con receptores) y el cierre de la Cresta.", problemas);
+            Comprobar(umbral.All(c => TieneOyentes(c.alAbrirse)), "La compuerta del Umbral no avisa al flujo del juego.", problemas);
 
-            // Cresta, cruce de la puerta del eclipse, umbral de la capilla, puerta del cráter del valle y lugar del cráter
+            // Cresta, umbral de la capilla, el pozo del cráter y el lugar del cráter (epílogo)
             var zonas = Todos<ZonaJugador>();
-            Comprobar(zonas.Length == 5 && zonas.All(z => TieneOyentes(z.alEntrar) && z.GetComponent<Collider>().isTrigger),
-                "Tiene que haber 5 zonas (Cresta, cruce, umbral de la capilla, puerta del cráter y lugar del cráter), todas triggers conectados.", problemas);
+            Comprobar(zonas.Length == 4 && zonas.All(z => TieneOyentes(z.alEntrar) && z.GetComponent<Collider>().isTrigger),
+                "Tiene que haber 4 zonas (Cresta, umbral de la capilla, pozo del cráter y lugar del cráter), todas triggers conectados.", problemas);
 
-            Comprobar(Todos<PrologoCapilla>().Length == 1 && Todos<CieloEclipse>().Length == 1,
-                "Falta el prólogo de la capilla o el cielo del eclipse.", problemas);
-            var puertas = Todos<PuertaEclipse>();
-            Comprobar(puertas.Length == 1, "Falta la puerta del eclipse en la Cresta.", problemas);
+            Comprobar(Todos<PrologoCapilla>().Length == 1 && Todos<CieloEclipse>().Length == 1 && Todos<CieloEstrellado>().Length == 1,
+                "Falta el prólogo de la capilla, el cielo del eclipse o el cielo estrellado.", problemas);
+            Comprobar(Todos<AperturaTecho>().Length == 1, "Falta el techo que se abre en la Cresta.", problemas);
 
             var adaptacion = Todos<AdaptacionOscuridad>().FirstOrDefault();
             Comprobar(adaptacion != null && adaptacion.GetComponent<Volume>() != null && TieneOyentes(adaptacion.alAdaptarse),

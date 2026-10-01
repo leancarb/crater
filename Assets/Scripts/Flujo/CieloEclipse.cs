@@ -14,7 +14,9 @@ using UnityEngine;
 /// Al cambiar 'Progreso' (Aplicar) se interpolan entre día y totalidad: la intensidad y el
 /// color del sol, la luz ambiente, la niebla y el fondo de la cámara. En LateUpdate
 /// (Posicionar) se acomodan los discos: el sol y la corona en la dirección del sol, la
-/// luna corrida según el progreso. Mostrar(false) apaga todo el exterior (dentro del cráter).
+/// luna corrida según el progreso. Mostrar(false) apaga todo el exterior.
+/// Cerca de la totalidad prende el CieloEstrellado: estrellas, Vía Láctea y el
+/// resplandor del horizonte, para que el cielo no quede negro.
 /// </summary>
 public class CieloEclipse : MonoBehaviour
 {
@@ -23,6 +25,7 @@ public class CieloEclipse : MonoBehaviour
     [SerializeField] Transform discoSol;
     [SerializeField] Transform discoLuna;
     [SerializeField] Renderer corona;
+    [SerializeField] CieloEstrellado estrellas;
 
     [Header("Tamaño aparente")]
     [Tooltip("Tiene que quedar dentro del plano lejano de la cámara.")]
@@ -43,7 +46,7 @@ public class CieloEclipse : MonoBehaviour
     [Header("Totalidad")]
     [SerializeField] Color solTotalidad = new Color(0.5f, 0.6f, 0.9f);
     [SerializeField] float intensidadTotalidad = 0.05f;
-    [SerializeField] Color cieloTotalidad = new Color(0.02f, 0.025f, 0.045f);
+    [SerializeField] Color cieloTotalidad = new Color(0.025f, 0.035f, 0.075f);
     [SerializeField] Color ambienteCieloTotalidad = new Color(0.06f, 0.07f, 0.1f);
     [SerializeField] Color ambienteHorizonteTotalidad = new Color(0.035f, 0.035f, 0.045f);
     [SerializeField] Color ambienteSueloTotalidad = new Color(0.015f, 0.013f, 0.012f);
@@ -182,6 +185,9 @@ public class CieloEclipse : MonoBehaviour
             bloque.SetColor(IdColor, cielo);
             rendererLuna.SetPropertyBlock(bloque);
         }
+
+        // las estrellas aparecen cuando ya casi no queda sol
+        if (estrellas != null) estrellas.Intensidad = Mathf.SmoothStep(0f, 1f, (progreso - 0.85f) / 0.15f);
 
         if (corona != null)
         {

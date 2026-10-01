@@ -5,7 +5,7 @@ eclipse revela un cráter en el valle que sólo existe mientras dura la totalida
 Adentro, la linterna es la única herramienta: con luz blanca abre el Umbral, con
 el filtro **CUERPO** enciende anclas de basalto que tienden puentes de luz, y con
 **HUECO** disuelve rejas. Al final hay que apagarla y dejar que los ojos se
-acostumbren a la oscuridad: así aparece la puerta de salida.
+acostumbren a la oscuridad: así se abre el techo y entra la luz del fin del eclipse.
 
 Unity 6000.3 · URP (Forward+) · Input System.
 
@@ -24,13 +24,13 @@ Unity 6000.3 · URP (Forward+) · Input System.
 
 | Sala | Qué enseña |
 |---|---|
-| 00 Capilla (prólogo) | De día. Al salir, el eclipse revela el cráter en el valle; su puerta lleva a la Explanada |
-| 01 Explanada | Borde del cráter, bajo la totalidad; rampa hacia abajo |
+| 00 Capilla (prólogo) | De día. Al salir, el eclipse abre el cráter en el valle: un pozo con una puerta en el borde |
+| 01 Explanada | El fondo del pozo: se baja caminando por la rampa que lo rodea, sin cortes; un túnel sigue abajo |
 | 02 Umbral | Recoger la linterna; sostener la luz sobre un ancla abre la compuerta |
 | 03 Campo | CUERPO: tres puentes (enseñar, barrer con retención, mirar hacia arriba) |
 | 04 Hondonada | HUECO: rejas y zigzag; al final, combinar los dos filtros desde una repisa |
-| 05 Cresta | La pared del fondo sólo refleja el propio foco. Apagar la linterna y adaptarse: aparecen tallados ocultos y la puerta del eclipse |
-| 06 Capilla (epílogo) | Cruzar la puerta: anillo de diamante, blanco y la capilla de día. El cráter ya no está; quedarse donde estaba trae los créditos |
+| 05 Cresta | Se cierra a la espalda. La pared del fondo sólo refleja el propio foco. Apagar la linterna y adaptarse: aparecen tallados ocultos y se abre el techo |
+| 06 Capilla (epílogo) | La luz del techo lo inunda todo: anillo de diamante, blanco y la capilla de día. El cráter ya no está; quedarse donde estaba trae los créditos |
 
 ## Cómo se trabaja
 
@@ -47,6 +47,7 @@ Dónde tocar:
 - `Assets/Editor/ConstructorCrater.Nivel.cs` — el nivel: geometría, puzzles, luces y arte, en metros.
 - `Assets/Editor/ConstructorCrater.cs` — materiales, prefabs, render y post-procesado.
 - `Assets/Editor/ConstructorCrater.Facetado.cs` — la estética low-poly: caras planas, superficies irregulares y un tono por cara. El tamaño de las caras y el relieve de cada zona están arriba de todo, en los `Perfil`.
+- `Assets/Editor/ConstructorCrater.Pozo.cs` — el cráter como pozo en el valle (la entrada sin cortes) y el cielo estrellado.
 - `Assets/Editor/GeneradorAudioCrater.cs` — sonidos sintetizados (reemplazables por WAV grabados con el mismo nombre).
 - `Assets/Data/Filtros/` — los dos filtros (color, cono, alcance, tiempo de carga).
 - `Assets/Scripts/` — el juego: `Jugador`, `Linterna`, `Mecanicas`, `Flujo`, `Interfaz`.

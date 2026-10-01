@@ -9,9 +9,11 @@ using UnityEngine.Rendering;
 ///
 ///  1. El jugador arranca en la capilla, libre, sin indicaciones.
 ///  2. Al cruzar el umbral (zona) arranca la cinemática, sin control:
-///     mira al sol, la luna lo tapa, los pájaros se callan, el cráter sube de la
-///     tierra y en su centro destella el contorno de una puerta.
-///  3. Al entrar por esa puerta (zona) funde a negro y aparece en la Explanada.
+///     mira al sol, la luna lo tapa, los pájaros se callan, la tierra del valle se
+///     abre en un pozo, el borde del cráter sube y en el borde destella una puerta.
+///  3. El pozo es el cráter de verdad: la Explanada está en el fondo. Al cruzar la
+///     puerta se baja caminando por una rampa que rodea el pozo. No hay corte: la
+///     luz, la niebla y el sonido pasan de a poco del valle al cráter.
 ///
 /// Guarda el ambiente del cráter tal como lo dejó el constructor y lo restaura
 /// al entrar. Después de verla una vez, la cinemática se salta con Espacio.
@@ -19,8 +21,10 @@ using UnityEngine.Rendering;
 /// CÓMO FUNCIONA
 /// Mientras dura la cinemática, JugadorFPS está apagado y este script mueve la cámara
 /// directamente. El cráter del valle existe en la escena desde el principio: sólo está
-/// escondido (el borde bajo tierra, el fondo con escala 0). "Revelarlo" es animar esas
-/// posiciones y escalas. Si ya se vio una vez (se guarda en PlayerPrefs), se puede saltar.
+/// escondido (el borde bajo tierra y una tapa de tierra sobre el pozo). "Revelarlo" es
+/// animar esas posiciones y escalas. Si ya se vio una vez (se guarda en PlayerPrefs),
+/// se puede saltar. La zona de entrada cubre todo el pozo: se baje por donde se baje,
+/// el ambiente cambia.
 /// </summary>
 public class PrologoCapilla : MonoBehaviour
 {
@@ -36,8 +40,8 @@ public class PrologoCapilla : MonoBehaviour
     [SerializeField] GameObject crater;
     [Tooltip("Piezas del borde: suben desde abajo de la tierra.")]
     [SerializeField] Transform[] bordes;
-    [Tooltip("Disco oscuro del fondo: se abre desde el centro.")]
-    [SerializeField] Transform fondo;
+    [Tooltip("Tapa de tierra sobre el pozo: se abre desde el centro y en el epílogo vuelve a cerrarse.")]
+    [SerializeField] Transform tapa;
     [SerializeField] Transform puerta;
     [SerializeField] Renderer[] contornoPuerta;
     [SerializeField] Renderer destello;
@@ -66,6 +70,8 @@ public class PrologoCapilla : MonoBehaviour
     [SerializeField] float revelado = 4f;
     [SerializeField] float duracionDestello = 2.2f;
     [SerializeField] float pausaFinal = 1f;
+    [Tooltip("Cuánto tarda el ambiente en pasar del valle al cráter al cruzar la puerta.")]
+    [SerializeField] float duracionEntrada = 5f;
 
     [Header("Aspecto")]
     [SerializeField] float profundidadOculta = 6f;
@@ -91,7 +97,8 @@ public class PrologoCapilla : MonoBehaviour
 
     float volumenPajaros;
     float[] alturasVisibles;
-    Vector3 escalaFondo;
+    Vector3 escalaTapa;
+    Collider colliderTapa;
     Vector3 escalaDestello;
     bool cinematicaHecha;
     bool entrando;
@@ -109,7 +116,11 @@ public class PrologoCapilla : MonoBehaviour
         alturasVisibles = new float[bordes != null ? bordes.Length : 0];
         for (int i = 0; i < alturasVisibles.Length; i++)
             if (bordes[i] != null) alturasVisibles[i] = bordes[i].position.y;
-        if (fondo != null) escalaFondo = fondo.localScale;
+        if (tapa != null)
+        {
+            escalaTapa = tapa.localScale;
+            colliderTapa = tapa.GetComponent<Collider>();
+        }
         if (destello != null) escalaDestello = destello.transform.localScale;
     }
 
@@ -233,29 +244,59 @@ public class PrologoCapilla : MonoBehaviour
         StartCoroutine(Entrar());
     }
 
+    /// <summary>
+    /// Sin fundido ni teletransporte: el jugador sigue caminando y el ambiente del valle
+    /// (totalidad) se mezcla con el del cráter durante 'duracionEntrada' segundos.
+    /// </summary>
     IEnumerator Entrar()
     {
         entrando = true;
-        if (jugador != null) jugador.enabled = false;
-        if (interfaz != null) yield return interfaz.Fundir(Color.black, 0f, 1f, 1.5f);
+        Activo = false;
+        EnElCrater = true;
+        flujo?.IniciarCrater();
+        eclipse?.MezclarAlCrater(duracionEntrada);
 
-        EntrarSinTransicion();
+        // el ambiente de ahora (el del valle en la totalidad) y el del cráter
+        Color cieloDesde = RenderSettings.ambientSkyColor, horizonteDesde = RenderSettings.ambientEquatorColor;
+        Color sueloDesde = RenderSettings.ambientGroundColor, nieblaDesde = RenderSettings.fogColor;
+        float densidadDesde = RenderSettings.fogDensity;
+        var cam = jugador != null ? jugador.GetComponentInChildren<Camera>() : Camera.main;
+        Color fondoDesde = cam != null ? cam.backgroundColor : colorNiebla;
+        float volGrave = graveEclipse != null ? graveEclipse.volume : 0f;
 
-        yield return new WaitForSeconds(0.4f);
-        if (interfaz != null) yield return interfaz.Fundir(Color.black, 1f, 0f, 2.5f);
-        if (jugador != null) jugador.enabled = true;
+        for (float t = 0f; t < duracionEntrada; t += Time.deltaTime)
+        {
+            float k = Suave(t / duracionEntrada);
+            RenderSettings.ambientSkyColor = Color.Lerp(cieloDesde, ambienteCielo, k);
+            RenderSettings.ambientEquatorColor = Color.Lerp(horizonteDesde, ambienteHorizonte, k);
+            RenderSettings.ambientGroundColor = Color.Lerp(sueloDesde, ambienteSuelo, k);
+            RenderSettings.fogColor = Color.Lerp(nieblaDesde, colorNiebla, k);
+            RenderSettings.fogDensity = Mathf.Lerp(densidadDesde, densidadNiebla, k);
+            if (cam != null) cam.backgroundColor = Color.Lerp(fondoDesde, fondoCamara, k);
+            if (graveEclipse != null) graveEclipse.volume = volGrave * (1f - k);
+            yield return null;
+        }
+
+        if (pajaros != null) pajaros.Stop();
+        if (graveEclipse != null) graveEclipse.Stop();
+        RestaurarAmbienteDelCrater();
         entrando = false;
     }
 
+    /// <summary>Arrancar directo en la Explanada (para probar): el cráter ya abierto y en totalidad.</summary>
     void EntrarSinTransicion()
     {
         Activo = false;
         EnElCrater = true;
+        cinematicaHecha = true;
         LlevarJugador(spawnCrater);
+        AplicarRevelado(1f);
+        FijarBrilloPuerta(brilloPuertaReposo);
 
         if (pajaros != null) pajaros.Stop();
         if (graveEclipse != null) graveEclipse.Stop();
-        cielo?.Mostrar(false);
+        cielo?.Mostrar(true);
+        if (cielo != null) cielo.Progreso = 1f;
         eclipse?.AplicarAmbienteDelCrater();
         RestaurarAmbienteDelCrater();
         flujo?.IniciarCrater();
@@ -267,6 +308,8 @@ public class PrologoCapilla : MonoBehaviour
     public void PrepararEpilogo()
     {
         if (crater != null) crater.SetActive(false);
+        // la tierra vuelve a cerrar el pozo
+        AplicarRevelado(0f);
         if (huella != null) huella.SetActive(true);
         if (zonaEpilogo != null) zonaEpilogo.SetActive(true);
         cielo?.Mostrar(true);
@@ -299,11 +342,14 @@ public class PrologoCapilla : MonoBehaviour
             }
         }
 
-        if (fondo != null)
+        if (tapa != null)
         {
-            float k = Suave(r);
-            fondo.gameObject.SetActive(k > 0.001f);
-            fondo.localScale = new Vector3(escalaFondo.x * k, escalaFondo.y, escalaFondo.z * k);
+            // la tierra se abre desde el centro, apenas empieza a subir el borde
+            float k = Suave(Mathf.Clamp01(r / 0.6f));
+            tapa.gameObject.SetActive(k < 0.999f);
+            tapa.localScale = new Vector3(escalaTapa.x * (1f - k), escalaTapa.y, escalaTapa.z * (1f - k));
+            // sólo se puede pisar cerrada (en el epílogo)
+            if (colliderTapa != null) colliderTapa.enabled = k <= 0.001f;
         }
 
         if (puerta != null) puerta.gameObject.SetActive(r > 0.5f);

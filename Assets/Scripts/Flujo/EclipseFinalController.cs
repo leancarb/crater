@@ -2,16 +2,19 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Coordina el final: la adaptación a la oscuridad en la Cresta abre la puerta del
-/// eclipse; cruzarla trae el anillo de diamante, el blanco y la capilla de día.
+/// Coordina el final: al entrar a la Cresta se cierra la compuerta a la espalda;
+/// la adaptación a la oscuridad abre el techo, entra la luz blanca del fin del
+/// eclipse hasta inundarlo todo y el jugador aparece en la capilla, de día.
 /// En el epílogo el cráter ya no está; los créditos llegan al quedarse en el lugar
 /// donde estaba o después de un rato.
 ///
 /// CÓMO FUNCIONA
 ///  1. HabilitarEnCresta (lo llama el flujo al entrar a la Cresta) enciende la adaptación.
-///  2. La adaptación dispara AlCompletarAdaptacion: se abre la PuertaEclipse.
-///  3. La zona detrás de la puerta llama a CruzarPuerta: silencio, anillo de diamante,
-///     blanco, y el jugador se teletransporta a la capilla (x = 300) con luz de día.
+///  2. La adaptación dispara AlCompletarAdaptacion: se abre el techo (AperturaTecho).
+///     Mientras se abre, el cielo que se ve por el hueco pasa de las estrellas a un
+///     blanco que encandila, y la luz ambiente sube con él.
+///  3. Con todo blanco: silencio, el tono del anillo de diamante, y el jugador se
+///     muda a la capilla sin que se note. Después el blanco se disuelve en el día.
 ///  4. En el epílogo, la zona del lugar del cráter (o el reloj de 2 minutos) llama a
 ///     CerrarDemo: la cámara sube al sol, fundido a blanco, créditos y la pantalla final.
 /// Las esperas se hacen con corrutinas (IEnumerator + yield).
@@ -26,9 +29,10 @@ public class EclipseFinalController : MonoBehaviour
     [SerializeField] PausaCrater pausa;
     [SerializeField] Transform jugador;
     [SerializeField] Transform spawnCapilla;
-    [SerializeField] PuertaEclipse puerta;
+    [SerializeField] AperturaTecho techo;
     [SerializeField] PrologoCapilla prologo;
     [SerializeField] CieloEclipse cielo;
+    [SerializeField] CieloEstrellado estrellas;
 
     [Header("Ambiente del epílogo")]
     [SerializeField] Light luzDelCrater;
@@ -39,7 +43,12 @@ public class EclipseFinalController : MonoBehaviour
     [SerializeField] Color ambienteSueloEpilogo = new Color(0.22f, 0.16f, 0.1f);
     [SerializeField] float nieblaEpilogo = 0.006f;
     [SerializeField] AudioSource ambienteCrater;
+    [SerializeField] float volumenCrater = 0.55f;
     [SerializeField] AudioSource ambienteExterior;
+
+    [Header("La luz que entra por el techo")]
+    [Tooltip("Color del cielo (HDR) cuando el techo terminó de abrirse: más de 1 encandila con el bloom.")]
+    [SerializeField] Color cieloBlanco = new Color(6f, 6f, 6f);
 
     [Header("Anillo de diamante")]
     [SerializeField] AudioSource tonoFinal;
@@ -69,6 +78,7 @@ public class EclipseFinalController : MonoBehaviour
     bool transicionIniciada;
     bool cerrado;
     float tiempoEnEpilogo;
+    float intensidadLuzCrater = -1f;   // la del constructor, para volver a ella
 
     public bool EnEpilogo { get; private set; }
 
@@ -86,28 +96,41 @@ public class EclipseFinalController : MonoBehaviour
         adaptacion?.Habilitar();
     }
 
-    /// <summary>Conectado al evento 'alAdaptarse' de AdaptacionOscuridad: aparece la puerta.</summary>
+    /// <summary>Conectado al evento 'alAdaptarse' de AdaptacionOscuridad: se abre el techo.</summary>
     public void AlCompletarAdaptacion()
     {
-        if (puerta != null) puerta.Abrir();
-        else CruzarPuerta();   // sin puerta en la escena, el final es directo
+        if (!transicionIniciada) StartCoroutine(Final());
     }
 
-    /// <summary>Conectado a la zona detrás de la puerta del eclipse.</summary>
-    public void CruzarPuerta()
-    {
-        if (!transicionIniciada) StartCoroutine(TrasladarALaCapilla());
-    }
-
-    IEnumerator TrasladarALaCapilla()
+    IEnumerator Final()
     {
         transicionIniciada = true;
         interfaz?.OcultarPrompt();
         if (pausa != null) pausa.enabled = false;
 
+        // 1. el techo se abre y la luz del fin del eclipse entra por el hueco.
+        // El jugador puede seguir mirando (y mirar para arriba)
+        if (techo != null) techo.Abrir();
+        float duracion = techo != null ? techo.Duracion : 6f;
+        var camara = jugador != null ? jugador.GetComponentInChildren<Camera>() : Camera.main;
+        Color fondoDesde = camara != null ? camara.backgroundColor : Color.black;
+        Color cieloDesde = RenderSettings.ambientSkyColor, horizonteDesde = RenderSettings.ambientEquatorColor;
+        float estrellasDesde = estrellas != null ? estrellas.Intensidad : 0f;
+        for (float t = 0f; t < duracion; t += Time.deltaTime)
+        {
+            float k = t / duracion;
+            float luz = k * k;   // casi nada al principio, todo al final
+            if (camara != null) camara.backgroundColor = Color.Lerp(fondoDesde, cieloBlanco, luz);
+            RenderSettings.ambientSkyColor = Color.Lerp(cieloDesde, Color.white * 2f, luz);
+            RenderSettings.ambientEquatorColor = Color.Lerp(horizonteDesde, Color.white, luz);
+            if (estrellas != null) estrellas.Intensidad = estrellasDesde * (1f - Mathf.Clamp01(k * 2f));
+            yield return null;
+        }
+
+        // 2. todo blanco: el último destello y silencio
         var control = jugador != null ? jugador.GetComponent<JugadorFPS>() : null;
-        var cc = jugador != null ? jugador.GetComponent<CharacterController>() : null;
         if (control != null) control.enabled = false;
+        if (interfaz != null) yield return interfaz.Fundir(Color.white, 0f, 1f, 0.8f);
 
         // silencio total: viento, zumbido, pasos. El tono final ignora esta pausa (ignoreListenerPause)
         AudioListener.pause = true;
@@ -122,6 +145,13 @@ public class EclipseFinalController : MonoBehaviour
         if (interfaz != null) yield return interfaz.AnilloDeDiamante(duracionDestello);
         else yield return new WaitForSecondsRealtime(duracionDestello);
         yield return new WaitForSecondsRealtime(blancoSostenido);
+
+        yield return MudarseALaCapilla(control);
+    }
+
+    IEnumerator MudarseALaCapilla(JugadorFPS control)
+    {
+        var cc = jugador != null ? jugador.GetComponent<CharacterController>() : null;
 
         // con la pantalla ya blanca, el jugador se muda a la capilla sin que se note
         if (cc != null) cc.enabled = false;
@@ -175,13 +205,45 @@ public class EclipseFinalController : MonoBehaviour
         if (ambienteExterior != null) ambienteExterior.Play();
     }
 
-    /// <summary>Luces y sonido del interior del cráter (al entrar desde el prólogo).</summary>
+    /// <summary>Luces y sonido del interior del cráter, de golpe (arrancar directo en la Explanada).</summary>
     public void AplicarAmbienteDelCrater()
     {
-        if (luzDelCrater != null) luzDelCrater.enabled = true;
+        GuardarIntensidadLuzCrater();
+        if (luzDelCrater != null) { luzDelCrater.enabled = true; luzDelCrater.intensity = intensidadLuzCrater; }
         if (solEpilogo != null) solEpilogo.enabled = false;
         if (ambienteExterior != null) ambienteExterior.Stop();
-        if (ambienteCrater != null) ambienteCrater.Play();
+        if (ambienteCrater != null) { ambienteCrater.volume = volumenCrater; ambienteCrater.Play(); }
+    }
+
+    /// <summary>Lo mismo, pero de a poco: el jugador entra caminando al cráter desde el valle.</summary>
+    public void MezclarAlCrater(float segundos) => StartCoroutine(Mezclar(segundos));
+
+    IEnumerator Mezclar(float segundos)
+    {
+        GuardarIntensidadLuzCrater();
+        float volExterior = ambienteExterior != null ? ambienteExterior.volume : 0f;
+        float intensidadSol = solEpilogo != null ? solEpilogo.intensity : 0f;
+        if (luzDelCrater != null) { luzDelCrater.intensity = 0f; luzDelCrater.enabled = true; }
+        if (ambienteCrater != null) { ambienteCrater.volume = 0f; ambienteCrater.Play(); }
+
+        for (float t = 0f; t < segundos; t += Time.deltaTime)
+        {
+            float k = Mathf.SmoothStep(0f, 1f, t / segundos);
+            if (luzDelCrater != null) luzDelCrater.intensity = intensidadLuzCrater * k;
+            if (solEpilogo != null) solEpilogo.intensity = intensidadSol * (1f - k);
+            if (ambienteExterior != null) ambienteExterior.volume = volExterior * (1f - k);
+            if (ambienteCrater != null) ambienteCrater.volume = volumenCrater * k;
+            yield return null;
+        }
+
+        if (solEpilogo != null) { solEpilogo.enabled = false; solEpilogo.intensity = intensidadSol; }
+        if (ambienteExterior != null) { ambienteExterior.Stop(); ambienteExterior.volume = volExterior; }
+        AplicarAmbienteDelCrater();
+    }
+
+    void GuardarIntensidadLuzCrater()
+    {
+        if (intensidadLuzCrater < 0f && luzDelCrater != null) intensidadLuzCrater = luzDelCrater.intensity;
     }
 
     /// <summary>Conectado a la zona donde estaba el cráter, en el epílogo.</summary>

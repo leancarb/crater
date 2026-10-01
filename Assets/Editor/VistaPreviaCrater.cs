@@ -19,7 +19,7 @@ public static class VistaPreviaCrater
 
     static readonly (string nombre, Vector3 ojo, Vector3 objetivo, bool linterna)[] Vistas =
     {
-        ("01_Explanada", new Vector3(0f, 5.6f, -40.2f), new Vector3(0f, 3f, -25f), false),
+        ("01_Explanada", new Vector3(0f, 5.6f, -44f), new Vector3(0f, 3f, -25f), false),
         ("02_Umbral", new Vector3(0f, 1.62f, -21f), new Vector3(-1.5f, 1.2f, -8f), true),
         ("03_Compuerta", new Vector3(-1f, 1.62f, -9f), new Vector3(0f, 2f, -3f), true),
         ("04_Campo", new Vector3(0f, 1.62f, 4.5f), new Vector3(0f, 0.6f, 12f), true),
@@ -29,7 +29,8 @@ public static class VistaPreviaCrater
         ("07_Zigzag", new Vector3(-3f, 1.62f, 47.5f), new Vector3(3f, 1.5f, 54f), true),
         ("08_Repisa", new Vector3(0f, 1.62f, 59f), new Vector3(0f, 1f, 67f), true),
         ("09_Cresta", new Vector3(0f, 1.62f, 77f), new Vector3(0f, 3f, 98f), false),
-        ("10_Capilla", new Vector3(300f, 1.62f, -4.5f), new Vector3(300f, 1.5f, 10f), false),
+        ("10_Capilla", new Vector3(0f, 10.62f, -76f), new Vector3(0f, 10.5f, -61.5f), false),
+        ("11_Borde_Del_Pozo", new Vector3(0f, 10.6f, -51f), new Vector3(0f, 4.5f, -37f), false),
     };
 
     [MenuItem("Crater/Renderizar vistas previas", priority = 30)]

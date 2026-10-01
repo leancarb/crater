@@ -151,6 +151,8 @@ public static partial class ConstructorCrater
             var malla = filtro.sharedMesh;
             if (r == null || malla == null) continue;
             if (r.sharedMaterials.Length == 0 || !r.sharedMaterials.All(m => m != null && kit.facetables.Contains(m))) continue;
+            // las mallas que ya salieron facetadas de acá (la tierra con el agujero) quedan como están
+            if (AssetDatabase.GetAssetPath(malla) == RutaMallasFacetadas) continue;
 
             filtro.sharedMesh = EsCuboPrimitivo(malla)
                 ? CajaFacetada(filtro.transform, PerfilDe(filtro.transform))
@@ -164,7 +166,7 @@ public static partial class ConstructorCrater
         string nombre = t.name;
         if (nombre.StartsWith("Horizonte") || (t.parent != null && t.parent.name == "Horizonte")) return PerfilRoca;
         if (nombre.StartsWith("Cerro_")) return PerfilCerro;
-        if (nombre == "Terreno" || nombre == "Llano") return PerfilSuelo;
+        if (nombre == "Terreno" || nombre.StartsWith("Llano")) return PerfilSuelo;
         for (var p = t.parent; p != null; p = p.parent)
         {
             if (p.name == "Crater_Valle") return PerfilCrater;
