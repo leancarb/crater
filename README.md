@@ -3,8 +3,8 @@
 Exploración en primera persona dentro de un cráter. Desde una capilla, un
 eclipse revela un cráter en el valle que sólo existe mientras dura la totalidad.
 Adentro, la linterna es la única herramienta: con luz blanca abre el Umbral, con
-el filtro **CUERPO** enciende anclas de basalto que tienden puentes de luz, y con
-**HUECO** disuelve rejas. Al final hay que apagarla y dejar que los ojos se
+el filtro **SOL** enciende anclas de basalto que tienden puentes de luz, y con
+el filtro **LUNA** disuelve rejas. Al final hay que apagarla y dejar que los ojos se
 acostumbren a la oscuridad: así se abre el techo y entra la luz del fin del eclipse.
 
 Unity 6000.3 · URP (Forward+) · Input System.
@@ -16,7 +16,7 @@ Unity 6000.3 · URP (Forward+) · Input System.
 | Moverse / mirar | WASD · mouse | stick izq. · stick der. |
 | Correr (mantener) | Shift | apretar el stick izq. |
 | Linterna | F | RB |
-| Filtro CUERPO / HUECO | 1 / 2 | X / Y |
+| Filtro SOL / LUNA | 1 / 2 | X / Y |
 | Luz blanca | Q | B |
 | Pausa y opciones (W / S elegir, A / D cambiar; R reinicia, X sale) | Esc | Start |
 | Saltar la cinemática (después de verla una vez) | Espacio | — |
@@ -28,7 +28,7 @@ Unity 6000.3 · URP (Forward+) · Input System.
 | 00 Capilla (prólogo) | De día. Al salir, el eclipse abre el cráter en el valle: un pozo con una puerta en el borde |
 | 01 Explanada | El fondo del pozo: se baja por la escalera de la puerta, sin cortes; un pasillo sigue al Umbral |
 | 02 Umbral | Recoger la linterna; sostener la luz sobre un ancla abre la compuerta |
-| 03 Rotonda | Dos alas en cualquier orden. Oeste (CUERPO): puente, puerta de dos anclas, anclas en el techo. Este (HUECO): muro de rejas, trampilla al piso de abajo, escotilla en el techo. Cada una termina en un sello que abre un atajo |
+| 03 Rotonda | Dos alas en cualquier orden. Oeste (filtro SOL): puente, puerta de dos anclas, anclas en el techo. Este (filtro LUNA): muro de rejas, trampilla al piso de abajo, escotilla en el techo. Cada una termina en un sello que abre un atajo |
 | 04 Cruce | Con los dos sellos se abre el norte: un ancla detrás de una reja, y un puente que termina contra una reja |
 | 05 Cresta | Se cierra a la espalda. La pared del fondo sólo refleja el propio foco. Apagar la linterna y adaptarse: aparecen tallados ocultos y se abre el techo |
 | 06 Capilla (epílogo) | La luz del techo lo inunda todo: anillo de diamante, blanco y la capilla de día. El cráter ya no está; quedarse donde estaba trae los créditos |

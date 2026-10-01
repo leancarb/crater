@@ -23,7 +23,7 @@ public class FiltroDefinicion : ScriptableObject
 
     [Header("Identidad")]
     // lo que muestra la interfaz arriba a la derecha
-    public string nombreVisible = "CUERPO";
+    public string nombreVisible = "SOL";
     public Canal canal = Canal.Cuerpo;
     [TextArea] public string descripcion;
 

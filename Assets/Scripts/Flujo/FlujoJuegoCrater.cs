@@ -152,8 +152,8 @@ public class FlujoJuegoCrater : MonoBehaviour
     void AlDesbloquearFiltro(FiltroDefinicion filtro)
     {
         if (filtro == null) return;
-        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo) interfaz?.MostrarPrompt("1 · Equipar CUERPO");
-        else if (filtro.canal == FiltroDefinicion.Canal.Hueco) interfaz?.MostrarPrompt("2 · Equipar HUECO");
+        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo) interfaz?.MostrarPrompt("1 · Equipar el filtro SOL");
+        else if (filtro.canal == FiltroDefinicion.Canal.Hueco) interfaz?.MostrarPrompt("2 · Equipar el filtro LUNA");
     }
 
     void AlEquiparFiltro(FiltroDefinicion filtro)
@@ -165,13 +165,13 @@ public class FlujoJuegoCrater : MonoBehaviour
         {
             pistaCuerpoMostrada = true;
             interfaz?.MostrarPromptTemporal(
-                "CUERPO enciende las anclas.\nSostené el haz sobre las dos para tender el puente.", 7f);
+                "El filtro SOL enciende las anclas.\nSostené el haz sobre las dos para tender el puente.", 7f);
         }
         else if (filtro.canal == FiltroDefinicion.Canal.Hueco && !pistaHuecoMostrada)
         {
             pistaHuecoMostrada = true;
             interfaz?.MostrarPromptTemporal(
-                "HUECO disuelve la materia: iluminala y atravesala.\nLo que está detrás de una reja no recibe luz.", 7f);
+                "El filtro LUNA disuelve las rejas: iluminala y atravesala.\nLo que está detrás de una reja no recibe luz.", 7f);
         }
         else if (ambos && !pistaCambioMostrada)
         {

@@ -305,7 +305,7 @@ public class InterfazCrater : MonoBehaviour
         barraCarga.color = linterna.ObjetivoAceptaFiltro ? color : ColorBloqueado;
     }
 
-    /// <summary>"1 CUERPO     2 HUECO" con colores (rich text); el filtro puesto a color pleno.</summary>
+    /// <summary>"1 SOL     2 LUNA" con colores (rich text); el filtro puesto a color pleno.</summary>
     string DescribirFiltros()
     {
         var sb = new StringBuilder();

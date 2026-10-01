@@ -50,9 +50,9 @@ public static class ValidarProyectoCrater
         var cuerpo = AssetDatabase.LoadAssetAtPath<FiltroDefinicion>(ConstructorCrater.RutaFiltroCuerpo);
         var hueco = AssetDatabase.LoadAssetAtPath<FiltroDefinicion>(ConstructorCrater.RutaFiltroHueco);
         Comprobar(cuerpo != null && cuerpo.canal == FiltroDefinicion.Canal.Cuerpo,
-            "El filtro CUERPO falta o está mal configurado.", problemas);
+            "El filtro SOL falta o está mal configurado.", problemas);
         Comprobar(hueco != null && hueco.canal == FiltroDefinicion.Canal.Hueco,
-            "El filtro HUECO falta o está mal configurado.", problemas);
+            "El filtro LUNA falta o está mal configurado.", problemas);
 
         foreach (var capa in new[] { ConstructorCrater.CapaAncla, ConstructorCrater.CapaReceptor, ConstructorCrater.CapaJugador })
             Comprobar(LayerMask.NameToLayer(capa) >= 0, $"Falta la capa {capa}.", problemas);
@@ -101,7 +101,7 @@ public static class ValidarProyectoCrater
             if (linterna != null)
             {
                 Comprobar(linterna.filtros.Count == 2 && linterna.filtros[0] == cuerpo && linterna.filtros[1] == hueco,
-                    "La linterna tiene que tener CUERPO (1) y HUECO (2), en ese orden.", problemas);
+                    "La linterna tiene que tener SOL (1) y LUNA (2), en ese orden.", problemas);
                 Comprobar(linterna.filtrosDesbloqueados.Count == 0, "La linterna no puede empezar con filtros desbloqueados.", problemas);
                 Comprobar(linterna.requiereRecogerla, "La linterna tiene que empezar sin recoger.", problemas);
             }
@@ -109,7 +109,7 @@ public static class ValidarProyectoCrater
             var recogibles = Todos<Recogible>();
             Comprobar(recogibles.Count(r => r.filtro == null) == 1, "Tiene que haber una única linterna para recoger.", problemas);
             Comprobar(recogibles.Count(r => r.filtro == cuerpo) == 1 && recogibles.Count(r => r.filtro == hueco) == 1,
-                "Tiene que haber un filtro CUERPO y un filtro HUECO para recoger.", problemas);
+                "Tiene que haber un filtro SOL y un filtro LUNA para recoger.", problemas);
 
             foreach (var puente in Todos<PuenteLuz>())
             {
@@ -120,7 +120,7 @@ public static class ValidarProyectoCrater
                 foreach (var ancla in puente.anclas.Where(a => a != null))
                 {
                     Comprobar(ancla.canalRequerido == FiltroDefinicion.Canal.Cuerpo,
-                        $"{ancla.name} sostiene un puente pero no responde a CUERPO.", problemas);
+                        $"{ancla.name} sostiene un puente pero no responde al filtro SOL.", problemas);
                     Comprobar(Vector3.Distance(ancla.PuntoDeImpacto, puente.transform.position) < alcance - 2f,
                         $"{ancla.name} queda demasiado lejos de {puente.name} para alcanzarla con el haz.", problemas);
                 }
@@ -128,7 +128,7 @@ public static class ValidarProyectoCrater
 
             foreach (var reja in Todos<MateriaHueca>())
             {
-                Comprobar(reja.canalRequerido == FiltroDefinicion.Canal.Hueco, $"{reja.name} no responde a HUECO.", problemas);
+                Comprobar(reja.canalRequerido == FiltroDefinicion.Canal.Hueco, $"{reja.name} no responde al filtro LUNA.", problemas);
                 var colliders = reja.GetComponents<Collider>();
                 Comprobar(colliders.Any(c => c.isTrigger) && colliders.Any(c => !c.isTrigger),
                     $"{reja.name} necesita un collider sólido y un trigger en el mismo objeto.", problemas);

@@ -99,10 +99,10 @@ public static partial class ConstructorCrater
         ConfigurarCapas();
 
         var kit = new Kit { audio = GeneradorAudioCrater.GenerarTodo() };
-        kit.cuerpo = ConfigurarFiltro(RutaFiltroCuerpo, "CUERPO", FiltroDefinicion.Canal.Cuerpo,
+        kit.cuerpo = ConfigurarFiltro(RutaFiltroCuerpo, "SOL", FiltroDefinicion.Canal.Cuerpo,
             new Color(1f, 0.6f, 0.24f), "Enciende las anclas de basalto. Dos anclas encendidas tienden un puente de luz.",
             kit.audio.equiparCuerpo, kit.audio.zumbidoCuerpo);
-        kit.hueco = ConfigurarFiltro(RutaFiltroHueco, "HUECO", FiltroDefinicion.Canal.Hueco,
+        kit.hueco = ConfigurarFiltro(RutaFiltroHueco, "LUNA", FiltroDefinicion.Canal.Hueco,
             ColorLuna, "Disuelve la materia hueca: rejas y tapas se vuelven atravesables.",
             kit.audio.equiparHueco, kit.audio.zumbidoHueco);
 
