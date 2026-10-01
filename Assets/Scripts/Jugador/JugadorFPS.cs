@@ -71,11 +71,13 @@ public class JugadorFPS : MonoBehaviour
             return;
         }
 
-        Vector2 giro = EntradaCrater.Mirada() * sensibilidad;
+        // la sensibilidad y el eje se pueden cambiar en la pausa (OpcionesCrater)
+        Vector2 giro = EntradaCrater.Mirada() * sensibilidad * OpcionesCrater.Sensibilidad;
+        bool invertir = invertirY != OpcionesCrater.InvertirY;
         // horizontal: gira todo el cuerpo (así "adelante" siempre es hacia donde se mira)
         transform.Rotate(0f, giro.x, 0f);
         // vertical: sólo la cámara, con límite para no mirar más allá de arriba/abajo
-        pitch = Mathf.Clamp(pitch + giro.y * (invertirY ? 1f : -1f), -limiteVertical, limiteVertical);
+        pitch = Mathf.Clamp(pitch + giro.y * (invertir ? 1f : -1f), -limiteVertical, limiteVertical);
         AplicarPitch();
     }
 

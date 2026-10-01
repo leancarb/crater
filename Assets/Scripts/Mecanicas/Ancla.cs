@@ -54,6 +54,9 @@ public class Ancla : ReceptorDeLuz
             // el primer 40 % de la retención no late: sólo baja un poco el brillo
             nivel = Mathf.Lerp(0.35f, 1f, r) * Mathf.Lerp(0.55f, 1f, r > 0.6f ? 1f : pulso);
         }
+        // tapada por una reja: la linterna la ve pero la luz no llega. Titila apagada
+        if (!Activo && Tapado)
+            nivel = Mathf.Max(nivel, 0.12f + 0.1f * Mathf.Sin(Time.time * 22f));
         Nivel = nivel;
 
         // ??= crea el bloque la primera vez (AlActualizar puede llamarse antes que Awake de otros)

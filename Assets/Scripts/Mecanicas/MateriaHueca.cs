@@ -80,6 +80,9 @@ public class MateriaHueca : ReceptorDeLuz
             foreach (var c in solidos) if (c != null) c.enabled = solido;
         }
 
+        // tapa algo que la linterna busca: el sello late, para decir "primero yo"
+        float pulsoTapada = Tapado && Solido ? 0.35f + 0.35f * Mathf.Sin(Time.time * 12f) : 0f;
+
         // transparencia: el alfa del color base baja hasta 'opacidadMinima'
         float alfa = Mathf.Lerp(1f, opacidadMinima, Disolucion);
         for (int i = 0; i < renderers.Length; i++)
@@ -92,7 +95,7 @@ public class MateriaHueca : ReceptorDeLuz
             bloque.SetColor(IdBase, c);
             // el sello azul muestra el progreso: brilla con la carga antes de disolverse
             if (System.Array.IndexOf(sellos, r) >= 0)
-                bloque.SetColor(IdEmision, colorSello * Mathf.Lerp(0.9f, 4f, Mathf.Max(Carga, Disolucion)) * alfa);
+                bloque.SetColor(IdEmision, colorSello * Mathf.Lerp(0.9f, 4f, Mathf.Max(Mathf.Max(Carga, Disolucion), pulsoTapada)) * alfa);
             r.SetPropertyBlock(bloque);
         }
 

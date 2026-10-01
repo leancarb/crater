@@ -64,7 +64,7 @@ La herramienta que nos permite ver también define lo que vemos. La linterna ens
 | Linterna | F | RB |
 | Filtro CUERPO / HUECO | 1 / 2 | X / Y |
 | Luz blanca | Q | B |
-| Pausa (R reinicia, X sale) | Esc | Start |
+| Pausa y opciones (W / S elegir, A / D cambiar; R reinicia, X sale) | Esc | Start |
 | Saltar la cinemática (desde la 2.ª vez) | Espacio | — |
 
 ### 3.2 Linterna
@@ -78,7 +78,7 @@ La herramienta que nos permite ver también define lo que vemos. La linterna ens
 | # | Filtro | Color | Receptor | Qué hace |
 |---|---|---|---|---|
 | 1 | **CUERPO** | Ámbar | Ancla de basalto → Puente de luz | Enciende anclas. Con todas las anclas de un puente encendidas, el puente se materializa. Las anclas retienen unos segundos al perder el haz. |
-| 2 | **HUECO** | Azul | Reja | Disuelve la materia hueca mientras se la ilumina: se vuelve atravesable. Una reja sólida tapa la luz: lo que está detrás no se enciende. También hay rejas acostadas (trampillas en el piso, escotillas en el techo). |
+| 2 | **HUECO** | Azul | Reja | Disuelve la materia hueca mientras se la ilumina: se vuelve atravesable. Una reja sólida tapa la luz: lo que está detrás no se enciende. Si se apunta a un ancla tapada con el filtro correcto, el ancla titila apagada y el sello azul de la reja late: "primero yo". También hay rejas acostadas (trampillas en el piso, escotillas en el techo). |
 
 **Sellos:** al final de cada ala. Una vez encendidos quedan así para siempre; abren un atajo a la Rotonda y, los dos juntos, la puerta del norte.
 
@@ -112,7 +112,7 @@ Cada ala sigue el patrón **Enseñar → Probar → Torcer**. Se hacen en cualqu
 | **00 Capilla (prólogo)** | Libre, sin indicaciones. Al cruzar el umbral: cinemática del eclipse (~18 s). El cráter se abre en el valle, frente a la capilla: es un pozo y el resto del nivel está bajo tierra. La puerta está en el borde, del lado de la capilla. |
 | **01 Explanada** | El fondo del pozo, bajo la totalidad. Se llega por la escalera de la puerta; un pasillo sigue al Umbral. |
 | **02 Umbral** | La linterna. Sostener la luz blanca sobre un ancla abre la compuerta. |
-| **03 Rotonda** | Sala central con óculo. Dos alas a los lados; al norte, la puerta de los sellos con dos tallados que se encienden con cada sello. |
+| **03 Rotonda** | Sala central con óculo y, debajo, el anillo de seis columnas y el obelisco del mapa de Blender (el obelisco mira a la puerta de los sellos). Dos alas a los lados; al norte, la puerta de los sellos con dos tallados que se encienden con cada sello. Sobre cada atajo, un faro (tallado con luz) se prende cuando su sello se enciende. |
 | **03a Ala oeste** | CUERPO. Enseñar: un abismo y dos anclas juntas. Probar: una puerta que se sostiene con dos anclas lejanas (encender una, barrer a la otra y pasar con la retención). Torcer: las anclas cuelgan del techo sobre el otro lado de un pozo. Sello detrás de un tabique. |
 | **03b Ala este** | HUECO. Enseñar: un muro de rejas. Probar: la sala no tiene salida; el camino es una trampilla en el piso que da a una galería de abajo, con otra reja. Torcer: una rampa que termina contra una escotilla de reja en el techo. Sello: una placa de materia hueca que queda disuelta. |
 | **04 Cruce** | Los dos filtros. Un ancla del puente está detrás de una reja: disolverla, cambiar a CUERPO y encenderla antes de que se cierre. Después, un puente sostenido por anclas que quedan a la espalda termina contra una reja: parado arriba, cambiar a HUECO y pasar antes de que se apague. |

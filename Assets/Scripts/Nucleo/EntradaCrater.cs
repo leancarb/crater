@@ -74,6 +74,28 @@ public static class EntradaCrater
     public static bool Pausa =>
         Presionada(Key.Escape) || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
 
+    /// <summary>
+    /// Navegar un menú: (0, +1) arriba, (0, -1) abajo, (+1, 0) derecha, (-1, 0) izquierda.
+    /// WASD, flechas o la cruceta del joystick. Sólo el frame en que se apretó.
+    /// </summary>
+    public static Vector2Int NavegarMenu()
+    {
+        var n = Vector2Int.zero;
+        if (Presionada(Key.W) || Presionada(Key.UpArrow)) n.y += 1;
+        if (Presionada(Key.S) || Presionada(Key.DownArrow)) n.y -= 1;
+        if (Presionada(Key.D) || Presionada(Key.RightArrow)) n.x += 1;
+        if (Presionada(Key.A) || Presionada(Key.LeftArrow)) n.x -= 1;
+        var g = Gamepad.current;
+        if (g != null)
+        {
+            if (g.dpad.up.wasPressedThisFrame) n.y += 1;
+            if (g.dpad.down.wasPressedThisFrame) n.y -= 1;
+            if (g.dpad.right.wasPressedThisFrame) n.x += 1;
+            if (g.dpad.left.wasPressedThisFrame) n.x -= 1;
+        }
+        return n;
+    }
+
     /// <summary>True sólo en el frame en que se apretó la tecla.</summary>
     public static bool Presionada(Key tecla) =>
         Keyboard.current != null && Keyboard.current[tecla].wasPressedThisFrame;

@@ -19,6 +19,9 @@ public class TestigoDeSello : MonoBehaviour
     public float emisionApagado = 0.15f;
     [Tooltip("Segundos para pasar de apagado a encendido.")]
     public float transicion = 1.5f;
+    [Tooltip("Opcional: una luz que se prende con el sello, para verlo de lejos.")]
+    public Light luz;
+    public float intensidadLuz = 30f;
 
     static readonly int IdEmision = Shader.PropertyToID("_EmissionColor");
     MaterialPropertyBlock bloque;
@@ -38,6 +41,11 @@ public class TestigoDeSello : MonoBehaviour
         if (renderers == null) return;
         bloque ??= new MaterialPropertyBlock();
         Color c = colorEncendido * Mathf.Lerp(emisionApagado, emisionEncendido, nivel);
+        if (luz != null)
+        {
+            luz.intensity = intensidadLuz * nivel;
+            luz.enabled = nivel > 0.01f;
+        }
         foreach (var r in renderers)
         {
             if (r == null) continue;

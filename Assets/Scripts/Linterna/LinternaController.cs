@@ -252,7 +252,17 @@ public class LinternaController : MonoBehaviour
             if (Physics.Raycast(transform.position, hacia.normalized, hacia.magnitude - 0.05f,
                                 capaObstaculos, QueryTriggerInteraction.Ignore))
                 continue;
-            if (TapadoPorUnaReja(hacia, receptor)) continue;
+            var reja = RejaEnElMedio(hacia, receptor);
+            if (reja != null)
+            {
+                // se ve pero no le llega: el receptor titila y la reja avisa que es ella
+                if (receptor.AceptaFiltro(FiltroActual))
+                {
+                    receptor.AvisarTapado();
+                    reja.AvisarTapado();
+                }
+                continue;
+            }
 
             // 4. se le avisa sólo si el filtro actual es el suyo
             HayObjetivo = true;
@@ -270,16 +280,16 @@ public class LinternaController : MonoBehaviour
     /// pero mientras están sólidas tapan la luz: lo que está detrás no se ilumina hasta
     /// disolverlas. Disueltas, sus colliders se apagan y el rayo pasa.
     /// </summary>
-    bool TapadoPorUnaReja(Vector3 hacia, ReceptorDeLuz objetivo)
+    MateriaHueca RejaEnElMedio(Vector3 hacia, ReceptorDeLuz objetivo)
     {
         int n = Physics.RaycastNonAlloc(transform.position, hacia.normalized, impactosRejas, hacia.magnitude - 0.05f,
                                         capaReceptores, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < n; i++)
         {
             var reja = impactosRejas[i].collider.GetComponentInParent<MateriaHueca>();
-            if (reja != null && reja != objetivo && reja.Solido) return true;
+            if (reja != null && reja != objetivo && reja.Solido) return reja;
         }
-        return false;
+        return null;
     }
 
     // en la vista Scene, una línea amarilla del largo del alcance

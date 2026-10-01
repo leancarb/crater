@@ -112,7 +112,8 @@ public class RecorridoCraterTests
         Assert.That(Buscar<Compuerta>("Atajo_Oeste").Abierta, Is.True, "el sello oeste no abrió el atajo");
         yield return Caminar(new Vector3(-9f, 0f, 24.75f));
 
-        // ---- ala este: HUECO
+        // ---- ala este: HUECO (rodeando el anillo de columnas del centro de la rotonda)
+        yield return Caminar(new Vector3(-8.5f, 0f, 4f));
         yield return Caminar(new Vector3(8f, 0f, 1f));
         yield return Caminar(new Vector3(16.5f, 0f, 1f));
         Assert.That(linterna.EstaDesbloqueado(hueco), Is.True, "no se pudo recoger HUECO");

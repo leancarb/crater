@@ -17,7 +17,7 @@ Unity 6000.3 · URP (Forward+) · Input System.
 | Linterna | F | RB |
 | Filtro CUERPO / HUECO | 1 / 2 | X / Y |
 | Luz blanca | Q | B |
-| Pausa (R reinicia, X sale) | Esc | Start |
+| Pausa y opciones (W / S elegir, A / D cambiar; R reinicia, X sale) | Esc | Start |
 | Saltar la cinemática (después de verla una vez) | Espacio | — |
 
 ## Recorrido

@@ -42,6 +42,7 @@ public class InterfazCrater : MonoBehaviour
     Text textoTitulo;
     Text textoSubtitulo;
     GameObject panelPausa;
+    Text textoOpciones;
 
     // se guarda la corrutina en curso para cortarla si llega otra indicación
     Coroutine rutinaPrompt;
@@ -205,6 +206,19 @@ public class InterfazCrater : MonoBehaviour
             var sombra = texto.GetComponent<Shadow>();
             if (sombra != null) sombra.enabled = valor;
         }
+    }
+
+    /// <summary>Dibuja las opciones en la pausa, con la elegida resaltada.</summary>
+    public void MostrarOpciones(int elegida)
+    {
+        if (textoOpciones == null) return;
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < OpcionesCrater.CantidadDeFilas; i++)
+        {
+            string fila = OpcionesCrater.Texto((OpcionesCrater.Fila)i);
+            sb.AppendLine(i == elegida ? $"<color=#FFB060>‹  {fila}  ›</color>" : fila);
+        }
+        textoOpciones.text = sb.ToString();
     }
 
     public void MostrarPausa(bool visible)
@@ -382,10 +396,14 @@ public class InterfazCrater : MonoBehaviour
         panelPausa = Crear("Pausa", raiz, Vector2.zero, Vector2.one);
         var fondoPausa = panelPausa.AddComponent<Image>();
         fondoPausa.color = new Color(0f, 0f, 0f, 0.78f);
-        CrearTexto(Crear("TituloPausa", panelPausa.transform, new Vector2(0.1f, 0.58f), new Vector2(0.9f, 0.72f)),
+        CrearTexto(Crear("TituloPausa", panelPausa.transform, new Vector2(0.1f, 0.74f), new Vector2(0.9f, 0.86f)),
             56, TextAnchor.MiddleCenter, Color.white).text = "PAUSA";
-        CrearTexto(Crear("Controles", panelPausa.transform, new Vector2(0.2f, 0.18f), new Vector2(0.8f, 0.56f)),
-            24, TextAnchor.UpperCenter, new Color(0.85f, 0.85f, 0.85f)).text =
+        textoOpciones = CrearTexto(Crear("Opciones", panelPausa.transform, new Vector2(0.2f, 0.42f), new Vector2(0.8f, 0.72f)),
+            28, TextAnchor.UpperCenter, Color.white);
+        textoOpciones.lineSpacing = 1.25f;
+        CrearTexto(Crear("Controles", panelPausa.transform, new Vector2(0.15f, 0.1f), new Vector2(0.85f, 0.38f)),
+            22, TextAnchor.UpperCenter, new Color(0.75f, 0.75f, 0.75f)).text =
+            "W / S · Elegir opción      A / D · Cambiar\n\n" +
             "WASD · Moverse      Mouse · Mirar\n" +
             "F · Linterna      1 / 2 · Filtros      Q · Luz blanca\n\n" +
             "Esc · Seguir      R · Reiniciar      X · Salir";

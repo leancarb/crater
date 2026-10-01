@@ -58,6 +58,16 @@ public abstract class ReceptorDeLuz : MonoBehaviour
 
     public Vector3 PuntoDeImpacto => puntoDeImpacto != null ? puntoDeImpacto.position : transform.position;
 
+    /// <summary>
+    /// La linterna apunta hacia acá con el filtro correcto pero una reja sólida está en
+    /// el medio (o, si esto es una reja, está tapando algo). Dura un instante: la
+    /// linterna lo vuelve a avisar cada frame. Las hijas lo usan para titilar.
+    /// </summary>
+    public bool Tapado => Time.time < tapadoHasta;
+    float tapadoHasta = -1f;
+
+    public void AvisarTapado() => tapadoHasta = Time.time + 0.12f;
+
     float tiempoDeCarga = TiempoDeCargaLuzBlanca;   // se toma del último filtro que lo iluminó
     float sinLuz;                                   // segundos desde que perdió el haz
     bool luzPendiente;                              // la linterna lo iluminó desde el último Avanzar()

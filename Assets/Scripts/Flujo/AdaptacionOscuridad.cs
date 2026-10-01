@@ -65,7 +65,12 @@ public class AdaptacionOscuridad : MonoBehaviour
 
     void Update()
     {
-        if (!Habilitada) return;
+        // el brillo de las opciones se suma siempre, también fuera de la Cresta
+        if (!Habilitada)
+        {
+            if (ajustes != null) ajustes.postExposure.value = exposicionNormal + OpcionesCrater.Brillo;
+            return;
+        }
 
         var linterna = LinternaController.Instancia;
         bool linternaApagada = linterna == null || !linterna.Encendida;
@@ -86,7 +91,7 @@ public class AdaptacionOscuridad : MonoBehaviour
 
         // exposición en EV: +1 duplica el brillo de la imagen, +3,2 lo multiplica por ~9
         if (ajustes != null)
-            ajustes.postExposure.value = Mathf.Lerp(exposicionNormal, exposicionAdaptada, Curva);
+            ajustes.postExposure.value = Mathf.Lerp(exposicionNormal, exposicionAdaptada, Curva) + OpcionesCrater.Brillo;
 
         if (ambienteDeAdaptacion != null)
             ambienteDeAdaptacion.volume = Curva * volumenMaximo;

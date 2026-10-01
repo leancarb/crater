@@ -128,6 +128,7 @@ public static partial class ConstructorCrater
         public VolumeProfile perfil;
 
         public GameObject modeloAncla, modeloReja, modeloPuente, modeloLinterna, modeloArquitectura, modeloMotivos;
+        public GameObject modeloMapaRecorrido;   // el mapa de Blender (Assets/Models/CraterMapa)
 
         public Material piso, basalto, basaltoMedio, techo, piedra, metal, metalGastado;
         public Material ambar, motivoLatente, puenteVidrio, puenteBorde, rejaBasalto, rejaSello, cielo, lente;
@@ -174,12 +175,13 @@ public static partial class ConstructorCrater
         kit.modeloLinterna = CargarModelo("SM_Linterna.fbx");
         kit.modeloArquitectura = CargarModelo("SM_Arquitectura_Modular.fbx");
         kit.modeloMotivos = CargarModelo("SM_Motivos_Tallados.fbx");
+        kit.modeloMapaRecorrido = CargarModelo("SM_Mapa01_Recorrido.fbx", "Assets/Models/CraterMapa/");
     }
 
-    static GameObject CargarModelo(string nombre)
+    static GameObject CargarModelo(string nombre, string carpeta = CarpetaModelos)
     {
-        ImportarConCarasPlanas(CarpetaModelos + nombre);
-        var modelo = AssetDatabase.LoadAssetAtPath<GameObject>(CarpetaModelos + nombre);
+        ImportarConCarasPlanas(carpeta + nombre);
+        var modelo = AssetDatabase.LoadAssetAtPath<GameObject>(carpeta + nombre);
         if (modelo == null) throw new InvalidOperationException("No se encontró el modelo " + nombre);
         return modelo;
     }

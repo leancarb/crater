@@ -66,6 +66,7 @@ public static partial class ConstructorCrater
 
         Caja(g, "Techo_Rotonda", -12.3f, 7, -3.3f, 12.3f, 7.3f, 27.3f, k.techo);
         Oculo(k, g, "Oculo_Rotonda", new Vector3(0f, 6.97f, 12f), 4f, 150f, 12f);
+        ConstruirAnilloDelMapa(k, g, new Vector3(0f, 0.12f, 12f), 0.4f);
 
         Luz(g, "Luz_Rotonda", new Vector3(0f, 5.8f, 5f), LuzCalida, 140f, 16f, true);
         Luz(g, "Luz_Rotonda_Norte", new Vector3(0f, 5.8f, 21f), LuzCalida, 100f, 14f, false);
@@ -89,6 +90,54 @@ public static partial class ConstructorCrater
         }
         Testigo("Testigo_Oeste", -3.6f, selloOeste);
         Testigo("Testigo_Este", 3.6f, selloEste);
+
+        // sobre cada atajo, del lado de la rotonda, un tallado con luz: se ve de lejos cuál se abrió
+        void Faro(string nombre, float lado, ReceptorDeLuz sello)
+        {
+            var tallado = Motivo(k, g, nombre, new Vector3(lado * 11.93f, 4.5f, 24.75f), lado < 0f ? 90f : -90f, 0.6f, k.ambar);
+            var testigo = tallado.AddComponent<TestigoDeSello>();
+            testigo.sello = sello;
+            testigo.renderers = tallado.GetComponentsInChildren<Renderer>();
+            testigo.luz = Luz(g, nombre + "_Luz", new Vector3(lado * 10.8f, 5f, 24.75f), LuzCalida, 0f, 9f, false);
+            testigo.intensidadLuz = 45f;
+        }
+        Faro("Faro_Atajo_Oeste", -1f, selloOeste);
+        Faro("Faro_Atajo_Este", 1f, selloEste);
+    }
+
+    /// <summary>
+    /// El anillo del mapa de Blender (Assets/Models/CraterMapa): seis columnas y el
+    /// obelisco sobre un piso redondo. Del FBX se usan sólo esas piezas, escaladas y
+    /// centradas en 'centro' (la cara de arriba del piso queda a esa altura), con el
+    /// obelisco mirando al norte, hacia la puerta de los sellos.
+    /// </summary>
+    static void ConstruirAnilloDelMapa(Kit k, Transform g, Vector3 centro, float escala)
+    {
+        var mapa = Instanciar(k.modeloMapaRecorrido, g, "Anillo_Del_Mapa");
+        foreach (var r in mapa.GetComponentsInChildren<Renderer>(true))
+            if (!r.name.StartsWith("Anillo")) Object.DestroyImmediate(r.gameObject);
+        mapa.transform.localScale = Vector3.one * escala;
+
+        Renderer Pieza(string nombre) => System.Array.Find(mapa.GetComponentsInChildren<Renderer>(true), r => r.name == nombre);
+        var piso = Pieza("Anillo_Piso");
+        var obelisco = Pieza("Anillo_Obelisco");
+        if (piso == null) throw new System.InvalidOperationException("SM_Mapa01_Recorrido.fbx no tiene Anillo_Piso");
+
+        // centrar: el medio del piso en 'centro', su cara de arriba a la altura de 'centro'
+        Bounds b = piso.bounds;
+        mapa.transform.position += centro - new Vector3(b.center.x, b.max.y, b.center.z);
+        // girar alrededor del centro hasta que el obelisco quede al norte (+z)
+        if (obelisco != null)
+        {
+            Vector3 hacia = obelisco.bounds.center - centro;
+            mapa.transform.RotateAround(centro, Vector3.up, -Mathf.Atan2(hacia.x, hacia.z) * Mathf.Rad2Deg);
+        }
+
+        Pintar(mapa, r => r.name.Contains("Obelisco") ? k.piedra : r.name.Contains("Piso") ? k.piso : k.basaltoMedio);
+        // columnas y obelisco sólidos; el piso es apenas un escalón, sin collider
+        foreach (var r in mapa.GetComponentsInChildren<Renderer>(true))
+            if (!r.name.Contains("Piso") && r.GetComponent<Collider>() == null) r.gameObject.AddComponent<BoxCollider>();
+        Estatico(mapa);
     }
 
     // ================================================================== ala oeste: CUERPO
@@ -234,10 +283,14 @@ public static partial class ConstructorCrater
 
         // el sello, detrás de un tabique: una placa de materia hueca que queda disuelta
         Caja(g, "Tabique_E3", 12.3f, -0.3f, 23.5f, 17.5f, 6, 23.8f, k.basaltoMedio);
-        Motivo(k, g, "Tallado_Sello_Este", new Vector3(14.6f, 0.4f, 26.95f), 180f, 0.7f, k.ambar);
+        var tallado = Motivo(k, g, "Tallado_Sello_Este", new Vector3(14.6f, 0.4f, 26.95f), 180f, 0.7f, k.ambar);
         var sello = Reja(k, g, "Sello_Este", new Vector3(14.6f, 0f, 26.55f), 180f, new Vector3(0.5f, 0.5f, 0.5f));
         sello.permanente = true;
         PrefabUtility.RecordPrefabInstancePropertyModifications(sello);
+        // el tallado de atrás de la placa se enciende cuando la placa queda disuelta
+        var testigo = tallado.AddComponent<TestigoDeSello>();
+        testigo.sello = sello;
+        testigo.renderers = tallado.GetComponentsInChildren<Renderer>();
         refs.atajoEste = CompuertaLosa(k, g, "Atajo_Este", new Vector3(12.15f, 2f, 24.75f), new Vector3(0.3f, 4f, 3.5f),
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Este", new Vector3(16f, 5f, 25f), LuzFria, 60f, 9f, false);
