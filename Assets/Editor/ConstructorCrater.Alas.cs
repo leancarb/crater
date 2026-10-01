@@ -73,23 +73,16 @@ public static partial class ConstructorCrater
     }
 
     /// <summary>
-    /// La puerta del norte y sus dos testigos (los tallados a los costados, que se
-    /// encienden con cada sello). Va después de las alas: necesita los sellos.
+    /// La puerta del norte, los hilos de tallados que llegan a ella (se encienden de a
+    /// uno con cada sello) y los faros de los atajos. Va después de las alas: necesita los sellos.
     /// </summary>
     static void ConstruirPuertaDeLosSellos(Kit k, Transform g, Referencias refs, ReceptorDeLuz selloOeste, ReceptorDeLuz selloEste)
     {
         refs.puertaSellos = CompuertaLosa(k, g, "Puerta_Sellos", new Vector3(0f, 2f, 27.15f), new Vector3(4f, 4f, 0.3f),
             new Vector3(0f, -4.4f, 0f), 3f, false, selloOeste, selloEste);
 
-        void Testigo(string nombre, float x, ReceptorDeLuz sello)
-        {
-            var tallado = Motivo(k, g, nombre, new Vector3(x, 1.2f, 26.95f), 180f, 0.8f, k.ambar);
-            var testigo = tallado.AddComponent<TestigoDeSello>();
-            testigo.sello = sello;
-            testigo.renderers = tallado.GetComponentsInChildren<Renderer>();
-        }
-        Testigo("Testigo_Oeste", -3.6f, selloOeste);
-        Testigo("Testigo_Este", 3.6f, selloEste);
+        // los hilos de soles y lunas que llegan a la puerta (ConstructorCrater.Tallados.cs)
+        ConstruirHilosDeLosSellos(k, g, refs, selloOeste, selloEste);
 
         // sobre cada atajo, del lado de la rotonda, un tallado con luz: se ve de lejos cuál se abrió
         void Faro(string nombre, float lado, ReceptorDeLuz sello)
@@ -319,8 +312,9 @@ public static partial class ConstructorCrater
         // ---- N2 · el puente se sostiene con anclas que quedan a la espalda y termina contra
         // una reja: parado arriba, cambiar a HUECO y pasar antes de que se apague
         Caja(g, "Piso_N2_Lejos", -6, -0.3f, 50.5f, 6, 0, 68.5f, k.piso);
-        var b1 = CrearAnclaEnEscena(k, g, "Ancla_N_Borde_A", new Vector3(-1.3f, 0f, 43.2f), Quaternion.identity, FiltroDefinicion.Canal.Cuerpo, 8f, 1);
-        var b2 = CrearAnclaEnEscena(k, g, "Ancla_N_Borde_B", new Vector3(1.3f, 0f, 43.2f), Quaternion.identity, FiltroDefinicion.Canal.Cuerpo, 8f, 3);
+        // miran al sur: se encienden antes de subir al puente y después quedan a la espalda
+        var b1 = CrearAnclaEnEscena(k, g, "Ancla_N_Borde_A", new Vector3(-1.3f, 0f, 43.2f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 8f, 1);
+        var b2 = CrearAnclaEnEscena(k, g, "Ancla_N_Borde_B", new Vector3(1.3f, 0f, 43.2f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 8f, 3);
         Puente(k, g, "Puente_N_Borde", new Vector3(0f, 0f, 45f), new Vector3(0f, 0f, 50.5f), 3.6f, b1, b2);
         Reja(k, g, "Reja_N_Borde_A", new Vector3(-3f, 0f, 51.2f));
         Reja(k, g, "Reja_N_Borde_B", new Vector3(3f, 0f, 51.2f));

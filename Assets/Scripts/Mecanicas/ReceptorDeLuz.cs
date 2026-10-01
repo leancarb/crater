@@ -32,6 +32,9 @@ public abstract class ReceptorDeLuz : MonoBehaviour
     [Tooltip("Una vez activo, queda activo para siempre (los sellos).")]
     public bool permanente;
 
+    [Tooltip("Sólo recibe luz desde adelante (transform.forward): las anclas, por la cara de los aros.")]
+    public bool soloDeFrente;
+
     [Tooltip("Punto al que apunta la linterna para el cono y la línea de vista. Vacío = el propio objeto.")]
     public Transform puntoDeImpacto;
 
@@ -67,6 +70,15 @@ public abstract class ReceptorDeLuz : MonoBehaviour
     float tapadoHasta = -1f;
 
     public void AvisarTapado() => tapadoHasta = Time.time + 0.12f;
+
+    /// <summary>¿La luz que sale de 'origen' le da en la cara que corresponde?</summary>
+    public bool DeFrenteA(Vector3 origen)
+    {
+        if (!soloDeFrente) return true;
+        Vector3 haciaLaLuz = origen - PuntoDeImpacto;
+        // más de ~85° de costado ya cuenta como "de atrás"
+        return Vector3.Dot(transform.forward, haciaLaLuz.normalized) > 0.08f;
+    }
 
     float tiempoDeCarga = TiempoDeCargaLuzBlanca;   // se toma del último filtro que lo iluminó
     float sinLuz;                                   // segundos desde que perdió el haz

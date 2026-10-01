@@ -247,6 +247,8 @@ public class LinternaController : MonoBehaviour
             Vector3 hacia = receptor.PuntoDeImpacto - transform.position;
             if (hacia.magnitude > AlcanceActual) continue;
             if (Vector3.Angle(transform.forward, hacia) > medio) continue;
+            // las anclas sólo se encienden por la cara de los aros, no por la espalda de roca
+            if (!receptor.DeFrenteA(transform.position)) continue;
 
             // 3. línea de vista: que no haya una pared en el medio, ni una reja sólida
             if (Physics.Raycast(transform.position, hacia.normalized, hacia.magnitude - 0.05f,

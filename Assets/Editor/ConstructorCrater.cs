@@ -103,7 +103,7 @@ public static partial class ConstructorCrater
             new Color(1f, 0.6f, 0.24f), "Enciende las anclas de basalto. Dos anclas encendidas tienden un puente de luz.",
             kit.audio.equiparCuerpo, kit.audio.zumbidoCuerpo);
         kit.hueco = ConfigurarFiltro(RutaFiltroHueco, "HUECO", FiltroDefinicion.Canal.Hueco,
-            new Color(0.32f, 0.45f, 1f), "Disuelve la materia hueca: rejas y tapas se vuelven atravesables.",
+            ColorLuna, "Disuelve la materia hueca: rejas y tapas se vuelven atravesables.",
             kit.audio.equiparHueco, kit.audio.zumbidoHueco);
 
         CargarModelos(kit);
@@ -135,6 +135,7 @@ public static partial class ConstructorCrater
         public Material adobe, paja, piedraCapilla, tierra;
         public Material cal, madera, cardon, pajaBrava, vela;
         public Material huella, espejo, puertaEclipse, luzEclipse, resplandor, corona, discoSol, discoLuna;
+        public Material tallaLuna, tallaEclipse;   // los tallados de luna (HUECO) y del eclipse
 
         // estética low-poly (ver ConstructorCrater.Facetado.cs)
         public HashSet<Material> piedraFacetada, facetables;
@@ -210,7 +211,9 @@ public static partial class ConstructorCrater
         kit.puenteVidrio = Emisivo(Transparente(Opaco("PuenteVidrio", new Color(1f, 0.5f, 0.15f, 0.45f), 0.6f)), new Color(1f, 0.42f, 0.08f));
         kit.puenteBorde = Emisivo(Transparente(Opaco("PuenteBorde", new Color(1f, 0.62f, 0.25f, 0.95f), 0.4f)), new Color(1f, 0.42f, 0.08f));
         kit.rejaBasalto = Transparente(Opaco("RejaBasalto", new Color(0.085f, 0.09f, 0.11f, 1f), 0.2f));
-        kit.rejaSello = Emisivo(Transparente(Opaco("RejaSello", new Color(0.1f, 0.25f, 1f, 0.35f), 0.5f)), new Color(0.08f, 0.22f, 1f) * 0.9f);
+        kit.rejaSello = Emisivo(Transparente(Opaco("RejaSello", new Color(0.35f, 0.5f, 1f, 0.35f), 0.5f)), new Color(0.35f, 0.5f, 1f) * 0.9f);
+        kit.tallaLuna = Emisivo(Opaco("TalladoLuna", ColorLuna * 0.6f, 0.3f), ColorLuna * 1.8f);
+        kit.tallaEclipse = Emisivo(Opaco("TalladoEclipse", new Color(0.85f, 0.9f, 1f), 0.3f), new Color(0.8f, 0.88f, 1f) * 2f);
 
         kit.adobe = Opaco("CapillaAdobe", new Color(0.62f, 0.4f, 0.24f), 0.15f);
         kit.paja = Opaco("CapillaTechoPaja", new Color(0.3f, 0.21f, 0.1f), 0.05f);
@@ -635,6 +638,7 @@ public static partial class ConstructorCrater
         ancla.canalRequerido = FiltroDefinicion.Canal.Cuerpo;
         ancla.retencion = 3f;
         ancla.puntoDeImpacto = nucleo.transform;
+        ancla.soloDeFrente = true;   // se enciende por la cara de los aros
         ancla.acentos = visual.GetComponentsInChildren<Renderer>(true)
             .Where(r => r.name.Contains("Ring") || r.name.Contains("Core")).ToArray();
         ancla.brillo = brillo;

@@ -28,7 +28,7 @@ public class MateriaHueca : ReceptorDeLuz
     public Renderer[] renderers;
     [Tooltip("Sello azul: brilla más a medida que se carga.")]
     public Renderer[] sellos;
-    public Color colorSello = new Color(0.12f, 0.3f, 1f);
+    public Color colorSello = new Color(0.35f, 0.5f, 1f);   // azul de luna
 
     [Header("Sonido")]
     public AudioSource siseo;

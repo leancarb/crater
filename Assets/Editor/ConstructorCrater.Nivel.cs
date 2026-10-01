@@ -48,6 +48,8 @@ public static partial class ConstructorCrater
         public CieloEclipse cielo;
         public GameObject craterValle, huella, guino;
         public Transform[] bordesCrater;
+        // los tramos de pared de la escalera: suben con el borde del cráter (si no, asomarían antes del eclipse)
+        public List<Transform> paredesEscalera = new List<Transform>();
         public Transform tapaCrater, puertaValle;
         public Renderer[] contornoValle;
         public Renderer destelloValle;
@@ -355,6 +357,7 @@ public static partial class ConstructorCrater
             roca.transform.rotation = Quaternion.LookRotation(-dir) * Quaternion.Euler(Azar(-8f, 8f), Azar(-12f, 12f), Azar(-6f, 6f));
             bordes.Add(roca.transform);
         }
+        bordes.AddRange(refs.paredesEscalera);
         refs.bordesCrater = bordes.ToArray();
 
         // la tapa: tierra sobre el agujero, se abre desde el centro. Está fuera del grupo

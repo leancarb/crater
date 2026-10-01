@@ -70,7 +70,7 @@ public static partial class ConstructorCrater
         // (empieza justo en el borde del agujero de la tierra: si se superpusieran, parpadearían)
         Caja(pozo, "Descanso_Puerta", -1.9f, suelo - 0.3f, CentroPozo.z - RadioPozo - 0.4f, 1.9f, suelo, InicioEscalera, k.piso);
         Caja(pozo, "Pared_Puerta", -1.9f, piso - 0.3f, -50.2f, 1.9f, suelo - 0.3f, -48.4f, k.basalto);
-        ConstruirEscalera(k, pozo, suelo, piso);
+        ConstruirEscalera(k, pozo, suelo, piso, refs);
 
         // al norte, la masa de roca: tapa el nivel y deja la boca del pasillo (x ±2,05, 4 m de
         // alto, como el dintel del Umbral). Queda un poco por debajo de la tierra: afuera
@@ -87,11 +87,11 @@ public static partial class ConstructorCrater
 
     /// <summary>
     /// La escalera de la puerta al fondo: escalones macizos (de piedra hasta el piso,
-    /// sin huecos abajo) y un pretil a cada lado. Para caminarla sin saltitos, los
+    /// sin huecos abajo) entre dos paredes altas talladas. Para caminarla sin saltitos, los
     /// escalones no tienen collider: se pisa una rampa invisible que pasa por el medio
     /// de cada escalón (a lo sumo a unos centímetros de la piedra que se ve).
     /// </summary>
-    static void ConstruirEscalera(Kit k, Transform pozo, float arriba, float abajo)
+    static void ConstruirEscalera(Kit k, Transform pozo, float arriba, float abajo, Referencias refs)
     {
         var escalera = Grupo(pozo, "Escalera");
         float largo = FinEscalera - InicioEscalera;
@@ -118,13 +118,32 @@ public static partial class ConstructorCrater
         rampa.AddComponent<BoxCollider>().size = new Vector3(MitadEscalera * 2f, 0.4f, hipotenusa + 0.4f);
         Estatico(rampa);
 
-        // pretiles: siguen la pendiente, a la altura de la cintura
-        foreach (float lado in new[] { -1f, 1f })
+        // las paredes: tramos que bajan en escalones, 3,2 m por encima de los escalones,
+        // con lunas a la izquierda y soles a la derecha. Cada tramo es un grupo (pared y
+        // tallado) que sube con el borde del cráter en el prólogo
+        const int tramos = 8;
+        for (int i = 0; i < tramos; i++)
         {
-            var pretil = Bloque(escalera, lado < 0f ? "Pretil_Izq" : "Pretil_Der",
-                medio + normal * 0.45f + Vector3.right * lado * (MitadEscalera + 0.15f),
-                new Vector3(0.3f, 1.3f, hipotenusa), k.basalto);
-            pretil.transform.rotation = Quaternion.Euler(angulo * Mathf.Rad2Deg, 0f, 0f);
+            float z0 = InicioEscalera + i * largo / tramos, z1 = z0 + largo / tramos;
+            float lineaArriba = arriba - (z0 - InicioEscalera) / largo * caida;
+            float lineaMedio = arriba - ((z0 + z1) / 2f - InicioEscalera) / largo * caida;
+            float tope = lineaArriba + 3.2f;
+            Transform Tramo(float lado)
+            {
+                float x0 = lado < 0f ? -MitadEscalera - 0.4f : MitadEscalera, x1 = x0 + 0.4f;
+                var tramo = new GameObject($"Pared_Escalera_{(lado < 0f ? "Izq" : "Der")}_{i}").transform;
+                tramo.SetParent(escalera, false);
+                tramo.position = new Vector3((x0 + x1) / 2f, 0f, (z0 + z1) / 2f);
+                Bloque(tramo, "Muro", new Vector3((x0 + x1) / 2f, (abajo - 0.3f + tope) / 2f, (z0 + z1) / 2f),
+                    new Vector3(0.4f, tope - (abajo - 0.3f), z1 - z0 + 0.02f), lado < 0f ? k.basalto : k.basaltoMedio, false);
+                refs.paredesEscalera.Add(tramo);
+                return tramo;
+            }
+            var izq = Tramo(-1f);
+            var der = Tramo(1f);
+            float zMedio = (z0 + z1) / 2f;
+            TallarEscalera(k, izq, der, new Vector3(-MitadEscalera + 0.12f, lineaMedio + 1.7f, zMedio),
+                new Vector3(MitadEscalera - 0.12f, lineaMedio + 1.7f, zMedio), i);
         }
     }
 
