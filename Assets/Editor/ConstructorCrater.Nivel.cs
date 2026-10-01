@@ -72,6 +72,7 @@ public static partial class ConstructorCrater
         ConstruirCapilla(kit, Grupo(nivel, "06_Capilla"), refs);
         Vestir(kit, arte);
         ConstruirSistemas(kit, refs);
+        FacetarEscena(kit);
 
         EditorSceneManager.SaveScene(escena, RutaEscena);
     }

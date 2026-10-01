@@ -46,6 +46,7 @@ Dónde tocar:
 
 - `Assets/Editor/ConstructorCrater.Nivel.cs` — el nivel: geometría, puzzles, luces y arte, en metros.
 - `Assets/Editor/ConstructorCrater.cs` — materiales, prefabs, render y post-procesado.
+- `Assets/Editor/ConstructorCrater.Facetado.cs` — la estética low-poly: caras planas, superficies irregulares y un tono por cara. El tamaño de las caras y el relieve de cada zona están arriba de todo, en los `Perfil`.
 - `Assets/Editor/GeneradorAudioCrater.cs` — sonidos sintetizados (reemplazables por WAV grabados con el mismo nombre).
 - `Assets/Data/Filtros/` — los dos filtros (color, cono, alcance, tiempo de carga).
 - `Assets/Scripts/` — el juego: `Jugador`, `Linterna`, `Mecanicas`, `Flujo`, `Interfaz`.
