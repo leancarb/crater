@@ -133,7 +133,7 @@ public static partial class ConstructorCrater
         public Material ambar, motivoLatente, puenteVidrio, puenteBorde, rejaBasalto, rejaSello, cielo, lente;
         public Material adobe, paja, piedraCapilla, tierra;
         public Material cal, madera, cardon, pajaBrava, vela;
-        public Material huella, espejo, puertaEclipse, luzEclipse, resplandor, corona, discoSol, discoLuna, estrellas;
+        public Material huella, espejo, puertaEclipse, luzEclipse, resplandor, corona, discoSol, discoLuna;
 
         // estética low-poly (ver ConstructorCrater.Facetado.cs)
         public HashSet<Material> piedraFacetada, facetables;
@@ -233,12 +233,9 @@ public static partial class ConstructorCrater
         foreach (var guid in AssetDatabase.FindAssets("t:Material", new[] { "Assets/Materials" }))
             Validar(AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid)));
 
-        // el cielo estrellado (después de Validar, que le pisaría la cola de render):
-        // suma luz, se ve desde adentro de la esfera y se dibuja antes que todo
-        kit.estrellas = Aditivo("CieloEstrellado", TexturaEstrellas());
-        kit.estrellas.SetFloat("_Cull", 0f);
-        kit.estrellas.renderQueue = (int)RenderQueue.Background;
-        EditorUtility.SetDirty(kit.estrellas);
+        // restos de una versión anterior (el cielo estrellado)
+        AssetDatabase.DeleteAsset(CarpetaMateriales + "CieloEstrellado.mat");
+        AssetDatabase.DeleteAsset(CarpetaTexturas + "CieloEstrellado.png");
         AssetDatabase.SaveAssets();
     }
 

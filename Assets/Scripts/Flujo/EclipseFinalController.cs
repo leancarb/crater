@@ -11,7 +11,7 @@ using UnityEngine;
 /// CÓMO FUNCIONA
 ///  1. HabilitarEnCresta (lo llama el flujo al entrar a la Cresta) enciende la adaptación.
 ///  2. La adaptación dispara AlCompletarAdaptacion: se abre el techo (AperturaTecho).
-///     Mientras se abre, el cielo que se ve por el hueco pasa de las estrellas a un
+///     Mientras se abre, el cielo que se ve por el hueco pasa de la oscuridad a un
 ///     blanco que encandila, y la luz ambiente sube con él.
 ///  3. Con todo blanco: silencio, el tono del anillo de diamante, y el jugador se
 ///     muda a la capilla sin que se note. Después el blanco se disuelve en el día.
@@ -32,7 +32,6 @@ public class EclipseFinalController : MonoBehaviour
     [SerializeField] AperturaTecho techo;
     [SerializeField] PrologoCapilla prologo;
     [SerializeField] CieloEclipse cielo;
-    [SerializeField] CieloEstrellado estrellas;
 
     [Header("Ambiente del epílogo")]
     [SerializeField] Light luzDelCrater;
@@ -115,7 +114,6 @@ public class EclipseFinalController : MonoBehaviour
         var camara = jugador != null ? jugador.GetComponentInChildren<Camera>() : Camera.main;
         Color fondoDesde = camara != null ? camara.backgroundColor : Color.black;
         Color cieloDesde = RenderSettings.ambientSkyColor, horizonteDesde = RenderSettings.ambientEquatorColor;
-        float estrellasDesde = estrellas != null ? estrellas.Intensidad : 0f;
         for (float t = 0f; t < duracion; t += Time.deltaTime)
         {
             float k = t / duracion;
@@ -123,7 +121,6 @@ public class EclipseFinalController : MonoBehaviour
             if (camara != null) camara.backgroundColor = Color.Lerp(fondoDesde, cieloBlanco, luz);
             RenderSettings.ambientSkyColor = Color.Lerp(cieloDesde, Color.white * 2f, luz);
             RenderSettings.ambientEquatorColor = Color.Lerp(horizonteDesde, Color.white, luz);
-            if (estrellas != null) estrellas.Intensidad = estrellasDesde * (1f - Mathf.Clamp01(k * 2f));
             yield return null;
         }
 

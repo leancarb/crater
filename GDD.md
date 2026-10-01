@@ -35,7 +35,7 @@ El eclipse dura exactamente lo que el jugador permanezca adentro. El cráter es 
 
 | Momento | Qué pasa | Qué siente el jugador |
 |---|---|---|
-| **Prólogo** | Capilla de día. Al salir, empieza el eclipse (cinemática sin control): se callan los pájaros, aparecen las estrellas, la tierra se abre en un pozo, sube el borde del cráter y destella la puerta. | Curiosidad, extrañeza. |
+| **Prólogo** | Capilla de día. Al salir, empieza el eclipse (cinemática sin control): se callan los pájaros, todo queda en un crepúsculo profundo, la tierra se abre en un pozo, sube el borde del cráter y destella la puerta. | Curiosidad, extrañeza. |
 | **Descenso** | Sin cortes: se cruza la puerta y se baja caminando por una rampa que rodea el pozo hasta la Explanada, en el fondo. Un túnel sigue al Umbral, donde está la linterna. | Descubrimiento. |
 | **Aprendizaje** | El Campo entrega CUERPO; la Hondonada, HUECO. | Dominio, asombro. |
 | **La oscuridad** | Al entrar a la Cresta, una losa cierra el corredor a la espalda: no hay vuelta. La pared del fondo sólo devuelve el reflejo del propio foco. Al apagar la linterna y esperar, aparecen tallados ocultos. | Revelación, encierro. |
@@ -44,7 +44,7 @@ El eclipse dura exactamente lo que el jugador permanezca adentro. El cráter es 
 
 ### El eclipse
 
-- **Afuera** se ve en el cielo: el sol y la corona en la totalidad, con estrellas, la Vía Láctea y el horizonte encendido en 360° como un atardecer. La luna nueva no se ve de día: sólo su silueta cuando pasa por delante del sol. En el epílogo ya pasó y quedó del otro lado.
+- **Afuera** se ve en el cielo: el sol y la corona en la totalidad. No es noche cerrada sino un crepúsculo profundo: cielo azul oscuro, el horizonte cálido alrededor y el paisaje todavía visible. La luna nueva no se ve de día: sólo su silueta cuando pasa por delante del sol. En el epílogo ya pasó y quedó del otro lado.
 - **Adentro** la totalidad está congelada. Se ve por los **óculos** (Campo y Cresta): sol negro, corona plateada, cielo de noche.
 - **Termina con el anillo de diamante**, el destello real con el que cierra la totalidad: la luz vuelve de golpe, como al prender la luz después de estar a oscuras.
 
@@ -146,7 +146,6 @@ Todo el audio se sintetiza en `GeneradorAudioCrater` y se puede reemplazar por W
 - [x] Óculos con el eclipse congelado
 - [x] Pared espejo, encierro y techo que se abre en la Cresta
 - [x] Entrada continua: el cráter es un pozo en el valle
-- [x] Cielo estrellado en la totalidad
 - [x] Anillo de diamante, epílogo sin cráter y créditos
 - [x] Validador y tests (EditMode y PlayMode del recorrido completo, prólogo incluido)
 

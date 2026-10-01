@@ -51,8 +51,6 @@ public static partial class ConstructorCrater
         public Renderer destelloValle;
         public ZonaJugador zonaUmbralCapilla, zonaPuertaCrater;
 
-        public CieloEstrellado estrellas;
-
         // final
         public Compuerta cierreCresta;
         public AperturaTecho techoCresta;
@@ -67,7 +65,6 @@ public static partial class ConstructorCrater
         var nivel = new GameObject("NIVEL").transform;
         var arte = new GameObject("ARTE").transform;
 
-        ConstruirCieloEstrellado(kit, refs);
         ConstruirExplanada(kit, Grupo(nivel, "01_Explanada"), refs);
         ConstruirUmbral(kit, Grupo(nivel, "02_Umbral"), refs);
         ConstruirCampo(kit, Grupo(nivel, "03_Campo"));
@@ -492,7 +489,6 @@ public static partial class ConstructorCrater
         Asignar(cielo, "discoSol", Disco("DiscoSol", k.discoSol));
         Asignar(cielo, "discoLuna", Disco("DiscoLuna", k.discoLuna));
         Asignar(cielo, "corona", Plano(cieloGO.transform, "Corona", k.corona));
-        Asignar(cielo, "estrellas", refs.estrellas);
         refs.cielo = cielo;
     }
 
@@ -625,7 +621,6 @@ public static partial class ConstructorCrater
         Asignar(eclipse, "ambienteCrater", ambiente);
         Asignar(eclipse, "ambienteExterior", exterior);
         Asignar(eclipse, "techo", refs.techoCresta);
-        Asignar(eclipse, "estrellas", refs.estrellas);
         Asignar(eclipse, "prologo", prologo);
         Asignar(eclipse, "cielo", refs.cielo);
         Asignar(eclipse, "tonoFinal", tono);

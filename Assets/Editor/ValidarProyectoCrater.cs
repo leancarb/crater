@@ -150,8 +150,8 @@ public static class ValidarProyectoCrater
             Comprobar(zonas.Length == 4 && zonas.All(z => TieneOyentes(z.alEntrar) && z.GetComponent<Collider>().isTrigger),
                 "Tiene que haber 4 zonas (Cresta, umbral de la capilla, pozo del cráter y lugar del cráter), todas triggers conectados.", problemas);
 
-            Comprobar(Todos<PrologoCapilla>().Length == 1 && Todos<CieloEclipse>().Length == 1 && Todos<CieloEstrellado>().Length == 1,
-                "Falta el prólogo de la capilla, el cielo del eclipse o el cielo estrellado.", problemas);
+            Comprobar(Todos<PrologoCapilla>().Length == 1 && Todos<CieloEclipse>().Length == 1,
+                "Falta el prólogo de la capilla o el cielo del eclipse.", problemas);
             Comprobar(Todos<AperturaTecho>().Length == 1, "Falta el techo que se abre en la Cresta.", problemas);
 
             var adaptacion = Todos<AdaptacionOscuridad>().FirstOrDefault();

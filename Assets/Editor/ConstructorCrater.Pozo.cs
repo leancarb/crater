@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 /// <summary>
 /// El cráter como lugar físico: un pozo en el valle de la capilla. La Explanada es
@@ -21,8 +20,6 @@ using UnityEngine.Rendering;
 /// redondo (MallaSueloConHueco); antes del eclipse una tapa de tierra cubre el
 /// agujero y el prólogo la abre. Una zona que cubre todo el pozo avisa al prólogo
 /// que el jugador entró, para que el ambiente pase del valle al cráter.
-/// Acá también está el cielo estrellado (CieloEstrellado), que comparten el valle
-/// en la totalidad, el pozo y el techo abierto de la Cresta.
 /// </summary>
 public static partial class ConstructorCrater
 {
@@ -184,112 +181,5 @@ public static partial class ConstructorCrater
             }
         }
         return GuardarMalla(CrearMalla(nombre, vertices, uvs));
-    }
-
-    // ================================================================== el cielo estrellado
-
-    static void ConstruirCieloEstrellado(Kit k, Referencias refs)
-    {
-        var raiz = new GameObject("CieloEstrellado");
-        var esfera = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        esfera.name = "Esfera";
-        Object.DestroyImmediate(esfera.GetComponent<Collider>());
-        esfera.transform.SetParent(raiz.transform, false);
-        var r = esfera.GetComponent<Renderer>();
-        r.sharedMaterial = k.estrellas;
-        r.shadowCastingMode = ShadowCastingMode.Off;
-        r.receiveShadows = false;
-        var cielo = raiz.AddComponent<CieloEstrellado>();
-        Asignar(cielo, "esfera", r);
-        refs.estrellas = cielo;
-    }
-
-    /// <summary>
-    /// Panorámica (equirectangular) del cielo de la totalidad: fondo negro (el material
-    /// suma luz), Vía Láctea con polvo oscuro, nebulosas tenues, estrellas de distintos
-    /// brillos y colores, y el resplandor anaranjado del horizonte.
-    /// </summary>
-    static Texture2D TexturaEstrellas()
-    {
-        const int ancho = 2048, alto = 1024;
-        string ruta = CarpetaTexturas + "CieloEstrellado.png";
-        var px = new Color[ancho * alto];
-        Vector3 Direccion(float u, float v)
-        {
-            float lon = u * Mathf.PI * 2f, lat = (v - 0.5f) * Mathf.PI;
-            return new Vector3(Mathf.Cos(lat) * Mathf.Cos(lon), Mathf.Sin(lat), Mathf.Cos(lat) * Mathf.Sin(lon));
-        }
-        var planoVia = new Vector3(0.35f, 0.6f, 0.72f).normalized;   // la Vía Láctea cruza el cielo en diagonal
-
-        for (int y = 0; y < alto; y++)
-            for (int x = 0; x < ancho; x++)
-            {
-                Vector3 d = Direccion((x + 0.5f) / ancho, (y + 0.5f) / alto);
-                float lat = Mathf.Asin(d.y);
-
-                float fbm = Ruido(d * 3f, 21) * 0.55f + Ruido(d * 7f, 22) * 0.3f + Ruido(d * 15f, 23) * 0.15f;
-                float distVia = Vector3.Dot(d, planoVia);
-                float via = Mathf.Exp(-(distVia / 0.2f) * (distVia / 0.2f)) * Mathf.Clamp01(0.5f + 0.7f * fbm);
-                float polvo = 1f - 0.65f * Mathf.Exp(-(distVia / 0.035f) * (distVia / 0.035f)) * Mathf.Clamp01(0.6f + Ruido(d * 9f, 24));
-                via *= polvo;
-                Color c = new Color(0.07f, 0.065f, 0.11f) * via + new Color(0.06f, 0.05f, 0.035f) * via * via;
-
-                float nebulosa = Mathf.Clamp01(Ruido(d * 2.2f, 31) * 1.3f - 0.45f);
-                c += new Color(0.045f, 0.015f, 0.06f) * nebulosa + new Color(0.01f, 0.03f, 0.045f) * Mathf.Clamp01(Ruido(d * 1.6f, 32) - 0.3f);
-
-                // el horizonte: un atardecer en todas direcciones, que se apaga hacia arriba
-                float sobre = Mathf.SmoothStep(0f, 1f, (lat + 0.05f) / 0.05f);
-                float h = Mathf.Max(lat, 0f);
-                c += (new Color(0.5f, 0.22f, 0.07f) * Mathf.Exp(-h / 0.09f) + new Color(0.05f, 0.07f, 0.14f) * Mathf.Exp(-h / 0.45f)) * sobre;
-
-                px[y * ancho + x] = c;
-            }
-
-        // estrellas: direcciones al azar repartidas parejo en la esfera, más algunas en la Vía Láctea
-        var azar = new System.Random(5);
-        float Azar() => (float)azar.NextDouble();
-        void Sumar(int x, int y, Color c)
-        {
-            x = ((x % ancho) + ancho) % ancho;
-            if (y < 0 || y >= alto) return;
-            px[y * ancho + x] += c;
-        }
-        Color[] tonos = { new Color(0.75f, 0.85f, 1f), Color.white, new Color(1f, 0.92f, 0.78f), new Color(1f, 0.8f, 0.65f) };
-        for (int i = 0; i < 9000; i++)
-        {
-            float zz = Azar() * 2f - 1f, fi = Azar() * Mathf.PI * 2f;
-            var d = new Vector3(Mathf.Sqrt(1f - zz * zz) * Mathf.Cos(fi), zz, Mathf.Sqrt(1f - zz * zz) * Mathf.Sin(fi));
-            float enVia = Mathf.Exp(-Mathf.Pow(Vector3.Dot(d, planoVia) / 0.2f, 2f));
-            if (i % 3 == 0 && Azar() > enVia) continue;   // un tercio sólo vale si cae en la Vía Láctea
-            float lon = Mathf.Atan2(d.z, d.x);
-            if (lon < 0f) lon += Mathf.PI * 2f;
-            int x = Mathf.FloorToInt(lon / (Mathf.PI * 2f) * ancho);
-            int y = Mathf.FloorToInt((Mathf.Asin(d.y) / Mathf.PI + 0.5f) * alto);
-            float brillo = 0.18f + 2.6f * Mathf.Pow(Azar(), 9f);
-            Color c = tonos[azar.Next(tonos.Length)] * brillo;
-            Sumar(x, y, c);
-            if (brillo > 0.9f)
-            {
-                // las más brillantes, con un halo en cruz
-                Sumar(x + 1, y, c * 0.3f); Sumar(x - 1, y, c * 0.3f);
-                Sumar(x, y + 1, c * 0.3f); Sumar(x, y - 1, c * 0.3f);
-            }
-        }
-
-        var tex = new Texture2D(ancho, alto, TextureFormat.RGB24, false);
-        tex.SetPixels(px);
-        tex.Apply();
-        System.IO.File.WriteAllBytes(ruta, tex.EncodeToPNG());
-        Object.DestroyImmediate(tex);
-
-        AssetDatabase.ImportAsset(ruta, ImportAssetOptions.ForceUpdate);
-        var importador = (TextureImporter)AssetImporter.GetAtPath(ruta);
-        importador.mipmapEnabled = false;
-        importador.wrapModeU = TextureWrapMode.Repeat;
-        importador.wrapModeV = TextureWrapMode.Clamp;
-        importador.maxTextureSize = 2048;
-        importador.textureCompression = TextureImporterCompression.CompressedHQ;
-        importador.SaveAndReimport();
-        return AssetDatabase.LoadAssetAtPath<Texture2D>(ruta);
     }
 }
