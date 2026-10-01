@@ -52,6 +52,11 @@ public static class EntradaCrater
         return v;
     }
 
+    /// <summary>Correr mientras se mantiene apretado (Shift o el stick izquierdo apretado).</summary>
+    public static bool Correr =>
+        (Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed))
+        || (Gamepad.current != null && Gamepad.current.leftStickButton.isPressed);
+
     /// <summary>Prender o apagar la linterna (F o RB).</summary>
     public static bool Linterna =>
         Presionada(Key.F) || (Gamepad.current != null && Gamepad.current.rightShoulder.wasPressedThisFrame);

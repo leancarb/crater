@@ -685,7 +685,9 @@ public static partial class ConstructorCrater
         // sin el panel azul: sólo las barras, de vidrio de luna translúcido
         foreach (var r in visual.GetComponentsInChildren<Renderer>(true))
             if (r.name.Contains("BlueSeal")) UnityEngine.Object.DestroyImmediate(r.gameObject);
-        Pintar(visual, _ => kit.rejaBasalto);
+        // el marco (postes y dintel) es de piedra como las paredes; sólo las barras son de luna
+        bool EsBarra(Renderer r) => r.name.Contains("Horizontal") || r.name.Contains("Vertical");
+        Pintar(visual, r => EsBarra(r) ? kit.rejaBasalto : kit.basaltoMedio);
 
         var solido = raiz.AddComponent<BoxCollider>();
         solido.center = new Vector3(0f, 2.3f, 0f);
@@ -707,8 +709,9 @@ public static partial class ConstructorCrater
         materia.retencion = 3f;
         materia.puntoDeImpacto = centro.transform;
         materia.solidos = new Collider[] { solido };
-        materia.renderers = visual.GetComponentsInChildren<Renderer>(true);
-        materia.sellos = materia.renderers;   // todas las barras brillan con la carga
+        // sólo las barras se disuelven y brillan con la carga; el marco queda
+        materia.renderers = visual.GetComponentsInChildren<Renderer>(true).Where(EsBarra).ToArray();
+        materia.sellos = materia.renderers;
         materia.siseo = siseo;
 
         PonerCapa(raiz, LayerMask.NameToLayer(CapaReceptor));

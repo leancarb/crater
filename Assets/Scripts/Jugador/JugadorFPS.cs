@@ -1,7 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// Controlador de primera persona. Sin salto, sin correr: el ritmo es contenido.
+/// Controlador de primera persona. Sin salto. Con Shift se corre (para recorrer y
+/// probar más rápido); sin Shift el ritmo es contenido.
 ///
 /// Poner en: un GameObject con CharacterController, con la Camera como hijo.
 ///
@@ -19,6 +20,8 @@ public class JugadorFPS : MonoBehaviour
 {
     [Header("Movimiento")]
     public float velocidad = 2.6f;
+    [Tooltip("Multiplica la velocidad mientras se mantiene Shift.")]
+    public float multiplicadorCorrer = 2.2f;
     public float gravedad = -18f;
     [Tooltip("Suavizado del arranque y la frenada. Más alto = más ágil.")]
     public float suavizado = 8f;
@@ -85,7 +88,8 @@ public class JugadorFPS : MonoBehaviour
     {
         Vector2 entrada = EntradaCrater.Movimiento();
         // la entrada (x, y) se convierte a una dirección en el mundo según hacia dónde mira el cuerpo
-        Vector3 deseada = (transform.right * entrada.x + transform.forward * entrada.y) * velocidad;
+        float rapidez = velocidad * (EntradaCrater.Correr ? multiplicadorCorrer : 1f);
+        Vector3 deseada = (transform.right * entrada.x + transform.forward * entrada.y) * rapidez;
         // suavizado exponencial: se siente igual a 30 o a 144 FPS
         velocidadActual = Vector3.Lerp(velocidadActual, deseada, 1f - Mathf.Exp(-suavizado * delta));
 

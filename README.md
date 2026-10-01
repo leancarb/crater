@@ -14,6 +14,7 @@ Unity 6000.3 · URP (Forward+) · Input System.
 | Acción | Teclado y mouse | Joystick |
 |---|---|---|
 | Moverse / mirar | WASD · mouse | stick izq. · stick der. |
+| Correr (mantener) | Shift | apretar el stick izq. |
 | Linterna | F | RB |
 | Filtro CUERPO / HUECO | 1 / 2 | X / Y |
 | Luz blanca | Q | B |
