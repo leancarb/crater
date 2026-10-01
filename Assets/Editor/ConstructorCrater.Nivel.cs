@@ -46,7 +46,7 @@ public static partial class ConstructorCrater
 
         // prólogo
         public CieloEclipse cielo;
-        public GameObject craterValle, huella;
+        public GameObject craterValle, huella, guino;
         public Transform[] bordesCrater;
         public Transform tapaCrater, puertaValle;
         public Renderer[] contornoValle;
@@ -295,6 +295,10 @@ public static partial class ConstructorCrater
 
         ConstruirEdificioCapilla(k, g);
         ConstruirPaisajeCapilla(k, g);
+
+        // el guiño: adentro, sobre la puerta, la espiral tallada de las anclas. Sólo aparece
+        // en el epílogo, frente a donde despierta el jugador: el cráter dejó una marca
+        refs.guino = Motivo(k, g, "Guino_Tallado", g.TransformPoint(new Vector3(0f, 3.3f, 6.8f)), 180f, 0.45f, k.ambar);
 
         refs.spawnCapilla = new GameObject("SpawnCapilla").transform;
         refs.spawnCapilla.SetParent(g, false);
@@ -573,6 +577,7 @@ public static partial class ConstructorCrater
         Asignar(prologo, "destello", refs.destelloValle);
         Asignar(prologo, "huella", refs.huella);
         Asignar(prologo, "zonaEpilogo", refs.zonaFinal.gameObject);
+        Asignar(prologo, "guino", refs.guino);
         Asignar(prologo, "pajaros", pajaros);
         Asignar(prologo, "graveEclipse", grave);
         Asignar(prologo, "campana", campana);

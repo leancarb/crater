@@ -49,6 +49,8 @@ public class PrologoCapilla : MonoBehaviour
     [SerializeField] GameObject huella;
     [Tooltip("Zona del lugar del cráter que dispara los créditos. Sólo en el epílogo.")]
     [SerializeField] GameObject zonaEpilogo;
+    [Tooltip("El guiño: la espiral de las anclas tallada sobre la puerta de la capilla. Sólo en el epílogo.")]
+    [SerializeField] GameObject guino;
 
     [Header("Sonido")]
     [SerializeField] AudioSource pajaros;
@@ -129,6 +131,7 @@ public class PrologoCapilla : MonoBehaviour
         OcultarCrater();
         if (huella != null) huella.SetActive(false);
         if (zonaEpilogo != null) zonaEpilogo.SetActive(false);
+        if (guino != null) guino.SetActive(false);
 
         if (saltarPrologo)
         {
@@ -312,6 +315,8 @@ public class PrologoCapilla : MonoBehaviour
         AplicarRevelado(0f);
         if (huella != null) huella.SetActive(true);
         if (zonaEpilogo != null) zonaEpilogo.SetActive(true);
+        // al volver, sobre la puerta está la espiral de las anclas: antes no estaba
+        if (guino != null) guino.SetActive(true);
         cielo?.Mostrar(true);
         cielo?.PonerDespues();
         if (pajaros != null) { pajaros.volume = volumenPajaros; pajaros.Play(); }
