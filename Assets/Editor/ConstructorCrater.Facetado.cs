@@ -13,7 +13,7 @@ using UnityEngine;
 ///     de la cara y la luz cambia de golpe de una cara a la otra (no se suaviza).
 ///     A los FBX del kit se les pide lo mismo al importarlos (ángulo de suavizado 0).
 ///  2. Caras irregulares. Las cajas del nivel (muros, pisos, techos, rocas) se
-///     subdividen en una grilla de ~1,3 m y cada vértice se corre un poco según un
+///     subdividen en una grilla (ver los Perfil) y cada vértice se corre un poco según un
 ///     ruido 3D continuo del mundo. Como el ruido depende sólo de la posición, dos
 ///     piezas que se tocan se deforman igual y no se abren grietas entre ellas.
 ///     Los colliders siguen siendo las cajas originales: el juego no cambia.
@@ -27,10 +27,33 @@ public static partial class ConstructorCrater
     const string RutaMallasFacetadas = "Assets/Models/Facetado/MallasFacetadas.asset";
     const int LadoTexturaFacetas = 32;
 
-    // grilla y relieve de los muros, pisos y techos del nivel
-    const float CeldaNivel = 1.3f;
-    static readonly Vector3 RelieveNivel = new Vector3(0.09f, 0.06f, 0.09f);
-    const float OndaNivel = 2.6f;   // metros entre "bultos" del ruido
+    /// <summary>Cómo se faceta una caja: tamaño de las caras, cuánto se deforma y qué tan seguido.</summary>
+    readonly struct Perfil
+    {
+        public readonly float celda;        // lado aproximado de cada cara, en metros
+        public readonly Vector3 relieve;    // cuánto se corre como máximo cada vértice, por eje
+        public readonly float onda;         // metros entre "bultos" del ruido
+        public readonly int semilla, tope;  // tope: máximo de caras por lado
+        public readonly bool sinBase;       // va enterrada: la cara de abajo no se genera
+        public Perfil(float celda, Vector3 relieve, float onda, int semilla, int tope = 48, bool sinBase = false)
+        {
+            this.celda = celda; this.relieve = relieve; this.onda = onda;
+            this.semilla = semilla; this.tope = tope; this.sinBase = sinBase;
+        }
+    }
+
+    // muros, pisos y techos del cráter: piedra apenas irregular
+    static readonly Perfil PerfilNivel = new Perfil(1.3f, new Vector3(0.09f, 0.06f, 0.09f), 2.6f, 1);
+    // rocas del horizonte y cerros lejanos: enormes y sueltas, mucho relieve
+    static readonly Perfil PerfilRoca = new Perfil(6f, Vector3.one * 2.2f, 9f, 3, sinBase: true);
+    // cerros que cierran el valle (con colisión: relieve moderado)
+    static readonly Perfil PerfilCerro = new Perfil(3f, new Vector3(1f, 0.8f, 1f), 6f, 4, sinBase: true);
+    // suelo del valle: triángulos grandes, planos (sólo se mueven de costado) y de distinto tono
+    static readonly Perfil PerfilSuelo = new Perfil(4f, new Vector3(0.8f, 0f, 0.8f), 8f, 5, 64, sinBase: true);
+    // borde del cráter del valle: rocas quebradas
+    static readonly Perfil PerfilCrater = new Perfil(1.2f, new Vector3(0.35f, 0.3f, 0.35f), 2.5f, 6);
+    // capilla: adobe y cal casi rectos, sólo un poco a mano
+    static readonly Perfil PerfilCapilla = new Perfil(1f, new Vector3(0.04f, 0.03f, 0.04f), 2f, 7);
 
     static Object contenedorMallas;
     static readonly Dictionary<Mesh, Mesh> mallasPlanas = new Dictionary<Mesh, Mesh>();
@@ -71,8 +94,8 @@ public static partial class ConstructorCrater
         mallasPlanas.Clear();
 
         var facetas = TexturaFacetas();
-        // piedra: caras planas y un tono por cara
-        kit.piedraFacetada = new HashSet<Material> { kit.piso, kit.basalto, kit.basaltoMedio, kit.techo, kit.piedra, kit.espejo };
+        // piedra (y tierra, adobe...): caras planas y un tono por cara
+        kit.piedraFacetada = new HashSet<Material>(MaterialesDePiedra(kit));
         foreach (var m in kit.piedraFacetada)
         {
             m.SetTexture("_BaseMap", facetas);
@@ -129,19 +152,25 @@ public static partial class ConstructorCrater
             if (r == null || malla == null) continue;
             if (r.sharedMaterials.Length == 0 || !r.sharedMaterials.All(m => m != null && kit.facetables.Contains(m))) continue;
 
-            if (EsCuboPrimitivo(malla))
-            {
-                // las rocas del horizonte son enormes y van sueltas: grilla grande y mucho relieve
-                bool roca = filtro.transform.parent != null && filtro.transform.parent.name == "Horizonte";
-                filtro.sharedMesh = roca
-                    ? CajaFacetada(filtro.transform, 5f, Vector3.one * 2.2f, 9f, 3)
-                    : CajaFacetada(filtro.transform, CeldaNivel, RelieveNivel, OndaNivel, 1);
-            }
-            else
-            {
-                filtro.sharedMesh = MallaPlana(malla);
-            }
+            filtro.sharedMesh = EsCuboPrimitivo(malla)
+                ? CajaFacetada(filtro.transform, PerfilDe(filtro.transform))
+                : MallaPlana(malla);
         }
+    }
+
+    /// <summary>Elige el perfil por el nombre del objeto o del grupo en el que está.</summary>
+    static Perfil PerfilDe(Transform t)
+    {
+        string nombre = t.name;
+        if (nombre.StartsWith("Horizonte") || (t.parent != null && t.parent.name == "Horizonte")) return PerfilRoca;
+        if (nombre.StartsWith("Cerro_")) return PerfilCerro;
+        if (nombre == "Terreno" || nombre == "Llano") return PerfilSuelo;
+        for (var p = t.parent; p != null; p = p.parent)
+        {
+            if (p.name == "Crater_Valle") return PerfilCrater;
+            if (p.name.EndsWith("_Capilla")) return PerfilCapilla;
+        }
+        return PerfilNivel;
     }
 
     static bool EsCuboPrimitivo(Mesh m) => m.name == "Cube" && m.vertexCount == 24;
@@ -152,19 +181,20 @@ public static partial class ConstructorCrater
     /// Una caja de 1 × 1 × 1 (como el cubo de Unity, para que la escala del objeto la siga
     /// estirando) subdividida según su tamaño real y deformada por el ruido del mundo.
     /// </summary>
-    static Mesh CajaFacetada(Transform t, float celda, Vector3 relieve, float onda, int semilla)
+    static Mesh CajaFacetada(Transform t, Perfil perfil)
     {
         Vector3 escala = t.lossyScale;
         // subdivisiones por eje: las caras que comparten una arista usan el mismo número
         var n = new int[3];
         for (int eje = 0; eje < 3; eje++)
-            n[eje] = Mathf.Clamp(Mathf.RoundToInt(Mathf.Abs(escala[eje]) / celda), 1, 48);
+            n[eje] = Mathf.Clamp(Mathf.RoundToInt(Mathf.Abs(escala[eje]) / perfil.celda), 1, perfil.tope);
 
         var vertices = new List<Vector3>();
         var uvs = new List<Vector2>();
         for (int eje = 0; eje < 3; eje++)
             for (int signo = -1; signo <= 1; signo += 2)
             {
+                if (perfil.sinBase && eje == 1 && signo < 0) continue;
                 // u × v = normal hacia afuera (así los triángulos quedan del lado de afuera)
                 int a = (eje + 1) % 3, b = (eje + 2) % 3;
                 if (signo < 0) { int c = a; a = b; b = c; }
@@ -181,7 +211,7 @@ public static partial class ConstructorCrater
                     {
                         Vector3 local = origen + u * ((float)i / nu) + v * ((float)j / nv);
                         Vector3 mundo = t.TransformPoint(local);
-                        p[i, j] = t.InverseTransformPoint(mundo + Desplazamiento(mundo, relieve, onda, semilla));
+                        p[i, j] = t.InverseTransformPoint(mundo + Desplazamiento(mundo, perfil.relieve, perfil.onda, perfil.semilla));
                     }
 
                 for (int i = 0; i < nu; i++)

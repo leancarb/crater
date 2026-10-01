@@ -229,6 +229,12 @@ public static partial class ConstructorCrater
         AssetDatabase.SaveAssets();
     }
 
+    /// <summary>Los materiales que llevan un tono por cara (ver ConstructorCrater.Facetado.cs).</summary>
+    static IEnumerable<Material> MaterialesDePiedra(Kit k) => new[]
+    {
+        k.piso, k.basalto, k.basaltoMedio, k.techo, k.piedra, k.espejo,
+    };
+
     /// <summary>
     /// Material URP/Lit opaco guardado en Assets/Materials. Si ya existe se reutiliza (así
     /// no cambian las referencias) y se le vuelven a poner todos los valores.
