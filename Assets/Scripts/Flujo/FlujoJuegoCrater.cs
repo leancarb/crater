@@ -12,6 +12,8 @@ using UnityEngine;
 /// indicación. Las zonas y la compuerta llaman a sus métodos públicos a través de
 /// UnityEvents conectados por el constructor (EntrarCresta, NotificarUmbralAbierto...).
 /// El orden del enum importa: se compara con < y >= (por ejemplo "antes de la Cresta").
+/// Desde la rotonda las dos alas se hacen en cualquier orden: las indicaciones de cada
+/// filtro salen al juntarlo y al usarlo, no según la etapa.
 /// </summary>
 public class FlujoJuegoCrater : MonoBehaviour
 {
@@ -21,10 +23,8 @@ public class FlujoJuegoCrater : MonoBehaviour
         BuscarLinterna,
         EncenderLinterna,
         AbrirUmbral,
-        BuscarCuerpo,
-        UsarCuerpo,
-        BuscarHueco,
-        UsarHueco,
+        Explorar,     // la rotonda y las dos alas, en cualquier orden
+        Cruce,        // los dos sellos abrieron el paso del norte
         Cresta,
         Epilogo,
         Finalizado
@@ -46,7 +46,8 @@ public class FlujoJuegoCrater : MonoBehaviour
     }
 
     bool vinculado;            // ya se suscribió a los eventos de la linterna
-    bool pistaHuecoMostrada;   // la explicación de HUECO sale una sola vez
+    bool pistaCuerpoMostrada, pistaHuecoMostrada, pistaCambioMostrada;   // cada explicación sale una vez
+    int sellos;                // cuántos sellos se encendieron
 
     void Start()
     {
@@ -108,7 +109,7 @@ public class FlujoJuegoCrater : MonoBehaviour
         {
             if (compuertaUmbral != null && compuertaUmbral.Abierta)
             {
-                AvanzarABuscarCuerpo();
+                AvanzarAExplorar();
                 return;
             }
             EtapaActual = Etapa.AbrirUmbral;
@@ -124,45 +125,58 @@ public class FlujoJuegoCrater : MonoBehaviour
     /// <summary>Conectado al evento 'alAbrirse' de la compuerta del Umbral.</summary>
     public void NotificarUmbralAbierto()
     {
-        if (EtapaActual <= Etapa.AbrirUmbral) AvanzarABuscarCuerpo();
+        if (EtapaActual <= Etapa.AbrirUmbral) AvanzarAExplorar();
     }
 
-    void AvanzarABuscarCuerpo()
+    void AvanzarAExplorar()
     {
-        EtapaActual = Etapa.BuscarCuerpo;
-        interfaz?.MostrarPromptTemporal("El paso está abierto. Buscá el filtro ámbar.", 5f);
+        EtapaActual = Etapa.Explorar;
+        interfaz?.MostrarPromptTemporal("El paso está abierto. Dos alas: cada una guarda un filtro y un sello.", 6f);
+    }
+
+    /// <summary>Conectado a los atajos que abre cada sello al encenderse.</summary>
+    public void NotificarSello()
+    {
+        sellos++;
+        if (sellos == 1) interfaz?.MostrarPromptTemporal("Un sello encendido. El atajo vuelve a la rotonda.", 5f);
+    }
+
+    /// <summary>Conectado a la puerta de los sellos: los dos están encendidos.</summary>
+    public void EntrarCruce()
+    {
+        if (EtapaActual >= Etapa.Cruce) return;
+        EtapaActual = Etapa.Cruce;
+        interfaz?.MostrarPromptTemporal("Los dos sellos arden. Se abrió el paso del norte.", 5f);
     }
 
     void AlDesbloquearFiltro(FiltroDefinicion filtro)
     {
         if (filtro == null) return;
-        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo)
-        {
-            EtapaActual = Etapa.UsarCuerpo;
-            interfaz?.MostrarPrompt("1 · Equipar CUERPO");
-        }
-        else if (filtro.canal == FiltroDefinicion.Canal.Hueco)
-        {
-            EtapaActual = Etapa.UsarHueco;
-            interfaz?.MostrarPrompt("2 · Equipar HUECO");
-        }
+        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo) interfaz?.MostrarPrompt("1 · Equipar CUERPO");
+        else if (filtro.canal == FiltroDefinicion.Canal.Hueco) interfaz?.MostrarPrompt("2 · Equipar HUECO");
     }
 
     void AlEquiparFiltro(FiltroDefinicion filtro)
     {
         if (filtro == null) return;
 
-        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo && EtapaActual == Etapa.UsarCuerpo)
+        bool ambos = linterna != null && linterna.filtrosDesbloqueados.Count >= 2;
+        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo && !pistaCuerpoMostrada)
         {
-            EtapaActual = Etapa.BuscarHueco;
+            pistaCuerpoMostrada = true;
             interfaz?.MostrarPromptTemporal(
                 "CUERPO enciende las anclas.\nSostené el haz sobre las dos para tender el puente.", 7f);
         }
-        else if (filtro.canal == FiltroDefinicion.Canal.Hueco && EtapaActual == Etapa.UsarHueco && !pistaHuecoMostrada)
+        else if (filtro.canal == FiltroDefinicion.Canal.Hueco && !pistaHuecoMostrada)
         {
             pistaHuecoMostrada = true;
             interfaz?.MostrarPromptTemporal(
-                "HUECO disuelve la materia: iluminala y atravesala.\n1 / 2 · Cambiar filtro     Q · Luz blanca", 7f);
+                "HUECO disuelve la materia: iluminala y atravesala.\nLo que está detrás de una reja no recibe luz.", 7f);
+        }
+        else if (ambos && !pistaCambioMostrada)
+        {
+            pistaCambioMostrada = true;
+            interfaz?.MostrarPromptTemporal("1 / 2 · Cambiar filtro     Q · Luz blanca", 5f);
         }
     }
 

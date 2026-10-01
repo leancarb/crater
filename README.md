@@ -27,8 +27,8 @@ Unity 6000.3 · URP (Forward+) · Input System.
 | 00 Capilla (prólogo) | De día. Al salir, el eclipse abre el cráter en el valle: un pozo con una puerta en el borde |
 | 01 Explanada | El fondo del pozo: se baja por la escalera de la puerta, sin cortes; un pasillo sigue al Umbral |
 | 02 Umbral | Recoger la linterna; sostener la luz sobre un ancla abre la compuerta |
-| 03 Campo | CUERPO: tres puentes (enseñar, barrer con retención, mirar hacia arriba) |
-| 04 Hondonada | HUECO: rejas y zigzag; al final, combinar los dos filtros desde una repisa |
+| 03 Rotonda | Dos alas en cualquier orden. Oeste (CUERPO): puente, puerta de dos anclas, anclas en el techo. Este (HUECO): muro de rejas, trampilla al piso de abajo, escotilla en el techo. Cada una termina en un sello que abre un atajo |
+| 04 Cruce | Con los dos sellos se abre el norte: un ancla detrás de una reja, y un puente que termina contra una reja |
 | 05 Cresta | Se cierra a la espalda. La pared del fondo sólo refleja el propio foco. Apagar la linterna y adaptarse: aparecen tallados ocultos y se abre el techo |
 | 06 Capilla (epílogo) | La luz del techo lo inunda todo: anillo de diamante, blanco y la capilla de día. El cráter ya no está; quedarse donde estaba trae los créditos |
 
@@ -48,6 +48,7 @@ Dónde tocar:
 - `Assets/Editor/ConstructorCrater.cs` — materiales, prefabs, render y post-procesado.
 - `Assets/Editor/ConstructorCrater.Facetado.cs` — la estética low-poly: caras planas, superficies irregulares y un tono por cara. El tamaño de las caras y el relieve de cada zona están arriba de todo, en los `Perfil`.
 - `Assets/Editor/ConstructorCrater.Pozo.cs` — el cráter como pozo en el valle (la entrada sin cortes).
+- `Assets/Editor/ConstructorCrater.Alas.cs` — la Rotonda, las dos alas y el Cruce: el corazón del recorrido.
 - `Assets/Editor/GeneradorAudioCrater.cs` — sonidos sintetizados (reemplazables por WAV grabados con el mismo nombre).
 - `Assets/Data/Filtros/` — los dos filtros (color, cono, alcance, tiempo de carga).
 - `Assets/Scripts/` — el juego: `Jugador`, `Linterna`, `Mecanicas`, `Flujo`, `Interfaz`.

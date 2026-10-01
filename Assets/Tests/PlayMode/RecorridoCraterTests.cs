@@ -83,37 +83,96 @@ public class RecorridoCraterTests
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.AbrirUmbral));
         yield return Iluminar(Buscar<Ancla>("Ancla_Umbral"), 0.8f);
         yield return Esperar(3.5f);
-        Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.BuscarCuerpo), "la compuerta no se abrió");
+        Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Explorar), "la compuerta no se abrió");
+        yield return Caminar(new Vector3(0f, 0f, 1f));
 
-        // Campo: CUERPO
-        yield return Caminar(new Vector3(0f, 0f, 1.5f));
+        // ---- ala oeste: CUERPO
+        yield return Caminar(new Vector3(-16.5f, 0f, 1f));
         Assert.That(linterna.EstaDesbloqueado(cuerpo), Is.True, "no se pudo recoger CUERPO");
         yield return Equipar(cuerpo);
-        yield return CruzarPuente("Puente_Ensenar", 5.4f, 9.3f, "Ancla_Ensenar_A", "Ancla_Ensenar_B");
-        yield return Caminar(new Vector3(0f, 0f, 12.6f));
-        yield return CruzarPuente("Puente_Probar", 12.6f, 19.3f, "Ancla_Probar_A", "Ancla_Probar_B");
-        yield return Caminar(new Vector3(0f, 0f, 23.5f));
-        yield return CruzarPuente("Puente_Torcer", 23.5f, 28.6f, "Ancla_Torcer_A", "Ancla_Torcer_B");
+        yield return CruzarPuente("Puente_O_Ensenar", new Vector3(-24.8f, 0f, 1f), new Vector3(-29.6f, 0f, 1f), "Ancla_O_Ensenar_A", "Ancla_O_Ensenar_B");
+        yield return Caminar(new Vector3(-29.6f, 0f, 6f));
+        yield return Caminar(new Vector3(-33f, 0f, 8f));
+        yield return Caminar(new Vector3(-33f, 0f, 11.5f));
 
-        // Hondonada: HUECO
-        yield return Caminar(new Vector3(0f, 0f, 38.5f));
+        // la puerta que se sostiene con dos anclas lejanas
+        yield return Caminar(new Vector3(-21.5f, 0f, 12f));
+        yield return Iluminar(Buscar<Ancla>("Ancla_O_Puerta_A"), 0.6f);
+        yield return Iluminar(Buscar<Ancla>("Ancla_O_Puerta_B"), 0.6f);
+        yield return Esperar(0.7f);
+        Assert.That(Buscar<Compuerta>("Puerta_O_Dos_Anclas").Abierta, Is.True, "las dos anclas no abrieron la puerta");
+        yield return Caminar(new Vector3(-18f, 0f, 12f));
+
+        // anclas colgadas del techo, y el sello detrás del tabique
+        yield return CruzarPuente("Puente_O_Torcer", new Vector3(-16f, 0f, 14.3f), new Vector3(-16f, 0f, 19f), "Ancla_O_Torcer_A", "Ancla_O_Torcer_B");
+        yield return Caminar(new Vector3(-13.3f, 0f, 19.5f));
+        yield return Caminar(new Vector3(-13.3f, 0f, 24.5f));
+        yield return Iluminar(Buscar<Ancla>("Sello_Oeste"), 0.6f);
+        yield return Esperar(3f);
+        Assert.That(Buscar<Compuerta>("Atajo_Oeste").Abierta, Is.True, "el sello oeste no abrió el atajo");
+        yield return Caminar(new Vector3(-9f, 0f, 24.75f));
+
+        // ---- ala este: HUECO
+        yield return Caminar(new Vector3(8f, 0f, 1f));
+        yield return Caminar(new Vector3(16.5f, 0f, 1f));
         Assert.That(linterna.EstaDesbloqueado(hueco), Is.True, "no se pudo recoger HUECO");
         yield return Equipar(hueco);
-        yield return Atravesar("Reja_Ensenar_A");
-        yield return Atravesar("Reja_Zigzag_1");
-        yield return Atravesar("Reja_Zigzag_2");
-        yield return Atravesar("Reja_Zigzag_3");
+        yield return Atravesar("Reja_E_Ensenar_A", new Vector3(25.8f, 0f, -2f), new Vector3(30f, 0f, -2f));
+        yield return Caminar(new Vector3(33f, 0f, -2f));
+        yield return Caminar(new Vector3(33f, 0f, 8f));
+        yield return Caminar(new Vector3(33f, 0f, 11.5f));
 
-        // Torcer: CUERPO para el puente, HUECO para la reja, desde la repisa
-        yield return Caminar(new Vector3(0f, 0f, 59.6f));
+        // la trampilla: el camino sigue abajo
+        yield return Caminar(new Vector3(24f, 0f, 13.5f));
+        yield return Iluminar(Buscar<MateriaHueca>("Trampilla_E"), 0.6f);
+        yield return Caminar(new Vector3(24f, 0f, 17.5f));
+        yield return Esperar(1f);
+        Assert.That(jugador.transform.position.y, Is.LessThan(-3f), "no se cayó por la trampilla");
+        yield return Atravesar("Reja_E_Galeria", new Vector3(23.2f, 0f, 17.5f), new Vector3(18.5f, 0f, 17.5f));
+        yield return Atravesar("Reja_E_Trinchera", new Vector3(18f, 0f, 15.3f), new Vector3(18f, 0f, 12.5f));
+
+        // la rampa y la escotilla del techo
+        yield return Caminar(new Vector3(14.5f, 0f, 12f));
+        yield return Caminar(new Vector3(14.5f, 0f, 16.2f));
+        yield return Iluminar(Buscar<MateriaHueca>("Escotilla_E"), 0.6f);
+        yield return Caminar(new Vector3(14.5f, 0f, 22f));
+        Assert.That(jugador.transform.position.y, Is.GreaterThan(-0.5f), "no se pudo subir por la escotilla");
+        yield return Caminar(new Vector3(18.6f, 0f, 22.5f));
+        yield return Caminar(new Vector3(18.6f, 0f, 25.3f));
+        yield return Iluminar(Buscar<MateriaHueca>("Sello_Este"), 0.6f);
+        yield return Esperar(3f);
+        Assert.That(Buscar<Compuerta>("Atajo_Este").Abierta, Is.True, "el sello este no abrió el atajo");
+        yield return Caminar(new Vector3(9f, 0f, 24.75f));
+
+        // ---- los dos sellos abren el norte: el Cruce
+        yield return Esperar(3.5f);
+        Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Cruce), "los dos sellos no abrieron la puerta del norte");
+        yield return Caminar(new Vector3(0f, 0f, 24f));
+        yield return Caminar(new Vector3(0f, 0f, 32.3f));
+
+        // un ancla detrás de una reja: HUECO, cambiar a CUERPO y encenderla antes de que se cierre
+        yield return Iluminar(Buscar<MateriaHueca>("Reja_N_Tapa"), 0.6f);
         yield return Equipar(cuerpo);
-        yield return CruzarPuente("Puente_Hondonada", 59.6f, 64.8f, "Ancla_Hondonada_A", "Ancla_Hondonada_B");
+        yield return Iluminar(Buscar<Ancla>("Ancla_N_Oculta"), 0.6f);
+        yield return Iluminar(Buscar<Ancla>("Ancla_N_Vista"), 0.6f);
+        yield return Esperar(0.3f);
+        Assert.That(Buscar<PuenteLuz>("Puente_N_Reja").Solido, Is.True, "el puente de la reja no apareció");
+        MirarHacia(new Vector3(-0.8f, 0f, 37f));
+        yield return Caminar(new Vector3(-0.8f, 0f, 37f));
+        yield return Caminar(new Vector3(-0.8f, 0f, 41.5f));
+        yield return Caminar(new Vector3(0f, 0f, 42f));
+
+        // el puente con las anclas a la espalda y la reja al final
+        yield return Iluminar(Buscar<Ancla>("Ancla_N_Borde_A"), 0.6f);
+        yield return Iluminar(Buscar<Ancla>("Ancla_N_Borde_B"), 0.6f);
+        yield return Esperar(0.3f);
+        Assert.That(Buscar<PuenteLuz>("Puente_N_Borde").Solido, Is.True, "el puente del borde no apareció");
+        MirarHacia(new Vector3(0f, 0f, 50f));
+        yield return Caminar(new Vector3(0f, 0f, 44.6f));
+        yield return Caminar(new Vector3(-1.5f, 0f, 50.1f));
         yield return Equipar(hueco);
-        var reja = Buscar<MateriaHueca>("Reja_Salida_A");
-        yield return Iluminar(reja, 0.8f);
-        Assert.That(reja.Solido, Is.False, "la reja de salida no se disolvió desde la repisa");
-        yield return Caminar(new Vector3(-1f, 0f, 68f));
-        Assert.That(jugador.transform.position.z, Is.GreaterThan(67.5f), "no se pudo atravesar la reja de salida");
+        yield return Atravesar("Reja_N_Borde_A", new Vector3(-1.5f, 0f, 50.1f), new Vector3(-1.5f, 0f, 53f));
+        yield return Caminar(new Vector3(0f, 0f, 62f));
 
         // Cresta: el corredor se cierra a la espalda
         yield return Caminar(new Vector3(0f, 0f, 70f));
@@ -174,28 +233,38 @@ public class RecorridoCraterTests
         Assert.That(linterna.FiltroActual, Is.SameAs(filtro));
     }
 
-    IEnumerator CruzarPuente(string nombre, float zAntes, float zDespues, params string[] anclas)
+    /// <summary>Camina hasta 'antes', enciende las anclas, espera el puente y cruza hasta 'despues'.</summary>
+    IEnumerator CruzarPuente(string nombre, Vector3 antes, Vector3 despues, params string[] anclas)
     {
         var puente = Buscar<PuenteLuz>(nombre);
-        yield return Caminar(new Vector3(0f, 0f, zAntes));
+        yield return Caminar(antes);
         foreach (var ancla in anclas) yield return Iluminar(Buscar<Ancla>(ancla), 0.6f);
         yield return Esperar(0.3f);
         Assert.That(puente.Solido, Is.True, $"{nombre} no apareció");
 
-        fps.MirarHacia(jugador.transform.position + Vector3.forward * 10f + Vector3.up * 1.6f);
-        yield return Caminar(new Vector3(0f, 0f, zDespues));
+        MirarHacia(despues);
+        yield return Caminar(despues);
         Assert.That(jugador.transform.position.y, Is.GreaterThan(-0.5f), $"el jugador se cayó cruzando {nombre}");
     }
 
-    IEnumerator Atravesar(string nombre)
+    /// <summary>Camina hasta 'antes', disuelve la reja y pasa hasta 'despues'.</summary>
+    IEnumerator Atravesar(string nombre, Vector3 antes, Vector3 despues)
     {
         var reja = Buscar<MateriaHueca>(nombre);
-        Vector3 p = reja.transform.position;
-        yield return Caminar(new Vector3(p.x, 0f, p.z - 2.2f));
+        yield return Caminar(antes);
         yield return Iluminar(reja, 0.6f);
         yield return Esperar(0.2f);
         Assert.That(reja.Solido, Is.False, $"{nombre} no se disolvió");
-        yield return Caminar(new Vector3(p.x, 0f, p.z + 1.4f));
+        yield return Caminar(despues);
+    }
+
+    /// <summary>Mira hacia un punto del recorrido, a la altura de los ojos.</summary>
+    void MirarHacia(Vector3 destino)
+    {
+        Vector3 p = jugador.transform.position;
+        Vector3 dir = new Vector3(destino.x - p.x, 0f, destino.z - p.z);
+        if (dir.sqrMagnitude < 0.0001f) return;
+        fps.MirarHacia(p + Vector3.up * 1.6f + dir.normalized * 10f);
     }
 
     static IEnumerator Esperar(float segundos)

@@ -15,8 +15,10 @@ using UnityEngine.SceneManagement;
 ///   01 Explanada   z -48 … -34   el fondo del pozo que el eclipse abre en el valle; se baja por una escalera
 ///      Pasaje      z -34 … -23   pasillo plano hasta el Umbral
 ///   02 Umbral      z -23 … -3    la linterna y la primera ancla (luz blanca) abren la compuerta
-///   03 Campo       z  -3 …  30   filtro CUERPO: tres puentes (enseñar, probar, torcer la mirada)
-///   04 Hondonada   z  30 …  68.5 filtro HUECO: rejas, zigzag y la combinación de ambos filtros
+///   03 Rotonda     z  -3 …  27   con dos alas, en cualquier orden (ver ConstructorCrater.Alas.cs):
+///      Ala oeste   x -36 … -12   filtro CUERPO y su sello
+///      Ala este    x  12 …  36   filtro HUECO y su sello
+///   04 Cruce       z  27 …  68.5 los dos filtros juntos
 ///   05 Cresta      z 68.5 … 99   se cierra a la espalda; apagar la linterna, adaptarse y el techo se abre
 ///
 /// CÓMO FUNCIONA
@@ -52,7 +54,7 @@ public static partial class ConstructorCrater
         public ZonaJugador zonaUmbralCapilla, zonaPuertaCrater;
 
         // final
-        public Compuerta cierreCresta;
+        public Compuerta cierreCresta, puertaSellos, atajoOeste, atajoEste;
         public AperturaTecho techoCresta;
     }
 
@@ -67,8 +69,12 @@ public static partial class ConstructorCrater
 
         ConstruirExplanada(kit, Grupo(nivel, "01_Explanada"), refs);
         ConstruirUmbral(kit, Grupo(nivel, "02_Umbral"), refs);
-        ConstruirCampo(kit, Grupo(nivel, "03_Campo"));
-        ConstruirHondonada(kit, Grupo(nivel, "04_Hondonada"));
+        var rotonda = Grupo(nivel, "03_Rotonda");
+        ConstruirRotonda(kit, rotonda, refs);
+        var selloOeste = ConstruirAlaOeste(kit, Grupo(nivel, "03_Ala_Oeste"), refs);
+        var selloEste = ConstruirAlaEste(kit, Grupo(nivel, "03_Ala_Este"), refs);
+        ConstruirPuertaDeLosSellos(kit, rotonda, refs, selloOeste, selloEste);
+        ConstruirCruce(kit, Grupo(nivel, "04_Cruce"));
         ConstruirCresta(kit, Grupo(nivel, "05_Cresta"), refs);
         ConstruirCapilla(kit, Grupo(nivel, "06_Capilla"), refs);
         Vestir(kit, arte);
@@ -167,78 +173,6 @@ public static partial class ConstructorCrater
 
         Luz(g, "Luz_Umbral", new Vector3(0f, 3.4f, -17f), LuzCalida, 120f, 14f, true);
         Luz(g, "Luz_Compuerta", new Vector3(0f, 3.2f, -6f), LuzCalida, 45f, 9f, false);
-    }
-
-    // ================================================================== 03 Campo
-
-    static void ConstruirCampo(Kit k, Transform g)
-    {
-        Caja(g, "Piso_Campo_Entrada", -6, -0.3f, -3, 6, 0, 6, k.piso);
-        Caja(g, "Piso_Campo_Medio_1", -6, -0.3f, 8.6f, 6, 0, 13, k.piso);
-        Caja(g, "Piso_Campo_Medio_2", -6, -0.3f, 18.5f, 6, 0, 24, k.piso);
-        Caja(g, "Piso_Campo_Salida", -6, -0.3f, 27.5f, 6, 0, 30, k.piso);
-        Caja(g, "Muro_Campo_Izq", -6.3f, -9, -3, -6, 6, 30, k.basaltoMedio);
-        Caja(g, "Muro_Campo_Der", 6, -9, -3, 6.3f, 6, 30, k.basalto);
-        Caja(g, "Dintel_Umbral", -6.3f, 4, -3.3f, 6.3f, 6, -3, k.basalto);
-        Caja(g, "Techo_Campo", -6.3f, 6, -3.3f, 6.3f, 6.3f, 30, k.techo);
-        Oculo(k, g, "Oculo_Campo", new Vector3(0f, 5.97f, 16f), 3.2f, 150f, 10f);
-
-        ColocarRecogible(k, g, "Recogible_Cuerpo", k.cuerpo, new Vector3(0f, 0f, 1.5f));
-
-        // Enseñar: las dos anclas entran juntas en el cono (medio ángulo 14°) desde el borde
-        var a1 = CrearAnclaEnEscena(k, g, "Ancla_Ensenar_A", new Vector3(-1.15f, 0f, 11.6f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 3f, 0);
-        var a2 = CrearAnclaEnEscena(k, g, "Ancla_Ensenar_B", new Vector3(1.15f, 0f, 11.6f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 3f, 2);
-        Puente(k, g, "Puente_Ensenar", 6f, 8.6f, 3.5f, a1, a2);
-
-        // Probar: más separadas, hay que barrer de una a la otra y cruzar con la retención
-        var b1 = CrearAnclaEnEscena(k, g, "Ancla_Probar_A", new Vector3(-2.6f, 0f, 20.2f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 5.5f, 1);
-        var b2 = CrearAnclaEnEscena(k, g, "Ancla_Probar_B", new Vector3(2.6f, 0f, 20.2f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 5.5f, 3);
-        Puente(k, g, "Puente_Probar", 13f, 18.5f, 3.6f, b1, b2);
-
-        // Torcer: cuelgan del techo sobre el hueco, hay que levantar la mirada
-        var c1 = CrearAnclaEnEscena(k, g, "Ancla_Torcer_A", new Vector3(-1.05f, 6f, 25.75f), Quaternion.Euler(180f, 0f, 0f), FiltroDefinicion.Canal.Cuerpo, 4.5f, 2);
-        var c2 = CrearAnclaEnEscena(k, g, "Ancla_Torcer_B", new Vector3(1.05f, 6f, 25.75f), Quaternion.Euler(180f, 0f, 0f), FiltroDefinicion.Canal.Cuerpo, 4.5f, 4);
-        Puente(k, g, "Puente_Torcer", 24f, 27.5f, 3.6f, c1, c2);
-
-        Luz(g, "Luz_Campo", new Vector3(0f, 5.3f, 2f), LuzCalida, 130f, 15f, true);
-        Luz(g, "Luz_Campo_Fondo", new Vector3(0f, 5.3f, 22f), LuzCalida, 80f, 12f, false);
-    }
-
-    // ================================================================== 04 Hondonada
-
-    static void ConstruirHondonada(Kit k, Transform g)
-    {
-        Caja(g, "Piso_Hondonada", -6, -0.3f, 30, 6, 0, 61, k.piso);
-        Caja(g, "Repisa_Hondonada", -1.8f, -0.3f, 64, 1.8f, 0, 65.5f, k.piso);
-        Caja(g, "Piso_Hondonada_Salida", -6, -0.3f, 65.5f, 6, 0, 68.5f, k.piso);
-        Caja(g, "Muro_Hondonada_Izq", -6.3f, -9, 30, -6, 6, 68.5f, k.basalto);
-        Caja(g, "Muro_Hondonada_Der", 6, -9, 30, 6.3f, 6, 68.5f, k.basaltoMedio);
-        Caja(g, "Techo_Hondonada", -6.3f, 6, 30, 6.3f, 6.3f, 68.5f, k.techo);
-
-        ColocarRecogible(k, g, "Recogible_Hueco", k.hueco, new Vector3(0f, 0f, 38.5f));
-
-        // Enseñar: una reja de lado a lado
-        Reja(k, g, "Reja_Ensenar_A", -3f, 46f);
-        Reja(k, g, "Reja_Ensenar_B", 3f, 46f);
-
-        // Probar: zigzag, la mitad de cada paso es roca maciza
-        Reja(k, g, "Reja_Zigzag_1", -3f, 50f);
-        Caja(g, "Tabique_Zigzag_1", 0, -0.3f, 49.6f, 6, 6, 50.4f, k.basaltoMedio);
-        Caja(g, "Tabique_Zigzag_2", -6, -0.3f, 53.6f, 0, 6, 54.4f, k.basaltoMedio);
-        Reja(k, g, "Reja_Zigzag_2", 3f, 54f);
-        Reja(k, g, "Reja_Zigzag_3", -3f, 58f);
-        Caja(g, "Tabique_Zigzag_3", 0, -0.3f, 57.6f, 6, 6, 58.4f, k.basaltoMedio);
-
-        // Torcer: puente con CUERPO, repisa angosta, y reja con HUECO
-        var a1 = CrearAnclaEnEscena(k, g, "Ancla_Hondonada_A", new Vector3(-4f, 0f, 60.1f), Quaternion.Euler(0f, 150f, 0f), FiltroDefinicion.Canal.Cuerpo, 5f, 3);
-        var a2 = CrearAnclaEnEscena(k, g, "Ancla_Hondonada_B", new Vector3(4f, 0f, 60.1f), Quaternion.Euler(0f, 210f, 0f), FiltroDefinicion.Canal.Cuerpo, 5f, 5);
-        Puente(k, g, "Puente_Hondonada", 61f, 64f, 3.6f, a1, a2);
-        Reja(k, g, "Reja_Salida_A", -3f, 66.6f);
-        Reja(k, g, "Reja_Salida_B", 3f, 66.6f);
-
-        Luz(g, "Luz_Hondonada", new Vector3(0f, 5.3f, 38f), LuzFria, 120f, 15f, true);
-        Luz(g, "Luz_Zigzag", new Vector3(0f, 5.3f, 52f), LuzFria, 90f, 12f, false);
-        Luz(g, "Luz_Hondonada_Fondo", new Vector3(0f, 5.3f, 64f), LuzFria, 70f, 11f, false);
     }
 
     // ================================================================== 05 Cresta
@@ -497,8 +431,8 @@ public static partial class ConstructorCrater
             Modulo(k, modulos, $"Modulo_{sala}_Der_{z:0}", new Vector3(mitad - 0.45f * escala, 0f, z), -90f, escala, k.piedra);
         }
         foreach (float z in new[] { -19f, -13f, -7f }) Par(z, 6f, 0.62f, "Umbral");
-        foreach (float z in new[] { 1f, 10.5f, 16f, 21.5f }) Par(z, 6f, 0.82f, "Campo");
-        foreach (float z in new[] { 33f, 40f, 63f }) Par(z, 6f, 0.82f, "Hondonada");
+        foreach (float z in new[] { 6f, 12f, 18f }) Par(z, 12f, 1f, "Rotonda");
+        foreach (float z in new[] { 29f, 41f, 56f, 64f }) Par(z, 6f, 0.82f, "Cruce");
         foreach (float z in new[] { 80f, 87f, 94f }) Par(z, 12f, 1f, "Cresta");
         // el fondo de la Cresta, la pared espejo: dos módulos a los costados
         Modulo(k, modulos, "Modulo_Cresta_Fondo_Izq", new Vector3(-6f, 0f, 98.55f), 180f, 1.05f, k.piedra);
@@ -509,8 +443,8 @@ public static partial class ConstructorCrater
         Motivo(k, motivos, "Mural_Plaza_Izq", new Vector3(-6.5f, 0.4f, -34.35f), 180f, 0.9f, k.ambar);
         Motivo(k, motivos, "Mural_Plaza_Der", new Vector3(6.5f, 0.4f, -34.35f), 180f, 0.9f, k.ambar);
         Motivo(k, motivos, "Mural_Umbral", new Vector3(5.93f, 0.3f, -16f), -90f, 0.7f, k.ambar);
-        Motivo(k, motivos, "Mural_Campo", new Vector3(-5.93f, 0.6f, 4.5f), 90f, 0.8f, k.ambar);
-        Motivo(k, motivos, "Mural_Hondonada", new Vector3(5.93f, 0.6f, 36.5f), -90f, 0.8f, k.ambar);
+        Motivo(k, motivos, "Mural_Rotonda_O", new Vector3(-11.93f, 0.6f, 9f), 90f, 0.9f, k.ambar);
+        Motivo(k, motivos, "Mural_Rotonda_E", new Vector3(11.93f, 0.6f, 15f), -90f, 0.9f, k.ambar);
 
         // tallados latentes: casi invisibles con la linterna, aparecen al adaptarse
         var latentes = Grupo(arte, "MotivosLatentes_Cresta");
@@ -532,7 +466,7 @@ public static partial class ConstructorCrater
         Estatico(m);
     }
 
-    static void Motivo(Kit k, Transform padre, string nombre, Vector3 posicion, float rotY, float escala, Material material)
+    static GameObject Motivo(Kit k, Transform padre, string nombre, Vector3 posicion, float rotY, float escala, Material material)
     {
         var m = Instanciar(k.modeloMotivos, padre, nombre);
         // el tallado está corrido 0,31 m del pivote: se centra
@@ -542,6 +476,7 @@ public static partial class ConstructorCrater
         Pintar(m, _ => material);
         foreach (var r in m.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
         Estatico(m);
+        return m;
     }
 
     // ================================================================== sistemas
@@ -643,6 +578,9 @@ public static partial class ConstructorCrater
         Asignar(prologo, "sonidoDestello", destelloPuerta);
 
         UnityEventTools.AddPersistentListener(refs.compuertaUmbral.alAbrirse, new UnityAction(flujo.NotificarUmbralAbierto));
+        UnityEventTools.AddPersistentListener(refs.puertaSellos.alAbrirse, new UnityAction(flujo.EntrarCruce));
+        UnityEventTools.AddPersistentListener(refs.atajoOeste.alAbrirse, new UnityAction(flujo.NotificarSello));
+        UnityEventTools.AddPersistentListener(refs.atajoEste.alAbrirse, new UnityAction(flujo.NotificarSello));
         UnityEventTools.AddPersistentListener(refs.zonaCresta.alEntrar, new UnityAction(flujo.EntrarCresta));
         // la Compuerta "se abre" hacia arriba: acá eso es cerrar el corredor
         UnityEventTools.AddPersistentListener(refs.zonaCresta.alEntrar, new UnityAction(refs.cierreCresta.Abrir));
@@ -665,23 +603,6 @@ public static partial class ConstructorCrater
         ancla.tono.clip = k.audio.tonosAncla[tono % k.audio.tonosAncla.Length];
         PrefabUtility.RecordPrefabInstancePropertyModifications(ancla.tono);
         return ancla;
-    }
-
-    /// <summary>Tiende un puente sobre el hueco [zDesde, zHasta], sostenido por las anclas dadas.</summary>
-    static PuenteLuz Puente(Kit k, Transform g, string nombre, float zDesde, float zHasta, float ancho, params Ancla[] anclas)
-    {
-        const float solape = 0.25f;
-        var go = Instancia(k.prefabPuente, g, nombre, new Vector3(0f, 0f, zDesde - solape), Quaternion.identity,
-            new Vector3(ancho / 2.2f, 1f, (zHasta - zDesde + solape * 2f) / 8f));
-        var puente = go.GetComponent<PuenteLuz>();
-        puente.anclas = new List<ReceptorDeLuz>(anclas);
-        PrefabUtility.RecordPrefabInstancePropertyModifications(puente);
-        return puente;
-    }
-
-    static MateriaHueca Reja(Kit k, Transform g, string nombre, float x, float z)
-    {
-        return Instancia(k.prefabReja, g, nombre, new Vector3(x, 0f, z), Quaternion.identity).GetComponent<MateriaHueca>();
     }
 
     static Recogible ColocarRecogible(Kit k, Transform g, string nombre, FiltroDefinicion filtro, Vector3 posicion)

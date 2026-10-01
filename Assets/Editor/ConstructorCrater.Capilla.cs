@@ -228,7 +228,7 @@ public static partial class ConstructorCrater
             float ancho = Azar(30f, 55f), alto = Azar(18f, 42f), fondo = Azar(14f, 24f);
             Vector3 mundo = g.TransformPoint(pos);
             float alcance = Mathf.Max(ancho, fondo) * 0.6f;
-            bool sobreElNivel = Mathf.Abs(mundo.x) < 14f + alcance && mundo.z > -50f - alcance && mundo.z < 104f + alcance;
+            bool sobreElNivel = Mathf.Abs(mundo.x) < 38f + alcance && mundo.z > -50f - alcance && mundo.z < 104f + alcance;
             if (!sobreElNivel) Cerro($"Horizonte_{ang:000}", pos, ancho, alto, fondo, false);
         }
 

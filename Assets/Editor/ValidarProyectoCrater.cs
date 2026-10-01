@@ -138,12 +138,17 @@ public static class ValidarProyectoCrater
                 Comprobar(LayerMask.LayerToName(ancla.gameObject.layer) == ConstructorCrater.CapaAncla,
                     $"{ancla.name} no está en la capa Ancla.", problemas);
 
-            // la del Umbral (la abren sus receptores) y el cierre de la Cresta (lo cierra la zona)
+            // todas las compuertas se abren con receptores, salvo el cierre de la Cresta (lo cierra la zona)
             var compuertas = Todos<Compuerta>();
-            var umbral = compuertas.Where(c => c.receptores.Count > 0).ToArray();
-            Comprobar(compuertas.Length == 2 && umbral.Length == 1,
-                "Tienen que estar la compuerta del Umbral (con receptores) y el cierre de la Cresta.", problemas);
-            Comprobar(umbral.All(c => TieneOyentes(c.alAbrirse)), "La compuerta del Umbral no avisa al flujo del juego.", problemas);
+            Compuerta Compuerta(string nombre) => compuertas.FirstOrDefault(c => c.name == nombre);
+            Comprobar(compuertas.Where(c => c.name != "Cierre_Cresta").All(c => c.receptores.Count > 0 && c.receptores.All(r => r != null)),
+                "Hay una compuerta sin receptores (sólo el cierre de la Cresta puede no tenerlos).", problemas);
+            Comprobar(Compuerta("Cierre_Cresta") != null, "Falta el cierre de la Cresta.", problemas);
+            foreach (var nombre in new[] { "Compuerta_Umbral", "Puerta_Sellos", "Atajo_Oeste", "Atajo_Este" })
+                Comprobar(Compuerta(nombre) != null && TieneOyentes(Compuerta(nombre).alAbrirse), $"Falta {nombre} o no avisa al flujo del juego.", problemas);
+            var sellos = Compuerta("Puerta_Sellos");
+            Comprobar(sellos != null && sellos.receptores.Count == 2 && sellos.receptores.All(r => r != null && r.permanente),
+                "La puerta de los sellos tiene que abrirse con los dos sellos, y los sellos tienen que ser permanentes.", problemas);
 
             // Cresta, umbral de la capilla, el pozo del cráter y el lugar del cráter (epílogo)
             var zonas = Todos<ZonaJugador>();

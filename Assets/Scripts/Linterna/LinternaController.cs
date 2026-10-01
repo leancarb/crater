@@ -16,7 +16,8 @@ using UnityEngine;
 ///  2. Aplica el filtro al Spot Light: color, ángulo, alcance e intensidad.
 ///  3. Si está encendida, busca receptores con OverlapSphere (una esfera del largo
 ///     del alcance), descarta los que quedan fuera del ángulo del cono y los que
-///     tienen una pared en el medio (Raycast), y a los que quedan les llama RecibirLuz().
+///     tienen una pared o una reja sólida en el medio (Raycast), y a los que quedan les
+///     llama RecibirLuz().
 /// Otros sistemas no leen el teclado: escuchan los eventos (AlCambiarEncendido,
 /// AlEquiparFiltro, etc.) o consultan las propiedades de estado.
 /// 'Instancia' da acceso a la única linterna desde cualquier script (patrón singleton).
@@ -247,10 +248,11 @@ public class LinternaController : MonoBehaviour
             if (hacia.magnitude > AlcanceActual) continue;
             if (Vector3.Angle(transform.forward, hacia) > medio) continue;
 
-            // 3. línea de vista: que no haya una pared en el medio
+            // 3. línea de vista: que no haya una pared en el medio, ni una reja sólida
             if (Physics.Raycast(transform.position, hacia.normalized, hacia.magnitude - 0.05f,
                                 capaObstaculos, QueryTriggerInteraction.Ignore))
                 continue;
+            if (TapadoPorUnaReja(hacia, receptor)) continue;
 
             // 4. se le avisa sólo si el filtro actual es el suyo
             HayObjetivo = true;
@@ -259,6 +261,25 @@ public class LinternaController : MonoBehaviour
             receptor.RecibirLuz(FiltroActual, delta);
             CargaObjetivo = Mathf.Max(CargaObjetivo, receptor.Carga);
         }
+    }
+
+    readonly RaycastHit[] impactosRejas = new RaycastHit[8];
+
+    /// <summary>
+    /// Las rejas de materia hueca están en la capa de receptores (no en la de obstáculos),
+    /// pero mientras están sólidas tapan la luz: lo que está detrás no se ilumina hasta
+    /// disolverlas. Disueltas, sus colliders se apagan y el rayo pasa.
+    /// </summary>
+    bool TapadoPorUnaReja(Vector3 hacia, ReceptorDeLuz objetivo)
+    {
+        int n = Physics.RaycastNonAlloc(transform.position, hacia.normalized, impactosRejas, hacia.magnitude - 0.05f,
+                                        capaReceptores, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < n; i++)
+        {
+            var reja = impactosRejas[i].collider.GetComponentInParent<MateriaHueca>();
+            if (reja != null && reja != objetivo && reja.Solido) return true;
+        }
+        return false;
     }
 
     // en la vista Scene, una línea amarilla del largo del alcance

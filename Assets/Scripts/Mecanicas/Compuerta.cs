@@ -4,7 +4,9 @@ using UnityEngine.Events;
 
 /// <summary>
 /// Losa de piedra que se hunde en el piso cuando todos sus receptores están
-/// activos. Una vez abierta queda abierta.
+/// activos. Una vez abierta queda abierta, salvo que sea 'sostenida': esa se
+/// abre sólo mientras sus receptores sigan activos (la retención de las anclas
+/// da unos segundos para pasar) y nunca se cierra encima del jugador.
 ///
 /// Poner en: la compuerta (con su Collider). 'desplazamiento' es cuánto se mueve al abrirse.
 ///
@@ -13,13 +15,18 @@ using UnityEngine.Events;
 /// vez que se cumple llama a Abrir(), que dispara el sonido y el evento 'alAbrirse'
 /// (el FlujoJuegoCrater lo escucha para avanzar de etapa). Desde ahí anima la losa
 /// hacia 'origen + desplazamiento' durante 'duracion' segundos.
-/// En el juego la usa el Umbral, con un ancla que se abre con luz blanca.
+/// Sostenida, Progreso va hacia 1 o hacia 0 según el estado de los receptores; antes de
+/// cerrarse revisa (CheckBox) que el jugador no esté parado en el paso.
 /// </summary>
 public class Compuerta : MonoBehaviour
 {
     public List<ReceptorDeLuz> receptores = new List<ReceptorDeLuz>();
     public Vector3 desplazamiento = new Vector3(0f, -4.4f, 0f);
     public float duracion = 3f;
+    [Tooltip("Abierta sólo mientras sus receptores estén activos.")]
+    public bool sostenida;
+    [Tooltip("Capa del jugador, para no cerrarse encima de él (sostenida).")]
+    public LayerMask capaJugador;
 
     [Header("Aspecto y sonido")]
     [Tooltip("Tallados que se encienden al abrirse.")]
@@ -37,6 +44,7 @@ public class Compuerta : MonoBehaviour
 
     Vector3 origen;            // posición cerrada, guardada una vez
     bool origenGuardado;
+    Bounds paso;               // el volumen que ocupa la losa cerrada (sostenida)
     MaterialPropertyBlock bloque;
 
     void Awake() => GuardarOrigen();
@@ -47,6 +55,17 @@ public class Compuerta : MonoBehaviour
         if (origenGuardado) return;
         origen = transform.localPosition;
         origenGuardado = true;
+
+        // el paso: lo que ocupa la losa cerrada, un poco más grande
+        paso = new Bounds(transform.position, Vector3.zero);
+        bool primero = true;
+        foreach (var c in GetComponentsInChildren<Collider>())
+        {
+            if (c.isTrigger) continue;
+            if (primero) { paso = c.bounds; primero = false; }
+            else paso.Encapsulate(c.bounds);
+        }
+        paso.Expand(new Vector3(0.6f, 0f, 0.6f));
     }
 
     void Update() => Avanzar(Time.deltaTime);
@@ -55,13 +74,17 @@ public class Compuerta : MonoBehaviour
     public void Avanzar(float delta)
     {
         // TrueForAll: todos los receptores tienen que estar encendidos a la vez
-        if (!Abierta && receptores.Count > 0 && receptores.TrueForAll(r => r != null && r.Activo))
-            Abrir();
-        if (!Abierta || Progreso >= 1f) return;
+        bool encendidos = receptores.Count > 0 && receptores.TrueForAll(r => r != null && r.Activo);
+        if (!Abierta && encendidos) Abrir();
+        // sostenida: se cierra al apagarse, salvo que el jugador esté en el paso
+        if (sostenida && Abierta && !encendidos && !JugadorEnElPaso()) Abierta = false;
 
-        Progreso = Mathf.MoveTowards(Progreso, 1f, delta / Mathf.Max(0.01f, duracion));
-        // un temblor al arrancar, después se hunde parejo
-        float temblor = Progreso < 0.15f ? Mathf.Sin(Time.time * 60f) * 0.015f : 0f;
+        float objetivo = Abierta ? 1f : 0f;
+        if (Mathf.Approximately(Progreso, objetivo)) return;
+
+        Progreso = Mathf.MoveTowards(Progreso, objetivo, delta / Mathf.Max(0.01f, duracion));
+        // un temblor al arrancar a abrirse, después se hunde parejo (al cerrarse, sin temblor)
+        float temblor = Abierta && Progreso < 0.15f ? Mathf.Sin(Time.time * 60f) * 0.015f : 0f;
         // SmoothStep: arranca y frena suave, en vez de moverse a velocidad constante
         transform.localPosition = origen + desplazamiento * Mathf.SmoothStep(0f, 1f, Progreso) + Vector3.right * temblor;
 
@@ -75,6 +98,12 @@ public class Compuerta : MonoBehaviour
             bloque.SetColor(IdEmision, colorAcento * Mathf.Lerp(0.3f, 4f, Mathf.Sin(Progreso * Mathf.PI)));
             r.SetPropertyBlock(bloque);
         }
+    }
+
+    bool JugadorEnElPaso()
+    {
+        int capa = capaJugador.value != 0 ? capaJugador.value : LayerMask.GetMask("Jugador");
+        return Physics.CheckBox(paso.center, paso.extents, Quaternion.identity, capa, QueryTriggerInteraction.Ignore);
     }
 
     public void Abrir()

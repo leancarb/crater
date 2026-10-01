@@ -37,7 +37,7 @@ El eclipse dura exactamente lo que el jugador permanezca adentro. El cráter es 
 |---|---|---|
 | **Prólogo** | Capilla de día. Al salir, empieza el eclipse (cinemática sin control): se callan los pájaros, todo queda en un crepúsculo profundo, la tierra se abre en un pozo, sube el borde del cráter y destella la puerta. | Curiosidad, extrañeza. |
 | **Descenso** | Sin cortes: se cruza la puerta y se baja por una escalera hasta la Explanada, en el fondo del pozo. Un pasillo sigue al Umbral, donde está la linterna. | Descubrimiento. |
-| **Aprendizaje** | El Campo entrega CUERPO; la Hondonada, HUECO. | Dominio, asombro. |
+| **Aprendizaje** | La Rotonda abre dos alas, en cualquier orden: la oeste entrega CUERPO, la este HUECO. Cada una termina en un sello. Con los dos, el Cruce pide usar los filtros juntos. | Dominio, asombro. |
 | **La oscuridad** | Al entrar a la Cresta, una losa cierra el corredor a la espalda: no hay vuelta. La pared del fondo sólo devuelve el reflejo del propio foco. Al apagar la linterna y esperar, aparecen tallados ocultos. | Revelación, encierro. |
 | **Final** | Adaptado a la oscuridad, el techo se abre y entra la luz blanca del fin del eclipse hasta inundarlo todo. Silencio, **anillo de diamante**, y el jugador aparece en la capilla, de día. | Cierre sereno. |
 | **Epílogo** | El cráter ya no está: sólo queda pasto aplastado. Quedarse ahí (o esperar un rato) trae los créditos. | Pérdida suave, confirmación. |
@@ -45,7 +45,7 @@ El eclipse dura exactamente lo que el jugador permanezca adentro. El cráter es 
 ### El eclipse
 
 - **Afuera** se ve en el cielo: el sol y la corona en la totalidad. No es noche cerrada sino un crepúsculo profundo: cielo azul oscuro, el horizonte cálido alrededor y el paisaje todavía visible. La luna nueva no se ve de día: sólo su silueta cuando pasa por delante del sol. En el epílogo ya pasó y quedó del otro lado.
-- **Adentro** la totalidad está congelada. Se ve por los **óculos** (Campo y Cresta): sol negro, corona plateada, cielo de noche.
+- **Adentro** la totalidad está congelada. Se ve por los **óculos** (Rotonda y Cruce): sol negro, corona plateada, cielo de noche.
 - **Termina con el anillo de diamante**, el destello real con el que cierra la totalidad: la luz vuelve de golpe, como al prender la luz después de estar a oscuras.
 
 ### Tema
@@ -78,7 +78,11 @@ La herramienta que nos permite ver también define lo que vemos. La linterna ens
 | # | Filtro | Color | Receptor | Qué hace |
 |---|---|---|---|---|
 | 1 | **CUERPO** | Ámbar | Ancla de basalto → Puente de luz | Enciende anclas. Con todas las anclas de un puente encendidas, el puente se materializa. Las anclas retienen unos segundos al perder el haz. |
-| 2 | **HUECO** | Azul | Reja | Disuelve la materia hueca mientras se la ilumina: se vuelve atravesable. |
+| 2 | **HUECO** | Azul | Reja | Disuelve la materia hueca mientras se la ilumina: se vuelve atravesable. Una reja sólida tapa la luz: lo que está detrás no se enciende. También hay rejas acostadas (trampillas en el piso, escotillas en el techo). |
+
+**Sellos:** al final de cada ala. Una vez encendidos quedan así para siempre; abren un atajo a la Rotonda y, los dos juntos, la puerta del norte.
+
+**Puertas sostenidas:** se abren sólo mientras sus anclas estén encendidas; la retención da unos segundos para pasar. Nunca se cierran encima del jugador.
 
 ### 3.4 Adaptación a la oscuridad
 
@@ -89,26 +93,29 @@ Sólo en la Cresta. Con la linterna apagada, tras 3 s la exposición sube durant
 - La pared del fondo de la Cresta es basalto pulido. **Con la linterna prendida** devuelve un reflejo encandilante del propio foco (del color del filtro), como una ventana de noche.
 - **Con la linterna apagada**, el reflejo desaparece y aparecen los tallados latentes.
 - Al entrar a la Cresta, una losa sube del piso y cierra el corredor.
-- Adaptado, la hoja desaparece y detrás se ve la luz plateada del eclipse. Cruzarla es el final.
+- Adaptado, el techo se abre y entra la luz blanca del fin del eclipse hasta inundarlo todo.
 
 ---
 
 ## 4. Recorrido
 
 ```
-CAPILLA ─► EXPLANADA ─► UMBRAL ─► CAMPO ─► HONDONADA ─► CRESTA ─► (blanco) ─► CAPILLA ─► CRÉDITOS
-(prólogo)               linterna  CUERPO   HUECO        oscuridad              (epílogo)
+                                          ┌─ ALA OESTE (CUERPO) ─┐
+CAPILLA ─► EXPLANADA ─► UMBRAL ─► ROTONDA ┤                      ├─ sellos ─► CRUCE ─► CRESTA ─► (blanco) ─► CAPILLA ─► CRÉDITOS
+(prólogo)               linterna          └─ ALA ESTE (HUECO) ───┘            (los dos)  oscuridad              (epílogo)
 ```
 
-Cada filtro sigue el patrón **Enseñar → Probar → Torcer**.
+Cada ala sigue el patrón **Enseñar → Probar → Torcer**. Se hacen en cualquier orden; el sello del final abre un atajo de vuelta a la Rotonda.
 
 | Sala | Contenido |
 |---|---|
 | **00 Capilla (prólogo)** | Libre, sin indicaciones. Al cruzar el umbral: cinemática del eclipse (~18 s). El cráter se abre en el valle, frente a la capilla: es un pozo y el resto del nivel está bajo tierra. La puerta está en el borde, del lado de la capilla. |
 | **01 Explanada** | El fondo del pozo, bajo la totalidad. Se llega por la escalera de la puerta; un pasillo sigue al Umbral. |
 | **02 Umbral** | La linterna. Sostener la luz blanca sobre un ancla abre la compuerta. |
-| **03 Campo** | CUERPO. Enseñar: dos anclas juntas. Probar: anclas separadas, barrer y cruzar con la retención. Torcer: anclas en el techo, hay que levantar la mirada. Óculo con el eclipse. |
-| **04 Hondonada** | HUECO. Enseñar: una reja. Probar: zigzag. Torcer: puente con CUERPO hasta una repisa y reja con HUECO desde ahí. |
+| **03 Rotonda** | Sala central con óculo. Dos alas a los lados; al norte, la puerta de los sellos con dos tallados que se encienden con cada sello. |
+| **03a Ala oeste** | CUERPO. Enseñar: un abismo y dos anclas juntas. Probar: una puerta que se sostiene con dos anclas lejanas (encender una, barrer a la otra y pasar con la retención). Torcer: las anclas cuelgan del techo sobre el otro lado de un pozo. Sello detrás de un tabique. |
+| **03b Ala este** | HUECO. Enseñar: un muro de rejas. Probar: la sala no tiene salida; el camino es una trampilla en el piso que da a una galería de abajo, con otra reja. Torcer: una rampa que termina contra una escotilla de reja en el techo. Sello: una placa de materia hueca que queda disuelta. |
+| **04 Cruce** | Los dos filtros. Un ancla del puente está detrás de una reja: disolverla, cambiar a CUERPO y encenderla antes de que se cierre. Después, un puente sostenido por anclas que quedan a la espalda termina contra una reja: parado arriba, cambiar a HUECO y pasar antes de que se apague. |
 | **05 Cresta** | Se cierra a la espalda. Apagar la linterna: tallados latentes y la pared espejo. El techo se abre y entra la luz blanca. |
 | **06 Capilla (epílogo)** | De día, sin linterna. El cráter no está; en su lugar, pasto aplastado. Quedarse 5 s ahí, o esperar 2 min, trae los créditos. |
 

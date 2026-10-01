@@ -274,6 +274,50 @@ public class CraterGameplayTests
     }
 
     [Test]
+    public void SelloPermanenteNoSeApagaNunca()
+    {
+        var sello = Crear("Sello").AddComponent<Ancla>();
+        sello.canalRequerido = FiltroDefinicion.Canal.Cuerpo;
+        sello.permanente = true;
+
+        sello.RecibirLuz(Filtro(FiltroDefinicion.Canal.Cuerpo), 1f);
+        sello.Avanzar(0.01f);
+        Assert.That(sello.Activo, Is.True);
+
+        for (int i = 0; i < 200; i++) sello.Avanzar(0.5f);   // cien segundos sin luz
+        Assert.That(sello.Activo, Is.True);
+    }
+
+    [Test]
+    public void CompuertaSostenidaSeCierraCuandoSeApagaSuAncla()
+    {
+        var compuerta = Crear("Compuerta").AddComponent<Compuerta>();
+        var ancla = Crear("Ancla").AddComponent<Ancla>();
+        ancla.canalRequerido = FiltroDefinicion.Canal.Ninguno;
+        ancla.retencion = 1f;
+        compuerta.receptores.Add(ancla);
+        compuerta.desplazamiento = Vector3.down * 4f;
+        compuerta.duracion = 0.5f;
+        compuerta.sostenida = true;
+
+        ancla.RecibirLuz(null, 1f);
+        ancla.Avanzar(0.01f);
+        for (int i = 0; i < 10; i++) compuerta.Avanzar(0.1f);
+        Assert.That(compuerta.Abierta, Is.True);
+        Assert.That(compuerta.transform.localPosition.y, Is.EqualTo(-4f).Within(0.01f));
+
+        // sin luz: la retención la sostiene un segundo, después se cierra
+        for (int i = 0; i < 30; i++)
+        {
+            ancla.Avanzar(0.1f);
+            compuerta.Avanzar(0.1f);
+        }
+        Assert.That(ancla.Activo, Is.False);
+        Assert.That(compuerta.Abierta, Is.False);
+        Assert.That(compuerta.transform.localPosition.y, Is.EqualTo(0f).Within(0.01f));
+    }
+
+    [Test]
     public void RespawnDevuelveAlUltimoPuntoSeguro()
     {
         var go = Crear("Jugador");

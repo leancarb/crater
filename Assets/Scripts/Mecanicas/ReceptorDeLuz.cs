@@ -14,6 +14,7 @@ using UnityEngine.Events;
 ///  3. Al llegar a 1 se activa (Activo = true) y dispara 'alActivarse'.
 ///  4. Si deja de recibir luz, primero espera 'retencion' segundos (sigue activo),
 ///     después la carga baja al doble de velocidad y, en 0, se desactiva.
+///     Un receptor 'permanente' (los sellos) no se desactiva nunca más.
 /// Las hijas redefinen AlActualizar() para dibujarse (brillo, transparencia, etc.).
 /// Es 'abstract': Unity no deja ponerla sola en un objeto.
 /// </summary>
@@ -27,6 +28,9 @@ public abstract class ReceptorDeLuz : MonoBehaviour
 
     [Tooltip("Segundos que sigue activo después de perder el haz. 0 = se apaga al instante.")]
     [Min(0f)] public float retencion = 0f;
+
+    [Tooltip("Una vez activo, queda activo para siempre (los sellos).")]
+    public bool permanente;
 
     [Tooltip("Punto al que apunta la linterna para el cono y la línea de vista. Vacío = el propio objeto.")]
     public Transform puntoDeImpacto;
@@ -47,7 +51,7 @@ public abstract class ReceptorDeLuz : MonoBehaviour
         get
         {
             if (!Activo) return 0f;
-            if (Recibiendo || retencion <= 0f) return 1f;
+            if (Recibiendo || permanente || retencion <= 0f) return 1f;
             return Mathf.Clamp01(1f - sinLuz / retencion);
         }
     }
@@ -96,7 +100,7 @@ public abstract class ReceptorDeLuz : MonoBehaviour
         {
             sinLuz += delta;
             // mientras dure la retención, un receptor activo no pierde carga
-            bool retenido = Activo && sinLuz < retencion;
+            bool retenido = Activo && (permanente || sinLuz < retencion);
             if (!retenido)
             {
                 // se descarga al doble de velocidad de lo que carga
