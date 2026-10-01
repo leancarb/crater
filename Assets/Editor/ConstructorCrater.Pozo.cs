@@ -98,12 +98,17 @@ public static partial class ConstructorCrater
             pretil.transform.rotation = giro;
         }
 
-        // al norte, la masa de roca: tapa el nivel y deja la boca del túnel (x ±2,05, hasta y 5,8).
-        // Queda un poco por debajo de la tierra: afuera del agujero no se ve
+        // al norte, la masa de roca: tapa el nivel y deja la boca del túnel (x ±2,05).
+        // El techo del túnel va 3,2 m sobre el piso del pozo: la rampa arranca a esa altura
+        // y el jugador tiene que pasar parado. Queda un poco por debajo de la tierra:
+        // afuera del agujero no se ve
         float masa = suelo - 0.15f;
+        float techoTunel = piso + 3.2f;
         Caja(pozo, "Masa_Norte_Izq", -12.6f, piso - 0.3f, -34.3f, -2.05f, masa, -23.3f, k.basalto);
         Caja(pozo, "Masa_Norte_Der", 2.05f, piso - 0.3f, -34.3f, 12.6f, masa, -23.3f, k.basaltoMedio);
-        Caja(pozo, "Masa_Norte_Tunel", -2.05f, 5.8f, -34.3f, 2.05f, masa, -23.3f, k.basalto);
+        Caja(pozo, "Masa_Norte_Tunel", -2.05f, techoTunel, -34.3f, 2.05f, masa, -23.3f, k.basalto);
+        // del lado del Umbral, el dintel llega a 5,8: se cierra lo que queda hasta el techo del túnel
+        Caja(pozo, "Cierre_Tunel", -2.05f, 5.8f, -23.6f, 2.05f, techoTunel, -23.3f, k.basalto);
 
         // la zona de entrada: todo el pozo. Pasar la puerta (o caerse adentro) cambia el ambiente
         refs.zonaPuertaCrater = Zona(pozo, "Zona_Puerta_Crater", new Vector3(CentroPozo.x, (piso + AlturaValle + 0.6f) / 2f, CentroPozo.z),
