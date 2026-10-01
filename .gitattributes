@@ -83,7 +83,7 @@ Packages/packages-lock.json linguist-generated
 *.collada               lfs
 *.dae                   lfs
 *.dxf                   lfs
-*.FBX                   lfs
+# *.FBX                   lfs   (fuera de LFS: en Windows esta regla también agarra los .fbx en minúscula)
 # *.fbx                   lfs   (fuera de LFS: los archivos del proyecto son chicos y así cualquier clon los trae enteros)
 *.jas                   lfs
 *.lws                   lfs
