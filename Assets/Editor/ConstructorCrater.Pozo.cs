@@ -7,12 +7,11 @@ using UnityEngine;
 /// su fondo, así que se entra caminando, sin cortes ni teletransporte.
 ///
 ///   valle (piso de tierra)         y = 9   (la capilla y el cráter del valle)
-///   fondo del pozo = Explanada     y = 4
-///   resto del nivel                y = 0   (todo bajo tierra, con sus techos)
+///   fondo del pozo = Explanada     y = 0   (a la altura del resto del nivel)
 ///
-/// Desde la puerta, en el borde sur del pozo, una rampa baja pegada a la pared
-/// hasta la Explanada. Del lado norte, una masa de roca tapa el resto del nivel y
-/// deja la boca del túnel de la rampa que sigue al Umbral.
+/// Desde la puerta, en el borde sur del pozo, una escalera recta baja hasta el
+/// fondo. Del lado norte, una masa de roca tapa el resto del nivel y deja la boca
+/// de un pasillo plano que sigue al Umbral.
 ///
 /// CÓMO FUNCIONA
 /// El valle (el grupo 06_Capilla) se ubica de modo que el cráter del valle quede
@@ -27,13 +26,13 @@ public static partial class ConstructorCrater
     const float AlturaValle = 9f;
     const float RadioPozo = 10.5f;
     /// <summary>Centro del pozo, al nivel del piso de la Explanada.</summary>
-    static readonly Vector3 CentroPozo = new Vector3(0f, 4f, -37.5f);
+    static readonly Vector3 CentroPozo = new Vector3(0f, 0f, -37.5f);
     /// <summary>Dónde está el cráter en las coordenadas locales de la capilla.</summary>
     static readonly Vector3 CraterEnLaCapilla = new Vector3(0f, 0f, 34f);
 
-    // la rampa que baja pegada a la pared: ángulos medidos desde +x hacia +z
-    const float RadioRampa = 9.35f, AnchoRampa = 2.2f;
-    const float AnguloInicioRampa = 266f, AnguloFinRampa = 185f;
+    // la escalera: baja derecho hacia el norte, del descanso de la puerta al fondo
+    const float InicioEscalera = -46.3f, FinEscalera = -34.6f, MitadEscalera = 1.6f;
+    const int Escalones = 40;
 
     /// <summary>Un punto de la circunferencia del pozo, en el plano horizontal.</summary>
     static Vector3 EnElPozo(float angulo, float radio, float y) =>
@@ -49,8 +48,9 @@ public static partial class ConstructorCrater
         float borde = AlturaValle + 0.2f;           // las paredes asoman un poco: el labio del cráter
         float piso = CentroPozo.y;
 
-        // el fondo: la Explanada. Llega hasta la boca del túnel (z -34)
-        Caja(pozo, "Piso_Pozo", -11.5f, piso - 0.3f, -49f, 11.5f, piso, -34f, k.piso);
+        // el fondo: la Explanada. Del lado norte sigue el pasillo plano hasta el Umbral
+        Caja(pozo, "Piso_Pozo", -11.5f, piso - 0.3f, -49f, 11.5f, piso, -34.3f, k.piso);
+        Caja(pozo, "Piso_Pasaje", -2.05f, piso - 0.3f, -34.3f, 2.05f, piso, -23f, k.piso);
 
         // la pared: un anillo de bloques. Al sur queda el hueco de la puerta; al norte está la masa
         const int bloques = 24;
@@ -68,48 +68,64 @@ public static partial class ConstructorCrater
 
         // la puerta: un descanso al nivel del valle y la pared rellena debajo
         // (empieza justo en el borde del agujero de la tierra: si se superpusieran, parpadearían)
-        Caja(pozo, "Descanso_Puerta", -1.9f, suelo - 0.3f, CentroPozo.z - RadioPozo - 0.4f, 1.9f, suelo, -46.3f, k.piso);
+        Caja(pozo, "Descanso_Puerta", -1.9f, suelo - 0.3f, CentroPozo.z - RadioPozo - 0.4f, 1.9f, suelo, InicioEscalera, k.piso);
         Caja(pozo, "Pared_Puerta", -1.9f, piso - 0.3f, -50.2f, 1.9f, suelo - 0.3f, -48.4f, k.basalto);
+        ConstruirEscalera(k, pozo, suelo, piso);
 
-        // la rampa: segmentos inclinados de AnguloInicioRampa a AnguloFinRampa, de y 'suelo' a 'piso'
-        const int segmentos = 12;
-        float paso = (AnguloInicioRampa - AnguloFinRampa) / segmentos;
-        for (int i = 0; i < segmentos; i++)
-        {
-            float a0 = AnguloInicioRampa - i * paso, a1 = a0 - paso;
-            Vector3 p0 = EnElPozo(a0, RadioRampa, Mathf.Lerp(suelo, piso, (float)i / segmentos));
-            Vector3 p1 = EnElPozo(a1, RadioRampa, Mathf.Lerp(suelo, piso, (float)(i + 1) / segmentos));
-            Vector3 adelante = (p1 - p0).normalized;
-            var giro = Quaternion.LookRotation(adelante, Vector3.up);
-            Vector3 arriba = giro * Vector3.up;
-            float largo = Vector3.Distance(p0, p1) + 0.35f;   // se solapan: sin escalones ni rendijas
-            var tramo = Bloque(pozo, $"Rampa_Pozo_{i:00}", (p0 + p1) / 2f - arriba * 0.15f,
-                new Vector3(AnchoRampa, 0.3f, largo), k.piso);
-            tramo.transform.rotation = giro;
-
-            // pretil bajo del lado del vacío
-            Vector3 adentro = Vector3.Cross(Vector3.up, adelante).normalized;   // hacia el centro del pozo
-            if (Vector3.Dot(adentro, new Vector3(CentroPozo.x - p0.x, 0f, CentroPozo.z - p0.z)) < 0f) adentro = -adentro;
-            var pretil = Bloque(pozo, $"Pretil_Pozo_{i:00}", (p0 + p1) / 2f + adentro * (AnchoRampa / 2f - 0.12f) + arriba * 0.35f,
-                new Vector3(0.25f, 0.7f, largo), k.basalto);
-            pretil.transform.rotation = giro;
-        }
-
-        // al norte, la masa de roca: tapa el nivel y deja la boca del túnel (x ±2,05).
-        // El techo del túnel va 3,2 m sobre el piso del pozo: la rampa arranca a esa altura
-        // y el jugador tiene que pasar parado. Queda un poco por debajo de la tierra:
-        // afuera del agujero no se ve
+        // al norte, la masa de roca: tapa el nivel y deja la boca del pasillo (x ±2,05, 4 m de
+        // alto, como el dintel del Umbral). Queda un poco por debajo de la tierra: afuera
+        // del agujero no se ve
         float masa = suelo - 0.15f;
-        float techoTunel = piso + 3.2f;
         Caja(pozo, "Masa_Norte_Izq", -12.6f, piso - 0.3f, -34.3f, -2.05f, masa, -23.3f, k.basalto);
         Caja(pozo, "Masa_Norte_Der", 2.05f, piso - 0.3f, -34.3f, 12.6f, masa, -23.3f, k.basaltoMedio);
-        Caja(pozo, "Masa_Norte_Tunel", -2.05f, techoTunel, -34.3f, 2.05f, masa, -23.3f, k.basalto);
-        // del lado del Umbral, el dintel llega a 5,8: se cierra lo que queda hasta el techo del túnel
-        Caja(pozo, "Cierre_Tunel", -2.05f, 5.8f, -23.6f, 2.05f, techoTunel, -23.3f, k.basalto);
+        Caja(pozo, "Masa_Norte_Pasaje", -2.05f, piso + 4f, -34.3f, 2.05f, masa, -23.3f, k.basalto);
 
         // la zona de entrada: todo el pozo. Pasar la puerta (o caerse adentro) cambia el ambiente
         refs.zonaPuertaCrater = Zona(pozo, "Zona_Puerta_Crater", new Vector3(CentroPozo.x, (piso + AlturaValle + 0.6f) / 2f, CentroPozo.z),
             new Vector3(16f, AlturaValle + 0.6f - piso, 16f));
+    }
+
+    /// <summary>
+    /// La escalera de la puerta al fondo: escalones macizos (de piedra hasta el piso,
+    /// sin huecos abajo) y un pretil a cada lado. Para caminarla sin saltitos, los
+    /// escalones no tienen collider: se pisa una rampa invisible que pasa por el medio
+    /// de cada escalón (a lo sumo a unos centímetros de la piedra que se ve).
+    /// </summary>
+    static void ConstruirEscalera(Kit k, Transform pozo, float arriba, float abajo)
+    {
+        var escalera = Grupo(pozo, "Escalera");
+        float largo = FinEscalera - InicioEscalera;
+        float pisada = largo / Escalones, alzada = (arriba - abajo) / Escalones;
+
+        for (int i = 0; i < Escalones; i++)
+        {
+            float z0 = InicioEscalera + i * pisada;
+            float tope = arriba - (i + 0.5f) * alzada;
+            var escalon = Caja(escalera, $"Escalon_{i:00}", -MitadEscalera, abajo - 0.3f, z0, MitadEscalera, tope, z0 + pisada + 0.02f,
+                i % 2 == 0 ? k.piso : k.basaltoMedio);
+            Object.DestroyImmediate(escalon.GetComponent<Collider>());
+        }
+
+        // la rampa invisible: de (InicioEscalera, arriba) a (FinEscalera, abajo)
+        float caida = arriba - abajo;
+        float angulo = Mathf.Atan2(caida, largo);
+        float hipotenusa = Mathf.Sqrt(largo * largo + caida * caida);
+        var normal = new Vector3(0f, Mathf.Cos(angulo), Mathf.Sin(angulo));
+        var medio = new Vector3(0f, (arriba + abajo) / 2f, (InicioEscalera + FinEscalera) / 2f);
+        var rampa = new GameObject("Rampa_Escalera");
+        rampa.transform.SetParent(escalera, false);
+        rampa.transform.SetPositionAndRotation(medio - normal * 0.2f, Quaternion.Euler(angulo * Mathf.Rad2Deg, 0f, 0f));
+        rampa.AddComponent<BoxCollider>().size = new Vector3(MitadEscalera * 2f, 0.4f, hipotenusa + 0.4f);
+        Estatico(rampa);
+
+        // pretiles: siguen la pendiente, a la altura de la cintura
+        foreach (float lado in new[] { -1f, 1f })
+        {
+            var pretil = Bloque(escalera, lado < 0f ? "Pretil_Izq" : "Pretil_Der",
+                medio + normal * 0.45f + Vector3.right * lado * (MitadEscalera + 0.15f),
+                new Vector3(0.3f, 1.3f, hipotenusa), k.basalto);
+            pretil.transform.rotation = Quaternion.Euler(angulo * Mathf.Rad2Deg, 0f, 0f);
+        }
     }
 
     // ================================================================== la tierra del valle

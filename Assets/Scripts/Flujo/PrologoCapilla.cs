@@ -12,7 +12,7 @@ using UnityEngine.Rendering;
 ///     mira al sol, la luna lo tapa, los pájaros se callan, la tierra del valle se
 ///     abre en un pozo, el borde del cráter sube y en el borde destella una puerta.
 ///  3. El pozo es el cráter de verdad: la Explanada está en el fondo. Al cruzar la
-///     puerta se baja caminando por una rampa que rodea el pozo. No hay corte: la
+///     puerta se baja caminando por una escalera hasta el fondo. No hay corte: la
 ///     luz, la niebla y el sonido pasan de a poco del valle al cráter.
 ///
 /// Guarda el ambiente del cráter tal como lo dejó el constructor y lo restaura

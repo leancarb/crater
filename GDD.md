@@ -36,7 +36,7 @@ El eclipse dura exactamente lo que el jugador permanezca adentro. El cráter es 
 | Momento | Qué pasa | Qué siente el jugador |
 |---|---|---|
 | **Prólogo** | Capilla de día. Al salir, empieza el eclipse (cinemática sin control): se callan los pájaros, todo queda en un crepúsculo profundo, la tierra se abre en un pozo, sube el borde del cráter y destella la puerta. | Curiosidad, extrañeza. |
-| **Descenso** | Sin cortes: se cruza la puerta y se baja caminando por una rampa que rodea el pozo hasta la Explanada, en el fondo. Un túnel sigue al Umbral, donde está la linterna. | Descubrimiento. |
+| **Descenso** | Sin cortes: se cruza la puerta y se baja por una escalera hasta la Explanada, en el fondo del pozo. Un pasillo sigue al Umbral, donde está la linterna. | Descubrimiento. |
 | **Aprendizaje** | El Campo entrega CUERPO; la Hondonada, HUECO. | Dominio, asombro. |
 | **La oscuridad** | Al entrar a la Cresta, una losa cierra el corredor a la espalda: no hay vuelta. La pared del fondo sólo devuelve el reflejo del propio foco. Al apagar la linterna y esperar, aparecen tallados ocultos. | Revelación, encierro. |
 | **Final** | Adaptado a la oscuridad, el techo se abre y entra la luz blanca del fin del eclipse hasta inundarlo todo. Silencio, **anillo de diamante**, y el jugador aparece en la capilla, de día. | Cierre sereno. |
@@ -105,7 +105,7 @@ Cada filtro sigue el patrón **Enseñar → Probar → Torcer**.
 | Sala | Contenido |
 |---|---|
 | **00 Capilla (prólogo)** | Libre, sin indicaciones. Al cruzar el umbral: cinemática del eclipse (~18 s). El cráter se abre en el valle, frente a la capilla: es un pozo y el resto del nivel está bajo tierra. La puerta está en el borde, del lado de la capilla. |
-| **01 Explanada** | El fondo del pozo, bajo la totalidad. Se llega por la rampa que rodea el pozo; un túnel baja al Umbral. |
+| **01 Explanada** | El fondo del pozo, bajo la totalidad. Se llega por la escalera de la puerta; un pasillo sigue al Umbral. |
 | **02 Umbral** | La linterna. Sostener la luz blanca sobre un ancla abre la compuerta. |
 | **03 Campo** | CUERPO. Enseñar: dos anclas juntas. Probar: anclas separadas, barrer y cruzar con la retención. Torcer: anclas en el techo, hay que levantar la mirada. Óculo con el eclipse. |
 | **04 Hondonada** | HUECO. Enseñar: una reja. Probar: zigzag. Torcer: puente con CUERPO hasta una repisa y reja con HUECO desde ahí. |

@@ -154,6 +154,8 @@ public class InterfazCrater : MonoBehaviour
         OcultarPrompt();
         var rt = anillo.rectTransform;
         anillo.enabled = true;
+        // si la pantalla ya estaba blanca (o casi), el velo no vuelve atrás
+        float veloInicial = velo.enabled ? velo.color.a : 0f;
         for (float t = 0f; t < duracion; t += Time.unscaledDeltaTime)
         {
             float k = t / duracion;
@@ -161,7 +163,7 @@ public class InterfazCrater : MonoBehaviour
             float tam = Mathf.Lerp(14f, 6000f, Mathf.Pow(k, 2.6f));
             rt.sizeDelta = new Vector2(tam, tam);
             anillo.color = new Color(1f, 1f, 1f, Mathf.Clamp01(k * 6f));
-            MostrarVelo(Color.white, Mathf.Pow(k, 3f));
+            MostrarVelo(Color.white, Mathf.Max(veloInicial, Mathf.Pow(k, 3f)));
             yield return null;
         }
         MostrarVelo(Color.white, 1f);

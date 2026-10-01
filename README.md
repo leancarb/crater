@@ -25,7 +25,7 @@ Unity 6000.3 · URP (Forward+) · Input System.
 | Sala | Qué enseña |
 |---|---|
 | 00 Capilla (prólogo) | De día. Al salir, el eclipse abre el cráter en el valle: un pozo con una puerta en el borde |
-| 01 Explanada | El fondo del pozo: se baja caminando por la rampa que lo rodea, sin cortes; un túnel sigue abajo |
+| 01 Explanada | El fondo del pozo: se baja por la escalera de la puerta, sin cortes; un pasillo sigue al Umbral |
 | 02 Umbral | Recoger la linterna; sostener la luz sobre un ancla abre la compuerta |
 | 03 Campo | CUERPO: tres puentes (enseñar, barrer con retención, mirar hacia arriba) |
 | 04 Hondonada | HUECO: rejas y zigzag; al final, combinar los dos filtros desde una repisa |

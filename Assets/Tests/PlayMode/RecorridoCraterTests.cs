@@ -65,20 +65,15 @@ public class RecorridoCraterTests
         for (float t = 0f; t < 40f && prologo.Reproduciendo; t += Time.deltaTime) yield return null;
         Assert.That(prologo.Reproduciendo, Is.False, "la cinemática del eclipse no terminó");
 
-        // por la puerta del borde y la rampa que rodea el pozo, hasta el fondo (la Explanada)
+        // por la puerta del borde y la escalera, hasta el fondo del pozo (la Explanada)
         yield return Caminar(Buscar<Transform>("Puerta").position + Vector3.forward * 1.2f);
-        Vector3 centroPozo = new Vector3(0f, 4f, -37.5f);
-        for (float ang = 262f; ang >= 185f; ang -= 7f)
-            yield return Caminar(centroPozo + new Vector3(Mathf.Cos(ang * Mathf.Deg2Rad), 0f, Mathf.Sin(ang * Mathf.Deg2Rad)) * 9.35f);
-        yield return Caminar(new Vector3(-6f, 0f, -36f));
-        Assert.That(jugador.transform.position.y, Is.LessThan(4.5f), "la rampa del pozo no llega al fondo");
+        yield return Caminar(new Vector3(0f, 0f, -33.8f));
+        Assert.That(jugador.transform.position.y, Is.LessThan(0.5f), "la escalera del pozo no llega al fondo");
         Assert.That(prologo.EnElCrater, Is.True, "bajar al pozo no avisó que se entró al cráter");
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.BuscarLinterna));
 
-        // Explanada y rampa
-        yield return Caminar(new Vector3(0f, 0f, -36f));
+        // el pasillo hasta el Umbral
         yield return Caminar(new Vector3(0f, 0f, -18f));
-        Assert.That(jugador.transform.position.y, Is.LessThan(0.5f), "la rampa no llega al Umbral");
 
         // Umbral: linterna y compuerta
         yield return Caminar(new Vector3(1.2f, 0f, -15.5f));

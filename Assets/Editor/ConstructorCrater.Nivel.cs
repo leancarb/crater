@@ -12,8 +12,8 @@ using UnityEngine.SceneManagement;
 /// el jugador avanza hacia +Z). El piso de cada sala está en y = 0 salvo la Explanada.
 ///
 ///   06 Capilla     y = 9         el valle, arriba de todo: prólogo y epílogo de día
-///   01 Explanada   z -48 … -34   el fondo del pozo que el eclipse abre en el valle (y = 4)
-///      Rampa       z -34 … -23   túnel que baja 4 m hasta el Umbral
+///   01 Explanada   z -48 … -34   el fondo del pozo que el eclipse abre en el valle; se baja por una escalera
+///      Pasaje      z -34 … -23   pasillo plano hasta el Umbral
 ///   02 Umbral      z -23 … -3    la linterna y la primera ancla (luz blanca) abren la compuerta
 ///   03 Campo       z  -3 …  30   filtro CUERPO: tres puentes (enseñar, probar, torcer la mirada)
 ///   04 Hondonada   z  30 …  68.5 filtro HUECO: rejas, zigzag y la combinación de ambos filtros
@@ -98,23 +98,17 @@ public static partial class ConstructorCrater
 
     static void ConstruirExplanada(Kit k, Transform g, Referencias refs)
     {
-        // el piso, las paredes y la rampa que baja desde el valle están en el pozo
+        // el piso, las paredes y la escalera que baja desde el valle están en el pozo
         ConstruirPozo(k, g, refs);
 
-        // rampa: de (z -34, y 4) a (z -23, y 0)
-        const float largo = 11.9f, grosor = 0.3f;
-        float angulo = Mathf.Atan2(4f, 11f);
-        var normal = new Vector3(0f, Mathf.Cos(angulo), Mathf.Sin(angulo));
-        var rampa = Bloque(g, "Rampa", new Vector3(0f, 2f, -28.5f) - normal * (grosor / 2f),
-            new Vector3(3.5f, grosor, largo), k.piso);
-        rampa.transform.rotation = Quaternion.Euler(angulo * Mathf.Rad2Deg, 0f, 0f);
-        Caja(g, "Muro_Rampa_Izq", -2.05f, -0.3f, -34.3f, -1.75f, 5.8f, -23, k.basalto);
-        Caja(g, "Muro_Rampa_Der", 1.75f, -0.3f, -34.3f, 2.05f, 5.8f, -23, k.basalto);
+        // el pasillo plano del fondo del pozo al Umbral
+        Caja(g, "Muro_Pasaje_Izq", -2.05f, -0.3f, -34.3f, -1.75f, 4f, -23, k.basalto);
+        Caja(g, "Muro_Pasaje_Der", 1.75f, -0.3f, -34.3f, 2.05f, 4f, -23, k.basalto);
 
         // para arrancar directo en la Explanada (PrologoCapilla.saltarPrologo)
         var spawn = new GameObject("SpawnInicio").transform;
         spawn.SetParent(g, false);
-        spawn.position = new Vector3(0f, 4.02f, -38.8f);
+        spawn.position = new Vector3(-4f, 0.02f, -40f);
         refs.spawnInicio = spawn;
         refs.jugador = (GameObject)PrefabUtility.InstantiatePrefab(k.prefabJugador);
         refs.jugador.transform.SetPositionAndRotation(spawn.position, Quaternion.identity);
@@ -130,7 +124,7 @@ public static partial class ConstructorCrater
         refs.luna.shadows = LightShadows.Soft;
         RenderSettings.sun = refs.luna;
 
-        Luz(g, "Luz_Plaza", new Vector3(0f, 6.2f, -37.5f), LuzCalida, 70f, 11f, false);
+        Luz(g, "Luz_Plaza", new Vector3(0f, 4.5f, -38f), LuzCalida, 90f, 14f, false);
     }
 
     // ================================================================== 02 Umbral
@@ -436,7 +430,7 @@ public static partial class ConstructorCrater
         refs.tapaCrater = tapa.transform;
 
         // la puerta: dos pilares y un dintel de basalto en el borde sur, con el contorno que
-        // destella. Del otro lado empieza la rampa que baja al fondo (ConstruirPozo)
+        // destella. Del otro lado empieza la escalera que baja al fondo (ConstruirPozo)
         Vector3 umbral = centro + new Vector3(0f, 0f, -RadioPozo);
         var puerta = Grupo(crater, "Puerta");
         puerta.position = umbral;
@@ -512,8 +506,8 @@ public static partial class ConstructorCrater
 
         var motivos = Grupo(arte, "MotivosTallados");
         // en el fondo del pozo, a los lados de la boca del túnel
-        Motivo(k, motivos, "Mural_Plaza_Izq", new Vector3(-6.5f, 4.4f, -34.35f), 180f, 0.9f, k.ambar);
-        Motivo(k, motivos, "Mural_Plaza_Der", new Vector3(6.5f, 4.4f, -34.35f), 180f, 0.9f, k.ambar);
+        Motivo(k, motivos, "Mural_Plaza_Izq", new Vector3(-6.5f, 0.4f, -34.35f), 180f, 0.9f, k.ambar);
+        Motivo(k, motivos, "Mural_Plaza_Der", new Vector3(6.5f, 0.4f, -34.35f), 180f, 0.9f, k.ambar);
         Motivo(k, motivos, "Mural_Umbral", new Vector3(5.93f, 0.3f, -16f), -90f, 0.7f, k.ambar);
         Motivo(k, motivos, "Mural_Campo", new Vector3(-5.93f, 0.6f, 4.5f), 90f, 0.8f, k.ambar);
         Motivo(k, motivos, "Mural_Hondonada", new Vector3(5.93f, 0.6f, 36.5f), -90f, 0.8f, k.ambar);
