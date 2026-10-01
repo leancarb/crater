@@ -110,6 +110,7 @@ public class RecorridoCraterTests
         yield return Iluminar(Buscar<Ancla>("Sello_Oeste"), 0.6f);
         yield return Esperar(3f);
         Assert.That(Buscar<Compuerta>("Atajo_Oeste").Abierta, Is.True, "el sello oeste no abrió el atajo");
+        yield return EsperarCinematica();
         yield return Caminar(new Vector3(-9f, 0f, 24.75f));
 
         // ---- ala este: HUECO (rodeando el anillo de columnas del centro de la rotonda)
@@ -143,10 +144,11 @@ public class RecorridoCraterTests
         yield return Iluminar(Buscar<MateriaHueca>("Sello_Este"), 0.6f);
         yield return Esperar(3f);
         Assert.That(Buscar<Compuerta>("Atajo_Este").Abierta, Is.True, "el sello este no abrió el atajo");
+        yield return EsperarCinematica();
         yield return Caminar(new Vector3(9f, 0f, 24.75f));
 
-        // ---- los dos sellos abren el norte: el Cruce
-        yield return Esperar(3.5f);
+        // ---- los dos sellos abren el norte (al final de su cinemática): el Cruce
+        yield return Esperar(1f);
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Cruce), "los dos sellos no abrieron la puerta del norte");
         yield return Caminar(new Vector3(0f, 0f, 24f));
         yield return Caminar(new Vector3(0f, 0f, 32.3f));
@@ -266,6 +268,14 @@ public class RecorridoCraterTests
         Vector3 dir = new Vector3(destino.x - p.x, 0f, destino.z - p.z);
         if (dir.sqrMagnitude < 0.0001f) return;
         fps.MirarHacia(p + Vector3.up * 1.6f + dir.normalized * 10f);
+    }
+
+    /// <summary>Espera a que termine la cinemática de un sello (la cámara vuelve al jugador).</summary>
+    static IEnumerator EsperarCinematica()
+    {
+        for (float t = 0f; t < 1f && !CinematicaDeSello.Reproduciendo; t += Time.deltaTime) yield return null;
+        for (float t = 0f; t < 40f && CinematicaDeSello.Reproduciendo; t += Time.deltaTime) yield return null;
+        Assert.That(CinematicaDeSello.Reproduciendo, Is.False, "la cinemática del sello no terminó");
     }
 
     static IEnumerator Esperar(float segundos)

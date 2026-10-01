@@ -25,6 +25,11 @@ public class HiloDeTallados : MonoBehaviour
     public float emisionEncendido = 3f;
     public float retraso = 0.45f;
     public float demoraInicial = 0.3f;
+    [Tooltip("Lo enciende otro script (la cinemática del sello) llamando a Encender().")]
+    public bool manual;
+
+    /// <summary>Segundos desde Encender() hasta que el último tallado quedó prendido.</summary>
+    public float Duracion => demoraInicial + (tallados != null ? tallados.Length : 0) * Mathf.Max(retraso, 0.5f);
 
     [Header("Sonido")]
     public AudioSource fuente;
@@ -43,11 +48,7 @@ public class HiloDeTallados : MonoBehaviour
 
     void Update()
     {
-        if (!encendido && Listo())
-        {
-            encendido = true;
-            StartCoroutine(Encender());
-        }
+        if (!manual && !encendido && Listo()) Encender();
         Aplicar();
     }
 
@@ -58,7 +59,14 @@ public class HiloDeTallados : MonoBehaviour
         return esperarA == null || esperarA.Progreso >= 0.99f;
     }
 
-    IEnumerator Encender()
+    public void Encender()
+    {
+        if (encendido) return;
+        encendido = true;
+        StartCoroutine(Prender());
+    }
+
+    IEnumerator Prender()
     {
         yield return new WaitForSeconds(demoraInicial);
         for (int i = 0; i < nivel.Length; i++)

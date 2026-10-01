@@ -25,6 +25,8 @@ public class Compuerta : MonoBehaviour
     public float duracion = 3f;
     [Tooltip("Abierta sólo mientras sus receptores estén activos.")]
     public bool sostenida;
+    [Tooltip("No se abre sola al encenderse sus receptores: espera que otro script llame a Abrir() (la puerta de los sellos espera su cinemática).")]
+    public bool abrirSoloPorOrden;
     [Tooltip("Capa del jugador, para no cerrarse encima de él (sostenida).")]
     public LayerMask capaJugador;
 
@@ -75,7 +77,7 @@ public class Compuerta : MonoBehaviour
     {
         // TrueForAll: todos los receptores tienen que estar encendidos a la vez
         bool encendidos = receptores.Count > 0 && receptores.TrueForAll(r => r != null && r.Activo);
-        if (!Abierta && encendidos) Abrir();
+        if (!Abierta && encendidos && !abrirSoloPorOrden) Abrir();
         // sostenida: se cierra al apagarse, salvo que el jugador esté en el paso
         if (sostenida && Abierta && !encendidos && !JugadorEnElPaso()) Abierta = false;
 

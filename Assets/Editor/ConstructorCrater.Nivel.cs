@@ -57,6 +57,9 @@ public static partial class ConstructorCrater
 
         // final
         public Compuerta cierreCresta, puertaSellos, atajoOeste, atajoEste;
+        public HiloDeTallados hiloSoles, hiloLunas, hiloEclipse;
+        public Transform vistaSoles, vistaLunas, vistaPuerta;
+        public ReceptorDeLuz selloOeste, selloEste;
         public AperturaTecho techoCresta;
     }
 
@@ -589,6 +592,19 @@ public static partial class ConstructorCrater
 
         UnityEventTools.AddPersistentListener(refs.compuertaUmbral.alAbrirse, new UnityAction(flujo.NotificarUmbralAbierto));
         UnityEventTools.AddPersistentListener(refs.puertaSellos.alAbrirse, new UnityAction(flujo.EntrarCruce));
+
+        // al encender cada sello, la cámara va a la rotonda a ver cómo se prende su hilo
+        var cinematica = sistemas.AddComponent<CinematicaDeSello>();
+        Asignar(cinematica, "jugador", refs.jugador.GetComponent<JugadorFPS>());
+        Asignar(cinematica, "interfaz", interfaz);
+        Asignar(cinematica, "pausa", pausa);
+        Asignar(cinematica, "linterna", linterna);
+        AsignarLista(cinematica, "sellos", new Object[] { refs.selloOeste, refs.selloEste });
+        AsignarLista(cinematica, "hilos", new Object[] { refs.hiloSoles, refs.hiloLunas });
+        AsignarLista(cinematica, "vistas", new Object[] { refs.vistaSoles, refs.vistaLunas });
+        Asignar(cinematica, "eclipse", refs.hiloEclipse);
+        Asignar(cinematica, "vistaFinal", refs.vistaPuerta);
+        Asignar(cinematica, "puerta", refs.puertaSellos);
         UnityEventTools.AddPersistentListener(refs.atajoOeste.alAbrirse, new UnityAction(flujo.NotificarSello));
         UnityEventTools.AddPersistentListener(refs.atajoEste.alAbrirse, new UnityAction(flujo.NotificarSello));
         UnityEventTools.AddPersistentListener(refs.zonaCresta.alEntrar, new UnityAction(flujo.EntrarCresta));

@@ -81,6 +81,11 @@ public static partial class ConstructorCrater
         refs.puertaSellos = CompuertaLosa(k, g, "Puerta_Sellos", new Vector3(0f, 2f, 27.15f), new Vector3(4f, 4f, 0.3f),
             new Vector3(0f, -4.4f, 0f), 3f, false, selloOeste, selloEste);
 
+        // la abre la cinemática del segundo sello, a la vista (CinematicaDeSello)
+        refs.puertaSellos.abrirSoloPorOrden = true;
+        refs.selloOeste = selloOeste;
+        refs.selloEste = selloEste;
+
         // los hilos de soles y lunas que llegan a la puerta (ConstructorCrater.Tallados.cs)
         ConstruirHilosDeLosSellos(k, g, refs, selloOeste, selloEste);
 
@@ -201,6 +206,7 @@ public static partial class ConstructorCrater
         refs.atajoOeste = CompuertaLosa(k, g, "Atajo_Oeste", new Vector3(-12.15f, 2f, 24.75f), new Vector3(0.3f, 4f, 3.5f),
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Oeste", new Vector3(-16f, 5.3f, 24.5f), LuzCalida, 70f, 10f, false);
+        DecorarAlaOeste(k, g, sello);
         return sello;
     }
 
@@ -287,6 +293,7 @@ public static partial class ConstructorCrater
         refs.atajoEste = CompuertaLosa(k, g, "Atajo_Este", new Vector3(12.15f, 2f, 24.75f), new Vector3(0.3f, 4f, 3.5f),
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Este", new Vector3(16f, 5f, 25f), LuzFria, 60f, 9f, false);
+        DecorarAlaEste(k, g, sello);
         return sello;
     }
 

@@ -127,6 +127,7 @@ public class LinternaController : MonoBehaviour
     void LeerEntrada()
     {
         if (!Disponible) return;   // todavía no la encontró
+        if (CinematicaDeSello.Reproduciendo) return;   // durante la cinemática no se toca
 
         if (EntradaCrater.Linterna)
             Encender(!Encendida);
