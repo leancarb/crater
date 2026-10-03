@@ -189,7 +189,7 @@ public static partial class ConstructorCrater
     {
         var hilos = Grupo(g, "Hilos_De_Los_Sellos");
         var afuera = Vector3.back;   // la pared norte mira al sur
-        const float z = 26.82f, y = 2.4f;
+        const float z = 26.95f, y = 2.4f;
 
         HiloDeTallados Hilo(string nombre, ReceptorDeLuz[] sellos, Compuerta esperar, Color color, Renderer[] tallados)
         {
@@ -208,49 +208,35 @@ public static partial class ConstructorCrater
             return hilo;
         }
 
+        // sobre la pared curva, de la boca de cada pasillo de vuelta hacia la puerta
+        Renderer EnElAnillo(string nombre, Figura f, float grados, Material m)
+        {
+            var dir = new Vector3(Mathf.Cos(grados * Mathf.Deg2Rad), 0f, Mathf.Sin(grados * Mathf.Deg2Rad));
+            return Glifo(hilos, nombre, f, CentroRotonda + dir * (RadioRotonda - 0.05f) + Vector3.up * y, -dir, 0.9f, m);
+        }
         var soles = new[]
         {
-            Glifo(hilos, "Sol_1", Figura.Sol, new Vector3(-10.2f, y, z), afuera, 0.9f, k.ambar),
-            Glifo(hilos, "Sol_2", Figura.SolMordido, new Vector3(-8f, y, z), afuera, 0.9f, k.ambar),
-            Glifo(hilos, "Sol_3", Figura.SolMordido, new Vector3(-5.8f, y, z), afuera, 0.9f, k.ambar),
-            Glifo(hilos, "Sol_4", Figura.SolFino, new Vector3(-3.6f, y, z), afuera, 0.9f, k.ambar),
+            EnElAnillo("Sol_1", Figura.Sol, 117.5f, k.ambar),
+            EnElAnillo("Sol_2", Figura.SolMordido, 112f, k.ambar),
+            EnElAnillo("Sol_3", Figura.SolMordido, 106.5f, k.ambar),
+            EnElAnillo("Sol_4", Figura.SolFino, 101f, k.ambar),
         };
         refs.hiloSoles = Hilo("Hilo_Soles", new[] { selloOeste }, refs.atajoOeste, new Color(1f, 0.42f, 0.1f), soles);
 
         var lunas = new[]
         {
-            Glifo(hilos, "Luna_1", Figura.LunaLlena, new Vector3(10.2f, y, z), afuera, 0.9f, k.tallaLuna),
-            Glifo(hilos, "Luna_2", Figura.LunaGibosa, new Vector3(8f, y, z), afuera, 0.9f, k.tallaLuna),
-            Glifo(hilos, "Luna_3", Figura.LunaCuarto, new Vector3(5.8f, y, z), afuera, 0.9f, k.tallaLuna),
-            Glifo(hilos, "Luna_4", Figura.LunaCreciente, new Vector3(3.6f, y, z), afuera, 0.9f, k.tallaLuna),
+            EnElAnillo("Luna_1", Figura.LunaLlena, 62.5f, k.tallaLuna),
+            EnElAnillo("Luna_2", Figura.LunaGibosa, 68f, k.tallaLuna),
+            EnElAnillo("Luna_3", Figura.LunaCuarto, 73.5f, k.tallaLuna),
+            EnElAnillo("Luna_4", Figura.LunaCreciente, 79f, k.tallaLuna),
         };
         refs.hiloLunas = Hilo("Hilo_Lunas", new[] { selloEste }, refs.atajoEste, ColorLuna, lunas);
 
-        var eclipse = Glifo(hilos, "Eclipse", Figura.Eclipse, new Vector3(0f, 5.4f, z), afuera, 1.8f, k.tallaEclipse);
+        var eclipse = Glifo(hilos, "Eclipse", Figura.Eclipse, new Vector3(0f, 5.5f, z), afuera, 1.8f, k.tallaEclipse);
         var hiloEclipse = Hilo("Hilo_Eclipse", new[] { selloOeste, selloEste }, null, new Color(0.85f, 0.9f, 1f), new[] { eclipse });
         hiloEclipse.demoraInicial = 0.4f;
         hiloEclipse.emisionEncendido = 4f;
         refs.hiloEclipse = hiloEclipse;
-
-        // desde dónde mira la cámara en cada cinemática (el obelisco del centro queda atrás)
-        Transform Vista(string nombre, Vector3 ojo, Vector3 objetivo)
-        {
-            var t = new GameObject(nombre).transform;
-            t.SetParent(hilos, false);
-            t.SetPositionAndRotation(ojo, Quaternion.LookRotation(objetivo - ojo));
-            return t;
-        }
-        refs.vistaSoles = Vista("Vista_Soles", new Vector3(-3.5f, 2.3f, 20.5f), new Vector3(-6.9f, 2.4f, z));
-        refs.vistaLunas = Vista("Vista_Lunas", new Vector3(3.5f, 2.3f, 20.5f), new Vector3(6.9f, 2.4f, z));
-        refs.vistaPuerta = Vista("Vista_Puerta", new Vector3(0f, 2.6f, 20f), new Vector3(0f, 3.6f, z));
-
-        // el vuelo de la cámara pasa por cada atajo: un punto del lado del ala y uno de la rotonda
-        Transform Punto(string nombre, Vector3 p) => Vista(nombre, p, p + Vector3.forward);
-        refs.caminos = new[]
-        {
-            Punto("Camino_Oeste_Ala", new Vector3(-13.4f, 1.8f, 24.75f)), Punto("Camino_Oeste_Rotonda", new Vector3(-10.4f, 2f, 24.75f)),
-            Punto("Camino_Este_Ala", new Vector3(13.4f, 1.8f, 24.75f)), Punto("Camino_Este_Rotonda", new Vector3(10.4f, 2f, 24.75f)),
-        };
     }
 
     /// <summary>Lunas a la izquierda y soles a la derecha de la escalera (hijos de cada tramo de pared).</summary>
@@ -261,8 +247,8 @@ public static partial class ConstructorCrater
         Figura[] soles = { Figura.SolSobreLuna0, Figura.SolSobreLuna1, Figura.SolSobreLuna2, Figura.SolSobreLuna3 };
         int n = i / 2;
         if (i % 2 == 0 || n >= lunas.Length) return;
-        Glifo(paredIzq, $"Luna_Escalera_{n}", lunas[n], centroIzq, Vector3.right, 1.2f, k.tallaLuna);
-        Glifo(paredDer, $"Sol_Escalera_{n}", soles[n], centroDer, Vector3.left, 1.2f, k.ambar);
+        Glifo(paredIzq, $"Luna_Escalera_{n}", lunas[n], centroIzq, Vector3.right, 1.2f, k.pinturaLuna);
+        Glifo(paredDer, $"Sol_Escalera_{n}", soles[n], centroDer, Vector3.left, 1.2f, k.pinturaSol);
     }
 }
 
@@ -330,7 +316,7 @@ public static partial class ConstructorCrater
         var testigo = raiz.gameObject.AddComponent<TestigoDeSello>();
         testigo.sello = sello;
         testigo.renderers = soles.ToArray();
-        testigo.emisionApagado = 0.25f;
+        testigo.emisionApagado = 0.02f;
         testigo.luz = Luz(raiz, "Fuego", pie + Vector3.up * 1.8f, LuzCalida, 0f, 7f, false);
         testigo.intensidadLuz = 25f;
     }
@@ -358,7 +344,7 @@ public static partial class ConstructorCrater
         testigo.sello = sello;
         testigo.renderers = tallados;
         testigo.colorEncendido = ColorLuna;
-        testigo.emisionApagado = 0.3f;
+        testigo.emisionApagado = 0.02f;
         testigo.luz = Luz(raiz, "Brillo", pie + Vector3.up * 2f + haciaLaSala * 1.2f, LuzFria, 0f, 6f, false);
         testigo.intensidadLuz = 18f;
     }
@@ -367,18 +353,18 @@ public static partial class ConstructorCrater
     static void DecorarAlaOeste(Kit k, Transform g, ReceptorDeLuz sello)
     {
         var arte = Grupo(g, "Arte_Sol");
+        // pintura mate y un solo motivo repetido: es ornamento, no un acertijo (no hay
+        // secuencia ni orden que descifrar, y no brilla como lo que se usa)
         // O1: un friso de soles en la pared sur y un halo grande en la oeste
-        Figura[] friso = { Figura.Sol, Figura.Halo, Figura.SolMordido, Figura.Halo, Figura.Sol };
         float[] xs = { -34.5f, -32.5f, -30.5f, -24.5f, -22.5f };
         for (int i = 0; i < xs.Length; i++)
-            Glifo(arte, $"Friso_O1_{i}", friso[i], new Vector3(xs[i], 3.4f, -6.92f), Vector3.forward, 0.85f, k.ambar);
-        Glifo(arte, "Halo_O1", Figura.Halo, new Vector3(-35.92f, 3.6f, 4f), Vector3.right, 2.2f, k.ambar);
-        Glifo(arte, "Sol_O1", Figura.Sol, new Vector3(-35.9f, 3.6f, 4f), Vector3.right, 1.1f, k.ambar);
-        // O2: el sol que se va comiendo, en la pared norte, y otro halo
-        Figura[] fases = { Figura.Sol, Figura.SolMordido, Figura.SolFino, Figura.Eclipse };
-        for (int i = 0; i < fases.Length; i++)
-            Glifo(arte, $"Fases_O2_{i}", fases[i], new Vector3(-29f + i * 2.2f, 3.6f, 20.92f), Vector3.back, 1f, k.ambar);
-        Glifo(arte, "Halo_O2", Figura.Halo, new Vector3(-35.92f, 3.4f, 15f), Vector3.right, 1.8f, k.ambar);
+            Glifo(arte, $"Friso_O1_{i}", Figura.Sol, new Vector3(xs[i], 3.4f, -6.92f), Vector3.forward, 0.85f, k.pinturaSol);
+        Glifo(arte, "Halo_O1", Figura.Halo, new Vector3(-35.92f, 3.6f, 4f), Vector3.right, 2.2f, k.pinturaSol);
+        Glifo(arte, "Sol_O1", Figura.Sol, new Vector3(-35.9f, 3.6f, 4f), Vector3.right, 1.1f, k.pinturaSol);
+        // O2: un friso de halos en la pared norte, y otro halo
+        for (int i = 0; i < 4; i++)
+            Glifo(arte, $"Friso_O2_{i}", Figura.Halo, new Vector3(-29f + i * 2.2f, 3.6f, 20.92f), Vector3.back, 1f, k.pinturaSol);
+        Glifo(arte, "Halo_O2", Figura.Halo, new Vector3(-35.92f, 3.4f, 15f), Vector3.right, 1.8f, k.pinturaSol);
 
         Pebetero(k, arte, "Pebetero_O1_A", new Vector3(-34.6f, 0f, -5.6f), sello);
         Pebetero(k, arte, "Pebetero_O1_B", new Vector3(-21.4f, 0f, -5.6f), sello);
@@ -390,19 +376,19 @@ public static partial class ConstructorCrater
     static void DecorarAlaEste(Kit k, Transform g, ReceptorDeLuz sello)
     {
         var arte = Grupo(g, "Arte_Luna");
-        // E1: las fases de la luna en la pared sur (salteando el muro de rejas) y una estrella en la este
-        Figura[] fases = { Figura.LunaCreciente, Figura.LunaCuarto, Figura.LunaGibosa, Figura.LunaLlena };
+        // pintura mate y un solo motivo repetido (ver DecorarAlaOeste)
+        // E1: un friso de lunas en la pared sur (salteando el muro de rejas) y una estrella en la este
         float[] xs = { 22f, 24.6f, 31.4f, 34f };
-        for (int i = 0; i < fases.Length; i++)
-            Glifo(arte, $"Fases_E1_{i}", fases[i], new Vector3(xs[i], 3.4f, -6.92f), Vector3.forward, 0.85f, k.tallaLuna);
-        Glifo(arte, "Estrella_E1", Figura.Estrella, new Vector3(35.92f, 3.6f, 4f), Vector3.left, 1.8f, k.tallaLuna);
+        for (int i = 0; i < xs.Length; i++)
+            Glifo(arte, $"Friso_E1_{i}", Figura.LunaCreciente, new Vector3(xs[i], 3.4f, -6.92f), Vector3.forward, 0.85f, k.pinturaLuna);
+        Glifo(arte, "Estrella_E1", Figura.Estrella, new Vector3(35.92f, 3.6f, 4f), Vector3.left, 1.8f, k.pinturaLuna);
         // E2: un cielo de estrellas y una luna grande
         for (int i = 0; i < 6; i++)
-            Glifo(arte, $"Estrellas_E2_{i}", Figura.Estrella, new Vector3(22.5f + i * 2.2f, 3.2f + (i % 2) * 1.1f, 20.92f), Vector3.back, 0.4f + (i % 3) * 0.12f, k.tallaLuna);
-        Glifo(arte, "Luna_E2", Figura.LunaLlena, new Vector3(35.92f, 3.6f, 15f), Vector3.left, 1.5f, k.tallaLuna);
+            Glifo(arte, $"Estrellas_E2_{i}", Figura.Estrella, new Vector3(22.5f + i * 2.2f, 3.2f + (i % 2) * 1.1f, 20.92f), Vector3.back, 0.4f + (i % 3) * 0.12f, k.pinturaLuna);
+        Glifo(arte, "Luna_E2", Figura.LunaLlena, new Vector3(35.92f, 3.6f, 15f), Vector3.left, 1.5f, k.pinturaLuna);
         // la galería de abajo: estrellas en la pared sur, para que se vea al caer
-        Glifo(arte, "Estrella_Galeria_A", Figura.Estrella, new Vector3(23.5f, -1.6f, 12.08f), Vector3.forward, 0.5f, k.tallaLuna);
-        Glifo(arte, "Estrella_Galeria_B", Figura.Estrella, new Vector3(26.2f, -1.2f, 12.08f), Vector3.forward, 0.35f, k.tallaLuna);
+        Glifo(arte, "Estrella_Galeria_A", Figura.Estrella, new Vector3(23.5f, -1.6f, 12.08f), Vector3.forward, 0.5f, k.pinturaLuna);
+        Glifo(arte, "Estrella_Galeria_B", Figura.Estrella, new Vector3(26.2f, -1.2f, 12.08f), Vector3.forward, 0.35f, k.pinturaLuna);
 
         Menhir(k, arte, "Menhir_E1_A", new Vector3(34.4f, 0f, -5.4f), new Vector3(-0.7f, 0f, 0.7f).normalized, sello);
         Menhir(k, arte, "Menhir_E1_B", new Vector3(21.6f, 0f, -5.4f), new Vector3(0.7f, 0f, 0.7f).normalized, sello);
@@ -419,7 +405,7 @@ public static partial class ConstructorCrater
     /// </summary>
     static void DespejarTallados(Kit k)
     {
-        var deTallado = new HashSet<Material> { k.ambar, k.motivoLatente, k.tallaLuna, k.tallaEclipse };
+        var deTallado = new HashSet<Material> { k.ambar, k.motivoLatente, k.tallaLuna, k.tallaEclipse, k.pinturaSol, k.pinturaLuna, k.pinturaHueso };
         var escena = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
         var tallados = new List<Renderer>();
         var modulos = new List<Transform>();

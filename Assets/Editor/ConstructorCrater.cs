@@ -136,6 +136,8 @@ public static partial class ConstructorCrater
         public Material cal, madera, cardon, pajaBrava, vela;
         public Material huella, espejo, puertaEclipse, luzEclipse, resplandor, corona, discoSol, discoLuna;
         public Material tallaLuna, tallaEclipse;   // los tallados de luna (HUECO) y del eclipse
+        // pintura mate, sin brillo: el arte decorativo y los murales ("lo que brilla, se usa")
+        public Material pinturaSol, pinturaLuna, pinturaHueso;
 
         // estética low-poly (ver ConstructorCrater.Facetado.cs)
         public HashSet<Material> piedraFacetada, facetables;
@@ -214,6 +216,10 @@ public static partial class ConstructorCrater
         kit.rejaSello = Emisivo(Transparente(Opaco("RejaSello", new Color(0.35f, 0.5f, 1f, 0.35f), 0.5f)), new Color(0.35f, 0.5f, 1f) * 0.9f);
         kit.tallaLuna = Emisivo(Opaco("TalladoLuna", ColorLuna * 0.6f, 0.3f), ColorLuna * 1.8f);
         kit.tallaEclipse = Emisivo(Opaco("TalladoEclipse", new Color(0.85f, 0.9f, 1f), 0.3f), new Color(0.8f, 0.88f, 1f) * 2f);
+        // lo decorativo no brilla: sólo brilla lo que se usa (anclas, sellos, hilos, faros)
+        kit.pinturaSol = Opaco("PinturaSol", new Color(0.55f, 0.27f, 0.09f), 0.08f);
+        kit.pinturaLuna = Opaco("PinturaLuna", new Color(0.3f, 0.38f, 0.55f), 0.08f);
+        kit.pinturaHueso = Opaco("PinturaHueso", new Color(0.58f, 0.55f, 0.48f), 0.08f);
 
         kit.adobe = Opaco("CapillaAdobe", new Color(0.62f, 0.4f, 0.24f), 0.15f);
         kit.paja = Opaco("CapillaTechoPaja", new Color(0.3f, 0.21f, 0.1f), 0.05f);

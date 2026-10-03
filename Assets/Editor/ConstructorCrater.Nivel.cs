@@ -15,9 +15,9 @@ using UnityEngine.SceneManagement;
 ///   01 Explanada   z -48 … -34   el fondo del pozo que el eclipse abre en el valle; se baja por una escalera
 ///      Pasaje      z -34 … -23   pasillo plano hasta el Umbral
 ///   02 Umbral      z -23 … -3    la linterna y la primera ancla (luz blanca) abren la compuerta
-///   03 Rotonda     z  -3 …  27   con dos alas, en cualquier orden (ver ConstructorCrater.Alas.cs):
-///      Ala oeste   x -36 … -12   filtro CUERPO y su sello
-///      Ala este    x  12 …  36   filtro HUECO y su sello
+///   03 Rotonda     z  -3 …  27   circular, con dos alas en cualquier orden (ver ConstructorCrater.Alas.cs):
+///      Ala oeste   x -39 … -15   filtro sol y su sello (entrada a mitad del costado)
+///      Ala este    x  15 …  39   filtro luna y su sello
 ///   04 Cruce       z  27 …  68.5 los dos filtros juntos
 ///   05 Cresta      z 68.5 … 99   se cierra a la espalda; apagar la linterna, adaptarse y el techo se abre
 ///
@@ -58,8 +58,6 @@ public static partial class ConstructorCrater
         // final
         public Compuerta cierreCresta, puertaSellos, atajoOeste, atajoEste;
         public HiloDeTallados hiloSoles, hiloLunas, hiloEclipse;
-        public Transform vistaSoles, vistaLunas, vistaPuerta;
-        public Transform[] caminos;
         public ReceptorDeLuz selloOeste, selloEste;
         public AperturaTecho techoCresta;
     }
@@ -77,8 +75,14 @@ public static partial class ConstructorCrater
         ConstruirUmbral(kit, Grupo(nivel, "02_Umbral"), refs);
         var rotonda = Grupo(nivel, "03_Rotonda");
         ConstruirRotonda(kit, rotonda, refs);
-        var selloOeste = ConstruirAlaOeste(kit, Grupo(nivel, "03_Ala_Oeste"), refs);
-        var selloEste = ConstruirAlaEste(kit, Grupo(nivel, "03_Ala_Este"), refs);
+        // cada ala se arma en su lugar de siempre y después se corre entera: así su entrada
+        // queda a mitad del costado de la rotonda circular (ver ConstructorCrater.Alas.cs)
+        var alaOeste = Grupo(nivel, "03_Ala_Oeste");
+        var selloOeste = ConstruirAlaOeste(kit, alaOeste, refs);
+        alaOeste.position = CorrimientoAlaOeste;
+        var alaEste = Grupo(nivel, "03_Ala_Este");
+        var selloEste = ConstruirAlaEste(kit, alaEste, refs);
+        alaEste.position = CorrimientoAlaEste;
         ConstruirPuertaDeLosSellos(kit, rotonda, refs, selloOeste, selloEste);
         ConstruirCruce(kit, Grupo(nivel, "04_Cruce"));
         ConstruirCresta(kit, Grupo(nivel, "05_Cresta"), refs);
@@ -154,7 +158,8 @@ public static partial class ConstructorCrater
         Caja(g, "Dintel_Rampa", -2.05f, 4, -23.3f, 2.05f, 5.8f, -23, k.basalto);
         Caja(g, "Techo_Umbral", -6.3f, 4, -23.3f, 6.3f, 4.3f, -3, k.techo);
 
-        Instancia(k.prefabLinterna, g, "Recogible_Linterna", new Vector3(1.2f, 0f, -15.5f), Quaternion.identity);
+        // la linterna, pasando los murales de los controles: así se los mira antes de agarrarla
+        Instancia(k.prefabLinterna, g, "Recogible_Linterna", new Vector3(1.5f, 0f, -8.5f), Quaternion.identity);
 
         var ancla = CrearAnclaEnEscena(k, g, "Ancla_Umbral", new Vector3(-5.1f, 0f, -10f), Quaternion.Euler(0f, 90f, 0f),
             FiltroDefinicion.Canal.Ninguno, 2f, 0);
@@ -444,8 +449,9 @@ public static partial class ConstructorCrater
             Modulo(k, modulos, $"Modulo_{sala}_Izq_{z:0}", new Vector3(-mitad + 0.45f * escala, 0f, z), 90f, escala, k.piedra);
             Modulo(k, modulos, $"Modulo_{sala}_Der_{z:0}", new Vector3(mitad - 0.45f * escala, 0f, z), -90f, escala, k.piedra);
         }
-        foreach (float z in new[] { -19f, -13f, -7f }) Par(z, 6f, 0.62f, "Umbral");
-        foreach (float z in new[] { 6f, 12f, 18f }) Par(z, 12f, 1f, "Rotonda");
+        // en el Umbral, la mitad sur queda libre para los murales que enseñan los controles
+        Par(-7f, 6f, 0.62f, "Umbral");
+        ConstruirMurales(k, arte);
         foreach (float z in new[] { 29f, 41f, 56f, 64f }) Par(z, 6f, 0.82f, "Cruce");
         foreach (float z in new[] { 80f, 87f, 94f }) Par(z, 12f, 1f, "Cresta");
         // el fondo de la Cresta, la pared espejo: dos módulos a los costados
@@ -454,11 +460,8 @@ public static partial class ConstructorCrater
 
         var motivos = Grupo(arte, "MotivosTallados");
         // en el fondo del pozo, a los lados de la boca del túnel
-        Motivo(k, motivos, "Mural_Plaza_Izq", new Vector3(-6.5f, 0.4f, -34.35f), 180f, 0.9f, k.ambar);
-        Motivo(k, motivos, "Mural_Plaza_Der", new Vector3(6.5f, 0.4f, -34.35f), 180f, 0.9f, k.ambar);
-        Motivo(k, motivos, "Mural_Umbral", new Vector3(5.93f, 0.3f, -16f), -90f, 0.7f, k.ambar);
-        Motivo(k, motivos, "Mural_Rotonda_O", new Vector3(-11.93f, 0.6f, 9f), 90f, 0.9f, k.ambar);
-        Motivo(k, motivos, "Mural_Rotonda_E", new Vector3(11.93f, 0.6f, 15f), -90f, 0.9f, k.ambar);
+        Motivo(k, motivos, "Mural_Plaza_Izq", new Vector3(-6.5f, 0.4f, -34.35f), 180f, 0.9f, k.pinturaSol);
+        Motivo(k, motivos, "Mural_Plaza_Der", new Vector3(6.5f, 0.4f, -34.35f), 180f, 0.9f, k.pinturaLuna);
 
         // tallados latentes: casi invisibles con la linterna, aparecen al adaptarse
         var latentes = Grupo(arte, "MotivosLatentes_Cresta");
@@ -603,10 +606,7 @@ public static partial class ConstructorCrater
         Asignar(cinematica, "linterna", linterna);
         AsignarLista(cinematica, "sellos", new Object[] { refs.selloOeste, refs.selloEste });
         AsignarLista(cinematica, "hilos", new Object[] { refs.hiloSoles, refs.hiloLunas });
-        AsignarLista(cinematica, "vistas", new Object[] { refs.vistaSoles, refs.vistaLunas });
-        AsignarLista(cinematica, "caminos", refs.caminos);
         Asignar(cinematica, "eclipse", refs.hiloEclipse);
-        Asignar(cinematica, "vistaFinal", refs.vistaPuerta);
         Asignar(cinematica, "puerta", refs.puertaSellos);
         UnityEventTools.AddPersistentListener(refs.atajoOeste.alAbrirse, new UnityAction(flujo.NotificarSello));
         UnityEventTools.AddPersistentListener(refs.atajoEste.alAbrirse, new UnityAction(flujo.NotificarSello));

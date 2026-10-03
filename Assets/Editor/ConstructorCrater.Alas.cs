@@ -34,42 +34,101 @@ public static partial class ConstructorCrater
 {
     // ================================================================== la rotonda
 
+    /// <summary>Centro (a nivel del piso) y radio de la rotonda circular.</summary>
+    static readonly Vector3 CentroRotonda = new Vector3(0f, 0f, 12f);
+    const float RadioRotonda = 15f;
+    /// <summary>Cuánto se corre cada ala desde donde la arma su código: hacia afuera y al norte.</summary>
+    static readonly Vector3 CorrimientoAlaOeste = new Vector3(-3f, 0f, 11f), CorrimientoAlaEste = new Vector3(3f, 0f, 11f);
+
+    /// <summary>
+    /// Sala circular de 30 m. Las alas se entran por la mitad de cada costado (z 10 … 14),
+    /// lejos de la boca del Umbral; los atajos vuelven por dos pasillos que entran en
+    /// diagonal por el noroeste y el noreste. Al norte, la puerta de los sellos.
+    /// </summary>
     static void ConstruirRotonda(Kit k, Transform g, Referencias refs)
     {
-        Caja(g, "Piso_Rotonda", -12, -0.3f, -3, 12, 0, 27, k.piso);
+        float cz = CentroRotonda.z;
+        Caja(g, "Piso_Rotonda", -RadioRotonda, -0.3f, -3, RadioRotonda, 0, 27, k.piso);
+        Caja(g, "Techo_Rotonda", -RadioRotonda - 0.6f, 7, -3.3f, RadioRotonda + 0.6f, 7.3f, 27.6f, k.techo);
 
-        // sur: la boca del Umbral
-        Caja(g, "Muro_Rotonda_Sur_Izq", -12.3f, -0.3f, -3.3f, -6, 7, -3, k.basalto);
-        Caja(g, "Muro_Rotonda_Sur_Der", 6, -0.3f, -3.3f, 12.3f, 7, -3, k.basalto);
+        // la pared: un anillo de bloques con aberturas (ángulos desde +x, en sentido antihorario)
+        var aberturas = new[]
+        {
+            new Vector2(246.4f, 293.6f),   // sur: la boca del Umbral (x ±6)
+            new Vector2(172.4f, 187.6f),   // oeste: el pasillo al ala (z 10 … 14)
+            new Vector2(-7.6f, 7.6f),      // este: el pasillo al ala
+            new Vector2(122.2f, 137.2f),   // noroeste: vuelve el atajo oeste (x -11 … -8)
+            new Vector2(42.8f, 57.8f),     // noreste: vuelve el atajo este (x 8 … 11)
+            new Vector2(82.4f, 97.6f),     // norte: la puerta de los sellos (x ±2)
+        };
+        const int bloques = 96;
+        float anchoBloque = 2f * Mathf.PI * (RadioRotonda + 0.3f) / bloques * 1.2f;
+        for (int i = 0; i < bloques; i++)
+        {
+            float ang = i * 360f / bloques;
+            bool abierto = false;
+            foreach (var ab in aberturas) abierto |= Mathf.DeltaAngle(ab.x, ang) >= 0f && Mathf.DeltaAngle(ang, ab.y) >= 0f;
+            if (abierto) continue;
+            var dir = new Vector3(Mathf.Cos(ang * Mathf.Deg2Rad), 0f, Mathf.Sin(ang * Mathf.Deg2Rad));
+            var b = Bloque(g, $"Pared_Rotonda_{i:00}", CentroRotonda + dir * (RadioRotonda + 0.3f) + Vector3.up * 3.35f,
+                new Vector3(anchoBloque, 7.3f, 0.6f), i % 4 == 0 ? k.basaltoMedio : k.basalto);
+            b.transform.rotation = Quaternion.LookRotation(-dir);
+        }
+
+        // jambas que cierran lo que el anillo de bloques deja entre cada abertura y su pasillo
+        Caja(g, "Jamba_Umbral_Izq", -6.6f, -0.3f, -3.3f, -5.9f, 7, -1.2f, k.basalto);
+        Caja(g, "Jamba_Umbral_Der", 5.9f, -0.3f, -3.3f, 6.6f, 7, -1.2f, k.basalto);
         Caja(g, "Dintel_Umbral", -6, 4, -3.3f, 6, 7, -3, k.basalto);
-
-        // oeste y este: el pasillo a cada ala (z -1 … 3) y el atajo de vuelta (z 23 … 26,5)
         foreach (float lado in new[] { -1f, 1f })
         {
             string n = lado < 0f ? "O" : "E";
-            float x0 = lado < 0f ? -12.3f : 12f, x1 = x0 + 0.3f;
-            var m = lado < 0f ? k.basaltoMedio : k.basalto;
-            Caja(g, $"Muro_Rotonda_{n}_1", x0, -0.3f, -3.3f, x1, 7, -1, m);
-            Caja(g, $"Muro_Rotonda_{n}_2", x0, -0.3f, 3, x1, 7, 23, m);
-            Caja(g, $"Muro_Rotonda_{n}_3", x0, -0.3f, 26.5f, x1, 7, 27.3f, m);
-            Caja(g, $"Dintel_Rotonda_{n}_Ala", x0, 4.5f, -1, x1, 7, 3, m);
-            Caja(g, $"Dintel_Rotonda_{n}_Atajo", x0, 4, 23, x1, 7, 26.5f, m);
+            float x0 = lado < 0f ? -15.7f : 14.6f, x1 = x0 + 1.1f;
+            Caja(g, $"Jamba_Ala_{n}_Sur", x0, -0.3f, 9.4f, x1, 7, 10, k.basalto);
+            Caja(g, $"Jamba_Ala_{n}_Norte", x0, -0.3f, 14, x1, 7, 14.6f, k.basalto);
+            Caja(g, $"Dintel_Ala_{n}", x0, 4.5f, 10, x1, 7, 14, k.basalto);
+            // el piso cruza el umbral del anillo hasta el pasillo del ala
+            Caja(g, $"Piso_Umbral_Ala_{n}", lado < 0f ? -15.4f : 14.9f, -0.3f, 10, lado < 0f ? -14.9f : 15.4f, 0, 14, k.piso);
         }
-        // del otro lado de estas paredes hay pozos: bajan hasta el fondo
-        Caja(g, "Muro_Rotonda_O_Bajo", -12.3f, -9, 15, -12, -0.3f, 17.5f, k.basaltoMedio);
-        Caja(g, "Muro_Rotonda_E_Bajo", 12, -3.8f, 9.3f, 12.3f, -0.3f, 21, k.basalto);
-
-        // norte: la puerta de los sellos
-        Caja(g, "Muro_Rotonda_Norte_Izq", -12.3f, -0.3f, 27, -2, 7, 27.3f, k.basalto);
-        Caja(g, "Muro_Rotonda_Norte_Der", 2, -0.3f, 27, 12.3f, 7, 27.3f, k.basalto);
+        Caja(g, "Jamba_Sellos_Izq", -2.7f, -0.3f, 26.3f, -2, 7, 27.3f, k.basalto);
+        Caja(g, "Jamba_Sellos_Der", 2, -0.3f, 26.3f, 2.7f, 7, 27.3f, k.basalto);
         Caja(g, "Dintel_Sellos", -2, 4, 27, 2, 7, 27.3f, k.basalto);
 
-        Caja(g, "Techo_Rotonda", -12.3f, 7, -3.3f, 12.3f, 7.3f, 27.3f, k.techo);
-        Oculo(k, g, "Oculo_Rotonda", new Vector3(0f, 6.97f, 12f), 4f, 150f, 12f);
-        ConstruirAnilloDelMapa(k, g, new Vector3(0f, 0.12f, 12f), 0.4f);
+        // los pasillos de vuelta de los atajos: del atajo (en el ala) hasta el anillo
+        foreach (float lado in new[] { -1f, 1f })
+        {
+            string n = lado < 0f ? "O" : "E";
+            float X(float x) => lado * x;   // se arma del lado oeste y se espeja
+            void C(string nombre, float xa, float y0, float za, float xb, float y1, float zb, Material m) =>
+                Caja(g, nombre, Mathf.Min(X(xa), X(xb)), y0, za, Mathf.Max(X(xa), X(xb)), y1, zb, m);
+            C($"Piso_Vuelta_{n}", 11, -0.3f, 27, 8, 0, 33.7f, k.piso);
+            C($"Piso_Vuelta_{n}_Atajo", 15, -0.3f, 33.7f, 8, 0, 37.8f, k.piso);
+            C($"Muro_Vuelta_{n}_Interior", 11.3f, -0.3f, 21.6f, 11, 7, 33.7f, k.basalto);
+            C($"Muro_Vuelta_{n}_Atajo_Sur", 15, -0.3f, 33.4f, 11, 7, 33.7f, k.basalto);
+            C($"Muro_Vuelta_{n}_Exterior", 8, -0.3f, 24.2f, 7.7f, 7, 38.1f, k.basaltoMedio);
+            C($"Muro_Vuelta_{n}_Fondo", 15.3f, -0.3f, 37.8f, 7.7f, 7, 38.1f, k.basalto);
+            C($"Techo_Vuelta_{n}", 15.3f, 7, 27.6f, 7.7f, 7.3f, 38.1f, k.techo);
+            Luz(g, $"Luz_Vuelta_{n}", new Vector3(X(9.5f), 5.5f, 33f), LuzCalida, 40f, 9f, false);
+        }
 
-        Luz(g, "Luz_Rotonda", new Vector3(0f, 5.8f, 5f), LuzCalida, 140f, 16f, true);
-        Luz(g, "Luz_Rotonda_Norte", new Vector3(0f, 5.8f, 21f), LuzCalida, 100f, 14f, false);
+        Oculo(k, g, "Oculo_Rotonda", new Vector3(0f, 6.97f, cz), 4f, 150f, 12f);
+        ConstruirAnilloDelMapa(k, g, new Vector3(0f, 0.12f, cz), 0.4f);
+
+        Luz(g, "Luz_Rotonda", new Vector3(0f, 5.8f, 4f), LuzCalida, 150f, 17f, true);
+        Luz(g, "Luz_Rotonda_Norte", new Vector3(0f, 5.8f, 21f), LuzCalida, 110f, 15f, false);
+    }
+
+    /// <summary>
+    /// La pared interior que cada ala necesita del lado de la rotonda (antes la ponía la
+    /// rotonda cuadrada): de la última sala hasta la puerta del atajo, con el pozo
+    /// bajando hasta el fondo. Coordenadas del ala SIN correr (se corren con el ala).
+    /// </summary>
+    static void ParedInteriorDelAla(Kit k, Transform g, float lado, float pisoBajo)
+    {
+        float x0 = lado < 0f ? -12.3f : 12f, x1 = x0 + 0.3f;
+        string n = lado < 0f ? "O" : "E";
+        Caja(g, $"Muro_Interior_{n}", x0, pisoBajo, 9.3f, x1, 6.3f, 23, k.basaltoMedio);
+        Caja(g, $"Muro_Interior_{n}_Fin", x0, -0.3f, 26.5f, x1, 6.3f, 27.3f, k.basaltoMedio);
+        Caja(g, $"Dintel_Atajo_{n}", x0, 4, 23, x1, 6.3f, 26.5f, k.basaltoMedio);
     }
 
     /// <summary>
@@ -89,14 +148,19 @@ public static partial class ConstructorCrater
         // los hilos de soles y lunas que llegan a la puerta (ConstructorCrater.Tallados.cs)
         ConstruirHilosDeLosSellos(k, g, refs, selloOeste, selloEste);
 
-        // sobre cada atajo, del lado de la rotonda, un tallado con luz: se ve de lejos cuál se abrió
+        // sobre la boca de cada pasillo de vuelta, en el anillo, un tallado con luz: se ve de lejos cuál ala está hecha
         void Faro(string nombre, float lado, ReceptorDeLuz sello)
         {
-            var tallado = Motivo(k, g, nombre, new Vector3(lado * 11.93f, 4.5f, 24.75f), lado < 0f ? 90f : -90f, 0.6f, k.ambar);
-            var testigo = tallado.AddComponent<TestigoDeSello>();
+            float ang = (lado < 0f ? 141f : 39f) * Mathf.Deg2Rad;
+            var dir = new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang));
+            var tallado = Glifo(g, nombre, lado < 0f ? Figura.Sol : Figura.LunaLlena,
+                CentroRotonda + dir * (RadioRotonda - 0.05f) + Vector3.up * 4.6f, -dir, 0.9f, lado < 0f ? k.ambar : k.tallaLuna);
+            var testigo = tallado.gameObject.AddComponent<TestigoDeSello>();
             testigo.sello = sello;
-            testigo.renderers = tallado.GetComponentsInChildren<Renderer>();
-            testigo.luz = Luz(g, nombre + "_Luz", new Vector3(lado * 10.8f, 5f, 24.75f), LuzCalida, 0f, 9f, false);
+            testigo.renderers = new[] { tallado };
+            testigo.colorEncendido = lado < 0f ? new Color(1f, 0.42f, 0.1f) : ColorLuna;
+            testigo.emisionApagado = 0.02f;
+            testigo.luz = Luz(g, nombre + "_Luz", CentroRotonda + dir * (RadioRotonda - 1.6f) + Vector3.up * 5f, lado < 0f ? LuzCalida : LuzFria, 0f, 9f, false);
             testigo.intensidadLuz = 45f;
         }
         Faro("Faro_Atajo_Oeste", -1f, selloOeste);
@@ -168,7 +232,7 @@ public static partial class ConstructorCrater
         var e2 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_B", new Vector3(-32f, 0f, 2.15f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3f, 2);
         Puente(k, g, "Puente_O_Ensenar", new Vector3(-26f, 0f, 1f), new Vector3(-28.5f, 0f, 1f), 3.6f, e1, e2);
         Luz(g, "Luz_O1", new Vector3(-28f, 5.3f, 1f), LuzCalida, 120f, 15f, true);
-        Motivo(k, g, "Mural_O1", new Vector3(-35.93f, 0.6f, -4f), 90f, 0.8f, k.ambar);
+        Motivo(k, g, "Mural_O1", new Vector3(-35.93f, 0.6f, -4f), 90f, 0.8f, k.pinturaSol);
 
         // ---- O2 · probar: la puerta se sostiene abierta mientras las dos anclas estén encendidas.
         // Están lejos una de otra: se enciende una, se barre a la otra y se corre por la retención
@@ -206,6 +270,7 @@ public static partial class ConstructorCrater
         refs.atajoOeste = CompuertaLosa(k, g, "Atajo_Oeste", new Vector3(-12.15f, 2f, 24.75f), new Vector3(0.3f, 4f, 3.5f),
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Oeste", new Vector3(-16f, 5.3f, 24.5f), LuzCalida, 70f, 10f, false);
+        ParedInteriorDelAla(k, g, -1f, -9f);
         DecorarAlaOeste(k, g, sello);
         return sello;
     }
@@ -240,7 +305,7 @@ public static partial class ConstructorCrater
         Reja(k, g, "Reja_E_Ensenar_B", new Vector3(28f, 0f, 4f), 90f);
         Luz(g, "Luz_E1", new Vector3(24f, 5.3f, 1f), LuzFria, 110f, 14f, true);
         Luz(g, "Luz_E1_Fondo", new Vector3(32f, 5.3f, 1f), LuzFria, 70f, 10f, false);
-        Motivo(k, g, "Mural_E1", new Vector3(35.93f, 0.6f, -4f), -90f, 0.8f, k.ambar);
+        Motivo(k, g, "Mural_E1", new Vector3(35.93f, 0.6f, -4f), -90f, 0.8f, k.pinturaLuna);
 
         // ---- E2 · probar: la sala no tiene salida. El camino es la trampilla del piso,
         // que da a una galería 3,5 m más abajo; ahí otra reja tapa el túnel
@@ -293,6 +358,7 @@ public static partial class ConstructorCrater
         refs.atajoEste = CompuertaLosa(k, g, "Atajo_Este", new Vector3(12.15f, 2f, 24.75f), new Vector3(0.3f, 4f, 3.5f),
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Este", new Vector3(16f, 5f, 25f), LuzFria, 60f, 9f, false);
+        ParedInteriorDelAla(k, g, 1f, -3.8f);
         DecorarAlaEste(k, g, sello);
         return sello;
     }
@@ -331,7 +397,7 @@ public static partial class ConstructorCrater
 
         // ---- N3 · la antesala de la Cresta
         Luz(g, "Luz_N3", new Vector3(0f, 5.3f, 61f), LuzFria, 70f, 11f, false);
-        Motivo(k, g, "Mural_Antesala", new Vector3(5.93f, 0.6f, 61f), -90f, 0.8f, k.ambar);
+        Motivo(k, g, "Mural_Antesala", new Vector3(5.93f, 0.6f, 61f), -90f, 0.8f, k.pinturaHueso);
     }
 
     // ================================================================== piezas

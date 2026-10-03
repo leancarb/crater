@@ -75,8 +75,8 @@ public class RecorridoCraterTests
         // el pasillo hasta el Umbral
         yield return Caminar(new Vector3(0f, 0f, -18f));
 
-        // Umbral: linterna y compuerta
-        yield return Caminar(new Vector3(1.2f, 0f, -15.5f));
+        // Umbral: los murales de los controles y, más adelante, la linterna y la compuerta
+        yield return Caminar(new Vector3(1.5f, 0f, -8.5f));
         Assert.That(linterna.Disponible, Is.True, "no se pudo recoger la linterna");
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.EncenderLinterna));
         linterna.Encender(true);
@@ -87,69 +87,82 @@ public class RecorridoCraterTests
         yield return Caminar(new Vector3(0f, 0f, 1f));
 
         // ---- ala oeste: CUERPO
-        yield return Caminar(new Vector3(-16.5f, 0f, 1f));
+        // la rotonda es circular: el ala se entra por la mitad del costado oeste
+        yield return Caminar(new Vector3(-9f, 0f, 4f));
+        yield return Caminar(new Vector3(-13f, 0f, 12f));
+        yield return Caminar(O(-16.5f, 1f));
         Assert.That(linterna.EstaDesbloqueado(cuerpo), Is.True, "no se pudo recoger CUERPO");
         yield return Equipar(cuerpo);
-        yield return CruzarPuente("Puente_O_Ensenar", new Vector3(-24.8f, 0f, 1f), new Vector3(-29.6f, 0f, 1f), "Ancla_O_Ensenar_A", "Ancla_O_Ensenar_B");
-        yield return Caminar(new Vector3(-29.6f, 0f, 6f));
-        yield return Caminar(new Vector3(-33f, 0f, 8f));
-        yield return Caminar(new Vector3(-33f, 0f, 11.5f));
+        yield return CruzarPuente("Puente_O_Ensenar", O(-24.8f, 1f), O(-29.6f, 1f), "Ancla_O_Ensenar_A", "Ancla_O_Ensenar_B");
+        yield return Caminar(O(-29.6f, 6f));
+        yield return Caminar(O(-33f, 8f));
+        yield return Caminar(O(-33f, 11.5f));
 
         // la puerta que se sostiene con dos anclas lejanas
-        yield return Caminar(new Vector3(-21.5f, 0f, 12f));
+        yield return Caminar(O(-21.5f, 12f));
         yield return Iluminar(Buscar<Ancla>("Ancla_O_Puerta_A"), 0.6f);
         yield return Iluminar(Buscar<Ancla>("Ancla_O_Puerta_B"), 0.6f);
         yield return Esperar(0.7f);
         Assert.That(Buscar<Compuerta>("Puerta_O_Dos_Anclas").Abierta, Is.True, "las dos anclas no abrieron la puerta");
-        yield return Caminar(new Vector3(-18f, 0f, 12f));
+        yield return Caminar(O(-18f, 12f));
 
         // anclas colgadas del techo, y el sello detrás del tabique
-        yield return CruzarPuente("Puente_O_Torcer", new Vector3(-16f, 0f, 14.3f), new Vector3(-16f, 0f, 19f), "Ancla_O_Torcer_A", "Ancla_O_Torcer_B");
-        yield return Caminar(new Vector3(-13.3f, 0f, 19.5f));
-        yield return Caminar(new Vector3(-13.3f, 0f, 24.5f));
+        yield return CruzarPuente("Puente_O_Torcer", O(-16f, 14.3f), O(-16f, 19f), "Ancla_O_Torcer_A", "Ancla_O_Torcer_B");
+        yield return Caminar(O(-13.3f, 19.5f));
+        yield return Caminar(O(-13.3f, 24.5f));
         yield return Iluminar(Buscar<Ancla>("Sello_Oeste"), 0.6f);
         yield return Esperar(3f);
         Assert.That(Buscar<Compuerta>("Atajo_Oeste").Abierta, Is.True, "el sello oeste no abrió el atajo");
+        // por el pasillo de vuelta hasta la rotonda: ahí se ve la cinemática del sello
+        yield return Caminar(new Vector3(-14f, 0f, 35.75f));
+        yield return Caminar(new Vector3(-9.5f, 0f, 35.75f));
+        yield return Caminar(new Vector3(-9.5f, 0f, 24f));
+        yield return Caminar(new Vector3(-6f, 0f, 19f));
         yield return EsperarCinematica();
-        yield return Caminar(new Vector3(-9f, 0f, 24.75f));
 
-        // ---- ala este: HUECO (rodeando el anillo de columnas del centro de la rotonda)
-        yield return Caminar(new Vector3(-8.5f, 0f, 4f));
-        yield return Caminar(new Vector3(8f, 0f, 1f));
-        yield return Caminar(new Vector3(16.5f, 0f, 1f));
+        // ---- ala este: HUECO (rodeando por el sur el anillo de columnas del centro de la rotonda)
+        yield return Caminar(new Vector3(-9f, 0f, 6f));
+        yield return Caminar(new Vector3(0f, 0f, 3f));
+        yield return Caminar(new Vector3(9f, 0f, 6f));
+        yield return Caminar(new Vector3(13f, 0f, 12f));
+        yield return Caminar(E(16.5f, 1f));
         Assert.That(linterna.EstaDesbloqueado(hueco), Is.True, "no se pudo recoger HUECO");
         yield return Equipar(hueco);
-        yield return Atravesar("Reja_E_Ensenar_A", new Vector3(25.8f, 0f, -2f), new Vector3(30f, 0f, -2f));
-        yield return Caminar(new Vector3(33f, 0f, -2f));
-        yield return Caminar(new Vector3(33f, 0f, 8f));
-        yield return Caminar(new Vector3(33f, 0f, 11.5f));
+        yield return Atravesar("Reja_E_Ensenar_A", E(25.8f, -2f), E(30f, -2f));
+        yield return Caminar(E(33f, -2f));
+        yield return Caminar(E(33f, 8f));
+        yield return Caminar(E(33f, 11.5f));
 
         // la trampilla: el camino sigue abajo
-        yield return Caminar(new Vector3(24f, 0f, 13.5f));
+        yield return Caminar(E(24f, 13.5f));
         yield return Iluminar(Buscar<MateriaHueca>("Trampilla_E"), 0.6f);
-        yield return Caminar(new Vector3(24f, 0f, 17.5f));
+        yield return Caminar(E(24f, 17.5f));
         yield return Esperar(1f);
         Assert.That(jugador.transform.position.y, Is.LessThan(-3f), "no se cayó por la trampilla");
-        yield return Atravesar("Reja_E_Galeria", new Vector3(23.2f, 0f, 17.5f), new Vector3(18.5f, 0f, 17.5f));
-        yield return Atravesar("Reja_E_Trinchera", new Vector3(18f, 0f, 15.3f), new Vector3(18f, 0f, 12.5f));
+        yield return Atravesar("Reja_E_Galeria", E(23.2f, 17.5f), E(18.5f, 17.5f));
+        yield return Atravesar("Reja_E_Trinchera", E(18f, 15.3f), E(18f, 12.5f));
 
         // la rampa y la escotilla del techo
-        yield return Caminar(new Vector3(14.5f, 0f, 12f));
-        yield return Caminar(new Vector3(14.5f, 0f, 16.2f));
+        yield return Caminar(E(14.5f, 12f));
+        yield return Caminar(E(14.5f, 16.2f));
         yield return Iluminar(Buscar<MateriaHueca>("Escotilla_E"), 0.6f);
-        yield return Caminar(new Vector3(14.5f, 0f, 22f));
+        yield return Caminar(E(14.5f, 22f));
         Assert.That(jugador.transform.position.y, Is.GreaterThan(-0.5f), "no se pudo subir por la escotilla");
-        yield return Caminar(new Vector3(18.6f, 0f, 22.5f));
-        yield return Caminar(new Vector3(18.6f, 0f, 25.3f));
+        yield return Caminar(E(18.6f, 22.5f));
+        yield return Caminar(E(18.6f, 25.3f));
         yield return Iluminar(Buscar<MateriaHueca>("Sello_Este"), 0.6f);
         yield return Esperar(3f);
         Assert.That(Buscar<Compuerta>("Atajo_Este").Abierta, Is.True, "el sello este no abrió el atajo");
+        yield return Caminar(new Vector3(14f, 0f, 35.75f));
+        yield return Caminar(new Vector3(9.5f, 0f, 35.75f));
+        yield return Caminar(new Vector3(9.5f, 0f, 24f));
+        yield return Caminar(new Vector3(6f, 0f, 19f));
         yield return EsperarCinematica();
-        yield return Caminar(new Vector3(9f, 0f, 24.75f));
 
         // ---- los dos sellos abren el norte (al final de su cinemática): el Cruce
         yield return Esperar(1f);
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Cruce), "los dos sellos no abrieron la puerta del norte");
+        yield return Caminar(new Vector3(0f, 0f, 22f));
         yield return Caminar(new Vector3(0f, 0f, 24f));
         yield return Caminar(new Vector3(0f, 0f, 32.3f));
 
@@ -202,6 +215,11 @@ public class RecorridoCraterTests
     }
 
     // ------------------------------------------------------------------ acciones
+
+    // cada ala se arma en sus coordenadas de siempre y después se corre entera
+    // (ConstructorCrater.CorrimientoAlaOeste / Este): estos pasan de unas a otras
+    static Vector3 O(float x, float z) => new Vector3(x - 3f, 0f, z + 11f);
+    static Vector3 E(float x, float z) => new Vector3(x + 3f, 0f, z + 11f);
 
     /// <summary>Camina en línea recta hacia 'destino' (sólo x y z). Falla si en 'limite' segundos no llega.</summary>
     IEnumerator Caminar(Vector3 destino, float limite = 30f)
