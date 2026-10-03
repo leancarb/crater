@@ -1,17 +1,12 @@
 /*
- * CRATER — trailer
- * Motor 3D minimo en canvas 2D (poligonos + painter's algorithm + luces spot),
- * sonido sintetizado con WebAudio. Sin dependencias.
+ * CRATER — pitch (~2 min)
+ * Recorre las funcionalidades del GDD v0.5, una por plano, con un texto que las
+ * explica y la interfaz minima del juego (mira con barra de carga, estado de la
+ * linterna arriba a la derecha, una indicacion breve abajo).
  *
- * Sigue el GDD v0.5 (capilla, eclipse, crater, CUERPO, HUECO, Cresta) y la
- * estructura del trailer de Silo: placas de texto sobre negro con un golpe grave,
- * planos lentos que se aceleran, el titulo recien al final y un cierre despues.
- *
- * Las mecanicas que se muestran salen de Assets/Scripts:
- *   LinternaController  -> haz con cono, alcance y color por filtro, demora de cambio
- *   Ancla + PuenteLuz   -> CUERPO: dos anclas encendidas sostienen un puente
- *   MateriaHueca        -> HUECO: la reja baja a 15 % de opacidad y se atraviesa
- *   AdaptacionOscuridad -> con la linterna apagada sube la exposicion y aparece la puerta
+ * Mismo motor que el teaser: canvas 2D con poligonos ordenados por profundidad,
+ * luces spot y direccionales, y sonido sintetizado con WebAudio.
+ * Todo sale de drawFrame(t), que depende solo de t.
  */
 (() => {
 'use strict';
@@ -52,6 +47,7 @@ function rng(seed) { // mulberry32
 const AMBER = [0.91, 0.63, 0.29];          // Filtro_Cuerpo / Ancla colorEncendida
 const BLUE  = [0.29, 0.357, 0.91];         // Filtro_Hueco
 const OCULO = [0.788, 0.443, 0.29];        // Mat_Oculo emission
+const GLOW  = [1.0, 0.42, 0.06];            // ambar saturado para lo que brilla (anclas, rocas)
 const ECL   = [0.78, 0.83, 0.93];          // plateado frio: corona, puerta, oculos (GDD 5)
 const WARM  = [1, 0.96, 0.88];             // LinternaController colorBase
 const ASH   = [0.30, 0.27, 0.24];
@@ -63,7 +59,8 @@ const FILTROS = {
   cuerpo: { col: AMBER, ang: 45, range: 14, int: 5.5 },
   hueco:  { col: BLUE,  ang: 55, range: 30, int: 8.0 },
 };
-const DEMORA_CAMBIO = 0.8;
+const DEMORA_CAMBIO = 0.6;   // GDD 3.2: cambiar de filtro tarda 0,6 s
+const CARGA = 0.4;           // GDD 3.2: cargar un receptor lleva 0,4 s
 
 const DISPLAY = '"Italiana", "Didot", "Bodoni 72", serif';
 const SERIF = '"Instrument Serif", "Iowan Old Style", Georgia, serif';
@@ -87,7 +84,7 @@ function resize() {
   let w = CW, h = w * 9 / 16;
   if (h > CH) { h = CH; w = h * 16 / 9; }
   VR.w = w; VR.h = h; VR.x = (CW - w) / 2; VR.y = (CH - h) / 2;
-  VR.bar = Math.max(0, (h - w / 2.2) / 2);
+  VR.bar = 0;
   if (!playing) drawFrame(T);
 }
 
@@ -101,14 +98,20 @@ for (let k = 0; k < 4; k++) {
 }
 
 // ------------------------------------------------------------------ geometria
-function quad(Q, p0, p1, p2, p3, o) {
-  const c = V((p0.x + p1.x + p2.x + p3.x) / 4, (p0.y + p1.y + p2.y + p3.y) / 4, (p0.z + p1.z + p2.z + p3.z) / 4);
-  const n = vnorm(vcross(vsub(p2, p0), vsub(p3, p1)));
-  const j = o.jit ?? 0.28, k = 1 - j + 2 * j * hash(c.x, c.y, c.z);
-  const q = { p: [p0, p1, p2, p3], c, n, alb: [o.alb[0] * k, o.alb[1] * k, o.alb[2] * k],
-              em: o.em ? o.em.slice() : [0, 0, 0], a: o.a ?? 1, upd: o.upd, i: o.i, off: null };
+function poly(Q, pts, o) {
+  let nx = 0, ny = 0, nz = 0, cx = 0, cy = 0, cz = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i], b = pts[(i + 1) % pts.length];
+    nx += (a.y - b.y) * (a.z + b.z); ny += (a.z - b.z) * (a.x + b.x); nz += (a.x - b.x) * (a.y + b.y);
+    cx += a.x; cy += a.y; cz += a.z;
+  }
+  const k = pts.length, c = V(cx / k, cy / k, cz / k), n = vnorm(V(nx, ny, nz));
+  const j = o.jit ?? 0.08, f = 1 - j + 2 * j * hash(c.x, c.y, c.z);
+  const q = { p: pts, c, n, alb: [o.alb[0] * f, o.alb[1] * f, o.alb[2] * f], em: o.em ? o.em.slice() : [0, 0, 0],
+              a: o.a ?? 1, upd: o.upd, i: o.i, off: null, layer: o.layer ?? 1, noSpot: o.noSpot };
   Q.push(q); return q;
 }
+const quad = (Q, p0, p1, p2, p3, o) => poly(Q, [p0, p1, p2, p3], o);
 function subdivide(prof, tile) {
   const pts = [];
   for (let i = 0; i < prof.length - 1; i++) {
@@ -178,6 +181,35 @@ function box(Q, cx, cy, cz, sx, sy, sz, o) {
   return out;
 }
 
+// prisma de base irregular con la tapa cortada en plano inclinado (monolitos, columnas)
+function prism(Q, cx, cz, r, sides, y0, h, slope, o) {
+  const R = rng(o.seed || 7), a0 = R() * 6.283, sa = R() * 6.283, B = [], T = [];
+  for (let i = 0; i < sides; i++) {
+    const a = a0 + i / sides * 6.283 + (R() - 0.5) * 0.4, rr = r * (0.8 + 0.4 * R());
+    const x = cx + Math.cos(a) * rr, z = cz + Math.sin(a) * rr;
+    B.push(V(x, y0, z)); T.push(V(x, h + slope * ((x - cx) * Math.cos(sa) + (z - cz) * Math.sin(sa)), z));
+  }
+  for (let i = 0; i < sides; i++) { const i1 = (i + 1) % sides; poly(Q, [B[i], B[i1], T[i1], T[i]], o); }
+  poly(Q, T, o);
+}
+// caja rotada en el plano xz
+function obox(Q, cx, cz, ang, w, d, y0, y1, o) {
+  const ux = Math.cos(ang), uz = Math.sin(ang), vx = -uz, vz = ux;
+  const P = (a, b, y) => V(cx + ux * a * w / 2 + vx * b * d / 2, y, cz + uz * a * w / 2 + vz * b * d / 2);
+  const B = [P(-1, -1, y0), P(1, -1, y0), P(1, 1, y0), P(-1, 1, y0)], T = [P(-1, -1, y1), P(1, -1, y1), P(1, 1, y1), P(-1, 1, y1)];
+  for (let i = 0; i < 4; i++) { const i1 = (i + 1) % 4; poly(Q, [B[i], B[i1], T[i1], T[i]], o); }
+  poly(Q, T, o);
+}
+// roca facetada: icosaedro con vertices desplazados. Devuelve las caras (con q.on, normal hacia afuera)
+function icosa(Q, c, r, seed, o) {
+  const t = (1 + Math.sqrt(5)) / 2, R = rng(seed);
+  const vs = [[-1, t, 0], [1, t, 0], [-1, -t, 0], [1, -t, 0], [0, -1, t], [0, 1, t], [0, -1, -t], [0, 1, -t], [t, 0, -1], [t, 0, 1], [-t, 0, -1], [-t, 0, 1]]
+    .map(v => { const k = r * (0.8 + 0.35 * R()) / Math.hypot(v[0], v[1], v[2]); return V(c.x + v[0] * k * (o.sx || 1), c.y + v[1] * k * (o.sy || 1), c.z + v[2] * k); });
+  const F = [[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11], [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+             [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9], [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]];
+  return F.map(f => { const q = poly(Q, [vs[f[0]], vs[f[1]], vs[f[2]]], o); q.on = vnorm(vsub(q.c, c)); return q; });
+}
+
 // ------------------------------------------------------------------ camara y proyeccion
 const cam = { p: V(0, 1.6, 0), yaw: 0, pitch: 0, roll: 0, fov: 1.05 };
 let CT = null;
@@ -219,9 +251,14 @@ const rgb = c => 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
 const rgba = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a.toFixed(3) + ')';
 
 // luz sobre un punto (para quads y particulas)
-function lightAt(px, py, pz, n, L, out) {
+function lightAt(px, py, pz, n, L, out, noSpot) {
   for (const l of L) {
     if (l.int <= 0) continue;
+    if (l.par) { // luz direccional: solo ilumina las caras que la miran
+      const dd = n ? -(n.x * l.d.x + n.y * l.d.y + n.z * l.d.z) : 0.5; if (dd <= 0) continue;
+      out[0] += l.col[0] * l.int * dd; out[1] += l.col[1] * l.int * dd; out[2] += l.col[2] * l.int * dd; continue;
+    }
+    if (noSpot && l.dir) continue;
     const dx = px - l.p.x, dy = py - l.p.y, dz = pz - l.p.z, d = Math.hypot(dx, dy, dz) || 1e-3;
     if (d > l.range) continue;
     const ix = dx / d, iy = dy / d, iz = dz / d;
@@ -240,25 +277,30 @@ function renderWorld(Q, L, env) {
   for (const q of Q) {
     if (q.upd) q.upd(q);
     if (q.a < 0.004) continue;
-    const off = q.off, cs = [toCam(q.p[0], off), toCam(q.p[1], off), toCam(q.p[2], off), toCam(q.p[3], off)];
+    const off = q.off, cs = q.p.map(p => toCam(p, off));
     let front = 0; for (const c of cs) if (c[2] >= NEAR) front++;
     if (!front) continue;
-    let poly = front < 4 ? clipNear(cs) : cs;
-    // descarte lateral grosero
+    const pl = front < cs.length ? clipNear(cs) : cs;
     let l = 0, r = 0, u = 0, dn = 0;
-    const sp = poly.map(c => { const s = toScr(c[0], c[1], c[2]); if (s[0] < -40) l++; if (s[0] > W + 40) r++; if (s[1] < -40) u++; if (s[1] > H + 40) dn++; return s; });
+    const sp = pl.map(c => { const s = toScr(c[0], c[1], c[2]); if (s[0] < -40) l++; if (s[0] > W + 40) r++; if (s[1] < -40) u++; if (s[1] > H + 40) dn++; return s; });
     if (l === sp.length || r === sp.length || u === sp.length || dn === sp.length) continue;
     const cx = q.c.x + (off ? off.x : 0), cy = q.c.y + (off ? off.y : 0), cz = q.c.z + (off ? off.z : 0);
+    // normal girada hacia la camara: en solidos convexos las caras visibles son las que la miran
+    let n = q.n; if (n.x * (cam.p.x - cx) + n.y * (cam.p.y - cy) + n.z * (cam.p.z - cz) < 0) n = V(-n.x, -n.y, -n.z);
     acc[0] = amb[0]; acc[1] = amb[1]; acc[2] = amb[2];
-    lightAt(cx, cy, cz, q.n, L, acc);
+    lightAt(cx, cy, cz, n, L, acc, q.noSpot);
     const dist = Math.hypot(cx - cam.p.x, cy - cam.p.y, cz - cam.p.z), fk = Math.exp(-dist * fog);
     const col = tone((q.alb[0] * acc[0] + q.em[0]) * fk + fc[0] * (1 - fk), (q.alb[1] * acc[1] + q.em[1]) * fk + fc[1] * (1 - fk),
                      (q.alb[2] * acc[2] + q.em[2]) * fk + fc[2] * (1 - fk), E, sat);
-    list.push({ d: (cs[0][2] + cs[1][2] + cs[2][2] + cs[3][2]) / 4, sp, col, a: q.a });
+    let d = 0; for (const c of cs) d += c[2];
+    list.push({ d: d / cs.length, layer: q.layer, sp, col, a: q.a });
   }
-  list.sort((a, b) => b.d - a.d);
+  // capas: 0 piso, 0.5 marcas en el piso, 1 todo lo demas. Entre el piso y los objetos va env.onFloor (la mancha del haz)
+  list.sort((a, b) => a.layer - b.layer || b.d - a.d);
   g.lineJoin = 'round';
+  let floorDone = false;
   for (const it of list) {
+    if (!floorDone && it.layer >= 1) { floorDone = true; if (env.onFloor) env.onFloor(); }
     const s = it.sp; g.beginPath(); g.moveTo(s[0][0], s[0][1]);
     for (let i = 1; i < s.length; i++) g.lineTo(s[i][0], s[i][1]);
     g.closePath();
@@ -267,6 +309,46 @@ function renderWorld(Q, L, env) {
     if (it.a < 1) { g.globalAlpha = it.a; g.fill(); g.globalAlpha = 1; }
     else { g.strokeStyle = c; g.lineWidth = 0.7; g.fill(); g.stroke(); }
   }
+  if (!floorDone && env.onFloor) env.onFloor();
+}
+
+// mancha nitida del haz sobre el piso: el borde del cono intersectado con el plano y = y0
+function floorPool(Lt, y0, alpha) {
+  if (!Lt || Lt.int <= 0) return;
+  const d = Lt.dir, u = vnorm(vcross(d, Math.abs(d.y) > 0.9 ? V(1, 0, 0) : V(0, 1, 0))), w = vcross(u, d), half = Math.acos(Lt.cosO);
+  const cs = [];
+  for (let k = 0; k < 36; k++) {
+    const a = k / 36 * 6.283, r = vnorm(vadd(vmul(d, Math.cos(half)), vmul(vadd(vmul(u, Math.cos(a)), vmul(w, Math.sin(a))), Math.sin(half))));
+    let t = Lt.range; if (r.y < -1e-3) t = Math.min(t, (y0 - Lt.p.y) / r.y);
+    const q = vadd(Lt.p, vmul(r, t)); q.y = y0; cs.push(toCam(q));
+  }
+  const pl = clipNear(cs); if (pl.length < 3) return;
+  const sp = pl.map(c => toScr(c[0], c[1], c[2])), col = Lt.col.map(v => v * 255 | 0);
+  const flat = vnorm(V(d.x, 0, d.z)), a0 = proj(V(Lt.p.x + flat.x * 2, y0, Lt.p.z + flat.z * 2)), a1 = proj(V(Lt.p.x + flat.x * Lt.range, y0, Lt.p.z + flat.z * Lt.range));
+  let fill = rgba(col, alpha);
+  if (a0 && a1) { const gr = g.createLinearGradient(a0[0], a0[1], a1[0], a1[1]); gr.addColorStop(0, rgba(col, alpha)); gr.addColorStop(1, rgba(col, alpha * 0.55)); fill = gr; }
+  g.fillStyle = fill; g.beginPath(); sp.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill();
+}
+// volumen del haz: una cuna translucida plana, de cara a la camara
+function beamVolume(p0, p1, r0, r1, col, alpha) {
+  const d = vnorm(vsub(p1, p0)), toC = vnorm(vsub(cam.p, vmul(vadd(p0, p1), 0.5))), s2 = vnorm(vcross(d, toC));
+  const pl = clipNear([vadd(p0, vmul(s2, r0)), vadd(p1, vmul(s2, r1)), vsub(p1, vmul(s2, r1)), vsub(p0, vmul(s2, r0))].map(p => toCam(p)));
+  if (pl.length < 3) return;
+  const sp = pl.map(c => toScr(c[0], c[1], c[2]));
+  g.fillStyle = rgba(col.map(v => v * 255 | 0), alpha);
+  g.beginPath(); sp.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill();
+}
+// anillos concentricos del ancla encendida, en el plano de la cara que recibe el haz
+function glyphRings(c, nrm, r, k, cols = ['rgb(232,161,74)', 'rgb(255,214,150)']) {
+  if (k <= 0) return;
+  const s0 = proj(c); if (!s0) return;
+  const u = vnorm(vcross(nrm, Math.abs(nrm.y) > 0.9 ? V(1, 0, 0) : V(0, 1, 0))), w = vcross(u, nrm), lw = Math.max(0.8, CT.f * 0.05 * r / s0[2]);
+  g.globalCompositeOperation = 'lighter';
+  for (const rr of [r, r * 0.62]) {
+    const pts = []; for (let i = 0; i <= 40; i++) { const a = i / 40 * 6.283; pts.push(vadd(c, vadd(vmul(u, Math.cos(a) * rr), vmul(w, Math.sin(a) * rr)))); }
+    polyline(pts, lw * 3.5, cols[0], 0.3 * k); polyline(pts, lw, cols[1], k);
+  }
+  g.globalCompositeOperation = 'source-over';
 }
 
 // linterna: spot desde un poco abajo y a la derecha del ojo
@@ -320,7 +402,7 @@ function polyline(pts, lw, color, alpha) {
 
 // ------------------------------------------------------------------ estado por frame
 const S = { audio: null, grain: 0.05, flash: 0 };
-function resetS() { S.audio = { drone: 0.3, wind: 0.1, hum: 0, humF: 110, birds: 0 }; S.grain = 0.05; S.flash = 0; }
+function resetS() { S.audio = { drone: 0.3, wind: 0.1, hum: 0, humF: 110, birds: 0 }; S.grain = 0.035; S.flash = 0; }
 const walkBob = (z, amp = 1) => ({ y: 0.028 * amp * MOTION * Math.sin(z * 6.2), roll: 0.006 * amp * MOTION * Math.sin(z * 3.1) });
 
 // ================================================================== ESCENAS
@@ -372,7 +454,7 @@ const SUN_DIR = vnorm(V(0, Math.sin(0.34), Math.cos(0.34))), CRATER_C = V(0, 0, 
 const STV = { rise: 0 };
 const W_VALLE = (() => {
   const Q = [];
-  grid(Q, V(-120, 0, -60), V(240, 0, 0), V(0, 0, 260), 24, 26, { alb: PASTO, amp: 1.4, jit: 0.22 });
+  grid(Q, V(-120, 0, -60), V(240, 0, 0), V(0, 0, 260), 24, 26, { alb: PASTO, amp: 1.4, jit: 0.06, layer: 0 });
   // capilla andina: zocalo, nave encalada, techo de paja a dos aguas, espadana con cruz
   box(Q, 0, 0.4, -15.5, 6.4, 0.8, 11.4, { alb: PIEDRA, jit: 0.15 });
   box(Q, 0, 2.65, -15.5, 6, 3.7, 11, { alb: ADOBE, jit: 0.05 });
@@ -393,18 +475,18 @@ const W_VALLE = (() => {
   // cardones
   const R = rng(31);
   for (let i = 0; i < 14; i++) {
-    const x = (R() < 0.5 ? -1 : 1) * (9 + R() * 40), z = -30 + R() * 90, h = 2 + R() * 3.5, c = { alb: [0.2, 0.27, 0.15], jit: 0.2 };
+    const x = (R() < 0.5 ? -1 : 1) * (9 + R() * 40), z = -30 + R() * 90, h = 2 + R() * 3.5, c = { alb: [0.2, 0.27, 0.15], jit: 0.05 };
     box(Q, x, h / 2, z, 0.45, h, 0.45, c);
     if (R() < 0.7) { const ah = h * (0.45 + R() * 0.3); box(Q, x + 0.5, ah, z, 0.6, 0.3, 0.3, c); box(Q, x + 0.7, ah + 0.6, z, 0.3, 1.2, 0.3, c); }
   }
   // el borde del crater, que sube cuando empieza la totalidad
-  revolve(Q, [[15, -2], [18.5, 6.5], [22, 4.5], [27, -2]], 40, { alb: ROCK, amp: 1.6, tile: 2.2, cx: CRATER_C.x, cz: CRATER_C.z,
+  revolve(Q, [[15, -2], [18.5, 6.5], [22, 4.5], [27, -2]], 40, { alb: ROCK, amp: 1.6, tile: 2.2, jit: 0.05, cx: CRATER_C.x, cz: CRATER_C.z,
     upd: q => { q.a = STV.rise > 0.01 ? 1 : 0; q.off = V(0, (STV.rise - 1) * 8.5, 0); } });
   return Q;
 })();
 const lerp3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
 const css3 = c => 'rgb(' + (c[0] * 255 | 0) + ',' + (c[1] * 255 | 0) + ',' + (c[2] * 255 | 0) + ')';
-function valle(prog) {
+function valle(prog, onFloor) {
   const day = 1 - smooth(0.5, 1, prog), tot = smooth(0.92, 1, prog);
   // cielo: de dia claro, en la totalidad noche con el horizonte encendido en 360
   const top = lerp3([0.02, 0.03, 0.07], [0.55, 0.66, 0.78], day), hor = lerp3(lerp3([0.2, 0.2, 0.26], [0.36, 0.2, 0.12], tot), [0.86, 0.86, 0.83], day);
@@ -427,17 +509,9 @@ function valle(prog) {
   const L = [{ p: vmul(SUN_DIR, 3000), col: [1, 0.97, 0.9], int: 1.35 * day, k: 0, range: 9000 },
              { p: vmul(SUN_DIR, 3000), col: ECL, int: 0.05 * tot, k: 0, range: 9000 }];
   const env = { amb: lerp3([0.006, 0.007, 0.012], [0.32, 0.33, 0.36], day), fog: 0.006,
-                fogCol: lerp3([0.012, 0.012, 0.02], [0.75, 0.77, 0.78], day) };
+                fogCol: lerp3([0.012, 0.012, 0.02], [0.75, 0.77, 0.78], day), onFloor };
   renderWorld(W_VALLE, L, env);
   return { day, tot };
-}
-function rCapilla(lt) {
-  cam.p = V(lerp(7.5, 5.2, lt / 7), 1.6, lerp(6, 3.2, lt / 7)); cam.fov = 1.05; cam.roll = 0;
-  const d = vsub(V(0, 3.4, -14), cam.p);
-  cam.yaw = Math.atan2(d.x, d.z) + 0.01 * hh(lt * 0.3); cam.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z)) + 0.008 * hh(lt * 0.4);
-  setCam();
-  valle(smooth(4, 7, lt) * 0.35);
-  S.audio = { drone: 0, wind: 0.12, hum: 0, humF: 110, birds: 1 };
 }
 function rEclipse(lt) {
   const prog = clamp(lt / 5.2);
@@ -462,163 +536,313 @@ function rEclipse(lt) {
   S.audio = { drone: 0.4 * v.tot, wind: 0.12 + 0.1 * v.tot, hum: 0, humF: 110, birds: prog < 1 ? 1 : 0 };
 }
 
-// ---- 1. El oculo -----------------------------------------------------------
-const W_OCULO = (() => {
-  const Q = [];
-  revolve(Q, [[0.3, 0], [20, 0]], 40, { alb: ASH, amp: 0.4, tile: 1.4 });
-  revolve(Q, [[20, 0], [20.6, 4], [20, 8], [18.5, 13], [15, 17.5], [10.5, 20.5], [6, 22]], 40, { alb: ROCK, amp: 0.9, tile: 1.7 });
-  const R = rng(11);
-  for (let i = 0; i < 16; i++) { const a = R() * 6.28, r = 7 + R() * 11, s = 0.5 + R() * 1.6;
-    box(Q, Math.cos(a) * r, s * 0.4, Math.sin(a) * r, s, s * 0.8 + R(), s * (0.7 + R() * 0.6), { alb: ROCK, jit: 0.3 }); }
-  return Q;
-})();
-function rOculo(lt) {
-  cam.p = V(0.3 * hh(lt * 0.2), 1.7, -13 + lt * 0.2);
-  cam.pitch = lerp(1.02, -0.05, ease(clamp((lt - 1.0) / 6.4)));
-  cam.yaw = 0.05 * hh(lt * 0.3); cam.roll = 0.01 * hh(lt * 0.25 + 4); cam.fov = 1.0;
-  setCam();
-  const sun = { p: V(0, 24, 0), dir: V(0, -1, 0), col: ECL, int: 1.9, k: 0.0015, range: 70,
-                cosO: Math.cos(0.4), cosI: Math.cos(0.17) };
-  const L = [sun, { p: V(0, 21, 0), col: ECL, int: 0.05, k: 0.0005, range: 60 }], env = { amb: [0.009, 0.008, 0.009], fog: 0.01 };
-  // cielo tras el oculo
-  const ring = []; for (let i = 0; i < 40; i++) { const a = i / 40 * 6.283; ring.push(proj(V(Math.cos(a) * 6.4, 22.2, Math.sin(a) * 6.4))); }
-  const ctr = proj(V(0, 22.6, 0));
-  if (ctr && ring.every(Boolean)) {
-    const R = Math.hypot(ring[0][0] - ctr[0], ring[0][1] - ctr[1]) * 1.2;
-    const gl = g.createRadialGradient(ctr[0], ctr[1], 0, ctr[0], ctr[1], R * 3);
-    gl.addColorStop(0, 'rgba(170,190,235,0.22)'); gl.addColorStop(1, 'rgba(170,190,235,0)');
-    g.fillStyle = gl; g.fillRect(0, 0, W, H);
-    g.save(); g.fillStyle = '#060a18'; g.beginPath(); ring.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fill(); g.clip();
-    corona(ctr[0], ctr[1], R * 0.24); g.restore();
-  }
-  renderWorld(W_OCULO, L, env);
-  // columna de luz
-  g.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < 28; i++) {
-    const a0 = i / 28 * 6.283, a1 = (i + 1) / 28 * 6.283;
-    const P = [V(Math.cos(a0) * 6, 22, Math.sin(a0) * 6), V(Math.cos(a1) * 6, 22, Math.sin(a1) * 6),
-               V(Math.cos(a1) * 9.6, 0, Math.sin(a1) * 9.6), V(Math.cos(a0) * 9.6, 0, Math.sin(a0) * 9.6)].map(proj);
-    if (P.some(p => !p)) continue;
-    g.fillStyle = 'rgba(185,200,240,0.02)'; g.beginPath(); P.forEach((p, k) => k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.fill();
-  }
-  g.globalCompositeOperation = 'source-over';
-  motes(320, 7, (i, a, b, c) => {
-    const y = (b * 22 + lt * 0.25) % 22, r = Math.sqrt(a) * (6 + (22 - y) * 0.16);
-    const an = c * 6.283 + lt * 0.02; return V(Math.cos(an) * r, y, Math.sin(an) * r + Math.sin(lt * 0.5 + i) * 0.2);
-  }, L, env, 0.6);
-  S.audio = { drone: 0.5, wind: 0.28, hum: 0, humF: 110 };
-}
-
-// ---- 2. Tunel de ceniza: se enciende la linterna ---------------------------
-const PT = [[-1.7, 0], [1.7, 0], [1.85, 1.8], [1.5, 2.6], [0.8, 3.1], [0, 3.25], [-0.8, 3.1], [-1.5, 2.6], [-1.85, 1.8], [-1.7, 0]];
-const W_TUNEL = (() => {
-  const Q = []; extrude(Q, PT, -2, 42, { alb: ASH, amp: 0.2, tile: 0.42 });
-  const R = rng(4);
-  for (let i = 0; i < 18; i++) { const s = 0.15 + R() * 0.45; box(Q, (R() - 0.5) * 2.6, s * 0.35, 2 + R() * 30, s, s * 0.7, s * 1.2, { alb: ROCK }); }
-  return Q;
-})();
-function rTunel(lt) {
-  const z = 0.5 + Math.max(0, lt - 1.4) * 0.85, b = walkBob(z, lt > 1.4 ? 1 : 0);
-  cam.p = V(0.05 * hh(lt * 0.4), 1.62 + b.y, z);
-  cam.yaw = 0.08 * hh(lt * 0.6); cam.pitch = -0.04 + 0.03 * hh(lt * 0.5 + 3); cam.roll = b.roll; cam.fov = 1.05;
-  setCam();
-  const on = lt >= 0.8;
-  const flick = lt < 1.15 ? (hash(Math.floor(lt * 40), 1, 2) > 0.4 ? 1 : 0.1) : 1;
-  const L = on ? [flashlight(FILTROS.none, flick, 0.05 * hh(lt * 0.9 + 1), -0.02)] : [];
-  const env = { amb: [0.0012, 0.0011, 0.0013], fog: 0.055 };
-  renderWorld(W_TUNEL, L, env);
-  if (on) { haze(L[0]); motes(160, 3, (i, a, b2, c) => V((a - 0.5) * 3, 0.3 + b2 * 2.7, cam.p.z + 0.4 + ((c * 8 + lt * 0.06) % 8)), L, env, 0.9); }
-  S.audio = { drone: 0.35, wind: 0.14, hum: 0, humF: 110 };
-}
-
-// ---- placas y titulos --------------------------------------------------------
+// ---- placas ------------------------------------------------------------------
 function rBlack() { S.audio = { drone: 0.2, wind: 0.05, hum: 0, humF: 110 }; }
 
-// ---- 4. CUERPO: anclas y puente de luz -------------------------------------
-const PC = [[-6, -12], [-6, 0], [-6.3, 2.5], [-5.8, 5], [-4, 6.8], [-1.5, 7.6], [1.5, 7.6], [4, 6.8], [5.8, 5], [6.3, 2.5], [6, 0], [6, -12]];
-const ST4 = { a: 0, b: 0, bridge: 0 };
-const W_CUERPO = (() => {
-  const Q = [];
-  extrude(Q, PC, -3, 30, { alb: ROCK, amp: 0.45, tile: 0.9 });
-  grid(Q, V(-6, 0, -3), V(12, 0, 0), V(0, 0, 9), 18, 13, { alb: ASH, amp: 0.1 });
-  grid(Q, V(-6, 0, 15), V(12, 0, 0), V(0, 0, 15), 18, 20, { alb: ASH, amp: 0.1 });
-  grid(Q, V(-6, 0, 6), V(12, 0, 0), V(0, -12, 0), 16, 14, { alb: ROCK, amp: 0.35 });
-  grid(Q, V(-6, -12, 15), V(12, 0, 0), V(0, 12, 0), 16, 14, { alb: ROCK, amp: 0.35 });
-  const ancla = (x, z, k) => {
-    box(Q, x, 0.6, z, 0.42, 1.2, 0.42, { alb: ROCK, jit: 0.1 });
-    box(Q, x, 1.45, z, 0.5, 0.5, 0.5, { alb: ANCLA_OFF, jit: 0.05, upd: q => {
-      const c = ST4[k], col = [0, 1, 2].map(i => lerp(ANCLA_OFF[i], AMBER[i], c));
-      q.alb = col; q.em = col.map(v => v * (0.02 + 1.3 * c)); } });
-  };
-  ancla(-5, 16.5, 'a'); ancla(5, 17.5, 'b');
-  for (let i = 0; i < 12; i++) {
-    const z0 = 6 + i * 0.75;
-    for (let s = 0; s < 2; s++) {
-      quad(Q, V(-0.95 + s * 0.95, 0.02, z0), V(s * 0.95, 0.02, z0), V(s * 0.95, 0.02, z0 + 0.75), V(-0.95 + s * 0.95, 0.02, z0 + 0.75),
-        { alb: [0.5, 0.35, 0.16], jit: 0.12, i, upd: q => {
-          const v = clamp(ST4.bridge * 1.5 - q.i / 12 * 0.5);
-          q.a = v * 0.82; q.em = AMBER.map(c => c * (0.35 + 0.5 * v) * v); } });
-    }
+// ---- El Umbral: sala circular con el oculo y la linterna en el piso ---------
+const STARS = (() => { const R = rng(55), out = []; while (out.length < 110) { const x = R() * 2 - 1, z = R() * 2 - 1; if (x * x + z * z < 0.92) out.push([x * 5, z * 5, R()]); } return out; })();
+const W_UMBRAL = (() => {
+  const Q = [], DARK = [0.14, 0.14, 0.15], STONE = [0.52, 0.5, 0.46], BENCH = [0.3, 0.29, 0.27];
+  const ring = (prof, alb, extra = {}) => revolve(Q, prof, 24, { alb, amp: 0, tile: 100, jit: 0.06, ...extra });
+  ring([[0.3, 0], [12, 0]], [0.08, 0.08, 0.09], { layer: 0, noSpot: true, jit: 0.12 });
+  ring([[5.4, 0.01], [6.2, 0.01]], [0.34, 0.34, 0.35], { layer: 0.5, noSpot: true });
+  ring([[0.3, 0.012], [2.4, 0.012]], [0.42, 0.42, 0.43], { layer: 0.5, noSpot: true });
+  ring([[8.8, 0.01], [9.3, 0.01]], [0.24, 0.24, 0.25], { layer: 0.5, noSpot: true });
+  ring([[9.6, 0], [9.6, 0.5]], BENCH); ring([[9.6, 0.5], [10.8, 0.5]], BENCH);
+  ring([[10.8, 0.5], [10.8, 1.0]], BENCH); ring([[10.8, 1.0], [12, 1.0]], BENCH);
+  ring([[12, 1.0], [12, 9.2]], DARK);
+  ring([[11.6, 8.6], [11.6, 9.4]], [0.36, 0.35, 0.33]); ring([[11.6, 9.4], [12, 9.4]], [0.36, 0.35, 0.33]);
+  ring([[12, 9.4], [8.5, 11.8], [5, 13.6]], DARK.map(v => v * 0.9));
+  ring([[5, 13.6], [5, 15]], STONE);
+  for (let k = 0; k < 8; k++) {
+    const a = k / 8 * 6.283 + Math.PI / 8;
+    obox(Q, Math.cos(a) * 11.4, Math.sin(a) * 11.4, a + Math.PI / 2, 0.9, 0.8, 1.0, 9.2, { alb: STONE, jit: 0.05 });
+    const b = k / 8 * 6.283, dA = 0.05, R2 = 11.75;   // puerta oscura entre pilastras
+    quad(Q, V(Math.cos(b - dA) * R2, 1.0, Math.sin(b - dA) * R2), V(Math.cos(b + dA) * R2, 1.0, Math.sin(b + dA) * R2),
+            V(Math.cos(b + dA) * R2, 3.4, Math.sin(b + dA) * R2), V(Math.cos(b - dA) * R2, 3.4, Math.sin(b - dA) * R2), { alb: [0.015, 0.015, 0.015], jit: 0 });
   }
+  box(Q, 0, 0.09, 0, 0.5, 0.16, 0.16, { alb: [0.24, 0.24, 0.25], jit: 0.05 });    // la linterna
+  box(Q, 0.3, 0.12, 0, 0.14, 0.24, 0.24, { alb: [0.2, 0.2, 0.21], jit: 0.05 });
   return Q;
 })();
-function rCuerpo(lt) {
-  const walk = ease(clamp((lt - 6) / 5)), z = 2 + walk * 7.5, b = walkBob(z, walk > 0 && walk < 1 ? 1 : 0);
-  cam.p = V(0.04 * hh(lt * 0.3), 1.62 + b.y, z); cam.roll = b.roll; cam.fov = 1.1;
-  cam.yaw = key(lt, [[0, 0.1], [1.8, 0], [3.0, -0.34], [3.6, -0.34], [5.0, 0], [11, 0]]) + 0.03 * hh(lt * 0.7);
-  cam.pitch = key(lt, [[0, -0.12], [5, -0.03], [6.2, -0.05], [8.2, -0.5], [9.4, -0.48], [11, -0.14]]) + 0.02 * hh(lt * 0.6 + 2);
+function rUmbral(lt) {
+  const tilt = ease(clamp((lt - 0.5) / 3.6));
+  cam.p = V(0.05 * hh(lt * 0.2), 1.7, -9 + 1.2 * ease(clamp(lt / 6.2))); cam.roll = 0; cam.fov = 1.15;
+  cam.yaw = 0.01 * hh(lt * 0.3); cam.pitch = lerp(0.98, -0.17, tilt);
   setCam();
-  ST4.a = clamp((lt - 3.0) / 0.35); ST4.b = clamp((lt - 4.6) / 0.35); ST4.bridge = clamp((lt - 4.95) / 1.1);
-  const bs = beamState(lt, 1.2, 'none', 'cuerpo');
-  const L = [flashlight(bs.F, bs.mul, 0.04 * hh(lt + 5), -0.02)];
-  L.push({ p: V(-5, 1.45, 16.5), col: AMBER, int: 1.1 * ST4.a, k: 0.25, range: 8 });
-  L.push({ p: V(5, 1.45, 17.5), col: AMBER, int: 1.1 * ST4.b, k: 0.25, range: 8 });
-  L.push({ p: V(0, 0.4, 10.5), col: AMBER, int: 0.9 * ST4.bridge, k: 0.1, range: 12 });
-  const env = { amb: [0.0012, 0.0011, 0.0012], fog: 0.03 };
-  renderWorld(W_CUERPO, L, env);
-  if (ST4.bridge > 0) { // bordes del puente
-    const len = 9 * clamp(ST4.bridge * 1.3), c = 'rgb(255,196,120)';
-    g.globalCompositeOperation = 'lighter';
-    for (const x of [-0.95, 0.95]) {
-      polyline([V(x, 0.03, 6), V(x, 0.03, 6 + len)], 3, 'rgba(232,161,74,0.35)', ST4.bridge);
-      polyline([V(x, 0.03, 6), V(x, 0.03, 6 + len)], 1, c, ST4.bridge);
-    }
-    g.globalCompositeOperation = 'source-over';
+  // cielo nocturno por el oculo
+  const rim = []; for (let i = 0; i < 48; i++) { const a = i / 48 * 6.283; rim.push(proj(V(Math.cos(a) * 5, 15, Math.sin(a) * 5))); }
+  const ctr = proj(V(0, 15.05, 0));
+  if (ctr && rim.every(Boolean)) {
+    const R = Math.max(...rim.map(p => Math.hypot(p[0] - ctr[0], p[1] - ctr[1])));
+    const gr = g.createRadialGradient(ctr[0], ctr[1], 0, ctr[0], ctr[1], R);
+    gr.addColorStop(0, '#1a3688'); gr.addColorStop(1, '#0c1d56');
+    g.fillStyle = gr; g.beginPath(); rim.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill();
+    for (const [x, z, b] of STARS) { const sp = proj(V(x, 15.04, z)); if (!sp) continue; const sz = b > 0.85 ? 1.6 : 1;
+      g.fillStyle = 'rgba(235,240,255,' + (0.45 + 0.55 * b) + ')'; g.fillRect(sp[0], sp[1], sz, sz); }
   }
-  haze(L[0]);
-  motes(200, 5, (i, a, b2, c) => V((a - 0.5) * 11, -5 + b2 * 10 + Math.sin(lt * 0.3 + i) * 0.3, cam.p.z + 0.5 + ((c * 15 + lt * 0.1) % 15)), L, env, 0.7);
-  S.audio = { drone: 0.4, wind: 0.2, hum: lt > 1.2 ? 0.1 : 0, humF: 110 };
+  const moon = { par: true, d: vnorm(V(0.25, -1, 0.35)), col: [0.78, 0.82, 0.95], int: 0.52 };
+  const L = [moon];
+  let F = null;
+  if (lt >= 4.4) {
+    const fl = lt < 4.6 ? (hash(Math.floor(lt * 40), 3, 3) > 0.4 ? 1 : 0.15) : 1;
+    F = { p: V(0.42, 0.12, 0), dir: vnorm(V(0.55, -0.012, 1)), col: WARM, int: 5 * fl, k: 0.1, range: 16,
+          cosO: Math.cos(14 * Math.PI / 180), cosI: Math.cos(8 * Math.PI / 180), cosS: Math.cos(30 * Math.PI / 180), ang: 28 };
+    L.push(F);
+  }
+  renderWorld(W_UMBRAL, L, { amb: [0.012, 0.012, 0.016], fog: 0.008, onFloor: () => floorPool(F, 0.015, 0.5 * (F ? F.int / 5 : 0)) });
+  S.audio = { drone: 0.34, wind: 0.22, hum: 0, humF: 110 };
 }
 
-// ---- 5. HUECO: la reja cede ------------------------------------------------
-const PT2 = PT.map(([x, y]) => [x * 1.12, y * 1.12]);
-const ceilAt = x => { let best = 0; for (let i = 0; i < PT2.length - 1; i++) { const a = PT2[i], b = PT2[i + 1];
-  if (a[1] < 1 || b[1] < 1) continue; const lo2 = Math.min(a[0], b[0]), hi = Math.max(a[0], b[0]);
-  if (x >= lo2 && x <= hi && hi > lo2) best = Math.max(best, lerp(a[1], b[1], (x - a[0]) / (b[0] - a[0]))); } return best || 2; };
-const ST5 = { dis: 0 };
-const W_HUECO = (() => {
-  const Q = []; extrude(Q, PT2, -2, 40, { alb: ASH, amp: 0.2, tile: 0.48 });
-  const reja = { alb: [0.2, 0.165, 0.13], jit: 0.15, upd: q => {
-    const d = ST5.dis; q.a = lerp(1, 0.15, d); q.em = BLUE.map(c => c * (0.25 * d + 1.6 * d * (1 - d))); } };
-  for (let x = -1.82; x <= 1.83; x += 0.26) { const h = ceilAt(x) - 0.05; box(Q, x, h / 2, 9, 0.07, h, 0.07, reja); }
-  for (const [y, w] of [[0.7, 3.9], [1.6, 3.9], [2.5, 3.3]]) box(Q, 0, y, 9, w, 0.07, 0.08, reja);
-  const R = rng(9);
-  for (let i = 0; i < 16; i++) { const s = 0.15 + R() * 0.5; box(Q, (R() - 0.5) * 2.8, s * 0.35, 1 + R() * 34, s, s * 0.7, s * 1.2, { alb: ROCK }); }
+// ---- La sala de los monolitos -----------------------------------------------
+const W_SALA = (() => {
+  const Q = [], R = rng(41), CREAM = [0.66, 0.64, 0.6];
+  grid(Q, V(-16, 0, -4), V(32, 0, 0), V(0, 0, 56), 8, 14, { alb: [0.22, 0.21, 0.2], layer: 0, noSpot: true, jit: 0.06 });
+  for (let i = 0; i < 14; i++) {
+    const side = i % 2 ? 1 : -1, x = side * (3.2 + R() * 4), z = 2 + i * 3.1 + R() * 2, h = 0.25 + R() * 0.5;
+    box(Q, x, h / 2, z, 3 + R() * 3, h, 2 + R() * 3, { alb: [0.27, 0.26, 0.25], jit: 0.05 });
+  }
+  for (let i = 0; i < 8; i++) for (const side of [-1, 1]) {
+    prism(Q, side * (6.5 + R() * 3.5), 5 + i * 5.5 + R() * 2, 1.2 + R() * 1.1, R() < 0.5 ? 4 : 5, 0, 10 + R() * 16, (R() - 0.5) * 1.6,
+      { alb: CREAM, jit: 0.04, seed: 100 + i * 2 + (side > 0 ? 1 : 0) });
+  }
+  for (let st = 0; st < 8; st++) box(Q, 0, (st + 1) * 0.1, 39 + st * 0.55, 6, (st + 1) * 0.2, 0.55, { alb: [0.3, 0.29, 0.27], jit: 0.03 });
+  box(Q, 0, 0.8, 46.5, 10, 1.6, 6, { alb: [0.3, 0.29, 0.27], jit: 0.03 });
+  box(Q, 0, 3.8, 47.6, 3.6, 4.4, 1.2, { alb: [0.2, 0.19, 0.18], jit: 0.03 });
+  quad(Q, V(-0.75, 1.62, 46.98), V(0.75, 1.62, 46.98), V(0.75, 4.3, 46.98), V(-0.75, 4.3, 46.98), { alb: [0.01, 0.01, 0.01], jit: 0, em: AMBER.map(v => v * 0.04) });
+  const frame = { alb: AMBER, em: AMBER.map(v => v * 0.55), jit: 0 };
+  box(Q, -0.85, 2.96, 46.94, 0.12, 2.7, 0.08, frame); box(Q, 0.85, 2.96, 46.94, 0.12, 2.7, 0.08, frame); box(Q, 0, 4.36, 46.94, 1.82, 0.12, 0.08, frame);
+  // rocas flotantes: las caras de abajo brillan en ambar
+  [[-6.8, 6.6, 15, 1.2], [7.4, 7.8, 18, 1.0], [-2.6, 6.2, 21, 0.32], [2.4, 7.4, 25, 0.3], [-2.1, 4.1, 29, 0.3], [3.3, 3.8, 32, 0.42], [-6.5, 9, 30, 0.8]]
+    .forEach(([x, y, z, r], k) => icosa(Q, V(x, y, z), r, 60 + k, { alb: [0.06, 0.055, 0.05], jit: 0.03 })
+      .forEach(q => { if (q.on.y < -0.45) q.em = GLOW.map(v => v * 0.5); }));
   return Q;
 })();
-function rHueco(lt) {
-  const walk = ease(clamp((lt - 3.1) / 6.2)), z = 3.2 + walk * 10.5, b = walkBob(z, walk > 0 && walk < 1 ? 1 : 0);
-  cam.p = V(0.05 * hh(lt * 0.4), 1.62 + b.y, z); cam.roll = b.roll; cam.fov = 1.05;
-  cam.yaw = 0.07 * hh(lt * 0.55); cam.pitch = -0.03 + 0.025 * hh(lt * 0.6 + 1);
+function rSala(lt) {
+  cam.p = V(0.5, 1.6, 1.5 + lt * 1.3); cam.roll = 0.004 * hh(lt); cam.fov = 1.2;
+  cam.yaw = -0.03 + 0.012 * hh(lt * 0.5); cam.pitch = 0.05 + 0.01 * hh(lt * 0.4 + 2);
   setCam();
-  ST5.dis = clamp((lt - 2.55) * 4);
-  const bs = beamState(lt, 1.4, 'none', 'hueco');
-  const L = [flashlight(bs.F, bs.mul, 0.04 * hh(lt + 2), -0.02)];
-  const env = { amb: [0.0011, 0.0011, 0.0014], fog: 0.035 };
-  renderWorld(W_HUECO, L, env);
-  haze(L[0], 0.09);
-  motes(180, 8, (i, a, b2, c) => V((a - 0.5) * 3.4, 0.3 + b2 * 3, cam.p.z + 0.4 + ((c * 10 + lt * 0.06) % 10)), L, env, 0.9);
-  S.audio = { drone: 0.36, wind: 0.14, hum: lt > 1.4 ? 0.11 : 0, humF: 82.4 };
+  const key = { par: true, d: vnorm(V(0.55, -0.5, 0.65)), col: [1, 0.96, 0.9], int: 1.0 };
+  const F = flashlight(FILTROS.cuerpo, 1, -0.015, -0.02); F.range = 34;
+  renderWorld(W_SALA, [key, F], { amb: [0.004, 0.004, 0.005], fog: 0.01, onFloor: () => floorPool(F, 0.012, 0.7) });
+  const dp = proj(V(0, 3, 46.9));
+  if (dp) { g.globalCompositeOperation = 'lighter'; const R = CT.f * 3 / dp[2], gr = g.createRadialGradient(dp[0], dp[1], 0, dp[0], dp[1], R);
+    gr.addColorStop(0, 'rgba(232,161,74,0.35)'); gr.addColorStop(1, 'rgba(232,161,74,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, H); g.globalCompositeOperation = 'source-over'; }
+  S.audio = { drone: 0.34, wind: 0.12, hum: 0.1, humF: 110 };
+}
+
+// ---- CUERPO de cerca: el haz enciende el ancla -------------------------------
+const ANCLA_A = V(0, 2.3, 6.2), LAMP_A = V(-10, 2.6, 1.2), TO_LAMP_A = vnorm(vsub(LAMP_A, ANCLA_A));
+const STA = { k: 0 };
+const W_ANCLA = (() => {
+  const Q = [], BR = [0.2, 0.15, 0.1];
+  prism(Q, 0.5, 8.4, 1.9, 5, -8, 14, 0.8, { alb: BR, seed: 201 });
+  prism(Q, -2.0, 7.7, 1.1, 4, -8, 11, -1, { alb: BR, seed: 202 });
+  prism(Q, 2.3, 7.5, 1.2, 5, -8, 12.5, 1.2, { alb: BR, seed: 203 });
+  prism(Q, -0.4, 6.9, 0.85, 4, -8, 1.0, 0.5, { alb: BR, seed: 204 });
+  prism(Q, 0.8, 6.8, 0.75, 4, 3.7, 12, 0.5, { alb: BR, seed: 205 });
+  icosa(Q, ANCLA_A, 1.05, 77, { alb: [0.07, 0.06, 0.05], jit: 0.03, sy: 1.35 }).forEach(q => {
+    q.upd = q2 => { const d = q2.on.x * TO_LAMP_A.x + q2.on.y * TO_LAMP_A.y + q2.on.z * TO_LAMP_A.z;
+      q2.em = d > 0.2 ? GLOW.map(v => v * (0.03 + 0.9 * STA.k) * d * d) : [0, 0, 0]; };
+  });
+  return Q;
+})();
+function rAnclaA(lt) {
+  const push = ease(clamp(lt / 3.4));
+  cam.p = V(-1.9 + 0.3 * push, 2.4, -0.4 + 0.9 * push); cam.roll = 0; cam.fov = 1.05;
+  const tg = V(-0.7, 2.5, 6.2), d = vsub(tg, cam.p);
+  cam.yaw = Math.atan2(d.x, d.z) + 0.008 * hh(lt); cam.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
+  setCam();
+  STA.k = clamp((lt - 0.9) / CARGA);
+  const on = lt >= 0.3 ? (lt < 0.45 ? 0.5 : 1) : 0;
+  const L = [{ p: LAMP_A, dir: vmul(TO_LAMP_A, -1), col: AMBER, int: 3.5 * on, k: 0.02, range: 25,
+               cosO: Math.cos(6 * Math.PI / 180), cosI: Math.cos(3.5 * Math.PI / 180) },
+             { p: ANCLA_A, col: AMBER, int: 0.45 * STA.k, k: 0.8, range: 5 }];
+  renderWorld(W_ANCLA, L, { amb: [0.003, 0.0025, 0.002], fog: 0.01 });
+  if (on) beamVolume(LAMP_A, vadd(ANCLA_A, vmul(TO_LAMP_A, 0.9)), 0.12, 0.55, AMBER, 0.32 * on);
+  glyphRings(vadd(ANCLA_A, vmul(TO_LAMP_A, 0.98)), TO_LAMP_A, 0.42, smooth(1.2, 1.5, lt));
+  S.audio = { drone: 0.3, wind: 0.08, hum: on ? 0.1 : 0, humF: 110 };
+}
+
+// ---- CUERPO: el puente entre dos anclas --------------------------------------
+const ANCLA_PA = V(-5.2, 6.9, 25.3), ANCLA_PB = V(4.4, 5.1, 10.1), LAMP_B = V(9, 3, 2.5);
+const PA = V(-4.5, 6.1, 24.6), PB = V(3.6, 4.5, 10.9);
+const STB = { a: 1, b: 0, br: 0 };
+const W_PUENTE = (() => {
+  const Q = [], BR = [0.17, 0.13, 0.09];
+  prism(Q, -6.4, 26.4, 1.9, 5, -30, 9.5, 1, { alb: BR, seed: 301 });
+  prism(Q, -4.3, 27.6, 1.3, 4, -30, 7.2, -0.8, { alb: BR, seed: 302 });
+  prism(Q, -7.8, 24.2, 1.0, 4, -30, 11, 0.6, { alb: BR, seed: 303 });
+  prism(Q, 5.6, 10.6, 1.8, 5, -30, 7.5, 1.2, { alb: BR, seed: 311 });
+  prism(Q, 7.3, 12.8, 1.2, 4, -30, 9.5, -1, { alb: BR, seed: 312 });
+  prism(Q, 4.3, 8.4, 1.0, 5, -30, 3.8, 0.5, { alb: BR, seed: 313 });
+  [[-1, 34, 1.4, 4], [4, 30, 1.1, 6], [9, 22, 1.3, 3], [-10, 16, 1.5, 5], [1.2, 20, 0.9, -2]]
+    .forEach(([x, z, r, h], k) => prism(Q, x, z, r, 4 + k % 2, -30, h, 0.8, { alb: BR.map(v => v * 0.8), seed: 320 + k }));
+  const toB = vnorm(vsub(PB, ANCLA_PA)), toL = vnorm(vsub(LAMP_B, ANCLA_PB));
+  icosa(Q, ANCLA_PA, 0.85, 91, { alb: [0.07, 0.06, 0.05], jit: 0.03 }).forEach(q => {
+    q.upd = q2 => { const d = q2.on.x * toB.x + q2.on.y * toB.y + q2.on.z * toB.z; q2.em = d > 0.2 ? GLOW.map(v => v * (0.03 + 0.9 * STB.a) * d * d) : [0, 0, 0]; }; });
+  icosa(Q, ANCLA_PB, 1.0, 92, { alb: [0.07, 0.06, 0.05], jit: 0.03 }).forEach(q => {
+    q.upd = q2 => { const d = q2.on.x * toL.x + q2.on.y * toL.y + q2.on.z * toL.z; q2.em = d > 0.2 ? GLOW.map(v => v * (0.03 + 0.9 * STB.b) * d * d) : [0, 0, 0]; }; });
+  return Q;
+})();
+const BRIDGE = (() => {
+  const R = rng(17), N = 9, D = vsub(PB, PA), S2 = vmul(vnorm(vcross(D, V(0, 1, 0))), 1.1), Lr = [], Rr = [], tris = [];
+  for (let i = 0; i <= N; i++) {
+    const c = vadd(PA, vmul(D, i / N)), j = () => V((R() - 0.5) * 0.25, (R() - 0.5) * 0.18, (R() - 0.5) * 0.25);
+    Lr.push(vadd(vsub(c, S2), j())); Rr.push(vadd(vadd(c, S2), j()));
+  }
+  for (let i = 0; i < N; i++) { tris.push([Lr[i], Rr[i], Lr[i + 1]]); tris.push([Rr[i], Rr[i + 1], Lr[i + 1]]); }
+  return tris;
+})();
+function rAnclaB(lt, off = 99) {   // off: momento en que se pierde el haz
+  cam.p = V(0.8, 11, 1.2 + lt * 0.3); cam.roll = 0; cam.fov = 1.1;
+  const d = vsub(V(-1.6, 4.2, 20), cam.p);
+  cam.yaw = Math.atan2(d.x, d.z) + 0.006 * hh(lt); cam.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
+  setCam();
+  // retencion: sin el haz, las anclas aguantan y despues se apagan; el puente se deshace desde B
+  STB.a = 1 - clamp((lt - off - 1.4) / 0.5); STB.b = clamp((lt - 0.6) / CARGA) * (1 - clamp((lt - off - 1.4) / 0.5));
+  STB.br = clamp((lt - 1.0) / 1.8) * (1 - clamp((lt - off - 2.0) / 0.6));
+  const toL = vnorm(vsub(LAMP_B, ANCLA_PB)), on = lt >= 0.2 && lt < off ? 1 : 0;
+  const mid = vmul(vadd(PA, PB), 0.5);
+  const L = [{ p: LAMP_B, dir: vmul(toL, -1), col: AMBER, int: 6 * on, k: 0.02, range: 25,
+               cosO: Math.cos(8 * Math.PI / 180), cosI: Math.cos(4 * Math.PI / 180), cosS: Math.cos(18 * Math.PI / 180) },
+             { p: ANCLA_PA, col: AMBER, int: 1.4 * STB.a, k: 0.25, range: 9 },
+             { p: ANCLA_PB, col: AMBER, int: 1.4 * STB.b, k: 0.25, range: 9 },
+             { p: mid, col: AMBER, int: 1.2 * STB.br, k: 0.03, range: 14 }];
+  renderWorld(W_PUENTE, L, { amb: [0.003, 0.0025, 0.002], fog: 0.012 });
+  if (on) beamVolume(LAMP_B, vadd(ANCLA_PB, vmul(toL, 1.0)), 0.3, 0.7, AMBER, 0.3);
+  // paneles triangulados que se arman de A hacia B
+  const n = BRIDGE.length;
+  for (let j = 0; j < n; j++) {
+    const v = clamp(STB.br * (n + 4) - j, 0, 1); if (v <= 0) continue;
+    const ps = BRIDGE[j].map(proj); if (ps.some(q => !q)) continue;
+    g.beginPath(); ps.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]))); g.closePath();
+    g.fillStyle = 'rgba(232,161,74,' + (0.5 * v) + ')'; g.fill();
+    g.strokeStyle = 'rgba(255,208,140,' + (0.95 * v) + ')'; g.lineWidth = 1.2; g.stroke();
+  }
+  // fragmentos que flotan en el frente del puente
+  if (STB.br > 0 && STB.br < 1) {
+    const front = vadd(PA, vmul(vsub(PB, PA), Math.min(1, STB.br * 1.1)));
+    for (let i = 0; i < 30; i++) {
+      const q = proj(vadd(front, V((hash(i, 1, 2) - 0.5) * 3, (hash(i, 2, 3) - 0.4) * 2 + lt * 0.3 * hash(i, 4, 4), (hash(i, 3, 1) - 0.5) * 3)));
+      if (!q) continue; const sz = clamp(CT.f * 0.08 / q[2], 1, 4);
+      g.fillStyle = 'rgba(245,175,85,' + (0.5 + 0.5 * hash(i, 5, 5)) + ')'; g.fillRect(q[0], q[1], sz, sz);
+    }
+  }
+  const ret = 1 - smooth(off + 1.0, off + 1.9, lt);
+  glyphRings(vadd(ANCLA_PA, vmul(vnorm(vsub(PB, ANCLA_PA)), 0.84)), vnorm(vsub(PB, ANCLA_PA)), 0.34, ret);
+  glyphRings(vadd(ANCLA_PB, vmul(toL, 0.98)), toL, 0.4, smooth(0.95, 1.2, lt) * ret);
+  S.audio = { drone: 0.36, wind: 0.1, hum: on ? 0.1 : 0, humF: 110 };
+}
+
+// ---- utilidades del pitch -----------------------------------------------------
+function lookAt(tg) { const d = vsub(tg, cam.p); cam.yaw = Math.atan2(d.x, d.z); cam.pitch = Math.atan2(d.y, Math.hypot(d.x, d.z)); }
+const WHITE_RINGS = ['rgb(220,214,200)', 'rgb(255,250,238)'];
+
+// ---- Luz blanca: el ancla del Umbral abre la compuerta -------------------------
+const ANCLA_C = V(3.1, 1.5, 7.2), EYE_C = V(0.6, 1.65, 1.5), TO_EYE_C = vnorm(vsub(EYE_C, ANCLA_C));
+const STC = { charge: 0, gate: 0 };
+const W_COMPUERTA = (() => {
+  const Q = [], DARK = [0.14, 0.14, 0.15], STONE = [0.52, 0.5, 0.46];
+  grid(Q, V(-9, 0, -2), V(18, 0, 0), V(0, 0, 12), 6, 4, { alb: [0.09, 0.09, 0.1], layer: 0, noSpot: true, jit: 0.1 });
+  grid(Q, V(-3, 0, 10), V(6, 0, 0), V(0, 0, 10), 2, 3, { alb: [0.16, 0.15, 0.14], layer: 0, noSpot: true, jit: 0.1 });
+  quad(Q, V(-9, 0, 10), V(-1.1, 0, 10), V(-1.1, 9, 10), V(-9, 9, 10), { alb: DARK });
+  quad(Q, V(1.1, 0, 10), V(9, 0, 10), V(9, 9, 10), V(1.1, 9, 10), { alb: DARK });
+  quad(Q, V(-1.1, 4.2, 10), V(1.1, 4.2, 10), V(1.1, 9, 10), V(-1.1, 9, 10), { alb: DARK });
+  for (const x of [-1.45, 1.45]) obox(Q, x, 9.8, 0, 0.7, 0.8, 0, 4.6, { alb: STONE, jit: 0.04 });
+  obox(Q, 0, 9.8, 0, 3.8, 0.9, 4.6, 5.3, { alb: STONE, jit: 0.04 });
+  for (const x of [-6, 6]) obox(Q, x, 9.6, 0, 0.9, 0.8, 0, 9, { alb: STONE, jit: 0.04 });
+  // la hoja de piedra sube y se esconde detras del muro
+  box(Q, 0, 2.1, 10.2, 2.2, 4.2, 0.3, { alb: [0.22, 0.21, 0.2], jit: 0.04, upd: q => { q.off = V(0, STC.gate * 4.4, 0); } });
+  for (const [x, z] of [[-1.4, 16], [1.6, 18]]) prism(Q, x, z, 0.8, 4, 0, 6, 0.6, { alb: STONE, seed: 410 + z });
+  prism(Q, ANCLA_C.x, ANCLA_C.z, 0.45, 5, 0, 1.05, 0.15, { alb: STONE, seed: 401 });
+  icosa(Q, ANCLA_C, 0.42, 402, { alb: [0.07, 0.06, 0.05], jit: 0.03 }).forEach(q => {
+    q.upd = q2 => { const d = q2.on.x * TO_EYE_C.x + q2.on.y * TO_EYE_C.y + q2.on.z * TO_EYE_C.z; q2.em = d > 0.2 ? WARM.map(v => v * (0.02 + 0.8 * STC.charge) * d * d) : [0, 0, 0]; }; });
+  return Q;
+})();
+function rCompuerta(lt) {
+  const k = ease(clamp((lt - 2.4) / 1.8)), aim = ease(clamp(lt / 1.0));
+  const tg = vadd(vadd(vmul(V(ANCLA_C.x - 0.1, ANCLA_C.y, ANCLA_C.z), 1 - k), vmul(V(0, 2.1, 10), k)), V((1 - aim) * -1.4, (1 - aim) * 0.5, 0));
+  cam.p = V(EYE_C.x - 0.4 * k, EYE_C.y, EYE_C.z + 1.6 * ease(clamp((lt - 3.2) / 3.3))); cam.roll = 0; cam.fov = 1.12;
+  lookAt(tg); cam.yaw += 0.008 * hh(lt); setCam();
+  STC.charge = clamp((lt - 1.1) / CARGA); STC.gate = ease(clamp((lt - 1.8) / 1.4));
+  const F = flashlight(FILTROS.none, 1, 0.006 * hh(lt + 2), -0.015);
+  const L = [{ par: true, d: vnorm(V(0.25, -1, 0.35)), col: [0.78, 0.82, 0.95], int: 0.4 }, F,
+             { p: V(0, 2.6, 14), col: [0.95, 0.9, 0.8], int: 0.9 * STC.gate, k: 0.08, range: 12 }];
+  renderWorld(W_COMPUERTA, L, { amb: [0.01, 0.01, 0.013], fog: 0.01, onFloor: () => floorPool(F, 0.012, 0.32) });
+  glyphRings(vadd(ANCLA_C, vmul(TO_EYE_C, 0.4)), TO_EYE_C, 0.2, smooth(1.4, 1.7, lt), WHITE_RINGS);
+  haze(F, 0.05);
+  S.audio = { drone: 0.3, wind: 0.18, hum: 0, humF: 110 };
+}
+
+// ---- Filtros: uno a la vez, cada uno con su color, apertura y alcance -----------
+function filtroAt(lt) {
+  if (lt < 3.8) return { bs: beamState(lt, 1.5, 'none', 'cuerpo'), name: lt < 1.5 ? 'none' : 'cuerpo' };
+  if (lt < 5.8) return { bs: beamState(lt, 3.8, 'cuerpo', 'hueco'), name: 'hueco' };
+  return { bs: beamState(lt, 5.8, 'hueco', 'none'), name: 'none' };
+}
+function rFiltros(lt) {
+  cam.p = V(0.5, 1.6, 1.2 + lt * 0.35); cam.roll = 0.003 * hh(lt); cam.fov = 1.2;
+  cam.yaw = -0.03 + 0.012 * hh(lt * 0.5); cam.pitch = 0.04 + 0.01 * hh(lt * 0.4 + 2);
+  setCam();
+  const { bs, name } = filtroAt(lt);
+  const F = flashlight(bs.F, bs.mul, -0.015, -0.02);
+  const key = { par: true, d: vnorm(V(0.55, -0.5, 0.65)), col: [1, 0.96, 0.9], int: 1.0 };
+  renderWorld(W_SALA, [key, F], { amb: [0.004, 0.004, 0.005], fog: 0.01, onFloor: () => floorPool(F, 0.012, 0.66 * bs.mul) });
+  S.audio = { drone: 0.32, wind: 0.1, hum: name === 'none' ? 0 : 0.1, humF: name === 'hueco' ? 82.4 : 110 };
+}
+
+// ---- HUECO: la reja se disuelve mientras se la ilumina ---------------------------
+const STR = { dis: 0, charge: 0 };
+const W_REJA = (() => {
+  const Q = [], R = rng(51), CREAM = [0.66, 0.64, 0.6];
+  grid(Q, V(-14, 0, -4), V(28, 0, 0), V(0, 0, 50), 7, 12, { alb: [0.22, 0.21, 0.2], layer: 0, noSpot: true, jit: 0.06 });
+  obox(Q, -2.9, 9, 0, 1.4, 1.6, 0, 6.5, { alb: CREAM, jit: 0.04 });
+  obox(Q, 2.9, 9, 0, 1.4, 1.6, 0, 6.5, { alb: CREAM, jit: 0.04 });
+  obox(Q, 0, 9, 0, 7.2, 1.8, 4.6, 6.2, { alb: CREAM, jit: 0.04 });
+  const bars = { alb: [0.14, 0.13, 0.12], jit: 0.05, upd: q => { const d = STR.dis; q.a = lerp(1, 0.15, d); q.em = BLUE.map(c => c * (0.25 * d + 1.4 * d * (1 - d))); } };
+  for (let x = -2.0; x <= 2.01; x += 0.33) box(Q, x, 2.3, 9, 0.09, 4.6, 0.09, bars);
+  for (const y of [1.2, 3.2]) box(Q, 0, y, 9, 4.3, 0.09, 0.1, bars);
+  for (let i = 0; i < 7; i++) for (const side of [-1, 1]) {
+    prism(Q, side * (5.5 + R() * 4), 3 + i * 6 + R() * 2, 1.1 + R() * 1.1, R() < 0.5 ? 4 : 5, 0, 8 + R() * 14, (R() - 0.5) * 1.4,
+      { alb: CREAM, jit: 0.04, seed: 500 + i * 2 + (side > 0 ? 1 : 0) });
+  }
+  for (let i = 0; i < 10; i++) { const side = i % 2 ? 1 : -1, h = 0.25 + R() * 0.45; box(Q, side * (2.6 + R() * 3), h / 2, 12 + i * 3, 2.5 + R() * 2.5, h, 2 + R() * 2, { alb: [0.27, 0.26, 0.25], jit: 0.05 }); }
+  icosa(Q, V(-3.6, 6.5, 20), 0.9, 520, { alb: [0.06, 0.055, 0.05], jit: 0.03 }).forEach(q => { if (q.on.y < -0.45) q.em = GLOW.map(v => v * 0.5); });
+  return Q;
+})();
+function rReja(lt) {
+  const walk = ease(clamp((lt - 2.2) / 4.6)), z = 1.5 + 3 * ease(clamp(lt / 1.4)) + 9 * walk, b = walkBob(z, walk > 0 && walk < 1 ? 1 : 0);
+  cam.p = V(0.1, 1.6 + b.y, z); cam.roll = b.roll; cam.fov = 1.15;
+  cam.yaw = 0.02 * hh(lt * 0.5); cam.pitch = 0.04 + 0.01 * hh(lt * 0.4);
+  setCam();
+  const bs = beamState(lt, 0.3, 'none', 'hueco');
+  const F = flashlight(bs.F, bs.mul, 0.01 * hh(lt + 3), -0.03);
+  STR.charge = clamp((lt - 0.3 - DEMORA_CAMBIO) / CARGA); STR.dis = clamp((lt - 0.3 - DEMORA_CAMBIO - CARGA) * 4);   // MateriaHueca: velocidad 4
+  const key = { par: true, d: vnorm(V(0.55, -0.5, 0.65)), col: [1, 0.96, 0.9], int: 1.0 };
+  renderWorld(W_REJA, [key, F], { amb: [0.004, 0.004, 0.005], fog: 0.01, onFloor: () => floorPool(F, 0.012, 0.6 * bs.mul) });
+  S.audio = { drone: 0.32, wind: 0.1, hum: lt > 0.3 ? 0.1 : 0, humF: 82.4 };
+}
+
+// ---- Epilogo: la capilla de dia, el crater ya no esta ----------------------------
+function pastoAplastado() {
+  const ring = []; for (let i = 0; i < 40; i++) { const a = i / 40 * 6.283; ring.push(toCam(V(CRATER_C.x + Math.cos(a) * 13, 0.3, CRATER_C.z + Math.sin(a) * 13))); }
+  const pl = clipNear(ring); if (pl.length < 3) return;
+  const sp = pl.map(c => toScr(c[0], c[1], c[2]));
+  g.fillStyle = 'rgba(150,138,104,0.9)'; g.beginPath(); sp.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill();
+  for (let i = 0; i < 70; i++) {   // el pasto echado en espiral
+    const a = i / 70 * 6.283, pts = [];
+    for (let k = 0; k <= 6; k++) { const r = 1 + k * 2, b = a + k * 0.12; pts.push(V(CRATER_C.x + Math.cos(b) * r, 0.31, CRATER_C.z + Math.sin(b) * r)); }
+    polyline(pts, 1, 'rgb(118,106,76)', 0.5);
+  }
+}
+function rEpilogo(lt) {
+  STV.rise = 0;
+  cam.p = V(0.3, 2.2, 110 - lt * 0.4); cam.roll = 0; cam.fov = 1.1;
+  cam.yaw = Math.PI + 0.02 * hh(lt * 0.2); cam.pitch = key(lt, [[0, -0.1], [2.6, -0.09], [6.5, -0.02]]);
+  setCam();
+  valle(0, pastoAplastado);
+  S.audio = { drone: 0, wind: 0.12, hum: 0, humF: 110, birds: 1 };
 }
 
 // ---- 6. La Cresta: pared espejo, oscuridad y la puerta del eclipse --------
@@ -711,22 +935,6 @@ function rDiamante(lt) {
   S.audio = { drone: 0, wind: 0, hum: 0, humF: 110 };
 }
 
-// ---- 8. Montaje ------------------------------------------------------------
-const CUTS = [['cuerpo', 5.3, 0.85], ['hueco', 2.45, 0.75], ['eclipse', 9.0, 0.7], ['oculo', 5.6, 0.6], ['adapt', 10.4, 0.6],
-              ['cuerpo', 8.6, 0.5], ['hueco', 5.2, 0.45], ['capilla', 3.0, 0.42], ['adapt', 1.5, 0.4], ['tunel', 3.2, 0.36],
-              ['cuerpo', 5.7, 0.32], ['eclipse', 6.2, 0.3], ['adapt', 11.5, 0.3], ['hueco', 2.7, 0.28]];
-const CUT_T = (() => { let t = 0; return CUTS.map(c => { const s = t; t += c[2]; return s; }); })();
-const MONTAGE_LEN = CUT_T[CUT_T.length - 1] + CUTS[CUTS.length - 1][2];
-function rMontaje(lt) {
-  let i = CUT_T.length - 1; while (i > 0 && CUT_T[i] > lt) i--;
-  if (lt < MONTAGE_LEN) {
-    const [id, t0] = CUTS[i], k = lt - CUT_T[i];
-    SC[id].render(t0 + k);
-    S.flash = Math.max(S.flash, 0.22 * Math.exp(-k * 14));
-  }
-  S.audio = { drone: 0.5, wind: 0.15, hum: 0, humF: 110 };
-}
-
 // ---- 9. Cierre -------------------------------------------------------------
 function rFinal(lt) {
   const gl = g.createRadialGradient(W / 2, H * 0.42, 0, W / 2, H * 0.42, H * 0.7);
@@ -771,93 +979,244 @@ function ring(cx, cy, r, a) {
   m.beginPath(); m.arc(cx, cy, r, 0, 6.283); m.stroke();
 }
 function oFinal(lt) {
-  const u = VR.h / 100, cx = VR.x + VR.w / 2, cy = VR.y + VR.h * 0.44;
-  const out = 1 - smooth(7.6, 9, lt), a = smooth(0.05, 0.9, lt) * out;
-  ring(cx, cy, VR.h * (0.27 + 0.02 * smooth(0, 9, lt)), a);
-  drawTitle('CRATER', cx, cy, u * 17, lerp(0.95, 0.42, ease(clamp(lt / 4.5))), a,
-    { x: VR.x + VR.w * lerp(0.2, 0.5, ease(clamp((lt - 0.3) / 2.8))), y: cy, r: VR.h * (0.3 + 2.5 * smooth(2.4, 4.4, lt)) }, 'rgba(232,161,74,0.8)');
-  const t1 = smooth(3.0, 4.2, lt) * out;
+  const u = VR.h / 100, cx = VR.x + VR.w / 2, cy = VR.y + VR.h * 0.46;
+  const out = 1 - smooth(4.3, 5, lt), a = smooth(0.05, 0.6, lt) * out;
+  ring(cx, cy, VR.h * (0.27 + 0.02 * smooth(0, 5, lt)), a);
+  drawTitle('CRATER', cx, cy, u * 17, lerp(0.9, 0.42, ease(clamp(lt / 3))), a,
+    { x: VR.x + VR.w * lerp(0.15, 0.55, ease(clamp((lt - 0.2) / 2))), y: cy, r: VR.h * (0.3 + 2.5 * smooth(1.8, 3.2, lt)) }, 'rgba(232,161,74,0.8)');
+  const t1 = smooth(2.2, 3.0, lt) * out;
   if (t1 > 0) { m.fillStyle = 'rgba(237,234,226,' + t1 + ')'; m.font = 'italic 400 ' + (u * 5) + 'px ' + SERIF; m.textAlign = 'center'; m.textBaseline = 'middle';
     m.fillText('Lo que la luz tapa.', cx, cy + u * 15 + (1 - t1) * u); }
-  const t2 = smooth(4.6, 5.6, lt) * out;
-  if (t2 > 0) {
-    const segW = VR.w * 0.08, gap = VR.w * 0.05, y = cy + u * 24;
-    [['CUERPO', AMBER], ['HUECO', BLUE]].forEach(([name, c], i) => {
-      const x = cx + (i - 0.5) * (segW + gap), col = c.map(v => v * 255 | 0);
-      m.fillStyle = rgba(col, t2); m.fillRect(x - segW / 2, y, segW * smooth(4.6 + i * 0.15, 5.4 + i * 0.15, lt), Math.max(1.5, u * 0.3));
-      m.font = '400 ' + (u * 1.7) + 'px ' + MONO; m.fillStyle = rgba(col, 0.85 * t2); spaced(m, name, x, y + u * 3.2, u * 0.5);
-    });
-  }
 }
-// despues del titulo: un clic de linterna en la oscuridad y la fecha
 function oCoda(lt) {
-  const u = VR.h / 100, a = smooth(1.5, 2.4, lt) * (1 - smooth(4.6, 5.5, lt));
+  const u = VR.h / 100, a = smooth(0.55, 1.0, lt) * (1 - smooth(1.6, 2.0, lt));
   if (a <= 0) return;
   m.font = '400 ' + (u * 2.2) + 'px ' + MONO; m.fillStyle = 'rgba(237,234,226,' + 0.8 * a + ')'; m.textBaseline = 'middle';
   spaced(m, 'PRÓXIMAMENTE', VR.x + VR.w / 2, VR.y + VR.h / 2, u * 1.1);
 }
+function rCard() { S.audio = { drone: 0, wind: 0, hum: 0, humF: 110 }; } // silencio antes del golpe
+
+// ------------------------------------------------------------------ placas del pitch (alta resolucion)
+function wrap(ctx, text, maxW) {
+  const words = text.split(' '), lines = []; let line = '';
+  for (const w of words) { const t2 = line ? line + ' ' + w : w; if (ctx.measureText(t2).width > maxW && line) { lines.push(line); line = w; } else line = t2; }
+  if (line) lines.push(line); return lines;
+}
+const cardAlpha = (id, lt) => smooth(0.1, 0.7, lt) * (1 - smooth(SC[id].dur - 0.6, SC[id].dur, lt));
+function cardHead(n, title, sub, a) {
+  const u = VR.h / 100, cx = VR.x + VR.w / 2;
+  m.textBaseline = 'middle'; m.textAlign = 'center';
+  m.font = '500 ' + (u * 1.7) + 'px ' + MONO; m.fillStyle = 'rgba(232,161,74,' + a + ')'; spaced(m, n, cx, VR.y + u * 13, u * 0.6);
+  m.font = '400 ' + (u * 5.6) + 'px ' + DISPLAY; m.fillStyle = 'rgba(237,234,226,' + a + ')'; spaced(m, title, cx, VR.y + u * 20, u * 0.5);
+  if (sub) { m.font = 'italic 400 ' + (u * 2.8) + 'px ' + SERIF; m.fillStyle = 'rgba(237,234,226,' + 0.75 * a + ')'; m.textAlign = 'center'; m.fillText(sub, cx, VR.y + u * 26.5); }
+}
+function oIntro(lt) {
+  const u = VR.h / 100, cx = VR.x + VR.w / 2, cy = VR.y + VR.h * 0.44, a = smooth(0.05, 0.8, lt) * (1 - smooth(4.3, 5, lt));
+  ring(cx, cy, VR.h * 0.27, a);
+  drawTitle('CRATER', cx, cy, u * 17, lerp(0.8, 0.42, ease(clamp(lt / 3))), a,
+    { x: VR.x + VR.w * lerp(0.15, 0.55, ease(clamp((lt - 0.2) / 2))), y: cy, r: VR.h * (0.3 + 2.5 * smooth(1.6, 3.0, lt)) }, 'rgba(232,161,74,0.8)');
+  const t1 = smooth(1.8, 2.6, lt) * a;
+  m.textAlign = 'center'; m.textBaseline = 'middle';
+  m.font = 'italic 400 ' + (u * 3.6) + 'px ' + SERIF; m.fillStyle = 'rgba(237,234,226,' + t1 + ')';
+  m.fillText('Un puzzle de luz en primera persona', cx, cy + u * 15);
+  m.font = '400 ' + (u * 1.7) + 'px ' + MONO; m.fillStyle = 'rgba(237,234,226,' + 0.6 * t1 + ')';
+  spaced(m, 'PITCH  ·  VERTICAL SLICE  ·  UNITY 6', cx, cy + u * 21, u * 0.6);
+}
+function oPilares(lt) {
+  const a = cardAlpha('pilares', lt), u = VR.h / 100;
+  cardHead('02', 'PILARES', null, a);
+  const P = [['La luz es el verbo', 'Toda interacción pasa por el haz: iluminar es actuar.'],
+             ['Ver es un acto', 'Cada filtro es una forma de mirar la materia. El final obliga a mirar sin herramienta.'],
+             ['Ritmo contenido', 'Sin salto ni carrera. La tensión viene de entender, no de reaccionar.'],
+             ['Interfaz mínima', 'Una indicación breve, el estado de la linterna y la mira. El resto lo dicen el color, el sonido y el mundo.']];
+  P.forEach(([t2, d], i) => {
+    const k = a * smooth(0.6 + i * 0.5, 1.2 + i * 0.5, lt), x = VR.x + VR.w * (i % 2 ? 0.54 : 0.14), y = VR.y + VR.h * (i < 2 ? 0.4 : 0.64);
+    m.textAlign = 'left'; m.textBaseline = 'alphabetic';
+    m.fillStyle = 'rgba(232,161,74,' + k + ')'; m.fillRect(x, y - u * 4.6, u * 3, Math.max(1, u * 0.25));
+    m.font = '400 ' + (u * 3.4) + 'px ' + DISPLAY; m.fillStyle = 'rgba(237,234,226,' + k + ')'; m.fillText(t2, x, y);
+    m.font = '400 ' + (u * 2.6) + 'px ' + SERIF; m.fillStyle = 'rgba(237,234,226,' + 0.8 * k + ')';
+    wrap(m, d, VR.w * 0.32).forEach((l, j) => m.fillText(l, x, y + u * 4.4 + j * u * 3.4));
+  });
+}
+function oPatron(lt) {
+  const a = cardAlpha('patron', lt), u = VR.h / 100;
+  cardHead('08', 'ENSEÑAR  ·  PROBAR  ·  TORCER', 'Cada filtro sigue el mismo patrón. Así lo hace CUERPO en el Campo.', a);
+  const amber = 'rgba(232,161,74,', bone = 'rgba(237,234,226,';
+  const panels = [
+    ['ENSEÑAR', 'Dos anclas juntas: un solo haz las enciende.', { A: [0.7, 0.62], B: [0.84, 0.62], cones: [[0.77, 0.62, 1]] }],
+    ['PROBAR', 'Anclas separadas: barrer de una a otra y cruzar con la retención.', { A: [0.28, 0.62], B: [0.86, 0.62], cones: [[0.28, 0.62, 0.35], [0.86, 0.62, 1]] }],
+    ['TORCER', 'Anclas en el techo: hay que levantar la mirada.', { A: [0.62, 0.16], B: [0.8, 0.16], ceil: true, cones: [[0.71, 0.16, 1]] }]];
+  panels.forEach(([name, text, d], i) => {
+    const k = a * smooth(0.7 + i * 0.8, 1.3 + i * 0.8, lt), pw = VR.w * 0.25, ph = VR.h * 0.3, x0 = VR.x + VR.w * (0.105 + i * 0.3), y0 = VR.y + VR.h * 0.35;
+    if (k <= 0) return;
+    const X = px => x0 + px * pw, Y = py => y0 + py * ph, lw = Math.max(1, u * 0.22);
+    m.lineWidth = lw; m.strokeStyle = bone + 0.55 * k + ')';
+    m.beginPath(); m.moveTo(X(0), Y(0.78)); m.lineTo(X(0.4), Y(0.78)); m.moveTo(X(0.6), Y(0.78)); m.lineTo(X(1), Y(0.78)); m.stroke();
+    if (d.ceil) { m.beginPath(); m.moveTo(X(0), Y(0.08)); m.lineTo(X(1), Y(0.08)); m.stroke(); }
+    const eye = [0.1, 0.58];
+    m.fillStyle = bone + 0.9 * k + ')'; m.beginPath(); m.arc(X(eye[0]), Y(eye[1]), u * 0.6, 0, 6.283); m.fill();
+    d.cones.forEach(([tx, ty, al]) => {
+      const dx = tx - eye[0], dy = ty - eye[1], n = Math.hypot(dx * pw, dy * ph), nx = -dy * ph / n, ny = dx * pw / n, spread = u * 3.2;
+      m.fillStyle = amber + 0.28 * al * k + ')'; m.beginPath(); m.moveTo(X(eye[0]), Y(eye[1]));
+      m.lineTo(X(tx) + nx * spread, Y(ty) + ny * spread); m.lineTo(X(tx) - nx * spread, Y(ty) - ny * spread); m.closePath(); m.fill();
+    });
+    const lit = smooth(1.3 + i * 0.8, 1.7 + i * 0.8, lt);
+    for (const [ax, ay] of [d.A, d.B]) {
+      m.beginPath(); for (let j = 0; j < 6; j++) { const an = j / 6 * 6.283 + 0.5; m.lineTo(X(ax) + Math.cos(an) * u * 1.3, Y(ay) + Math.sin(an) * u * 1.3); } m.closePath();
+      m.fillStyle = amber + (0.25 + 0.75 * lit) * k + ')'; m.fill();
+    }
+    m.strokeStyle = amber + lit * k + ')'; m.lineWidth = Math.max(2, u * 0.45);
+    m.beginPath(); m.moveTo(X(0.4), Y(0.78)); m.lineTo(X(0.4 + 0.2 * lit), Y(0.78)); m.stroke();
+    m.textAlign = 'left'; m.textBaseline = 'alphabetic';
+    m.font = '500 ' + (u * 1.7) + 'px ' + MONO; m.fillStyle = amber + k + ')'; spaced(m, name, x0, y0 + ph + u * 5, u * 0.5, 'left');
+    m.font = '400 ' + (u * 2.3) + 'px ' + SERIF; m.fillStyle = bone + 0.8 * k + ')';
+    wrap(m, text, pw).forEach((l, j) => m.fillText(l, x0, y0 + ph + u * 9 + j * u * 3.1));
+  });
+}
+function oRecorrido(lt) {
+  const a = cardAlpha('recorrido', lt), u = VR.h / 100;
+  cardHead('11', 'EL RECORRIDO', 'Un vertical slice de 15 a 25 minutos, de la capilla a la capilla.', a);
+  const N = [['CAPILLA', 'prólogo', [0.95, 0.93, 0.88]], ['EXPLANADA', 'el borde', ECL], ['UMBRAL', 'la linterna', WARM], ['CAMPO', 'CUERPO', AMBER],
+             ['HONDONADA', 'HUECO', BLUE], ['CRESTA', 'la oscuridad', ECL], ['CAPILLA', 'epílogo', [0.95, 0.93, 0.88]]];
+  const y = VR.y + VR.h * 0.56, xs = N.map((_, i) => VR.x + VR.w * (0.1 + i * 0.8 / (N.length - 1)));
+  const p = clamp((lt - 0.8) / 4.2) * (N.length - 1);
+  m.strokeStyle = 'rgba(237,234,226,' + 0.25 * a + ')'; m.lineWidth = Math.max(1, u * 0.2);
+  m.beginPath(); m.moveTo(xs[0], y); m.lineTo(xs[N.length - 1], y); m.stroke();
+  m.strokeStyle = 'rgba(232,161,74,' + 0.9 * a + ')'; m.lineWidth = Math.max(1.5, u * 0.35);
+  const i0 = Math.floor(p), xp = i0 >= N.length - 1 ? xs[N.length - 1] : lerp(xs[i0], xs[i0 + 1], p - i0);
+  m.beginPath(); m.moveTo(xs[0], y); m.lineTo(xp, y); m.stroke();
+  N.forEach(([name, tag, col], i) => {
+    const k = a * (0.35 + 0.65 * smooth(i - 0.3, i, p)), c = col.map(v => v * 255 | 0);
+    m.fillStyle = rgba(c, k); m.beginPath(); m.arc(xs[i], y, u * 1.1, 0, 6.283); m.fill();
+    m.textAlign = 'center'; m.textBaseline = 'middle';
+    m.font = '500 ' + (u * 1.55) + 'px ' + MONO; m.fillStyle = 'rgba(237,234,226,' + k + ')'; spaced(m, name, xs[i], y + u * 5, u * 0.35);
+    m.font = 'italic 400 ' + (u * 2.3) + 'px ' + SERIF; m.fillStyle = rgba(c, k); m.fillText(tag, xs[i], y + u * 8.6);
+  });
+  m.fillStyle = 'rgba(255,248,236,' + a + ')'; m.beginPath(); m.arc(xp, y, u * 0.55, 0, 6.283); m.fill();
+}
+function oFicha(lt) {
+  const a = cardAlpha('ficha', lt), u = VR.h / 100;
+  cardHead('12', 'FICHA', null, a);
+  const R2 = [['GÉNERO', 'Puzzle ambiental en primera persona, contemplativo'],
+              ['DURACIÓN', 'Vertical slice de 15 a 25 minutos'],
+              ['PLATAFORMA', 'PC, con teclado y mouse o joystick'],
+              ['MOTOR', 'Unity 6 con URP (Forward+)'],
+              ['SIN COMBATE', 'Caer en una fosa solo devuelve al último suelo seguro'],
+              ['ESTADO', 'Recorrido completo jugable, con prólogo, final, créditos y tests']];
+  R2.forEach(([k2, v], i) => {
+    const k = a * smooth(0.5 + i * 0.35, 1.0 + i * 0.35, lt), y = VR.y + VR.h * (0.36 + i * 0.085);
+    m.textBaseline = 'middle'; m.textAlign = 'left';
+    m.font = '500 ' + (u * 1.6) + 'px ' + MONO; m.fillStyle = 'rgba(232,161,74,' + 0.9 * k + ')'; spaced(m, k2, VR.x + VR.w * 0.2, y, u * 0.45, 'left');
+    m.font = '400 ' + (u * 2.8) + 'px ' + SERIF; m.fillStyle = 'rgba(237,234,226,' + k + ')'; m.fillText(v, VR.x + VR.w * 0.4, y);
+    m.fillStyle = 'rgba(237,234,226,' + 0.12 * k + ')'; m.fillRect(VR.x + VR.w * 0.2, y + u * 3.6, VR.w * 0.6, 1);
+  });
+}
+
+// ------------------------------------------------------------------ interfaz del juego (GDD 1, pilar 4)
+function drawHUD(h) {
+  if (!h) return;
+  const u = VR.h / 100, cx = VR.x + VR.w / 2, cy = VR.y + VR.h / 2, a = h.a ?? 1;
+  const col = (h.col || WARM).map(v => v * 255 | 0), off = h.lamp === 'APAGADA';
+  // mira con la barra de carga
+  m.strokeStyle = 'rgba(237,234,226,' + 0.7 * a + ')'; m.lineWidth = Math.max(1, u * 0.18);
+  m.beginPath(); m.arc(cx, cy, u * 0.35, 0, 6.283); m.stroke();
+  if (h.charge > 0) {
+    m.strokeStyle = 'rgba(237,234,226,' + 0.15 * a + ')'; m.lineWidth = Math.max(1.5, u * 0.3);
+    m.beginPath(); m.arc(cx, cy, u * 1.3, 0, 6.283); m.stroke();
+    m.strokeStyle = rgba(col, 0.95 * a); m.beginPath(); m.arc(cx, cy, u * 1.3, -Math.PI / 2, -Math.PI / 2 + 6.283 * clamp(h.charge)); m.stroke();
+  }
+  // estado de la linterna, arriba a la derecha
+  const x = VR.x + VR.w - u * 5, y = VR.y + u * 6;
+  m.textBaseline = 'middle';
+  m.font = '400 ' + (u * 1.4) + 'px ' + MONO; m.fillStyle = 'rgba(237,234,226,' + 0.5 * a + ')'; spaced(m, 'LINTERNA', x, y, u * 0.45, 'right');
+  m.font = '500 ' + (u * 1.9) + 'px ' + MONO; m.fillStyle = off ? 'rgba(237,234,226,' + 0.45 * a + ')' : rgba(col, a);
+  const w2 = spaced(m, h.lamp, x, y + u * 2.8, u * 0.55, 'right');
+  m.beginPath(); m.arc(x - w2 - u * 1.4, y + u * 2.8, u * 0.55, 0, 6.283);
+  if (off) { m.strokeStyle = 'rgba(237,234,226,' + 0.45 * a + ')'; m.lineWidth = Math.max(1, u * 0.15); m.stroke(); } else m.fill();
+  // indicacion breve, abajo
+  const ha = a * (h.hintA ?? 0);
+  if (h.hint && ha > 0) {
+    const y2 = VR.y + VR.h - u * 8; m.font = '500 ' + (u * 1.8) + 'px ' + MONO;
+    const kw = Math.max(u * 3.2, m.measureText(h.hint[0]).width + u * 1.8), tw = m.measureText(h.hint[1]).width, x0 = cx - (kw + u * 1.4 + tw) / 2;
+    m.strokeStyle = 'rgba(237,234,226,' + 0.7 * ha + ')'; m.lineWidth = Math.max(1, u * 0.15); m.strokeRect(x0, y2 - u * 1.6, kw, u * 3.2);
+    m.fillStyle = 'rgba(237,234,226,' + 0.95 * ha + ')'; m.textAlign = 'center'; m.fillText(h.hint[0], x0 + kw / 2, y2);
+    m.textAlign = 'left'; m.fillStyle = 'rgba(237,234,226,' + 0.8 * ha + ')'; m.fillText(h.hint[1], x0 + kw + u * 1.4, y2);
+  }
+}
+const hintWin = (lt, t0, t1) => smooth(t0, t0 + 0.25, lt) * (1 - smooth(t1 - 0.25, t1, lt));
+const LAMP = { none: ['LUZ BLANCA', WARM], cuerpo: ['CUERPO', AMBER], hueco: ['HUECO', BLUE] };
+
+// ------------------------------------------------------------------ textos que explican cada funcionalidad
+const CAPS = [];
+function drawCap(c, t) {
+  const a = smooth(c.t0, c.t0 + 0.6, t) * (1 - smooth(c.t1 - 0.5, c.t1, t)); if (a <= 0) return;
+  const u = VR.h / 100, x = VR.x + u * 6, y = VR.y + u * 8;
+  const gr = m.createLinearGradient(VR.x, VR.y, VR.x + VR.w * 0.5, VR.y + VR.h * 0.42);
+  gr.addColorStop(0, 'rgba(5,4,7,' + 0.62 * a + ')'); gr.addColorStop(1, 'rgba(5,4,7,0)');
+  m.fillStyle = gr; m.fillRect(VR.x, VR.y, VR.w * 0.6, VR.h * 0.5);
+  m.textAlign = 'left'; m.textBaseline = 'alphabetic';
+  m.font = '500 ' + (u * 1.7) + 'px ' + MONO; m.fillStyle = 'rgba(232,161,74,' + a + ')'; spaced(m, c.n, x, y, u * 0.6, 'left');
+  m.font = '400 ' + (u * 5) + 'px ' + DISPLAY; m.fillStyle = 'rgba(237,234,226,' + a + ')'; spaced(m, c.title, x, y + u * 6.4, u * 0.35, 'left');
+  m.font = '400 ' + (u * 2.6) + 'px ' + SERIF; m.fillStyle = 'rgba(237,234,226,' + 0.88 * a + ')';
+  wrap(m, c.text, VR.w * 0.36).forEach((l, i) => m.fillText(l, x, y + u * 11 + i * u * 3.5));
+}
 
 // ------------------------------------------------------------------ linea de tiempo
-// Estructura tipo Silo: plano, placa sobre negro con golpe, plano... y el titulo al final.
-const card = dur => ({ dur, render: rBlack, card: true });
+const mapAdaptP = lt => (lt < 2.5 ? lt + 0.5 : 3.0 + (lt - 2.5) * 1.2);   // apaga a los 2,5 s; la puerta se abre a los ~7,8 s
 const SC = {
-  capilla: { dur: 7,    render: rCapilla, fadeIn: 1.6, fadeOut: 0 },
-  eclipse: { dur: 10.5, render: rEclipse, fadeIn: 0,   fadeOut: 0.8 },
-  placa1:  card(3.4),
-  oculo:   { dur: 7,    render: rOculo,   fadeIn: 1.2, fadeOut: 0.5 },
-  placa2:  card(3.4),
-  tunel:   { dur: 6.5,  render: rTunel,   fadeIn: 0,   fadeOut: 0.3 },
-  placa3:  card(2.2),
-  cuerpo:  { dur: 11,   render: rCuerpo,  fadeIn: 0.4, fadeOut: 0.4 },
-  placa4:  card(2.2),
-  hueco:   { dur: 9.5,  render: rHueco,   fadeIn: 0.4, fadeOut: 0.4 },
-  placa5:  card(3.6),
-  adapt:   { dur: 13,   render: rAdapt,   fadeIn: 0.3, fadeOut: 0.5 },
-  montaje: { dur: MONTAGE_LEN + 0.5, render: rMontaje },
-  diamante:{ dur: 4.2,  render: rDiamante, fadeIn: 0.6 },
-  final:   { dur: 9,    render: rFinal,   over: oFinal },
-  coda:    { dur: 5.5,  render: rBlack,   over: oCoda },
+  intro:     { dur: 5,   render: rFinal, over: oIntro, fadeIn: 0.5 },
+  concepto:  { dur: 8.2, render: lt => rEclipse(1.5 + lt), fadeIn: 0.8, fadeOut: 0.5 },
+  pilares:   { dur: 7.5, render: rFinal, over: oPilares },
+  linterna:  { dur: 7,   render: rUmbral, fadeIn: 0.5, fadeOut: 0.3,
+               hud: lt => ({ lamp: lt >= 4.4 ? 'LUZ BLANCA' : 'APAGADA', col: WARM, hint: ['F', 'Encender la linterna'], hintA: hintWin(lt, 3.0, 4.8) }) },
+  compuerta: { dur: 6.5, render: rCompuerta, fadeIn: 0.3, fadeOut: 0.3,
+               hud: () => ({ lamp: 'LUZ BLANCA', col: WARM, charge: STC.charge }) },
+  filtros:   { dur: 7.5, render: rFiltros, fadeIn: 0.3, fadeOut: 0.3,
+               hud: lt => { const f = filtroAt(lt), [nm, col] = LAMP[f.name];
+                 const hs = lt < 3 ? [['1', 'CUERPO'], hintWin(lt, 1.0, 2.4)] : lt < 5 ? [['2', 'HUECO'], hintWin(lt, 3.3, 4.7)] : [['Q', 'Luz blanca'], hintWin(lt, 5.3, 6.7)];
+                 return { lamp: nm, col, hint: hs[0], hintA: hs[1] }; } },
+  cuerpoA:   { dur: 3.4, render: rAnclaA, fadeIn: 0.2,
+               hud: () => ({ lamp: 'CUERPO', col: AMBER, charge: STA.k }) },
+  cuerpoB:   { dur: 6.8, render: lt => rAnclaB(lt, 3.4), fadeOut: 0.4,
+               hud: lt => ({ lamp: lt < 3.4 ? 'CUERPO' : 'APAGADA', col: AMBER, charge: lt < 3.4 ? STB.b : 0, hint: ['F', 'Apagar'], hintA: hintWin(lt, 2.6, 3.8) }) },
+  hueco:     { dur: 7,   render: rReja, fadeIn: 0.3, fadeOut: 0.4,
+               hud: lt => ({ lamp: lt < 0.3 ? 'LUZ BLANCA' : 'HUECO', col: lt < 0.3 ? WARM : BLUE, charge: STR.dis < 1 ? STR.charge : 0, hint: ['2', 'HUECO'], hintA: hintWin(lt, 0.0, 1.2) }) },
+  patron:    { dur: 8,   render: rFinal, over: oPatron },
+  oscuridad: { dur: 11,  render: lt => rAdapt(mapAdaptP(lt)), fadeIn: 0.3, fadeOut: 0.4,
+               hud: lt => ({ lamp: lt < 2.5 ? 'LUZ BLANCA' : 'APAGADA', col: WARM, hint: ['F', 'Apagar'], hintA: hintWin(lt, 1.3, 2.8), a: 1 - smooth(8.5, 9.5, lt) }) },
+  diamante:  { dur: 2.2, render: lt => rDiamante(1.2 + lt * 1.2), fadeIn: 0.3 },
+  epilogo:   { dur: 7,   render: rEpilogo, whiteIn: 1.4, fadeOut: 0.6 },
+  recorrido: { dur: 7.5, render: rFinal, over: oRecorrido },
+  ficha:     { dur: 7.5, render: rFinal, over: oFicha },
+  cierre:    { dur: 4.5, render: rFinal, over: lt => oFinal(lt * 1.1), fadeOut: 0.3 },
 };
 const ORDER = Object.keys(SC);
 let TOTAL = 0; for (const id of ORDER) { SC[id].start = TOTAL; TOTAL += SC[id].dur; }
 const sceneAt = t => { for (let i = ORDER.length - 1; i >= 0; i--) { const s = SC[ORDER[i]]; if (t >= s.start) return [s, t - s.start]; } return [SC[ORDER[0]], 0]; };
 
+const cap = (id0, id1, n, title, text) => CAPS.push({ t0: SC[id0].start + 0.4, t1: SC[id1].start + SC[id1].dur - 0.2, n, title, text });
+cap('concepto', 'concepto', '01', 'CONCEPTO', 'Durante un eclipse total, un cráter que solo existe bajo esa luz se abre frente a una capilla. Adentro, una linterna con filtros enseña a ver.');
+cap('linterna', 'linterna', '03', 'LA LINTERNA', 'La luz es el verbo. La linterna está en el Umbral e ilumina todo lo que queda dentro del cono y a la vista.');
+cap('compuerta', 'compuerta', '04', 'LUZ BLANCA', 'Sostener el haz sobre un ancla la carga, y la mira muestra la carga. Así se abre la compuerta del Umbral.');
+cap('filtros', 'filtros', '05', 'FILTROS', 'Uno a la vez. Cada filtro es otra forma de mirar la materia, con su color, su apertura y su alcance. Al cambiar, el haz casi se apaga.');
+cap('cuerpoA', 'cuerpoB', '06', 'CUERPO', 'Enciende anclas. Con todas las anclas encendidas, el puente de luz se materializa. Sin el haz, retienen unos segundos y el puente se deshace.');
+cap('hueco', 'hueco', '07', 'HUECO', 'Disuelve la materia hueca mientras se la ilumina: la reja se vuelve atravesable.');
+cap('oscuridad', 'oscuridad', '09', 'LA OSCURIDAD', 'Prendida, la pared espejo solo devuelve el propio foco. Apagada, la vista se adapta, aparecen los tallados y se abre la puerta del eclipse.');
+cap('diamante', 'epilogo', '10', 'EL FINAL', 'Al cruzar la puerta, el anillo de diamante. De vuelta en la capilla, el cráter ya no está: solo queda pasto aplastado.');
+
 const CUES = [];
-const cue = (id, t0, t1, text, style = 'line', extra = {}) => CUES.push({ t0: SC[id].start + t0, t1: SC[id].start + t1, text, style, ...extra });
-const placa = (id, text) => cue(id, 0.25, SC[id].dur - 0.1, text, 'card');
-placa('placa1', 'Cuando el sol se apaga,\naparece un cráter.');
-placa('placa2', 'Existe solo\nmientras dura el eclipse.');
-placa('placa3', 'La luz sostiene.');
-placa('placa4', 'La luz atraviesa.');
-placa('placa5', 'Pero hay una puerta\nque la luz no deja ver.');
-cue('cuerpo', 1.2, 10.6, 'CUERPO', 'hud', { n: 'I', col: AMBER });
-cue('hueco', 1.4, 9.1, 'HUECO', 'hud', { n: 'II', col: BLUE });
-cue('adapt', 0.9, 3.0, 'Apagala.', 'big');
 
 function drawCue(c, t) {
-  const a = smooth(c.t0, c.t0 + 0.6, t) * (1 - smooth(c.t1 - 0.6, c.t1, t)); if (a <= 0) return;
+  const a = smooth(c.t0, c.t0 + 0.5, t) * (1 - smooth(c.t1 - 0.5, c.t1, t)); if (a <= 0) return;
   const u = VR.h / 100, cx = VR.x + VR.w / 2;
-  m.textBaseline = 'middle'; m.textAlign = 'center';
+  m.textBaseline = 'middle'; m.textAlign = 'center'; m.fillStyle = 'rgba(237,234,226,' + a + ')';
   if (c.style === 'card') {
     const lines = c.text.split('\n'), lh = u * 7.2, y0 = VR.y + VR.h / 2 - (lines.length - 1) * lh / 2;
-    m.font = '400 ' + (u * 5.4) + 'px ' + SERIF; m.fillStyle = 'rgba(237,234,226,' + a + ')';
+    m.font = '400 ' + (u * 5.4) + 'px ' + SERIF;
     lines.forEach((l, i) => m.fillText(l, cx, y0 + i * lh));
-  } else if (c.style === 'line') {
-    const lines = c.text.split('\n'), y0 = VR.y + VR.h - VR.bar - u * 13 - (lines.length - 1) * u * 6.5;
-    m.font = 'italic 400 ' + (u * 5.6) + 'px ' + SERIF; m.fillStyle = 'rgba(237,234,226,' + a + ')';
-    m.shadowColor = 'rgba(0,0,0,0.8)'; m.shadowBlur = u * 2;
-    lines.forEach((l, i) => m.fillText(l, cx, y0 + i * u * 6.5 + (1 - a) * u * 1.2));
-    m.shadowBlur = 0;
-  } else if (c.style === 'big') {
-    m.font = 'italic 400 ' + (u * 10) + 'px ' + SERIF; m.fillStyle = 'rgba(237,234,226,' + a + ')';
+  } else {
+    m.font = 'italic 400 ' + (u * 10) + 'px ' + SERIF;
     m.fillText(c.text, cx, VR.y + VR.h / 2);
-  } else if (c.style === 'hud') {
-    const x = VR.x + u * 7, y = VR.y + VR.bar + u * 7, col = c.col.map(v => v * 255 | 0);
-    m.fillStyle = rgba(col, a); m.beginPath(); m.arc(x + u * 0.6, y, u * 0.6, 0, 6.283); m.fill();
-    m.font = '400 ' + (u * 1.6) + 'px ' + MONO; m.fillStyle = 'rgba(237,234,226,' + 0.5 * a + ')';
-    spaced(m, 'FILTRO ' + c.n, x + u * 2.4, y - u * 1.6, u * 0.5, 'left');
-    m.font = '500 ' + (u * 2.4) + 'px ' + MONO; m.fillStyle = rgba(col, a);
-    spaced(m, c.text, x + u * 2.4, y + u * 1.4, u * 0.7, 'left');
   }
 }
 
@@ -873,7 +1232,7 @@ function drawFrame(t) {
   // grano
   m.save(); m.beginPath(); m.rect(VR.x, VR.y, VR.w, VR.h); m.clip();
   const gc = GRAIN[Math.max(0, Math.floor(t * 24)) % 4], pat = m.createPattern(gc, 'repeat');
-  m.translate(Math.random() * 192, Math.random() * 192);
+  const gk = Math.floor(t * 24); m.translate(hash(gk, 1, 7) * 192, hash(gk, 2, 9) * 192);
   m.globalCompositeOperation = 'screen'; m.globalAlpha = S.grain; m.fillStyle = pat; m.fillRect(-192, -192, CW + 384, CH + 384);
   m.restore();
   // vineta
@@ -882,11 +1241,14 @@ function drawFrame(t) {
   m.fillStyle = vg; m.fillRect(VR.x, VR.y, VR.w, VR.h);
   if (S.flash > 0) { m.fillStyle = 'rgba(255,244,228,' + clamp(S.flash) + ')'; m.fillRect(VR.x, VR.y, VR.w, VR.h); }
   if (sc.over) sc.over(lt);
+  if (sc.hud) drawHUD(sc.hud(lt));
+  if (sc.whiteIn && lt < sc.whiteIn) { m.fillStyle = 'rgba(255,250,242,' + (1 - smooth(0, sc.whiteIn, lt)) + ')'; m.fillRect(0, 0, CW, CH); }
   const fade = Math.max(sc.fadeIn ? 1 - lt / sc.fadeIn : 0, sc.fadeOut ? 1 - (sc.dur - lt) / sc.fadeOut : 0);
   if (fade > 0) { m.fillStyle = 'rgba(0,0,0,' + clamp(fade) + ')'; m.fillRect(0, 0, CW, CH); }
   // franjas cinemascope
   m.fillStyle = '#000'; m.fillRect(VR.x, VR.y, VR.w, VR.bar); m.fillRect(VR.x, VR.y + VR.h - VR.bar, VR.w, VR.bar);
   for (const c of CUES) if (t >= c.t0 && t <= c.t1) drawCue(c, t);
+  for (const c of CAPS) if (t >= c.t0 && t <= c.t1) drawCap(c, t);
   if (AU.C && playing) AU.levels(S.audio);
 }
 
@@ -1020,30 +1382,32 @@ const AU = {
 
 const EVENTS = [];
 const at = (id, t, fn) => EVENTS.push({ t: SC[id].start + t, fn });
-at('capilla', 3.6, () => AU.bell());
-at('eclipse', 5.2, () => AU.grave());                 // se callan los pajaros
-at('eclipse', 5.8, () => AU.rumble(3.2));
-at('eclipse', 8.8, () => { AU.tone(1318.5, 5, 0.09); AU.tone(1975.5, 4, 0.05); });
-for (const id of ORDER) if (SC[id].card) at(id, 0.05, () => AU.boom(0.6));
-at('oculo', 0.2, () => AU.swell(7));
-at('tunel', 0.8, () => AU.click());
-at('cuerpo', 1.2, () => AU.equip());
-at('cuerpo', 3.35, () => AU.tone(220));
-at('cuerpo', 4.95, () => AU.tone(277.18));
-at('cuerpo', 5.0, () => { AU.tone(329.63, 6, 0.16); AU.tone(440, 6, 0.1); AU.swell(5); });
-at('hueco', 1.4, () => AU.equip());
-at('hueco', 2.55, () => AU.hiss(1.1));
-at('adapt', 3.0, () => AU.click());
-at('adapt', 9.4, () => { AU.boom(0.55); AU.swell(4); });  // retumbo al abrirse la puerta
-CUTS.forEach((c, i) => at('montaje', CUT_T[i], () => (i === 0 ? AU.boom(0.9) : AU.hit())));
-at('diamante', 1.7, () => { AU.tone(1760, 4, 0.12); AU.tone(2637, 3, 0.06); });
-at('final', 0.05, () => AU.boom(1.1));
-at('final', 3.0, () => { AU.tone(110, 8, 0.18); AU.tone(164.8, 8, 0.1); });
-at('coda', 1.0, () => AU.click());
+at('intro', 0.2, () => AU.swell(5));
+at('intro', 1.2, () => { AU.tone(110, 5, 0.12); AU.tone(164.8, 5, 0.07); });
+at('concepto', 5.2 - 1.5, () => AU.grave());
+at('concepto', 5.8 - 1.5, () => AU.rumble(2.6));
+at('concepto', 8.8 - 1.5, () => { AU.tone(1318.5, 4, 0.08); AU.tone(1975.5, 3, 0.04); });
+at('linterna', 4.4, () => AU.click());
+at('compuerta', 1.1 + CARGA, () => AU.tone(392, 3, 0.12));
+at('compuerta', 1.8, () => AU.rumble(1.6));
+for (const tt of [1.5, 3.8, 5.8]) at('filtros', tt, () => AU.equip());
+at('cuerpoA', 0.3, () => AU.click());
+at('cuerpoA', 0.9 + CARGA, () => AU.tone(220));
+at('cuerpoB', 0.6 + CARGA, () => AU.tone(277.18));
+at('cuerpoB', 0.65 + CARGA, () => { AU.tone(329.63, 5, 0.14); AU.tone(440, 5, 0.08); AU.swell(4); });
+at('cuerpoB', 3.4, () => AU.click());
+at('cuerpoB', 5.4, () => AU.hiss(0.6));
+at('hueco', 0.3, () => AU.equip());
+at('hueco', 0.3 + DEMORA_CAMBIO + CARGA, () => AU.hiss(1));
+at('oscuridad', 2.5, () => AU.click());
+at('oscuridad', 2.5 + (9.4 - 3.0) / 1.2, () => { AU.boom(0.5); AU.swell(3); });
+at('diamante', (1.7 - 1.2) / 1.2, () => { AU.tone(1760, 3, 0.12); AU.tone(2637, 2.5, 0.06); });
+at('epilogo', 1.2, () => AU.bell());
+at('cierre', 0.3, () => { AU.tone(110, 5, 0.14); AU.tone(164.8, 5, 0.08); });
 EVENTS.sort((a, b) => a.t - b.t);
 
 // ------------------------------------------------------------------ reproduccion
-let T = SC.final.start + 6, playing = false, last = 0, started = false;
+let T = SC.cuerpoB.start + 2.9, playing = false, last = 0, started = false;
 const $ = id => document.getElementById(id);
 const ui = { start: $('start'), end: $('end'), bar: $('bar'), fill: $('fill'), pause: $('btn-pause'), mute: $('btn-mute'), restart: $('btn-restart'), replay: $('btn-replay') };
 
