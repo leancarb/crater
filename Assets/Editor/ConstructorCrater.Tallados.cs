@@ -40,12 +40,15 @@ public static partial class ConstructorCrater
     const float SeparacionDeLaPared = 0.08f;
 
     /// <summary>Pone una figura de 'tamanio' metros sobre una pared, mirando hacia 'afuera'.</summary>
-    static Renderer Glifo(Transform padre, string nombre, Figura figura, Vector3 posicion, Vector3 afuera, float tamanio, Material m)
+    static Renderer Glifo(Transform padre, string nombre, Figura figura, Vector3 posicion, Vector3 afuera, float tamanio, Material m,
+                          bool separar = true)
     {
         var go = new GameObject(nombre);
         go.transform.SetParent(padre, false);
         // un poco separada: las paredes facetadas tienen hasta 9 cm de relieve y la taparían
-        go.transform.SetPositionAndRotation(posicion + afuera.normalized * SeparacionDeLaPared, Quaternion.LookRotation(-afuera));
+        // ('separar' en false: figuras sueltas, que no van sobre una pared)
+        go.transform.SetPositionAndRotation(posicion + (separar ? afuera.normalized * SeparacionDeLaPared : Vector3.zero),
+            Quaternion.LookRotation(-afuera));
         go.transform.localScale = Vector3.one * tamanio;
         go.AddComponent<MeshFilter>().sharedMesh = MallaDeFigura(figura);
         var r = go.AddComponent<MeshRenderer>();
@@ -311,10 +314,12 @@ public static partial class ConstructorCrater
         collider.size = new Vector3(1f, 1.3f, 1f);
 
         var soles = new List<Renderer>();
-        for (int i = 0; i < 4; i++)
+        // dos soles cruzados en el centro del cuenco: se ve un sol desde cualquier lado
+        // (cuatro figuras corridas del centro se veían duplicadas, una detrás de otra)
+        for (int i = 0; i < 2; i++)
         {
             var dir = Quaternion.Euler(0f, i * 90f, 0f) * Vector3.forward;
-            soles.Add(Glifo(raiz, "Sol", i % 2 == 0 ? Figura.Sol : Figura.Halo, pie + Vector3.up * 1.75f + dir * 0.02f, dir, 0.8f, k.ambar));
+            soles.Add(Glifo(raiz, "Sol", Figura.Sol, pie + Vector3.up * 1.75f, dir, 0.8f, k.ambar, separar: false));
         }
         var testigo = raiz.gameObject.AddComponent<TestigoDeSello>();
         testigo.sello = sello;
