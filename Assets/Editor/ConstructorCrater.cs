@@ -163,7 +163,9 @@ public static partial class ConstructorCrater
         filtro.descripcion = descripcion;
         filtro.anguloCono = 28f;
         filtro.alcance = 15f;
-        filtro.intensidad = 230f;   // menos que la luz blanca (ver CrearPrefabs)
+        // menos que la luz blanca (950, ver CrearPrefabs) pero no tanto: con 230 parecía que la
+        // linterna se apagaba al poner un filtro
+        filtro.intensidad = 520f;
         filtro.tiempoDeCarga = 0.4f;
         filtro.sonidoAlEquipar = alEquipar;
         filtro.zumbido = zumbido;
