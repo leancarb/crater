@@ -3,8 +3,8 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Pausa con Esc: congela el tiempo, silencia el audio y libera el cursor.
-/// En pausa: Esc sigue, R reinicia, X sale, y las opciones se cambian con
-/// W/S (o flechas, o la cruceta) para elegir y A/D para cambiar el valor.
+/// En pausa sólo se ven los controles, en gris: Esc sigue, R reinicia, X sale.
+/// (Las opciones guardadas de antes se siguen aplicando: OpcionesCrater.)
 /// Fuera de pausa, un clic vuelve a capturar el mouse si el sistema lo soltó.
 ///
 /// CÓMO FUNCIONA
@@ -24,7 +24,6 @@ public class PausaCrater : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ReiniciarEstatico() => EnPausa = false;
 
-    int opcionElegida;
 
     void Start()
     {
@@ -50,7 +49,6 @@ public class PausaCrater : MonoBehaviour
         {
             if (EntradaCrater.Presionada(UnityEngine.InputSystem.Key.R)) ReiniciarEscena();
             else if (EntradaCrater.Presionada(UnityEngine.InputSystem.Key.X)) Salir();
-            else NavegarOpciones();
         }
         else if (Cursor.lockState != CursorLockMode.Locked && EntradaCrater.ClicIzquierdo)
         {
@@ -65,16 +63,6 @@ public class PausaCrater : MonoBehaviour
             Pausar();
     }
 
-    void NavegarOpciones()
-    {
-        var n = EntradaCrater.NavegarMenu();
-        if (n == Vector2Int.zero) return;
-        // arriba resta: la primera fila está arriba
-        opcionElegida = (opcionElegida - n.y + OpcionesCrater.CantidadDeFilas) % OpcionesCrater.CantidadDeFilas;
-        if (n.x != 0) OpcionesCrater.Cambiar((OpcionesCrater.Fila)opcionElegida, n.x);
-        interfaz?.MostrarOpciones(opcionElegida);
-    }
-
     public void Pausar()
     {
         EnPausa = true;
@@ -82,7 +70,6 @@ public class PausaCrater : MonoBehaviour
         AudioListener.pause = true;
         CapturarCursor(false);
         interfaz?.MostrarPausa(true);
-        interfaz?.MostrarOpciones(opcionElegida);
     }
 
     public void Reanudar()

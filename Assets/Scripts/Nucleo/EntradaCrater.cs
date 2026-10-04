@@ -75,6 +75,11 @@ public static class EntradaCrater
     public static bool QuitarFiltro =>
         Presionada(Key.Q) || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame);
 
+    /// <summary>Saltear la animación que se esté viendo (Espacio, Enter o A). No se anuncia con texto.</summary>
+    public static bool Saltar =>
+        Presionada(Key.Space) || Presionada(Key.Enter)
+        || (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame);
+
     /// <summary>Pausa (Esc o Start).</summary>
     public static bool Pausa =>
         Presionada(Key.Escape) || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);

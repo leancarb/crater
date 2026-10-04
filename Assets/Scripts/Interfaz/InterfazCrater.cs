@@ -23,6 +23,8 @@ public class InterfazCrater : MonoBehaviour
 {
     [SerializeField] LinternaController linterna;
     [SerializeField] Font fuente;
+    [Tooltip("La letra de la palabra CRÁTER (Cinzel: mayúsculas talladas en piedra).")]
+    [SerializeField] Font fuenteTitulo;
 
     const float DuracionFundidoPrompt = 0.35f;
     static readonly Color ColorApagado = new Color(0.6f, 0.6f, 0.6f);
@@ -42,7 +44,6 @@ public class InterfazCrater : MonoBehaviour
     Text textoTitulo;
     Text textoSubtitulo;
     GameObject panelPausa;
-    Text textoOpciones;
 
     // se guarda la corrutina en curso para cortarla si llega otra indicación
     Coroutine rutinaPrompt;
@@ -138,12 +139,20 @@ public class InterfazCrater : MonoBehaviour
     public IEnumerator MostrarTitulo()
     {
         MostrarVelo(Color.black, 1f);
-        textoTitulo.text = "CRÁTER";
+        PonerPalabraCrater();
         textoSubtitulo.text = "";
         yield return FundirTexto(textoTitulo, 0f, 1f, 1.6f);
         yield return new WaitForSeconds(1.4f);
         StartCoroutine(FundirTexto(textoTitulo, 1f, 0f, 1.6f));
         yield return Fundir(Color.black, 1f, 0f, 2.5f);
+    }
+
+    /// <summary>"CRÁTER" con su letra, grande y espaciada, como una inscripción.</summary>
+    void PonerPalabraCrater()
+    {
+        textoTitulo.font = fuenteTitulo != null ? fuenteTitulo : fuente;
+        textoTitulo.fontSize = fuenteTitulo != null ? 96 : 78;
+        textoTitulo.text = fuenteTitulo != null ? "C R Á T E R" : "CRÁTER";
     }
 
     /// <summary>
@@ -172,7 +181,7 @@ public class InterfazCrater : MonoBehaviour
     }
 
     /// <summary>Créditos en texto oscuro sobre blanco, una línea por vez.</summary>
-    public IEnumerator MostrarCreditos(string[] lineas)
+    public IEnumerator MostrarCreditos(string[] lineas, System.Func<bool> saltar = null)
     {
         OcultarPrompt();
         yield return Fundir(Color.white, velo.enabled ? velo.color.a : 0f, 1f, 1.5f);
@@ -181,16 +190,17 @@ public class InterfazCrater : MonoBehaviour
 
         foreach (string linea in lineas)
         {
+            if (saltar != null && saltar()) break;
             textoTitulo.text = linea;
+            textoTitulo.font = fuente;
             textoTitulo.fontSize = linea.Length > 16 ? 40 : 78;
             textoTitulo.color = new Color(ColorTextoSobreBlanco.r, ColorTextoSobreBlanco.g, ColorTextoSobreBlanco.b, 0f);
             yield return FundirTexto(textoTitulo, 0f, 1f, 1.2f);
-            yield return new WaitForSeconds(2.8f);
-            yield return FundirTexto(textoTitulo, 1f, 0f, 1.2f);
+            for (float t = 0f; t < 2.8f && (saltar == null || !saltar()); t += Time.unscaledDeltaTime) yield return null;
+            yield return FundirTexto(textoTitulo, 1f, 0f, saltar != null && saltar() ? 0.2f : 1.2f);
         }
 
-        textoTitulo.text = "CRÁTER";
-        textoTitulo.fontSize = 78;
+        PonerPalabraCrater();
         textoSubtitulo.text = "R · Volver a empezar     Esc · Salir";
         textoSubtitulo.color = new Color(ColorTextoSobreBlanco.r, ColorTextoSobreBlanco.g, ColorTextoSobreBlanco.b, 0f);
         StartCoroutine(FundirTexto(textoSubtitulo, 0f, 1f, 2f));
@@ -209,18 +219,6 @@ public class InterfazCrater : MonoBehaviour
     }
 
     /// <summary>Dibuja las opciones en la pausa, con la elegida resaltada.</summary>
-    public void MostrarOpciones(int elegida)
-    {
-        if (textoOpciones == null) return;
-        var sb = new System.Text.StringBuilder();
-        for (int i = 0; i < OpcionesCrater.CantidadDeFilas; i++)
-        {
-            string fila = OpcionesCrater.Texto((OpcionesCrater.Fila)i);
-            sb.AppendLine(i == elegida ? $"<color=#FFB060>‹  {fila}  ›</color>" : fila);
-        }
-        textoOpciones.text = sb.ToString();
-    }
-
     public void MostrarPausa(bool visible)
     {
         if (panelPausa != null) panelPausa.SetActive(visible);
@@ -396,15 +394,10 @@ public class InterfazCrater : MonoBehaviour
         panelPausa = Crear("Pausa", raiz, Vector2.zero, Vector2.one);
         var fondoPausa = panelPausa.AddComponent<Image>();
         fondoPausa.color = new Color(0f, 0f, 0f, 0.78f);
-        CrearTexto(Crear("TituloPausa", panelPausa.transform, new Vector2(0.1f, 0.74f), new Vector2(0.9f, 0.86f)),
-            56, TextAnchor.MiddleCenter, Color.white).text = "PAUSA";
-        textoOpciones = CrearTexto(Crear("Opciones", panelPausa.transform, new Vector2(0.2f, 0.42f), new Vector2(0.8f, 0.72f)),
-            28, TextAnchor.UpperCenter, Color.white);
-        textoOpciones.lineSpacing = 1.25f;
-        CrearTexto(Crear("Controles", panelPausa.transform, new Vector2(0.15f, 0.1f), new Vector2(0.85f, 0.38f)),
-            22, TextAnchor.UpperCenter, new Color(0.75f, 0.75f, 0.75f)).text =
-            "W / S · Elegir opción      A / D · Cambiar\n\n" +
-            "WASD · Moverse      Shift · Correr      Mouse · Mirar\n" +
+        // en la pausa sólo están los controles, en un gris apagado: sin menú de opciones
+        CrearTexto(Crear("Controles", panelPausa.transform, new Vector2(0.15f, 0.3f), new Vector2(0.85f, 0.7f)),
+            22, TextAnchor.MiddleCenter, new Color(0.42f, 0.42f, 0.42f)).text =
+            "WASD · Moverse      Mouse · Mirar\n" +
             "F · Linterna      1 / 2 · Filtros      Q · Luz blanca\n\n" +
             "Esc · Seguir      R · Reiniciar      X · Salir";
         panelPausa.SetActive(false);

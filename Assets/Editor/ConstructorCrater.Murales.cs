@@ -59,12 +59,35 @@ public static partial class ConstructorCrater
             foreach (float lado in new[] { -1f, 1f })
                 Losa(k, cruce, $"Friso_Cruce_{(lado < 0f ? "Izq" : "Der")}_{z:0}", new Vector3(lado * 6f, 4f, z),
                     lado < 0f ? Vector3.right : Vector3.left, 4f, 0.8f, (kk, l) => FrisoCerros(l.En(kk.pinturaHueso), 4f, 0.8f));
+        // y losas grandes, a la altura de los ojos
+        Losa(k, cruce, "Mural_Cruce_Reja_Y_Ancla", new Vector3(-6f, 1.9f, 35f), Vector3.right, 3f, 1.9f, PanelRejaYAncla);
+        Losa(k, cruce, "Mural_Cruce_Camino", new Vector3(6f, 1.9f, 35f), Vector3.left, 3f, 1.9f, PanelCaminoDeLuz);
+        Losa(k, cruce, "Mural_Cruce_Valle", new Vector3(-6f, 1.9f, 60f), Vector3.right, 3f, 1.9f, PanelValleEclipse);
+        Losa(k, cruce, "Mural_Cruce_Chakana", new Vector3(6f, 1.9f, 60f), Vector3.left, 3f, 1.9f, PanelChakanaGrande);
+
+        // --- la Cresta: un díptico, una losa en cada pared al entrar. De un lado, alguien
+        // encandilado por su propio reflejo; del otro, con la luz baja, y alrededor aparecen
+        // los tallados. No dice "apagala": muestra qué pasa si se la apaga
+        var cresta = Grupo(murales, "Diptico_Cresta");
+        Losa(k, cresta, "Mural_Cresta_Encandilado", new Vector3(-12f, 2.1f, 77.6f), Vector3.right, 2.8f, 1.8f, PanelEncandilado);
+        Losa(k, cresta, "Mural_Cresta_Oscuridad", new Vector3(12f, 2.1f, 77.6f), Vector3.left, 2.8f, 1.8f, PanelEnLaOscuridad);
 
         // --- el Umbral: cada control al lado de lo que enseña. Al entrar, moverse; junto a
         // la linterna, prenderla. Los filtros se enseñan donde se juntan (MuralesDelFiltro).
         var controles = Grupo(murales, "Controles_Umbral");
-        Losa(k, controles, "Control_Mover", new Vector3(-6f, 1.8f, -20f), Vector3.right, 2.4f, 1.5f, PanelMover);
-        Losa(k, controles, "Control_Linterna", new Vector3(6f, 1.8f, -10.5f), Vector3.left, 2.4f, 1.5f, PanelLinterna);
+        Losa(k, controles, "Control_Mover", new Vector3(-6f, 1.9f, -19.5f), Vector3.right, 3f, 1.9f, Escalado(1.22f, PanelMover));
+        Losa(k, controles, "Control_Linterna", new Vector3(6f, 1.9f, -10.5f), Vector3.left, 2.8f, 1.75f, Escalado(1.15f, PanelLinterna));
+        // enfrente de los controles, lo que se hace en el Umbral: la luz blanca sobre el ancla baja la losa
+        Losa(k, controles, "Mural_Ancla_Puerta", new Vector3(6f, 1.9f, -17.5f), Vector3.left, 3f, 1.9f, PanelAnclaYPuerta);
+        // arriba, un friso de serpiente escalonada de punta a punta: sol al oeste y luna al este,
+        // como las alas que vienen
+        foreach (float lado in new[] { -1f, 1f })
+            Losa(k, controles, lado < 0f ? "Friso_Umbral_Oeste" : "Friso_Umbral_Este", new Vector3(lado * 6f, 3.45f, -16.5f),
+                lado < 0f ? Vector3.right : Vector3.left, 12f, 0.6f,
+                (kk, l) => FrisoEscalonado(l.En(lado < 0f ? kk.pinturaSol : kk.pinturaLuna), 12f, 0.6f));
+        // luz para leerlos (sin brillo propio: lo que brilla, se usa)
+        Luz(controles, "Luz_Murales_Oeste", new Vector3(-3.6f, 3.2f, -19.5f), LuzCalida, 22f, 6f, false);
+        Luz(controles, "Luz_Murales_Este", new Vector3(3.6f, 3.2f, -14f), LuzCalida, 26f, 8f, false);
     }
 
     /// <summary>
@@ -267,6 +290,140 @@ public static partial class ConstructorCrater
         Persona(h, 0.17f, -0.4f, 0.3f, 0.04f, 0f);
     }
 
+    static void PanelAnclaYPuerta(Kit k, Lienzo l)
+    {
+        // alguien apunta la luz blanca al ancla; el ancla brilla y la losa de la puerta se hunde
+        var h = l.En(k.pinturaHueso);
+        Linea(h, new Vector2(-1.35f, -0.72f), new Vector2(1.35f, -0.72f), 0.03f);
+        Persona(h, -1.1f, -0.72f, 0.8f, 0.09f, 0f, true);
+        var mango = new Vector2(-1.1f, -0.72f + 0.8f * 0.7475f) + new Vector2(0.8f * 0.18f, 0.8f * 0.05f);
+        var aro = new Vector2(0.15f, -0.72f + 0.95f * 0.8f);
+        var hacia = aro - mango;
+        float grados = Mathf.Atan2(hacia.y, hacia.x) * Mathf.Rad2Deg;
+        var punta = Linterna(h, mango, grados, 0.22f);
+        Cono(h, punta, grados, (aro - punta).magnitude - 0.26f, 9f);
+        Ancla(h, h, 0.15f, -0.72f, 0.95f);
+        // la losa, ya hundida, y su contorno de antes
+        Rect(h, 0.72f, -0.72f, 1.08f, -0.25f);
+        for (float y = -0.2f; y < 0.4f; y += 0.12f)
+        {
+            Rect(h, 0.72f, y, 0.745f, y + 0.06f);
+            Rect(h, 1.055f, y, 1.08f, y + 0.06f);
+        }
+        Flecha(h, new Vector2(1.25f, 0.3f), new Vector2(1.25f, -0.4f), 0.035f);
+    }
+
+    // ================================================================== el Cruce y la Cresta
+
+    static void PanelRejaYAncla(Kit k, Lienzo l)
+    {
+        // detrás de una reja, un ancla: la luna abre la reja y el sol enciende el ancla
+        var u = l.En(k.pinturaLuna);
+        var s = l.En(k.pinturaSol);
+        var h = l.En(k.pinturaHueso);
+        Linea(h, new Vector2(-1.35f, -0.72f), new Vector2(1.35f, -0.72f), 0.03f);
+        Persona(h, -1.1f, -0.72f, 0.8f, 0.09f, 0f, true);
+        var mango = new Vector2(-1.1f + 0.8f * 0.18f, -0.72f + 0.8f * 0.7975f);
+        var punta = Linterna(h, mango, -6f, 0.22f);
+        Cono(u, punta, -6f, 1.05f, 13f);
+        Marco(h, 0.05f, -0.72f, 0.55f, 0.35f, 0.03f);
+        for (int i = 0; i < 3; i++)
+        {
+            float x = 0.17f + i * 0.13f;
+            for (float y = -0.66f; y < 0.3f; y += 0.15f) Rect(h, x - 0.014f, y, x + 0.014f, y + 0.06f);
+        }
+        Ancla(h, s, 0.95f, -0.72f, 1.05f);
+    }
+
+    static void PanelCaminoDeLuz(Kit k, Lienzo l)
+    {
+        // un puente de luz que se aleja hasta una puerta con el eclipse encima
+        var s = l.En(k.pinturaSol);
+        var h = l.En(k.pinturaHueso);
+        Tri(s, new Vector2(-0.9f, -0.75f), new Vector2(0.9f, -0.75f), new Vector2(0.12f, -0.05f));
+        Tri(s, new Vector2(-0.9f, -0.75f), new Vector2(0.12f, -0.05f), new Vector2(-0.12f, -0.05f));
+        Puerta(h, 0f, -0.05f, 0.34f, 0.5f, true);
+        FiguraEn(l.En(k.pinturaHueso), Figura.Halo, 0f, 0.62f, 0.4f);
+        FiguraEn(l.En(k.pinturaLuna), Figura.LunaLlena, 0f, 0.62f, 0.22f);
+        Persona(h, -0.35f, -0.62f, 0.45f, 0.06f, 0.02f);
+    }
+
+    static void PanelValleEclipse(Kit k, Lienzo l)
+    {
+        // el valle con sus cerros, la capilla chiquita y el eclipse arriba
+        var h = l.En(k.pinturaHueso);
+        float[] picos = { -1.05f, -0.65f, -0.2f, 0.3f, 0.7f, 1.08f };
+        for (int i = 0; i < picos.Length; i++)
+        {
+            float alto = i % 2 == 0 ? 0.55f : 0.35f;
+            Tri(h, new Vector2(picos[i] - 0.3f, -0.7f), new Vector2(picos[i] + 0.3f, -0.7f), new Vector2(picos[i], -0.7f + alto));
+        }
+        Rect(h, -1.35f, -0.76f, 1.35f, -0.7f);
+        var c = l.En(k.pinturaLuna);
+        Rect(c, 0.42f, -0.7f, 0.62f, -0.52f);
+        Tri(c, new Vector2(0.38f, -0.52f), new Vector2(0.66f, -0.52f), new Vector2(0.52f, -0.42f));
+        FiguraEn(l.En(k.pinturaSol), Figura.Eclipse, -0.2f, 0.45f, 0.62f);
+        FiguraEn(l.En(k.pinturaLuna), Figura.LunaLlena, -0.2f, 0.45f, 0.31f);
+    }
+
+    static void PanelChakanaGrande(Kit k, Lienzo l)
+    {
+        // la chakana grande del sol y, adentro, la espiral de la luna
+        Chakana(l.En(k.pinturaSol), 0f, 0f, 1.5f);
+        Espiral(l.En(k.pinturaHueso), 0f, 0f, 0.22f);
+        Chakana(l.En(k.pinturaLuna), -1.05f, 0f, 0.42f);
+        Chakana(l.En(k.pinturaLuna), 1.05f, 0f, 0.42f);
+    }
+
+    static void PanelEncandilado(Kit k, Lienzo l)
+    {
+        // alguien apunta la luz a una pared lisa: lo único que ve es su propio destello
+        var h = l.En(k.pinturaHueso);
+        Linea(h, new Vector2(-1.25f, -0.7f), new Vector2(1.25f, -0.7f), 0.03f);
+        Rect(h, 0.95f, -0.7f, 1.01f, 0.7f);
+        Persona(h, -0.95f, -0.7f, 0.85f, 0.09f, 0f, true);
+        var mango = new Vector2(-0.95f + 0.85f * 0.18f, -0.7f + 0.85f * 0.7975f);
+        var punta = Linterna(h, mango, 0f, 0.22f);
+        Cono(h, punta, 0f, 0.95f - punta.x, 8f);
+        FiguraEn(h, Figura.Estrella, 0.86f, mango.y, 0.7f);
+        Disco(h, 0.86f, mango.y, 0.12f, 10);
+    }
+
+    static void PanelEnLaOscuridad(Kit k, Lienzo l)
+    {
+        // la misma persona, con la luz baja; en la pared, alrededor, aparecen los tallados
+        var h = l.En(k.pinturaHueso);
+        var u = l.En(k.pinturaLuna);
+        Linea(h, new Vector2(-1.25f, -0.7f), new Vector2(1.25f, -0.7f), 0.03f);
+        Persona(h, -0.15f, -0.7f, 0.85f, 0.09f, 0f);
+        Linterna(h, new Vector2(-0.15f + 0.09f * 0.8f + 0.03f, -0.7f + 0.85f * 0.47f), -90f, 0.18f);
+        Espiral(u, -0.85f, 0.35f, 0.2f);
+        Chakana(u, 0.75f, 0.38f, 0.42f);
+        FrisoEscalonadoEn(u, -0.95f, -0.25f, 0.6f);
+        Tri(u, new Vector2(0.62f, -0.2f), new Vector2(0.78f, -0.04f), new Vector2(0.94f, -0.2f));
+        Tri(u, new Vector2(0.62f, -0.2f), new Vector2(0.94f, -0.2f), new Vector2(0.78f, -0.36f));
+        foreach (var e in new[] { new Vector2(-0.4f, 0.6f), new Vector2(0.2f, 0.68f), new Vector2(0.45f, 0.5f) })
+            FiguraEn(h, Figura.Estrella, e.x, e.y, 0.12f);
+    }
+
+    /// <summary>Un tramo corto de serpiente escalonada que arranca en (x, y) y mide 'largo'.</summary>
+    static void FrisoEscalonadoEn(List<Vector3> v, float x, float y, float largo)
+    {
+        float u = 0.1f, a = 0.08f;
+        float[] alturas = { -a, 0f, a, 0f };
+        var p = new Vector2(x, y - a);
+        int i = 1;
+        while (p.x + u <= x + largo)
+        {
+            var q = new Vector2(p.x + u, p.y);
+            Linea(v, p, q, 0.035f);
+            var r = new Vector2(q.x, y + alturas[i % alturas.Length]);
+            Linea(v, q, r, 0.035f);
+            p = r;
+            i++;
+        }
+    }
+
     // ================================================================== arte de las alas
 
     static void PanelAnclasDelTecho(Kit k, Lienzo l)
@@ -385,6 +542,18 @@ public static partial class ConstructorCrater
 
     // ================================================================== primitivas
 
+    /// <summary>El mismo dibujo, más grande (para una losa más grande que la del dibujo original).</summary>
+    static System.Action<Kit, Lienzo> Escalado(float factor, System.Action<Kit, Lienzo> dibujo) => (k, l) =>
+    {
+        var aparte = new Lienzo();
+        dibujo(k, aparte);
+        foreach (var (material, v) in aparte.capas)
+        {
+            var destino = l.En(material);
+            foreach (var p in v) destino.Add(p * factor);
+        }
+    };
+
     /// <summary>Un ancla: una piedra que se angosta hacia arriba con un aro que brilla.</summary>
     static void Ancla(List<Vector3> piedra, List<Vector3> aro, float x, float suelo, float alto)
     {
@@ -462,6 +631,24 @@ public static partial class ConstructorCrater
             return new Vector2(cx, cy) + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * (r * t);
         }
         for (int i = 1; i < pasos; i++) Linea(v, Punto(i), Punto(i + 1), r * 0.12f);
+    }
+
+    /// <summary>La serpiente escalonada: una línea que sube y baja en escalones a lo largo de la losa.</summary>
+    static void FrisoEscalonado(List<Vector3> v, float ancho, float alto)
+    {
+        float u = 0.14f, a = alto * 0.22f, x = -ancho / 2f + 0.18f, fin = ancho / 2f - 0.18f;
+        float[] alturas = { -a, 0f, a, 0f };
+        var p = new Vector2(x, -a);
+        int i = 1;
+        while (p.x + u <= fin)
+        {
+            var q = new Vector2(p.x + u, p.y);
+            Linea(v, p, q, 0.045f);
+            var r = new Vector2(q.x, alturas[i % alturas.Length]);
+            Linea(v, q, r, 0.045f);
+            p = r;
+            i++;
+        }
     }
 
     /// <summary>Un friso de cerros: triángulos de dos alturas a lo largo de la losa.</summary>

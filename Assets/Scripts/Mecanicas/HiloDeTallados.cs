@@ -66,6 +66,16 @@ public class HiloDeTallados : MonoBehaviour
         StartCoroutine(Prender());
     }
 
+    /// <summary>Deja todos los tallados prendidos ya (al saltear la cinemática).</summary>
+    public void Completar()
+    {
+        encendido = true;
+        StopAllCoroutines();
+        if (nivel == null) return;
+        for (int i = 0; i < nivel.Length; i++) nivel[i] = 1f;
+        Aplicar();
+    }
+
     IEnumerator Prender()
     {
         yield return new WaitForSeconds(demoraInicial);

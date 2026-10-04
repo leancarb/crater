@@ -77,6 +77,7 @@ public class EclipseFinalController : MonoBehaviour
     bool habilitado;
     bool transicionIniciada;
     bool cerrado;
+    bool animando, saltar;   // Espacio, Enter o A saltean la animación en curso (sin aviso en pantalla)
     float tiempoEnEpilogo;
     float intensidadLuzCrater = -1f;   // la del constructor, para volver a ella
 
@@ -84,6 +85,7 @@ public class EclipseFinalController : MonoBehaviour
 
     void Update()
     {
+        if (animando && EntradaCrater.Saltar) saltar = true;
         if (!EnEpilogo || cerrado) return;
         tiempoEnEpilogo += Time.deltaTime;
         if (tiempoEnEpilogo >= segundosHastaCreditos) CerrarDemo();
@@ -105,6 +107,8 @@ public class EclipseFinalController : MonoBehaviour
     IEnumerator Final()
     {
         transicionIniciada = true;
+        animando = true;
+        saltar = false;
         interfaz?.OcultarPrompt();
         if (pausa != null) pausa.enabled = false;
 
@@ -115,7 +119,7 @@ public class EclipseFinalController : MonoBehaviour
         var camara = jugador != null ? jugador.GetComponentInChildren<Camera>() : Camera.main;
         Color fondoDesde = camara != null ? camara.backgroundColor : Color.black;
         Color cieloDesde = RenderSettings.ambientSkyColor, horizonteDesde = RenderSettings.ambientEquatorColor;
-        for (float t = 0f; t < duracion; t += Time.deltaTime)
+        for (float t = 0f; t < duracion && !saltar; t += Time.deltaTime)
         {
             float k = t / duracion;
             float luz = k * k;   // casi nada al principio, todo al final
@@ -128,11 +132,11 @@ public class EclipseFinalController : MonoBehaviour
         // 2. todo blanco: el último destello y silencio
         var control = jugador != null ? jugador.GetComponent<JugadorFPS>() : null;
         if (control != null) control.enabled = false;
-        if (interfaz != null) yield return interfaz.Fundir(Color.white, 0f, 1f, 0.8f);
+        if (interfaz != null) yield return interfaz.Fundir(Color.white, 0f, 1f, saltar ? 0.1f : 0.8f);
 
         // silencio total: viento, zumbido, pasos. El tono final ignora esta pausa (ignoreListenerPause)
         AudioListener.pause = true;
-        yield return new WaitForSecondsRealtime(silencio);
+        yield return EsperarReal(silencio);
 
         // anillo de diamante: la luz del sol vuelve de golpe
         if (tonoFinal != null)
@@ -140,9 +144,9 @@ public class EclipseFinalController : MonoBehaviour
             tonoFinal.ignoreListenerPause = true;
             tonoFinal.Play();
         }
-        if (interfaz != null) yield return interfaz.AnilloDeDiamante(duracionDestello);
-        else yield return new WaitForSecondsRealtime(duracionDestello);
-        yield return new WaitForSecondsRealtime(blancoSostenido);
+        if (interfaz != null) yield return interfaz.AnilloDeDiamante(saltar ? 0.2f : duracionDestello);
+        else yield return EsperarReal(duracionDestello);
+        yield return EsperarReal(blancoSostenido);
 
         yield return MudarseALaCapilla(control);
     }
@@ -178,8 +182,9 @@ public class EclipseFinalController : MonoBehaviour
         yield return new WaitForSeconds(0.6f);
 
         if (campana != null) campana.PlayDelayed(1.2f);
-        if (interfaz != null) yield return interfaz.Fundir(Color.white, 1f, 0f, 3f);
+        if (interfaz != null) yield return interfaz.Fundir(Color.white, 1f, 0f, saltar ? 0.4f : 3f);
         if (control != null) control.enabled = true;
+        animando = false;
         flujo?.EntrarEpilogo();
     }
 
@@ -266,8 +271,15 @@ public class EclipseFinalController : MonoBehaviour
         musicaCreditos.volume = volumenMusica;
     }
 
+    IEnumerator EsperarReal(float segundos)
+    {
+        for (float t = 0f; t < segundos && !saltar; t += Time.unscaledDeltaTime) yield return null;
+    }
+
     IEnumerator Cierre()
     {
+        animando = true;
+        saltar = false;
         var control = jugador != null ? jugador.GetComponent<JugadorFPS>() : null;
         if (control != null) control.enabled = false;
 
@@ -280,14 +292,15 @@ public class EclipseFinalController : MonoBehaviour
             Quaternion desde = camara.rotation;
             Quaternion hacia = Quaternion.LookRotation(cielo.DireccionSol);
             if (interfaz != null) StartCoroutine(interfaz.Fundir(Color.white, 0f, 1f, 4f));
-            for (float t = 0f; t < 4f; t += Time.deltaTime)
+            for (float t = 0f; t < 4f && !saltar; t += Time.deltaTime)
             {
                 camara.rotation = Quaternion.Slerp(desde, hacia, Mathf.SmoothStep(0f, 1f, t / 4f));
                 yield return null;
             }
         }
 
-        if (interfaz != null) yield return interfaz.MostrarCreditos(creditos);
+        if (interfaz != null) yield return interfaz.MostrarCreditos(creditos, () => saltar);
+        animando = false;
 
         // pantalla final: R vuelve a empezar, Esc sale. Espera para siempre (hasta que se elija)
         while (true)

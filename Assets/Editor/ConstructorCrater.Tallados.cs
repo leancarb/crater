@@ -375,6 +375,40 @@ public static partial class ConstructorCrater
         Pebetero(k, arte, "Pebetero_O3", new Vector3(-13.4f, 0f, 10.4f), sello);
     }
 
+    /// <summary>
+    /// Los pasillos de vuelta de los atajos. Al abrirse el atajo, lo primero que se ve es la
+    /// pared del fondo: ahí, un sol (o una luna) grande y, por el pasillo hacia la rotonda,
+    /// otros dos. Se encienden con el sello del ala, con su luz: el camino de vuelta queda
+    /// alumbrado y se lee como "lo hiciste, por acá". (Los hilos de la rotonda quedan en la
+    /// rotonda: son los que muestra la cinemática y los que llegan a la puerta.)
+    /// </summary>
+    static void ArteDeLosPasillosDeVuelta(Kit k, Transform g, ReceptorDeLuz selloOeste, ReceptorDeLuz selloEste)
+    {
+        foreach (float lado in new[] { -1f, 1f })
+        {
+            bool sol = lado < 0f;
+            var raiz = Grupo(g, sol ? "Arte_Vuelta_O" : "Arte_Vuelta_E");
+            var afuera = Vector3.right * lado;   // la pared exterior mira al pasillo
+            float x = lado * 8f;
+            var m = sol ? k.ambar : k.tallaLuna;
+            var figura = sol ? Figura.Sol : Figura.LunaCreciente;
+            var tallados = new List<Renderer>
+            {
+                Glifo(raiz, "Grande", sol ? Figura.Sol : Figura.LunaLlena, new Vector3(x, 3.2f, 35.75f), afuera, 2f, m),
+                Glifo(raiz, "Halo", Figura.Halo, new Vector3(x + lado * 0.01f, 3.2f, 35.75f), afuera, 3.1f, m),
+                Glifo(raiz, "Pasillo_1", figura, new Vector3(x, 2.8f, 31f), afuera, 0.9f, m),
+                Glifo(raiz, "Pasillo_2", figura, new Vector3(x, 2.8f, 28.5f), afuera, 0.9f, m),
+            };
+            var testigo = raiz.gameObject.AddComponent<TestigoDeSello>();
+            testigo.sello = sol ? selloOeste : selloEste;
+            testigo.renderers = tallados.ToArray();
+            if (!sol) testigo.colorEncendido = ColorLuna;
+            testigo.emisionApagado = 0.02f;
+            testigo.luz = Luz(raiz, "Luz", new Vector3(lado * 10f, 4.2f, 33.5f), sol ? LuzCalida : LuzFria, 0f, 10f, false);
+            testigo.intensidadLuz = 35f;
+        }
+    }
+
     /// <summary>Lunas y estrellas en las paredes del ala este y menhires en sus rincones.</summary>
     static void DecorarAlaEste(Kit k, Transform g, ReceptorDeLuz sello)
     {

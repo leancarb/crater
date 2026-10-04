@@ -163,6 +163,7 @@ public static partial class ConstructorCrater
 
         var ancla = CrearAnclaEnEscena(k, g, "Ancla_Umbral", new Vector3(-5.1f, 0f, -10f), Quaternion.Euler(0f, 90f, 0f),
             FiltroDefinicion.Canal.Ninguno, 2f, 0);
+        AnclaDeLuzBlanca(k, g, ancla);
 
         // compuerta: una losa que se hunde en el piso
         var compuertaGO = new GameObject("Compuerta_Umbral");
@@ -173,12 +174,13 @@ public static partial class ConstructorCrater
         motivo.transform.localPosition = new Vector3(-0.35f * 1.4f, 0.4f, -0.21f);
         motivo.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
         motivo.transform.localScale = Vector3.one * 1.4f;
-        Pintar(motivo, _ => k.ambar);
+        Pintar(motivo, _ => k.tallaEclipse);   // blanco, como la luz y el ancla que la abren
         var compuerta = compuertaGO.AddComponent<Compuerta>();
         compuerta.receptores.Add(ancla);
         compuerta.desplazamiento = new Vector3(0f, -4.4f, 0f);
         compuerta.duracion = 3f;
         compuerta.acentos = motivo.GetComponentsInChildren<Renderer>();
+        compuerta.colorAcento = new Color(0.85f, 0.92f, 1f);
         compuerta.sonido = compuertaGO.AddComponent<AudioSource>();
         ConfigurarAudio(compuerta.sonido, k.audio.compuerta, 1f, false, true);
         compuerta.sonido.maxDistance = 40f;
@@ -240,7 +242,7 @@ public static partial class ConstructorCrater
         espejo.transform.position = new Vector3(0f, 3.85f, 99f);
         var paredEspejo = espejo.AddComponent<ParedEspejo>();
         var reflejo = Plano(espejo.transform, "Reflejo", k.resplandor);
-        var rebote = Luz(espejo.transform, "LuzRebote", new Vector3(0f, 1.6f, 98.4f), Color.white, 0f, 8f, false);
+        var rebote = Luz(espejo.transform, "LuzRebote", new Vector3(0f, 1.6f, 98.4f), Color.white, 0f, 12f, false);
         Asignar(paredEspejo, "reflejo", reflejo);
         Asignar(paredEspejo, "luzRebote", rebote);
     }
@@ -489,6 +491,8 @@ public static partial class ConstructorCrater
         var m = Instanciar(k.modeloMotivos, padre, nombre);
         // el tallado está corrido 0,31 m del pivote: se centra
         var rot = Quaternion.Euler(0f, rotY, 0f);
+        // separado de la pared: el relieve facetado (hasta 9 cm) lo tapaba en partes
+        posicion += rot * Vector3.forward * 0.1f;
         m.transform.SetPositionAndRotation(posicion + rot * new Vector3(0.31f * escala, 0f, 0f), rot);
         m.transform.localScale = Vector3.one * escala;
         Pintar(m, _ => material);
@@ -551,6 +555,7 @@ public static partial class ConstructorCrater
         tono.ignoreListenerPause = true;
 
         Asignar(interfaz, "linterna", linterna);
+        Asignar(interfaz, "fuenteTitulo", AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Cinzel-Bold.ttf"));
         Asignar(pausa, "interfaz", interfaz);
         Asignar(flujo, "linterna", linterna);
         Asignar(flujo, "interfaz", interfaz);
@@ -617,6 +622,9 @@ public static partial class ConstructorCrater
         UnityEventTools.AddPersistentListener(refs.zonaFinal.alEntrar, new UnityAction(eclipse.CerrarDemo));
         UnityEventTools.AddPersistentListener(adaptacion.alAdaptarse, new UnityAction(eclipse.AlCompletarAdaptacion));
         UnityEventTools.AddPersistentListener(refs.zonaUmbralCapilla.alEntrar, new UnityAction(prologo.IniciarCinematica));
+        // en el epílogo, salir del atrio también cierra la demo (en el prólogo CerrarDemo no hace nada)
+        UnityEventTools.AddPersistentListener(refs.zonaUmbralCapilla.alEntrar, new UnityAction(eclipse.CerrarDemo));
+        refs.zonaUmbralCapilla.unaVez = false;
         UnityEventTools.AddPersistentListener(refs.zonaPuertaCrater.alEntrar, new UnityAction(prologo.EntrarAlCrater));
     }
 
@@ -633,6 +641,35 @@ public static partial class ConstructorCrater
         ancla.tono.clip = k.audio.tonosAncla[tono % k.audio.tonosAncla.Length];
         PrefabUtility.RecordPrefabInstancePropertyModifications(ancla.tono);
         return ancla;
+    }
+
+    /// <summary>
+    /// El ancla del Umbral es de luz blanca: no se parece a las del filtro sol. Piedra clara,
+    /// aros blancos y, arriba, una lámpara colgada del techo que la ilumina y se ve de lejos.
+    /// </summary>
+    static void AnclaDeLuzBlanca(Kit k, Transform g, Ancla ancla)
+    {
+        var blanco = new Color(0.85f, 0.92f, 1f);
+        ancla.colorApagada = new Color(0.1f, 0.11f, 0.13f);
+        ancla.colorEncendida = blanco;
+        if (ancla.brillo != null) { ancla.brillo.color = blanco; PrefabUtility.RecordPrefabInstancePropertyModifications(ancla.brillo); }
+        PrefabUtility.RecordPrefabInstancePropertyModifications(ancla);
+        var acentos = new HashSet<Renderer>(ancla.acentos ?? new Renderer[0]);
+        foreach (var r in ancla.GetComponentsInChildren<Renderer>(true))
+            if (!acentos.Contains(r)) { r.sharedMaterial = k.piedra; PrefabUtility.RecordPrefabInstancePropertyModifications(r); }
+
+        // la lámpara: una cadena del techo y una piedra blanca que brilla, sobre el ancla
+        var arriba = ancla.transform.position + Vector3.up * 3.55f + Vector3.right * 0.3f;
+        var lampara = Grupo(g, "Lampara_Ancla_Umbral");
+        Bloque(lampara, "Cadena", arriba + Vector3.up * 0.24f, new Vector3(0.03f, 0.42f, 0.03f), k.metal);
+        var piedra = Bloque(lampara, "Luz", arriba, Vector3.one * 0.22f, k.luzEclipse);
+        piedra.transform.rotation = Quaternion.Euler(45f, 0f, 45f);
+        Object.DestroyImmediate(piedra.GetComponent<Collider>());
+        var luz = Luz(lampara, "Luz_Lampara", arriba - Vector3.up * 0.3f, blanco, 18f, 6f, true);
+        luz.type = LightType.Spot;
+        luz.spotAngle = 70f;
+        luz.innerSpotAngle = 35f;
+        luz.transform.rotation = Quaternion.LookRotation(ancla.PuntoDeImpacto - luz.transform.position);
     }
 
     static Recogible ColocarRecogible(Kit k, Transform g, string nombre, FiltroDefinicion filtro, Vector3 posicion)

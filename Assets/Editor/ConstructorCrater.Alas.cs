@@ -123,13 +123,13 @@ public static partial class ConstructorCrater
     /// rotonda cuadrada): de la última sala hasta la puerta del atajo, con el pozo
     /// bajando hasta el fondo. Coordenadas del ala SIN correr (se corren con el ala).
     /// </summary>
-    static void ParedInteriorDelAla(Kit k, Transform g, float lado, float pisoBajo)
+    static void ParedInteriorDelAla(Kit k, Transform g, float lado, float pisoBajo, float inicioAtajo = 23f)
     {
         float x0 = lado < 0f ? -12.3f : 12f, x1 = x0 + 0.3f;
         string n = lado < 0f ? "O" : "E";
-        Caja(g, $"Muro_Interior_{n}", x0, pisoBajo, 9.3f, x1, 6.3f, 23, k.basaltoMedio);
+        Caja(g, $"Muro_Interior_{n}", x0, pisoBajo, 9.3f, x1, 6.3f, inicioAtajo, k.basaltoMedio);
         Caja(g, $"Muro_Interior_{n}_Fin", x0, -0.3f, 26.5f, x1, 6.3f, 27.3f, k.basaltoMedio);
-        Caja(g, $"Dintel_Atajo_{n}", x0, 4, 23, x1, 6.3f, 26.5f, k.basaltoMedio);
+        Caja(g, $"Dintel_Atajo_{n}", x0, 4, inicioAtajo, x1, 6.3f, 26.5f, k.basaltoMedio);
     }
 
     /// <summary>
@@ -148,6 +148,7 @@ public static partial class ConstructorCrater
 
         // los hilos de soles y lunas que llegan a la puerta (ConstructorCrater.Tallados.cs)
         ConstruirHilosDeLosSellos(k, g, refs, selloOeste, selloEste);
+        ArteDeLosPasillosDeVuelta(k, g, selloOeste, selloEste);
 
         // sobre la boca de cada pasillo de vuelta, en el anillo, un tallado con luz: se ve de lejos cuál ala está hecha
         void Faro(string nombre, float lado, ReceptorDeLuz sello)
@@ -351,7 +352,11 @@ public static partial class ConstructorCrater
 
         // el sello, detrás de un tabique: una placa de materia hueca que queda disuelta
         Caja(g, "Tabique_E3", 12.3f, -0.3f, 23.5f, 17.5f, 6, 23.8f, k.basaltoMedio);
-        var tallado = Motivo(k, g, "Tallado_Sello_Este", new Vector3(14.6f, 0.4f, 26.95f), 180f, 0.7f, k.ambar);
+        // detrás de la placa, lunas y estrellas (antes era un tallado ámbar del kit, que no era del ala)
+        var tallado = Grupo(g, "Tallado_Sello_Este").gameObject;
+        Glifo(tallado.transform, "Luna", Figura.LunaCreciente, new Vector3(14.6f, 0.85f, 26.95f), Vector3.back, 1f, k.tallaLuna);
+        Glifo(tallado.transform, "Estrella_A", Figura.Estrella, new Vector3(13.95f, 1.35f, 26.95f), Vector3.back, 0.28f, k.tallaLuna);
+        Glifo(tallado.transform, "Estrella_B", Figura.Estrella, new Vector3(15.25f, 0.4f, 26.95f), Vector3.back, 0.22f, k.tallaLuna);
         var sello = Reja(k, g, "Sello_Este", new Vector3(14.6f, 0f, 26.55f), 180f, new Vector3(0.5f, 0.5f, 0.5f));
         sello.permanente = true;
         PrefabUtility.RecordPrefabInstancePropertyModifications(sello);
@@ -359,10 +364,13 @@ public static partial class ConstructorCrater
         var testigo = tallado.AddComponent<TestigoDeSello>();
         testigo.sello = sello;
         testigo.renderers = tallado.GetComponentsInChildren<Renderer>();
-        refs.atajoEste = CompuertaLosa(k, g, "Atajo_Este", new Vector3(12.15f, 2f, 24.75f), new Vector3(0.3f, 4f, 3.5f),
+        testigo.colorEncendido = ColorLuna;
+        testigo.emisionApagado = 0.04f;
+        // el atajo arranca detrás del tabique: si no, al abrirse dejaba ver por una rendija la sala de antes
+        refs.atajoEste = CompuertaLosa(k, g, "Atajo_Este", new Vector3(12.15f, 2f, 25.15f), new Vector3(0.3f, 4f, 2.7f),
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Este", new Vector3(16f, 5f, 25f), LuzFria, 60f, 9f, false);
-        ParedInteriorDelAla(k, g, 1f, -3.8f);
+        ParedInteriorDelAla(k, g, 1f, -3.8f, 23.8f);
         MuralesAlaEste(k, g);
         DecorarAlaEste(k, g, sello);
         return sello;
@@ -402,7 +410,6 @@ public static partial class ConstructorCrater
 
         // ---- N3 · la antesala de la Cresta
         Luz(g, "Luz_N3", new Vector3(0f, 5.3f, 61f), LuzFria, 70f, 11f, false);
-        Motivo(k, g, "Mural_Antesala", new Vector3(5.93f, 0.6f, 61f), -90f, 0.8f, k.pinturaHueso);
     }
 
     // ================================================================== piezas

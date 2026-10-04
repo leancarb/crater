@@ -130,6 +130,14 @@ Cada ala sigue el patrón **Enseñar → Probar → Torcer**. Se hacen en cualqu
 - **Lo que brilla, se usa.** Sólo brilla lo funcional o lo que responde al jugador: anclas, sellos, hilos, faros, pebeteros y menhires (apenas, hasta que se enciende su sello), los tallados latentes. El arte decorativo (frisos, murales, las paredes de la escalera, los paneles) es pintura mate sobre piedra: no brilla, así no se confunde con algo para iluminar.
 - **Ornamento, no acertijo.** Los frisos repiten un solo motivo (todos soles, todos halos, todas lunas crecientes): no hay secuencias ni órdenes que invitan a buscar un patrón. Las únicas secuencias son los hilos de la rotonda, que se encienden solos y muestran el progreso.
 - **Sin texto.** El HUD no explica controles ni mecánicas: los controles se enseñan con murales en el momento en que se usan y la historia con los del pasaje.
+- **Saltear animaciones:** Espacio, Enter o A saltean cualquier cinemática (prólogo, sellos, final y créditos), sin aviso en pantalla.
+- **Pausa:** sólo muestra los controles, en gris apagado; no hay menú de opciones.
+- **Título:** la palabra CRÁTER usa Cinzel (Assets/Fonts, licencia OFL), mayúsculas de inscripción tallada.
+- **Umbral:** el ancla es de luz blanca: piedra clara, aros blancos y una lámpara colgada encima, distinta de las anclas del filtro sol. Las paredes llevan un friso de serpiente escalonada (sol al oeste, luna al este) y un mural del ancla que baja la losa.
+- **Pasillos de vuelta:** al abrirse cada atajo se ve un sol (o una luna) grande y, por el pasillo, otros dos; se encienden con el sello y alumbran el camino a la rotonda.
+- **Cruce:** murales del ancla detrás de la reja, del camino de luz, del valle con el eclipse y de la chakana.
+- **Cresta:** un díptico al entrar: alguien encandilado por su propio destello y, enfrente, la misma persona con la luz baja y los tallados apareciendo alrededor. El reflejo de la pared del fondo sigue al haz.
+- **Final:** en el epílogo, salir del atrio de la capilla (o quedarse donde estaba el cráter) cierra la demo.
 - **Frisos y murales nuevos** donde las paredes estaban vacías: chakanas sobre el abismo de la tercera sala del ala oeste y, en su tabique, el dibujo de las anclas del techo con su puente; espirales sobre la trinchera del ala este y una luna grande en su tabique; cerros en las paredes del Cruce.
 - **Capilla:** capilla andina de adobe encalado. Zócalo de piedra, contrafuertes, techo de paja a dos aguas, espadaña con campana y cruz, óculo sobre la puerta. Adentro: vigas, bancos, retablo y velas. Adelante, un atrio con pirca, arco de ingreso y cruz atrial. Alrededor: cardones, paja brava y cerros facetados. Es el único lugar con luz de día.
 - **Post-procesado:** ACES, bloom, viñeta y grano fino. La adaptación usa la exposición.

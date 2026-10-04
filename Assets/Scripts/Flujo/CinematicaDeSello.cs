@@ -46,12 +46,14 @@ public class CinematicaDeSello : MonoBehaviour
     static void ReiniciarEstatico() => Reproduciendo = false;
 
     readonly Queue<int> pendientes = new Queue<int>();
+    bool saltar;   // Espacio, Enter o A: termina la cinemática de golpe, con todo en su estado final
     bool[] anotado;
 
     void Start() => anotado = new bool[sellos != null ? sellos.Length : 0];
 
     void Update()
     {
+        if (Reproduciendo && EntradaCrater.Saltar) saltar = true;
         for (int i = 0; i < anotado.Length; i++)
         {
             if (anotado[i] || sellos[i] == null || !sellos[i].Activo) continue;
@@ -77,6 +79,7 @@ public class CinematicaDeSello : MonoBehaviour
     IEnumerator Mostrar(int i)
     {
         Reproduciendo = true;
+        saltar = false;
         // frena en seco: si no, al devolverle el control seguía con la velocidad que traía
         // al entrar a la rotonda y la vista se corría un poco de costado
         if (jugador != null) { jugador.ReiniciarMovimiento(); jugador.enabled = false; }
@@ -90,7 +93,8 @@ public class CinematicaDeSello : MonoBehaviour
         {
             yield return Girar(camara, Mirar(camara, Centro(hilos[i])), segundosPorTramo);
             hilos[i].Encender();
-            yield return new WaitForSeconds(hilos[i].Duracion + 0.6f);
+            yield return Esperar(hilos[i].Duracion + 0.6f);
+            if (saltar) hilos[i].Completar();
         }
 
         // 2. los dos sellos: hacia la puerta, el eclipse que se enciende y la puerta que se abre
@@ -101,10 +105,11 @@ public class CinematicaDeSello : MonoBehaviour
             {
                 yield return Girar(camara, Mirar(camara, Centro(eclipse)), segundosPorTramo);
                 eclipse.Encender();
-                yield return new WaitForSeconds(eclipse.Duracion);
+                yield return Esperar(eclipse.Duracion);
+                if (saltar) eclipse.Completar();
             }
             if (puerta != null) puerta.Abrir();
-            yield return new WaitForSeconds(esperaPuerta);
+            yield return Esperar(esperaPuerta);
         }
 
         // 3. la mirada queda donde terminó (la puerta, o el hilo): el jugador sigue desde ahí
@@ -128,14 +133,21 @@ public class CinematicaDeSello : MonoBehaviour
         return c / hilo.tallados.Length;
     }
 
-    /// <summary>Gira la cámara en el lugar, con arranque y frenada suaves.</summary>
+    IEnumerator Esperar(float segundos)
+    {
+        for (float t = 0f; t < segundos && !saltar; t += Time.deltaTime) yield return null;
+    }
+
+    /// <summary>Gira la cámara en el lugar, con arranque y frenada suaves (salteando, de golpe).</summary>
     IEnumerator Girar(Transform camara, Quaternion hacia, float segundos)
     {
         Quaternion desde = camara.rotation;
-        for (float t = 0f; t < segundos; t += Time.deltaTime)
+        if (saltar) { camara.rotation = hacia; yield break; }
+        for (float t = 0f; t < segundos && !saltar; t += Time.deltaTime)
         {
             camara.rotation = Quaternion.Slerp(desde, hacia, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / (segundos * 0.6f))));
             yield return null;
         }
+        camara.rotation = hacia;
     }
 }

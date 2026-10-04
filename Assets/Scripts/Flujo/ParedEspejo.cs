@@ -5,17 +5,18 @@ using UnityEngine;
 /// con la linterna prendida sólo se ve el reflejo encandilante del propio foco.
 /// Es la pista de que hay que apagarla.
 ///
-/// El reflejo se dibuja en el punto de la pared más cercano a la cámara (donde un
-/// espejo plano muestra al que lo mira) y es más fuerte cuanto más de frente se apunta.
+/// El reflejo sigue al haz: aparece donde la linterna toca la pared, y es más fuerte
+/// cuanto más de frente y más cerca se apunta. Una luz de rebote devuelve el brillo
+/// hacia el jugador, como un espejo.
 ///
 /// Poner en: un objeto vacío en el centro de la cara de la pared, con el eje azul
 /// (forward) entrando en la pared.
 ///
 /// CÓMO FUNCIONA
-/// Cada frame proyecta la posición de la cámara sobre el plano de la pared ('pie').
-/// Si cae dentro de la pared y la linterna está prendida, pone ahí un quad brillante
-/// (el reflejo) y una luz de rebote, con intensidad según qué tan de frente y qué tan
-/// cerca se apunta. No es un espejo real (sería caro): es el efecto que se vería.
+/// Cada frame corta el rayo de la linterna (su posición y hacia dónde mira) con el plano
+/// de la pared. Si el corte cae dentro de la pared, pone ahí un quad brillante (el reflejo,
+/// del tamaño del círculo del haz) y, sobre el rayo reflejado, una luz de rebote. No es un
+/// espejo real (sería caro): es el efecto que se vería.
 /// </summary>
 public class ParedEspejo : MonoBehaviour
 {
@@ -25,11 +26,12 @@ public class ParedEspejo : MonoBehaviour
     [Header("Reflejo")]
     [SerializeField] Renderer reflejo;
     [SerializeField] Light luzRebote;
-    [SerializeField] float tamanioReflejo = 0.9f;
-    [SerializeField] float intensidadReflejo = 6f;
-    [SerializeField] float intensidadRebote = 25f;
-    [Tooltip("Más alto = el reflejo sólo aparece si se apunta muy de frente.")]
-    [SerializeField] float concentracion = 3f;
+    [Tooltip("Tamaño del reflejo respecto del círculo del haz sobre la pared.")]
+    [SerializeField] float tamanioReflejo = 1.4f;
+    [SerializeField] float intensidadReflejo = 16f;
+    [SerializeField] float intensidadRebote = 60f;
+    [Tooltip("Más alto = el reflejo sólo es fuerte si se apunta muy de frente.")]
+    [SerializeField] float concentracion = 1.2f;
 
     /// <summary>0 a 1: qué tan encandilado está el jugador por su propio reflejo.</summary>
     public float Encandilamiento { get; private set; }
@@ -54,42 +56,48 @@ public class ParedEspejo : MonoBehaviour
         }
 
         Vector3 normal = -transform.forward;                 // mira hacia la sala
-        Vector3 ojo = cam.transform.position;
-        float distancia = Vector3.Dot(ojo - transform.position, normal);
-        if (distancia <= 0.05f) { Apagar(); return; }         // detrás de la pared
+        Vector3 origen = linterna.spot.transform.position;
+        Vector3 haz = linterna.spot.transform.forward;
+        float distancia = Vector3.Dot(origen - transform.position, normal);
+        float hacia = Vector3.Dot(haz, -normal);             // 1 si el haz va derecho a la pared
+        if (distancia <= 0.05f || hacia <= 0.05f) { Apagar(); return; }
 
-        Vector3 pie = ojo - normal * distancia;               // donde el espejo te muestra
-        Vector3 local = transform.InverseTransformPoint(pie);
+        // dónde toca el haz la pared
+        float largo = distancia / hacia;
+        if (largo > linterna.AlcanceActual * 1.5f) { Apagar(); return; }
+        Vector3 toque = origen + haz * largo;
+        Vector3 local = transform.InverseTransformPoint(toque);
         if (Mathf.Abs(local.x) > tamanio.x * 0.5f || Mathf.Abs(local.y) > tamanio.y * 0.5f)
         {
             Apagar();
             return;
         }
 
-        // producto punto: 1 si la linterna apunta derecho a la pared, 0 si apunta de costado
-        float deFrente = Mathf.Clamp01(Vector3.Dot(linterna.transform.forward, -normal));
-        float cercania = Mathf.Clamp01(1f - distancia / linterna.AlcanceActual);   // el haz va y vuelve
-        // la potencia hace que el reflejo sólo sea fuerte muy de frente
-        float k = Mathf.Pow(deFrente, concentracion) * cercania;
+        float cercania = Mathf.Clamp01(1f - largo / (linterna.AlcanceActual * 1.5f));
+        float k = Mathf.Pow(hacia, concentracion) * Mathf.Lerp(0.35f, 1f, cercania);
         Encandilamiento = k;
         Color color = linterna.ColorActual;
+        // el círculo del haz sobre la pared: crece con la distancia y se estira al apuntar de costado
+        float radioHaz = largo * Mathf.Tan(linterna.AnguloActual * 0.5f * Mathf.Deg2Rad);
 
         if (reflejo != null)
         {
             reflejo.enabled = k > 0.001f;
-            reflejo.transform.SetPositionAndRotation(pie + normal * 0.03f, Quaternion.LookRotation(-normal));
-            reflejo.transform.localScale = Vector3.one * (tamanioReflejo * (1f + distancia * 0.08f));
+            reflejo.transform.SetPositionAndRotation(toque + normal * 0.03f, Quaternion.LookRotation(-normal));
+            reflejo.transform.localScale = Vector3.one * Mathf.Max(0.6f, radioHaz * 2f * tamanioReflejo);
             Color c = color * intensidadReflejo * k;
-            c.a = k;
+            c.a = Mathf.Clamp01(k * 1.5f);
             reflejo.GetPropertyBlock(bloque);
             bloque.SetColor(IdColor, c);
             reflejo.SetPropertyBlock(bloque);
         }
 
+        // el rayo reflejado: la luz vuelve hacia el que apunta
+        Vector3 rebota = Vector3.Reflect(haz, normal);
         if (luzRebote != null)
         {
             luzRebote.enabled = k > 0.001f;
-            luzRebote.transform.position = pie + normal * 0.6f;
+            luzRebote.transform.position = toque + rebota * 1.2f;
             luzRebote.color = color;
             luzRebote.intensity = intensidadRebote * k;
         }

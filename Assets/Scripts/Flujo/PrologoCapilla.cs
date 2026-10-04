@@ -149,11 +149,9 @@ public class PrologoCapilla : MonoBehaviour
 
     void Update()
     {
-        if (Reproduciendo && PuedeSaltar && (EntradaCrater.Presionada(Key.Space) || EntradaCrater.Presionada(Key.Enter)))
-            saltar = true;
+        // se puede saltear siempre, sin aviso en pantalla (Espacio, Enter o A)
+        if (Reproduciendo && EntradaCrater.Saltar) saltar = true;
     }
-
-    bool PuedeSaltar => PlayerPrefs.GetInt(ClaveVista, 0) == 1;
 
     // ---------------------------------------------------------------- cinemática
 
@@ -176,7 +174,6 @@ public class PrologoCapilla : MonoBehaviour
         saltar = false;
         if (jugador != null) jugador.enabled = false;
         Transform camara = jugador != null ? jugador.camara : Camera.main.transform;
-        if (PuedeSaltar) interfaz?.MostrarPromptTemporal("Espacio · Saltar", 3f);
 
         // 1. la mirada sube al sol
         Quaternion desde = camara.rotation;
