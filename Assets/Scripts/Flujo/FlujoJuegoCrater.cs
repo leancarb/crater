@@ -46,7 +46,6 @@ public class FlujoJuegoCrater : MonoBehaviour
     }
 
     bool vinculado;            // ya se suscribió a los eventos de la linterna
-    bool pistaCuerpoMostrada, pistaHuecoMostrada, pistaCambioMostrada;   // cada explicación sale una vez
     int sellos;                // cuántos sellos se encendieron
 
     void Start()
@@ -99,8 +98,9 @@ public class FlujoJuegoCrater : MonoBehaviour
 
     void AlRecogerLinterna()
     {
+        // los controles los enseñan los murales, sin texto (ConstructorCrater.Murales.cs)
         EtapaActual = Etapa.EncenderLinterna;
-        interfaz?.MostrarPrompt("F · Encender la linterna");
+        interfaz?.OcultarPrompt();
     }
 
     void AlCambiarEncendido(bool encendida)
@@ -113,12 +113,10 @@ public class FlujoJuegoCrater : MonoBehaviour
                 return;
             }
             EtapaActual = Etapa.AbrirUmbral;
-            interfaz?.MostrarPrompt("Sostené la luz sobre el ancla para abrir el paso.");
         }
         else if (EtapaActual == Etapa.Cresta)
         {
-            if (encendida) interfaz?.MostrarPrompt("F · Apagar la linterna");
-            else interfaz?.MostrarPromptTemporal("Esperá. Dejá que tus ojos se acostumbren.", 5f);
+            if (!encendida) interfaz?.MostrarPromptTemporal("Esperá. Dejá que tus ojos se acostumbren.", 5f);
         }
     }
 
@@ -149,44 +147,17 @@ public class FlujoJuegoCrater : MonoBehaviour
         interfaz?.MostrarPromptTemporal("Los dos sellos arden. Se abrió el paso del norte.", 5f);
     }
 
-    void AlDesbloquearFiltro(FiltroDefinicion filtro)
-    {
-        if (filtro == null) return;
-        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo) interfaz?.MostrarPrompt("1 · Equipar el filtro SOL");
-        else if (filtro.canal == FiltroDefinicion.Canal.Hueco) interfaz?.MostrarPrompt("2 · Equipar el filtro LUNA");
-    }
+    // los filtros se enseñan con los murales de cada ala: ni la tecla ni lo que hacen van en texto
+    void AlDesbloquearFiltro(FiltroDefinicion filtro) { }
 
-    void AlEquiparFiltro(FiltroDefinicion filtro)
-    {
-        if (filtro == null) return;
-
-        bool ambos = linterna != null && linterna.filtrosDesbloqueados.Count >= 2;
-        if (filtro.canal == FiltroDefinicion.Canal.Cuerpo && !pistaCuerpoMostrada)
-        {
-            pistaCuerpoMostrada = true;
-            interfaz?.MostrarPromptTemporal(
-                "El filtro SOL enciende las anclas.\nSostené el haz sobre las dos para tender el puente.", 7f);
-        }
-        else if (filtro.canal == FiltroDefinicion.Canal.Hueco && !pistaHuecoMostrada)
-        {
-            pistaHuecoMostrada = true;
-            interfaz?.MostrarPromptTemporal(
-                "El filtro LUNA disuelve las rejas: iluminala y atravesala.\nLo que está detrás de una reja no recibe luz.", 7f);
-        }
-        else if (ambos && !pistaCambioMostrada)
-        {
-            pistaCambioMostrada = true;
-            interfaz?.MostrarPromptTemporal("1 / 2 · Cambiar filtro     Q · Luz blanca", 5f);
-        }
-    }
+    void AlEquiparFiltro(FiltroDefinicion filtro) { }
 
     /// <summary>Conectado a la zona de entrada de la Cresta.</summary>
     public void EntrarCresta()
     {
         if (EtapaActual >= Etapa.Cresta) return;
         EtapaActual = Etapa.Cresta;
-        if (linterna != null && linterna.Encendida) interfaz?.MostrarPrompt("F · Apagar la linterna");
-        else interfaz?.MostrarPromptTemporal("Esperá. Dejá que tus ojos se acostumbren.", 5f);
+        if (linterna == null || !linterna.Encendida) interfaz?.MostrarPromptTemporal("Esperá. Dejá que tus ojos se acostumbren.", 5f);
         eclipse?.HabilitarEnCresta();
     }
 

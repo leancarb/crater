@@ -305,7 +305,7 @@ public class InterfazCrater : MonoBehaviour
         barraCarga.color = linterna.ObjetivoAceptaFiltro ? color : ColorBloqueado;
     }
 
-    /// <summary>"1 SOL     2 LUNA" con colores (rich text); el filtro puesto a color pleno.</summary>
+    /// <summary>"SOL     LUNA" con colores (rich text); el filtro puesto a color pleno. Sin teclas: las enseñan los murales.</summary>
     string DescribirFiltros()
     {
         var sb = new StringBuilder();
@@ -316,7 +316,7 @@ public class InterfazCrater : MonoBehaviour
             bool actual = f == linterna.FiltroActual;
             string hex = ColorUtility.ToHtmlStringRGB(actual ? f.color : Color.Lerp(f.color, Color.gray, 0.55f));
             if (sb.Length > 0) sb.Append("     ");
-            sb.Append($"<color=#{hex}>{i + 1} {f.nombreVisible}</color>");
+            sb.Append($"<color=#{hex}>{f.nombreVisible}</color>");
         }
         return sb.ToString();
     }

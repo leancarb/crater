@@ -273,6 +273,7 @@ public static partial class ConstructorCrater
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Oeste", new Vector3(-16f, 5.3f, 24.5f), LuzCalida, 70f, 10f, false);
         ParedInteriorDelAla(k, g, -1f, -9f);
+        MuralesAlaOeste(k, g);
         DecorarAlaOeste(k, g, sello);
         return sello;
     }
@@ -362,6 +363,7 @@ public static partial class ConstructorCrater
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Este", new Vector3(16f, 5f, 25f), LuzFria, 60f, 9f, false);
         ParedInteriorDelAla(k, g, 1f, -3.8f);
+        MuralesAlaEste(k, g);
         DecorarAlaEste(k, g, sello);
         return sello;
     }

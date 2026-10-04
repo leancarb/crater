@@ -461,9 +461,8 @@ public static partial class ConstructorCrater
         Modulo(k, modulos, "Modulo_Cresta_Fondo_Der", new Vector3(6f, 0f, 98.55f), 180f, 1.05f, k.piedra);
 
         var motivos = Grupo(arte, "MotivosTallados");
-        // en el fondo del pozo, a los lados de la boca del túnel
-        Motivo(k, motivos, "Mural_Plaza_Izq", new Vector3(-6.5f, 0.4f, -34.35f), 180f, 0.9f, k.pinturaSol);
-        Motivo(k, motivos, "Mural_Plaza_Der", new Vector3(6.5f, 0.4f, -34.35f), 180f, 0.9f, k.pinturaLuna);
+        // (en el fondo del pozo ya no hay murales a los lados del túnel: detrás de las paredes
+        // de la escalera sólo se veían de canto y distraían entre los dibujos)
 
         // tallados latentes: casi invisibles con la linterna, aparecen al adaptarse
         var latentes = Grupo(arte, "MotivosLatentes_Cresta");

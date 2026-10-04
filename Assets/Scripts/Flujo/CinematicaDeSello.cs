@@ -77,7 +77,9 @@ public class CinematicaDeSello : MonoBehaviour
     IEnumerator Mostrar(int i)
     {
         Reproduciendo = true;
-        if (jugador != null) jugador.enabled = false;
+        // frena en seco: si no, al devolverle el control seguía con la velocidad que traía
+        // al entrar a la rotonda y la vista se corría un poco de costado
+        if (jugador != null) { jugador.ReiniciarMovimiento(); jugador.enabled = false; }
         if (pausa != null) pausa.enabled = false;
 
         // la cámara no se mueve de los ojos del jugador: sólo gira, como en el eclipse
@@ -108,6 +110,7 @@ public class CinematicaDeSello : MonoBehaviour
         // 3. la mirada queda donde terminó (la puerta, o el hilo): el jugador sigue desde ahí
         if (jugador != null)
         {
+            jugador.ReiniciarMovimiento();
             jugador.MirarHacia(camara.position + camara.forward * 10f);
             jugador.enabled = true;
         }

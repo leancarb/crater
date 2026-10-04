@@ -47,7 +47,18 @@ public static partial class ConstructorCrater
         System.Action<Kit, Lienzo>[] escenas = { LoreSolYLuna, LoreEclipse, LoreCrater, LoreLuz };
         for (int i = 0; i < zs.Length; i++)
             Losa(k, lore, $"Lore_{i + 1}", new Vector3(-1.75f, 2.1f, zs[i]), Vector3.right, 2f, 1.4f, escenas[i]);
-        Luz(lore, "Luz_Pasaje", new Vector3(0.6f, 3.4f, -28.75f), LuzCalida, 30f, 7f, false);
+        // y en la pared de enfrente, cómo sigue: las anclas, los sellos, la puerta y la vuelta
+        System.Action<Kit, Lienzo>[] sigue = { LoreAnclas, LoreSellos, LorePuerta, LoreVuelta };
+        for (int i = 0; i < zs.Length; i++)
+            Losa(k, lore, $"Lore_{i + 5}", new Vector3(1.75f, 2.1f, zs[i]), Vector3.left, 2f, 1.4f, sigue[i]);
+        Luz(lore, "Luz_Pasaje", new Vector3(0f, 3.4f, -28.75f), LuzCalida, 34f, 7f, false);
+
+        // --- frisos del Cruce: cerros, entre los módulos de las paredes
+        var cruce = Grupo(murales, "Frisos_Cruce");
+        foreach (float z in new[] { 35f, 48.5f })
+            foreach (float lado in new[] { -1f, 1f })
+                Losa(k, cruce, $"Friso_Cruce_{(lado < 0f ? "Izq" : "Der")}_{z:0}", new Vector3(lado * 6f, 4f, z),
+                    lado < 0f ? Vector3.right : Vector3.left, 4f, 0.8f, (kk, l) => FrisoCerros(l.En(kk.pinturaHueso), 4f, 0.8f));
 
         // --- el Umbral: cada control al lado de lo que enseña. Al entrar, moverse; junto a
         // la linterna, prenderla. Los filtros se enseñan donde se juntan (MuralesDelFiltro).
@@ -104,6 +115,28 @@ public static partial class ConstructorCrater
             r.shadowCastingMode = ShadowCastingMode.Off;
             Estatico(go);
         }
+    }
+
+    /// <summary>
+    /// El arte del ala oeste que faltaba: sobre el tabique de las anclas del techo, el
+    /// dibujo del puente que tienden; en la pared sur de esa sala, un friso de chakanas.
+    /// Coordenadas del ala sin correr.
+    /// </summary>
+    static void MuralesAlaOeste(Kit k, Transform g)
+    {
+        var murales = Grupo(g, "Murales_O3");
+        Losa(k, murales, "Mural_Anclas_Del_Techo", new Vector3(-17f, 2.3f, 21.5f), Vector3.back, 3.6f, 2.2f, PanelAnclasDelTecho);
+        Losa(k, murales, "Friso_O3_Chakanas", new Vector3(-16f, 3.4f, 9.3f), Vector3.forward, 6f, 0.9f,
+            (kk, l) => { for (int i = 0; i < 6; i++) Chakana(l.En(kk.pinturaSol), -2.5f + i, 0f, 0.62f); });
+    }
+
+    /// <summary>El arte del ala este que faltaba: espirales sobre la trinchera y una luna grande en el tabique del sello.</summary>
+    static void MuralesAlaEste(Kit k, Transform g)
+    {
+        var murales = Grupo(g, "Murales_E3");
+        Losa(k, murales, "Friso_E3_Espirales", new Vector3(16f, 1.2f, 9.3f), Vector3.forward, 6f, 0.9f,
+            (kk, l) => { for (int i = 0; i < 6; i++) Espiral(l.En(kk.pinturaLuna), -2.5f + i, 0f, 0.3f); });
+        Losa(k, murales, "Mural_Tabique_E3", new Vector3(14.9f, 2.4f, 23.5f), Vector3.back, 3.6f, 2f, PanelNocheDeLuna);
     }
 
     // ================================================================== el lore
@@ -168,6 +201,106 @@ public static partial class ConstructorCrater
         Cono(h, punta, 20f, 0.95f, 16f);
         FiguraEn(l.En(k.pinturaSol), Figura.Sol, 0.2f, 0.17f, 0.22f);
         FiguraEn(l.En(k.pinturaLuna), Figura.LunaCreciente, 0.46f, 0.22f, 0.2f);
+    }
+
+    static void LoreAnclas(Kit k, Lienzo l)
+    {
+        // las anclas: dos piedras que, encendidas, tienden un puente sobre el vacío
+        var s = l.En(k.pinturaSol);
+        var h = l.En(k.pinturaHueso);
+        Rect(h, -0.9f, -0.62f, -0.42f, -0.3f);
+        Rect(h, 0.42f, -0.62f, 0.9f, -0.3f);
+        Rect(s, -0.42f, -0.34f, 0.42f, -0.3f);
+        Ancla(h, s, -0.68f, -0.3f, 0.62f);
+        Ancla(h, s, 0.68f, -0.3f, 0.62f);
+        Persona(h, -0.05f, -0.3f, 0.36f, 0.06f, 0.02f);
+    }
+
+    static void LoreSellos(Kit k, Lienzo l)
+    {
+        // una puerta cerrada; de un lado el sol, del otro la luna, y de cada uno un hilo hasta ella
+        var h = l.En(k.pinturaHueso);
+        Linea(h, new Vector2(-0.85f, -0.55f), new Vector2(0.85f, -0.55f), 0.03f);
+        Puerta(h, 0f, -0.55f, 0.42f, 0.7f, false);
+        FiguraEn(l.En(k.pinturaSol), Figura.Sol, -0.62f, 0.25f, 0.36f);
+        FiguraEn(l.En(k.pinturaLuna), Figura.LunaCreciente, 0.62f, 0.25f, 0.32f);
+        for (int i = 1; i < 4; i++)
+        {
+            Disco(h, -0.62f + i * 0.12f, 0.25f - i * 0.02f, 0.02f, 6);
+            Disco(h, 0.62f - i * 0.12f, 0.25f - i * 0.02f, 0.02f, 6);
+        }
+    }
+
+    static void LorePuerta(Kit k, Lienzo l)
+    {
+        // con los dos, el eclipse sobre la puerta y la puerta abierta: adentro, la luz
+        var h = l.En(k.pinturaHueso);
+        FiguraEn(l.En(k.pinturaSol), Figura.Eclipse, 0f, 0.38f, 0.38f);
+        FiguraEn(l.En(k.pinturaLuna), Figura.LunaLlena, 0f, 0.38f, 0.19f);
+        Linea(h, new Vector2(-0.85f, -0.55f), new Vector2(0.85f, -0.55f), 0.03f);
+        // adentro de la puerta abierta, la luz; y sale hacia los dos lados
+        var s = l.En(k.pinturaSol);
+        Rect(s, -0.1f, -0.55f, 0.3f, -0.06f);
+        Disco(s, 0.1f, -0.06f, 0.2f, 12);
+        Puerta(h, 0.1f, -0.55f, 0.42f, 0.7f, true);
+        foreach (float lado in new[] { -1f, 1f })
+            for (int i = 0; i < 3; i++)
+            {
+                float y = -0.42f + i * 0.14f;
+                Linea(s, new Vector2(0.1f + lado * 0.3f, y), new Vector2(0.1f + lado * 0.44f, y + (i - 1) * 0.04f), 0.02f);
+            }
+        Persona(h, -0.6f, -0.55f, 0.36f, 0.06f, 0.03f);
+    }
+
+    static void LoreVuelta(Kit k, Lienzo l)
+    {
+        // y al final, la vuelta a la capilla con el sol bajo del atardecer
+        var h = l.En(k.pinturaHueso);
+        SemiDisco(l.En(k.pinturaSol), 0.58f, -0.4f, 0.24f);
+        Linea(h, new Vector2(-0.85f, -0.4f), new Vector2(0.85f, -0.4f), 0.03f);
+        Rect(h, -0.6f, -0.4f, -0.4f, -0.05f);
+        Rect(h, -0.24f, -0.4f, -0.04f, -0.05f);
+        Rect(h, -0.4f, -0.17f, -0.24f, -0.05f);
+        Tri(h, new Vector2(-0.66f, -0.05f), new Vector2(0.02f, -0.05f), new Vector2(-0.32f, 0.16f));
+        Rect(h, -0.34f, 0.16f, -0.3f, 0.3f);
+        Rect(h, -0.38f, 0.24f, -0.26f, 0.27f);
+        Persona(h, 0.17f, -0.4f, 0.3f, 0.04f, 0f);
+    }
+
+    // ================================================================== arte de las alas
+
+    static void PanelAnclasDelTecho(Kit k, Lienzo l)
+    {
+        // las dos anclas cuelgan del techo; encendidas, el puente cruza el vacío de abajo
+        var s = l.En(k.pinturaSol);
+        var h = l.En(k.pinturaHueso);
+        Rect(h, -1.7f, 0.92f, 1.7f, 0.96f);
+        foreach (float x in new[] { -0.35f, 0.35f })
+        {
+            Rect(h, x - 0.03f, 0.6f, x + 0.03f, 0.92f);
+            Anillo(s, new Vector2(x, 0.5f), 0.09f, 0.14f);
+            for (int i = 0; i < 6; i++)
+            {
+                float a = (i + 0.5f) * Mathf.PI / 3f;
+                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                Linea(s, new Vector2(x, 0.5f) + d * 0.19f, new Vector2(x, 0.5f) + d * 0.26f, 0.02f);
+            }
+        }
+        Rect(h, -1.6f, -0.95f, -0.7f, -0.45f);
+        Rect(h, 0.7f, -0.95f, 1.6f, -0.45f);
+        Rect(s, -0.7f, -0.5f, 0.7f, -0.45f);
+        for (int i = 0; i < 6; i++) Rect(s, -0.6f + i * 0.24f, -0.45f, -0.57f + i * 0.24f, -0.36f);
+        Persona(h, -1.15f, -0.45f, 0.42f, 0.05f, 0f, true);
+    }
+
+    static void PanelNocheDeLuna(Kit k, Lienzo l)
+    {
+        // una luna creciente grande entre estrellas
+        var u = l.En(k.pinturaLuna);
+        FiguraEn(u, Figura.LunaCreciente, -0.35f, 0f, 1.3f);
+        float[,] estrellas = { { 0.55f, 0.5f, 0.22f }, { 1.2f, 0.2f, 0.16f }, { 0.8f, -0.45f, 0.2f }, { 1.4f, -0.6f, 0.12f }, { 0.3f, -0.7f, 0.1f } };
+        for (int i = 0; i < estrellas.GetLength(0); i++)
+            FiguraEn(l.En(k.pinturaHueso), Figura.Estrella, estrellas[i, 0], estrellas[i, 1], estrellas[i, 2]);
     }
 
     // ================================================================== los controles
@@ -251,6 +384,100 @@ public static partial class ConstructorCrater
     }
 
     // ================================================================== primitivas
+
+    /// <summary>Un ancla: una piedra que se angosta hacia arriba con un aro que brilla.</summary>
+    static void Ancla(List<Vector3> piedra, List<Vector3> aro, float x, float suelo, float alto)
+    {
+        float a0 = alto * 0.16f, a1 = alto * 0.08f;
+        Tri(piedra, new Vector2(x - a0, suelo), new Vector2(x + a0, suelo), new Vector2(x + a1, suelo + alto * 0.62f));
+        Tri(piedra, new Vector2(x - a0, suelo), new Vector2(x + a1, suelo + alto * 0.62f), new Vector2(x - a1, suelo + alto * 0.62f));
+        var c = new Vector2(x, suelo + alto * 0.8f);
+        Anillo(aro, c, alto * 0.1f, alto * 0.16f);
+        for (int i = 0; i < 8; i++)
+        {
+            float a = (i + 0.5f) * Mathf.PI / 4f;
+            var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+            Linea(aro, c + d * alto * 0.21f, c + d * alto * 0.28f, alto * 0.03f);
+        }
+    }
+
+    /// <summary>Una puerta de arco: jambas, arco de medio punto y, si está abierta, nada adentro; cerrada, la hoja.</summary>
+    static void Puerta(List<Vector3> v, float cx, float suelo, float ancho, float alto, bool abierta)
+    {
+        float g = 0.035f, r = ancho / 2f, yArco = suelo + alto - r;
+        Rect(v, cx - r - g, suelo, cx - r, yArco);
+        Rect(v, cx + r, suelo, cx + r + g, yArco);
+        const int lados = 10;
+        for (int i = 0; i < lados; i++)
+        {
+            float a0 = i * Mathf.PI / lados, a1 = (i + 1) * Mathf.PI / lados;
+            Vector2 d0 = new Vector2(Mathf.Cos(a0), Mathf.Sin(a0)), d1 = new Vector2(Mathf.Cos(a1), Mathf.Sin(a1));
+            var c = new Vector2(cx, yArco);
+            Tri(v, c + d0 * r, c + d0 * (r + g), c + d1 * (r + g));
+            Tri(v, c + d0 * r, c + d1 * (r + g), c + d1 * r);
+            if (!abierta) Tri(v, c, c + d0 * (r - 0.03f), c + d1 * (r - 0.03f));
+        }
+        if (!abierta)
+        {
+            Rect(v, cx - r + 0.03f, suelo, cx - 0.012f, yArco);
+            Rect(v, cx + 0.012f, suelo, cx + r - 0.03f, yArco);
+        }
+    }
+
+    /// <summary>Medio disco (de 0 a 180 grados): el sol que se esconde en el horizonte.</summary>
+    static void SemiDisco(List<Vector3> v, float cx, float cy, float r)
+    {
+        const int lados = 10;
+        var c = new Vector2(cx, cy);
+        for (int i = 0; i < lados; i++)
+        {
+            float a0 = i * Mathf.PI / lados, a1 = (i + 1) * Mathf.PI / lados;
+            Tri(v, c, c + r * new Vector2(Mathf.Cos(a0), Mathf.Sin(a0)), c + r * new Vector2(Mathf.Cos(a1), Mathf.Sin(a1)));
+        }
+        for (int i = 0; i < 5; i++)
+        {
+            float a = (i + 0.5f) * Mathf.PI / 5f;
+            var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+            Linea(v, c + d * (r + 0.05f), c + d * (r + 0.14f), 0.025f);
+        }
+    }
+
+    /// <summary>La chakana: la cruz andina escalonada, de 'lado' metros.</summary>
+    static void Chakana(List<Vector3> v, float cx, float cy, float lado)
+    {
+        float u = lado / 6f;
+        Rect(v, cx - u, cy - 3f * u, cx + u, cy + 3f * u);
+        Rect(v, cx - 3f * u, cy - u, cx + 3f * u, cy + u);
+        Rect(v, cx - 2f * u, cy - 2f * u, cx + 2f * u, cy + 2f * u);
+    }
+
+    /// <summary>Una espiral de dos vueltas y media, de radio 'r'.</summary>
+    static void Espiral(List<Vector3> v, float cx, float cy, float r)
+    {
+        const float vueltas = 2.5f;
+        const int pasos = 40;
+        Vector2 Punto(int i)
+        {
+            float t = (float)i / pasos, a = t * vueltas * Mathf.PI * 2f;
+            return new Vector2(cx, cy) + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * (r * t);
+        }
+        for (int i = 1; i < pasos; i++) Linea(v, Punto(i), Punto(i + 1), r * 0.12f);
+    }
+
+    /// <summary>Un friso de cerros: triángulos de dos alturas a lo largo de la losa.</summary>
+    static void FrisoCerros(List<Vector3> v, float ancho, float alto)
+    {
+        float x = -ancho / 2f + 0.15f, base_ = -alto / 2f + 0.15f;
+        int i = 0;
+        while (x < ancho / 2f - 0.5f)
+        {
+            float w = i % 2 == 0 ? 0.5f : 0.36f, h = i % 2 == 0 ? alto - 0.34f : (alto - 0.34f) * 0.6f;
+            Tri(v, new Vector2(x, base_), new Vector2(x + w, base_), new Vector2(x + w / 2f, base_ + h));
+            x += w * 0.7f;
+            i++;
+        }
+        Rect(v, -ancho / 2f + 0.12f, base_ - 0.04f, ancho / 2f - 0.12f, base_);
+    }
 
     static void Rect(List<Vector3> v, float x0, float y0, float x1, float y1)
     {

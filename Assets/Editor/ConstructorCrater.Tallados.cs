@@ -219,19 +219,19 @@ public static partial class ConstructorCrater
         }
         var soles = new[]
         {
-            EnElAnillo("Sol_1", Figura.Sol, 117.5f, k.ambar),
-            EnElAnillo("Sol_2", Figura.SolMordido, 112f, k.ambar),
-            EnElAnillo("Sol_3", Figura.SolMordido, 106.5f, k.ambar),
-            EnElAnillo("Sol_4", Figura.SolFino, 101f, k.ambar),
+            EnElAnillo("Sol_1", Figura.Sol, 119.5f, k.ambar),
+            EnElAnillo("Sol_2", Figura.SolMordido, 114.5f, k.ambar),
+            EnElAnillo("Sol_3", Figura.SolMordido, 109.5f, k.ambar),
+            EnElAnillo("Sol_4", Figura.SolFino, 104.5f, k.ambar),
         };
         refs.hiloSoles = Hilo("Hilo_Soles", new[] { selloOeste }, refs.atajoOeste, new Color(1f, 0.42f, 0.1f), soles);
 
         var lunas = new[]
         {
-            EnElAnillo("Luna_1", Figura.LunaLlena, 62.5f, k.tallaLuna),
-            EnElAnillo("Luna_2", Figura.LunaGibosa, 68f, k.tallaLuna),
-            EnElAnillo("Luna_3", Figura.LunaCuarto, 73.5f, k.tallaLuna),
-            EnElAnillo("Luna_4", Figura.LunaCreciente, 79f, k.tallaLuna),
+            EnElAnillo("Luna_1", Figura.LunaLlena, 60.5f, k.tallaLuna),
+            EnElAnillo("Luna_2", Figura.LunaGibosa, 65.5f, k.tallaLuna),
+            EnElAnillo("Luna_3", Figura.LunaCuarto, 70.5f, k.tallaLuna),
+            EnElAnillo("Luna_4", Figura.LunaCreciente, 75.5f, k.tallaLuna),
         };
         refs.hiloLunas = Hilo("Hilo_Lunas", new[] { selloEste }, refs.atajoEste, ColorLuna, lunas);
 
