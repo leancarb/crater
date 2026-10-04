@@ -65,6 +65,9 @@ public class ParedEspejo : MonoBehaviour
         // dónde toca el haz la pared
         float largo = distancia / hacia;
         if (largo > linterna.AlcanceActual * 1.5f) { Apagar(); return; }
+        // si antes de llegar a esta pared el haz choca con otra cosa (otra pared, el techo,
+        // una columna), no hay reflejo acá: si no, aparecía uno detrás de otra pared
+        if (Physics.Raycast(origen, haz, largo - 0.3f, ~0, QueryTriggerInteraction.Ignore)) { Apagar(); return; }
         Vector3 toque = origen + haz * largo;
         Vector3 local = transform.InverseTransformPoint(toque);
         if (Mathf.Abs(local.x) > tamanio.x * 0.5f || Mathf.Abs(local.y) > tamanio.y * 0.5f)
