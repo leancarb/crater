@@ -112,7 +112,7 @@ public static partial class ConstructorCrater
             Luz(g, $"Luz_Vuelta_{n}", new Vector3(X(9.5f), 5.5f, 33f), LuzCalida, 40f, 9f, false);
         }
 
-        Oculo(k, g, "Oculo_Rotonda", new Vector3(0f, 6.97f, cz), 4f, 150f, 12f);
+        // (el óculo de la rotonda va sobre el obelisco: ver MapaYObelisco)
         ConstruirAnilloDelMapa(k, g, new Vector3(0f, 0.12f, cz), 0.4f);
 
         Luz(g, "Luz_Rotonda", new Vector3(0f, 5.8f, 4f), LuzCalida, 150f, 17f, true);
@@ -271,6 +271,18 @@ public static partial class ConstructorCrater
         var (normalSur, puntoSur) = Cara(Vector3.back, obeliscoR.bounds.max.y - 1.3f);
         obelisco.eclipse = Glifo(raiz, "Obelisco_Eclipse", Figura.Eclipse, puntoSur, normalSur, 1.1f, k.tallaEclipse);
         obelisco.luz = Luz(raiz, "Luz_Eclipse", puntoSur + normalSur * 1.2f, new Color(0.85f, 0.92f, 1f), 0f, 12f, false);
+
+        // arriba del obelisco, un círculo en el techo: si se mira para arriba se ve el eclipse,
+        // y entra un haz de luz que cae sobre el obelisco e invita a mirar por ahí
+        var arriba = new Vector3(obeliscoR.bounds.center.x, 6.97f, obeliscoR.bounds.center.z);
+        Oculo(k, g, "Oculo_Rotonda", arriba, 2.8f, 120f, 12f);
+        var haz = Grupo(g, "Haz_Oculo");
+        for (int i = 0; i < 2; i++)
+        {
+            var plano = Plano(haz, $"Haz_{i}", k.hazDeLuz);
+            plano.transform.SetPositionAndRotation(new Vector3(arriba.x, 3.5f, arriba.z), Quaternion.Euler(0f, 45f + i * 90f, 0f));
+            plano.transform.localScale = new Vector3(2.6f, 7f, 1f);
+        }
         return obelisco;
     }
 

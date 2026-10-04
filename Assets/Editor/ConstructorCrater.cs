@@ -136,7 +136,8 @@ public static partial class ConstructorCrater
         public Material cal, madera, cardon, pajaBrava, vela;
         public Material huella, espejo, puertaEclipse, luzEclipse, resplandor, corona, discoSol, discoLuna;
         public Material resplandorTallado;
-        public Material destello;            // el destello de la puerta del cráter al abrirse   // el reflejo de la Cresta: en el destello se ven los tallados
+        public Material destello;
+        public Material hazDeLuz;            // el haz que baja del óculo de la rotonda            // el destello de la puerta del cráter al abrirse   // el reflejo de la Cresta: en el destello se ven los tallados
         public Material tallaLuna, tallaEclipse;   // los tallados de luna (HUECO) y del eclipse
         // pintura mate, sin brillo: el arte decorativo y los murales ("lo que brilla, se usa")
         public Material pinturaSol, pinturaLuna, pinturaHueso;
@@ -244,6 +245,9 @@ public static partial class ConstructorCrater
         kit.puertaEclipse = Emisivo(Opaco("PuertaEclipse", new Color(0.05f, 0.06f, 0.08f), 0.3f), new Color(0.75f, 0.85f, 1f) * 1.2f);
         kit.luzEclipse = Emisivo(Opaco("LuzEclipse", new Color(0.8f, 0.85f, 1f), 0f), new Color(0.75f, 0.85f, 1f) * 2.5f);
         kit.resplandor = Aditivo("Resplandor", Textura("Resplandor", 128, PixelResplandor));
+        kit.hazDeLuz = Aditivo("HazDeLuz", Textura("HazDeLuz", 256, PixelHaz));
+        kit.hazDeLuz.SetFloat("_Cull", 0f);   // de los dos lados: son dos planos cruzados
+        kit.hazDeLuz.SetColor(IdBase, new Color(0.8f, 0.88f, 1f));
         kit.destello = Aditivo("DestelloPuerta", Textura("DestelloPuerta", 512, PixelDestello));
         kit.resplandorTallado = Aditivo("ResplandorTallado", Textura("ResplandorTallado", 256, PixelResplandorTallado));
         kit.corona = Aditivo("CoronaEclipse", Textura("Corona", 256, PixelCorona));
@@ -398,6 +402,14 @@ public static partial class ConstructorCrater
         float borde = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((1f - r) / 0.25f));
         float a = Mathf.Clamp01((nucleo + halo + rayoH + rayoV) * borde);
         return new Color(1f, 1f, 1f, a);
+    }
+
+    /// <summary>Un haz de luz visto de costado: fuerte arriba, se apaga hacia abajo y hacia los lados.</summary>
+    static Color PixelHaz(float u, float v)
+    {
+        float lados = Mathf.Pow(Mathf.Clamp01(1f - Mathf.Abs(u)), 1.8f);
+        float alto = Mathf.Pow(Mathf.Clamp01((v + 1f) / 2f), 1.4f);
+        return new Color(1f, 1f, 1f, 0.22f * lados * alto);
     }
 
     static Color PixelCorona(float u, float v)
