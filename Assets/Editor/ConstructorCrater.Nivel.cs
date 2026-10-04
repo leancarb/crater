@@ -332,8 +332,9 @@ public static partial class ConstructorCrater
         solGO.transform.rotation = Quaternion.Euler(28f, 200f, 0f);
         refs.sol = solGO.AddComponent<Light>();
         refs.sol.type = LightType.Directional;
-        refs.sol.color = new Color(1f, 0.88f, 0.72f);
-        refs.sol.intensity = 1.6f;
+        // mañana en el prólogo; en el epílogo CieloEclipse lo baja al atardecer
+        refs.sol.color = new Color(1f, 0.95f, 0.86f);
+        refs.sol.intensity = 1.7f;
         refs.sol.shadows = LightShadows.Soft;
         refs.sol.enabled = false;
 

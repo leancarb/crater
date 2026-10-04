@@ -35,7 +35,7 @@ El eclipse dura exactamente lo que el jugador permanezca adentro. El cráter es 
 
 | Momento | Qué pasa | Qué siente el jugador |
 |---|---|---|
-| **Prólogo** | Capilla de día. Al salir del atrio por el arco, empieza el eclipse (cinemática sin control): se callan los pájaros, todo queda en un crepúsculo profundo, la tierra se abre en un pozo, sube el borde del cráter y destella la puerta. | Curiosidad, extrañeza. |
+| **Prólogo** | Capilla, de mañana: sol blanco y cielo azul limpio. Al salir del atrio por el arco, empieza el eclipse (cinemática sin control): se callan los pájaros, todo queda en un crepúsculo profundo, la tierra se abre en un pozo, sube el borde del cráter y destella la puerta. | Curiosidad, extrañeza. |
 | **Descenso** | Sin cortes: se cruza la puerta y se baja por una escalera hasta la Explanada, en el fondo del pozo. Un pasillo sigue al Umbral, donde está la linterna. | Descubrimiento. |
 | **Aprendizaje** | La Rotonda abre dos alas, en cualquier orden: la oeste entrega el filtro sol, la este el filtro luna. Cada una termina en un sello. Con los dos, el Cruce pide usar los filtros juntos. | Dominio, asombro. |
 | **La oscuridad** | Al entrar a la Cresta, una losa cierra el corredor a la espalda: no hay vuelta. La pared del fondo sólo devuelve el reflejo del propio foco. Al apagar la linterna y esperar, aparecen tallados ocultos. | Revelación, encierro. |
@@ -119,7 +119,7 @@ Cada ala sigue el patrón **Enseñar → Probar → Torcer**. Se hacen en cualqu
 | **03b Ala este** | Filtro luna. Arte de la luna: las fases de la luna, un cielo de estrellas, una luna llena grande y menhires con una luna y una estrella talladas que se encienden con el sello. Enseñar: un muro de rejas. Probar: la sala no tiene salida; el camino es una trampilla en el piso que da a una galería de abajo, con otra reja. Torcer: una rampa que termina contra una escotilla de reja en el techo. Sello: una placa de materia hueca que queda disuelta. |
 | **04 Cruce** | Los dos filtros. Un ancla del puente está detrás de una reja: disolverla, cambiar al filtro sol y encenderla antes de que se cierre. Después, un puente sostenido por anclas que quedan a la espalda termina contra una reja: parado arriba, cambiar al filtro luna y pasar antes de que se apague. |
 | **05 Cresta** | Se cierra a la espalda. Apagar la linterna: tallados latentes y la pared espejo. El techo se abre y entra la luz blanca. |
-| **06 Capilla (epílogo)** | De día, sin linterna. El guiño: adentro, sobre la puerta, ahora está tallada la espiral de las anclas (en el prólogo no estaba). El cráter no está; en su lugar, pasto aplastado. Quedarse 5 s ahí, o esperar 2 min, trae los créditos. |
+| **06 Capilla (epílogo)** | Al atardecer, sin linterna: el sol bajo y anaranjado entra de frente por la puerta, el cielo se vuelve cálido y las sombras largas; se nota que pasó el día. El guiño: adentro, sobre la puerta, ahora está tallada la espiral de las anclas (en el prólogo no estaba). El cráter no está; en su lugar, pasto aplastado. Quedarse 5 s ahí, o esperar 2 min, trae los créditos. |
 
 ---
 

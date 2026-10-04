@@ -17,6 +17,10 @@ using UnityEngine;
 /// luna corrida según el progreso. Mostrar(false) apaga todo el exterior.
 /// La totalidad no es noche cerrada: es un crepúsculo profundo, con el cielo azul
 /// oscuro y el horizonte encendido alrededor. El paisaje se sigue viendo.
+///
+/// El prólogo es de mañana (sol blanco, cielo azul limpio) y el epílogo, al atardecer:
+/// PonerDespues() baja el sol frente a la puerta de la capilla y pasa la luz, el
+/// ambiente y la niebla a los tonos cálidos del 'Atardecer'. Así se nota que pasó el día.
 /// </summary>
 public class CieloEclipse : MonoBehaviour
 {
@@ -35,12 +39,24 @@ public class CieloEclipse : MonoBehaviour
     [SerializeField] float separacionInicial = 2.4f;
 
     [Header("Día")]
-    [SerializeField] Color solDia = new Color(1f, 0.88f, 0.72f);
-    [SerializeField] float intensidadDia = 1.6f;
-    [SerializeField] Color cieloDia = new Color(0.62f, 0.72f, 0.82f);
-    [SerializeField] Color ambienteCieloDia = new Color(0.55f, 0.6f, 0.68f);
-    [SerializeField] Color ambienteHorizonteDia = new Color(0.45f, 0.4f, 0.34f);
-    [SerializeField] Color ambienteSueloDia = new Color(0.22f, 0.16f, 0.1f);
+    [SerializeField] Color solDia = new Color(1f, 0.95f, 0.86f);
+    [SerializeField] float intensidadDia = 1.7f;
+    [SerializeField] Color cieloDia = new Color(0.56f, 0.74f, 0.95f);
+    [SerializeField] Color ambienteCieloDia = new Color(0.55f, 0.65f, 0.8f);
+    [SerializeField] Color ambienteHorizonteDia = new Color(0.5f, 0.5f, 0.46f);
+    [SerializeField] Color ambienteSueloDia = new Color(0.22f, 0.18f, 0.12f);
+
+    [Header("Atardecer (epílogo)")]
+    [Tooltip("Giro de la luz del sol: bajo, frente a la puerta de la capilla.")]
+    [SerializeField] Vector3 giroSolAtardecer = new Vector3(11f, 160f, 0f);
+    [SerializeField] Color solAtardecer = new Color(1f, 0.56f, 0.3f);
+    [SerializeField] float intensidadAtardecer = 1.4f;
+    [SerializeField] Color cieloAtardecer = new Color(0.94f, 0.6f, 0.42f);
+    [SerializeField] Color ambienteCieloAtardecer = new Color(0.5f, 0.42f, 0.55f);
+    [SerializeField] Color ambienteHorizonteAtardecer = new Color(0.72f, 0.45f, 0.3f);
+    [SerializeField] Color ambienteSueloAtardecer = new Color(0.2f, 0.12f, 0.08f);
+    [SerializeField] float nieblaAtardecer = 0.006f;
+    [SerializeField] Color colorDiscoAtardecer = new Color(6f, 3.2f, 1.5f);
 
     [Header("Totalidad")]
     // crepúsculo profundo: el cielo azul oscuro, el horizonte anaranjado (la luz que llega
@@ -63,6 +79,7 @@ public class CieloEclipse : MonoBehaviour
     float progreso;
     bool visible;
     float ladoLuna = 1f;   // 1 = todavía no pasó, -1 = ya pasó (epílogo)
+    bool atardecer;
     Renderer rendererLuna;
     MaterialPropertyBlock bloque;
     static readonly int IdColor = Shader.PropertyToID("_BaseColor");
@@ -79,6 +96,17 @@ public class CieloEclipse : MonoBehaviour
     public void PonerDespues()
     {
         ladoLuna = -1f;
+        atardecer = true;
+        if (sol != null) sol.transform.rotation = Quaternion.Euler(giroSolAtardecer);
+        // el disco del sol, anaranjado
+        var disco = discoSol != null ? discoSol.GetComponent<Renderer>() : null;
+        if (disco != null)
+        {
+            var b = new MaterialPropertyBlock();
+            disco.GetPropertyBlock(b);
+            b.SetColor(IdColor, colorDiscoAtardecer);
+            disco.SetPropertyBlock(b);
+        }
         Progreso = 0f;
     }
 
@@ -163,20 +191,20 @@ public class CieloEclipse : MonoBehaviour
 
         if (sol != null)
         {
-            sol.intensity = Mathf.Lerp(intensidadTotalidad, intensidadDia, luz);
-            sol.color = Color.Lerp(solTotalidad, solDia, luz);
+            sol.intensity = Mathf.Lerp(intensidadTotalidad, atardecer ? intensidadAtardecer : intensidadDia, luz);
+            sol.color = Color.Lerp(solTotalidad, atardecer ? solAtardecer : solDia, luz);
         }
 
         // luz ambiente en tres tonos: cielo (arriba), horizonte y suelo (abajo)
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
-        RenderSettings.ambientSkyColor = Color.Lerp(ambienteCieloTotalidad, ambienteCieloDia, luz);
-        RenderSettings.ambientEquatorColor = Color.Lerp(ambienteHorizonteTotalidad, ambienteHorizonteDia, luz);
-        RenderSettings.ambientGroundColor = Color.Lerp(ambienteSueloTotalidad, ambienteSueloDia, luz);
+        RenderSettings.ambientSkyColor = Color.Lerp(ambienteCieloTotalidad, atardecer ? ambienteCieloAtardecer : ambienteCieloDia, luz);
+        RenderSettings.ambientEquatorColor = Color.Lerp(ambienteHorizonteTotalidad, atardecer ? ambienteHorizonteAtardecer : ambienteHorizonteDia, luz);
+        RenderSettings.ambientGroundColor = Color.Lerp(ambienteSueloTotalidad, atardecer ? ambienteSueloAtardecer : ambienteSueloDia, luz);
 
-        Color cielo = Color.Lerp(cieloTotalidad, cieloDia, luz);
+        Color cielo = Color.Lerp(cieloTotalidad, atardecer ? cieloAtardecer : cieloDia, luz);
         RenderSettings.fog = true;
         RenderSettings.fogColor = cielo;
-        RenderSettings.fogDensity = densidadNiebla;
+        RenderSettings.fogDensity = atardecer ? nieblaAtardecer : densidadNiebla;
         var cam = Camera.main;
         if (cam != null) cam.backgroundColor = cielo;
 

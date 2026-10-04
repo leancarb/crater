@@ -36,10 +36,11 @@ public class EclipseFinalController : MonoBehaviour
     [Header("Ambiente del epílogo")]
     [SerializeField] Light luzDelCrater;
     [SerializeField] Light solEpilogo;
-    [SerializeField] Color cieloEpilogo = new Color(0.62f, 0.72f, 0.82f);
-    [SerializeField] Color ambienteCieloEpilogo = new Color(0.55f, 0.6f, 0.68f);
-    [SerializeField] Color ambienteHorizonteEpilogo = new Color(0.45f, 0.4f, 0.34f);
-    [SerializeField] Color ambienteSueloEpilogo = new Color(0.22f, 0.16f, 0.1f);
+    // el atardecer: los mismos tonos que CieloEclipse usa en el epílogo
+    [SerializeField] Color cieloEpilogo = new Color(0.94f, 0.6f, 0.42f);
+    [SerializeField] Color ambienteCieloEpilogo = new Color(0.5f, 0.42f, 0.55f);
+    [SerializeField] Color ambienteHorizonteEpilogo = new Color(0.72f, 0.45f, 0.3f);
+    [SerializeField] Color ambienteSueloEpilogo = new Color(0.2f, 0.12f, 0.08f);
     [SerializeField] float nieblaEpilogo = 0.006f;
     [SerializeField] AudioSource ambienteCrater;
     [SerializeField] float volumenCrater = 0.55f;
