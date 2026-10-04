@@ -101,6 +101,17 @@ public static partial class ConstructorCrater
         Losa(k, murales, lado < 0f ? "Control_FiltroSol" : "Control_FiltroLuna", new Vector3(x, 1.9f, 3f), Vector3.back, 2.4f, 1.5f,
             lado < 0f ? (System.Action<Kit, Lienzo>)PanelFiltroSol : PanelFiltroLuna);
         Losa(k, murales, "Control_LuzBlanca", new Vector3(x, 1.9f, -1f), Vector3.forward, 2.4f, 1.5f, PanelLuzBlanca);
+        LuzDeMural(murales, new Vector3(x, 1.2f, 1f), Vector3.zero, 2.4f);   // en el medio del pasillo: alumbra las dos
+    }
+
+    /// <summary>
+    /// Una luz blanca cálida, suave, delante de un mural: la pintura no brilla, así que en las
+    /// salas oscuras (o de luz azul) hace falta que algo la alumbre para leerla.
+    /// </summary>
+    static void LuzDeMural(Transform padre, Vector3 enLaPared, Vector3 afuera, float ancho)
+    {
+        Luz(padre, "Luz_Mural", enLaPared + afuera * 1.6f + Vector3.up * 1.1f, new Color(1f, 0.93f, 0.84f),
+            6f * ancho, 3.5f + ancho * 0.6f, false);
     }
 
     /// <summary>Una losa de piedra clara sobre la pared, con un marco y el dibujo pintado delante.</summary>
@@ -149,6 +160,7 @@ public static partial class ConstructorCrater
     {
         var murales = Grupo(g, "Murales_O3");
         Losa(k, murales, "Mural_Anclas_Del_Techo", new Vector3(-17f, 2.3f, 21.5f), Vector3.back, 3.6f, 2.2f, PanelAnclasDelTecho);
+        LuzDeMural(murales, new Vector3(-17f, 2.3f, 21.5f), Vector3.back, 3.6f);
         Losa(k, murales, "Friso_O3_Chakanas", new Vector3(-16f, 3.4f, 9.3f), Vector3.forward, 6f, 0.9f,
             (kk, l) => { for (int i = 0; i < 6; i++) Chakana(l.En(kk.pinturaSol), -2.5f + i, 0f, 0.62f); });
     }
@@ -160,6 +172,8 @@ public static partial class ConstructorCrater
         Losa(k, murales, "Friso_E3_Espirales", new Vector3(16f, 1.2f, 9.3f), Vector3.forward, 6f, 0.9f,
             (kk, l) => { for (int i = 0; i < 6; i++) Espiral(l.En(kk.pinturaLuna), -2.5f + i, 0f, 0.3f); });
         Losa(k, murales, "Mural_Tabique_E3", new Vector3(14.9f, 2.4f, 23.5f), Vector3.back, 3.6f, 2f, PanelNocheDeLuna);
+        LuzDeMural(murales, new Vector3(14.9f, 2.4f, 23.5f), Vector3.back, 3.6f);
+        LuzDeMural(murales, new Vector3(16f, 1.2f, 9.3f), Vector3.forward, 6f);
     }
 
     // ================================================================== el lore

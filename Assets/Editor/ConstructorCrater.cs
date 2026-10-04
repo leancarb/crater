@@ -222,8 +222,9 @@ public static partial class ConstructorCrater
         kit.tallaLuna = Emisivo(Opaco("TalladoLuna", ColorLuna * 0.6f, 0.3f), ColorLuna * 1.8f);
         kit.tallaEclipse = Emisivo(Opaco("TalladoEclipse", new Color(0.85f, 0.9f, 1f), 0.3f), new Color(0.8f, 0.88f, 1f) * 2f);
         // lo decorativo no brilla: sólo brilla lo que se usa (anclas, sellos, hilos, faros)
-        kit.pinturaSol = Opaco("PinturaSol", new Color(0.55f, 0.27f, 0.09f), 0.08f);
-        kit.pinturaLuna = Opaco("PinturaLuna", new Color(0.3f, 0.38f, 0.55f), 0.08f);
+        // (un poco más claras que la piedra oscura de las losas, para que se lean)
+        kit.pinturaSol = Opaco("PinturaSol", new Color(0.66f, 0.33f, 0.11f), 0.08f);
+        kit.pinturaLuna = Opaco("PinturaLuna", new Color(0.38f, 0.5f, 0.76f), 0.08f);
         kit.pinturaHueso = Opaco("PinturaHueso", new Color(0.58f, 0.55f, 0.48f), 0.08f);
         kit.tallaCresta = Emisivo(Opaco("TalladoCresta", new Color(0.62f, 0.66f, 0.74f), 0.1f), ColorLuna * 0.06f);
 
