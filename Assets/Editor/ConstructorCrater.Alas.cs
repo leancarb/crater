@@ -370,8 +370,6 @@ public static partial class ConstructorCrater
         Caja(g, "Techo_O2", -36.3f, 6, 9.3f, -19.7f, 6.3f, 21.3f, k.techo);
         var p1 = CrearAnclaEnEscena(k, g, "Ancla_O_Puerta_A", new Vector3(-27f, 0f, 10.1f), Quaternion.identity, FiltroDefinicion.Canal.Cuerpo, 4f, 1);
         var p2 = CrearAnclaEnEscena(k, g, "Ancla_O_Puerta_B", new Vector3(-31f, 0f, 20.2f), Quaternion.Euler(0f, 135f, 0f), FiltroDefinicion.Canal.Cuerpo, 4f, 3);
-        MarcoDePuerta(k, p1);
-        MarcoDePuerta(k, p2);
         CompuertaLosa(k, g, "Puerta_O_Dos_Anclas", new Vector3(-19.85f, 1.75f, 12f), new Vector3(0.3f, 3.5f, 3f),
             new Vector3(0f, -3.8f, 0f), 0.7f, true, p1, p2);
         Luz(g, "Luz_O2", new Vector3(-28f, 5.3f, 15f), LuzCalida, 110f, 14f, true);
@@ -391,17 +389,13 @@ public static partial class ConstructorCrater
 
         // el sello, detrás de un tabique: desde la otra orilla no se lo ve
         Caja(g, "Tabique_O3", -19.7f, -0.3f, 21.5f, -14.3f, 6, 21.8f, k.basaltoMedio);
-        // el sello, en el rincón noreste, mirando al oeste: se lo enciende de frente al atajo,
-        // así la puerta se ve abrirse al lado del sello (antes quedaba a la espalda)
-        var sello = CrearAnclaEnEscena(k, g, "Sello_Oeste", new Vector3(-13.3f, 0f, 26.1f), Quaternion.Euler(0f, -90f, 0f), FiltroDefinicion.Canal.Cuerpo, 0f, 5);
-        MarcoDePuerta(k, sello);
+        var sello = CrearAnclaEnEscena(k, g, "Sello_Oeste", new Vector3(-18.6f, 0f, 24.5f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 0f, 5);
         sello.permanente = true;
         PrefabUtility.RecordPrefabInstancePropertyModifications(sello);
-        // el atajo termina antes del rincón del sello (z 23 … 25,3)
-        refs.atajoOeste = CompuertaLosa(k, g, "Atajo_Oeste", new Vector3(-12.15f, 2f, 24.15f), new Vector3(0.3f, 4f, 2.3f),
+        refs.atajoOeste = CompuertaLosa(k, g, "Atajo_Oeste", new Vector3(-12.15f, 2f, 24.75f), new Vector3(0.3f, 4f, 3.5f),
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Oeste", new Vector3(-16f, 5.3f, 24.5f), LuzCalida, 70f, 10f, false);
-        ParedInteriorDelAla(k, g, -1f, -9f, 23f, 25.3f);
+        ParedInteriorDelAla(k, g, -1f, -9f);
         MuralesAlaOeste(k, g);
         DecorarAlaOeste(k, g, sello);
         return sello;

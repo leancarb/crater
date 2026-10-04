@@ -109,13 +109,12 @@ public class RecorridoCraterTests
         // anclas colgadas del techo, y el sello detrás del tabique
         yield return CruzarPuente("Puente_O_Torcer", O(-16f, 14.3f), O(-16f, 19f), "Ancla_O_Torcer_A", "Ancla_O_Torcer_B");
         yield return Caminar(O(-13.3f, 19.5f));
-        yield return Caminar(O(-13.3f, 23.2f));
-        yield return Caminar(O(-16.5f, 24.5f));
+        yield return Caminar(O(-13.3f, 24.5f));
         yield return Iluminar(Buscar<Ancla>("Sello_Oeste"), 0.6f);
         yield return Esperar(3f);
         Assert.That(Buscar<Compuerta>("Atajo_Oeste").Abierta, Is.True, "el sello oeste no abrió el atajo");
         // por el pasillo de vuelta hasta la rotonda: ahí se ve la cinemática del sello
-        yield return Caminar(new Vector3(-14f, 0f, 35.1f));
+        yield return Caminar(new Vector3(-14f, 0f, 35.75f));
         yield return Caminar(new Vector3(-9.5f, 0f, 35.75f));
         yield return Caminar(new Vector3(-9.5f, 0f, 24f));
         yield return Caminar(new Vector3(-6f, 0f, 19f));

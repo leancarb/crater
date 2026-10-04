@@ -165,7 +165,6 @@ public static partial class ConstructorCrater
         var ancla = CrearAnclaEnEscena(k, g, "Ancla_Umbral", new Vector3(-5.1f, 0f, -10f), Quaternion.Euler(0f, 90f, 0f),
             FiltroDefinicion.Canal.Ninguno, 2f, 0);
         AnclaDeLuzBlanca(k, g, ancla);
-        MarcoDePuerta(k, ancla);
 
         // compuerta: una losa que se hunde en el piso
         var compuertaGO = new GameObject("Compuerta_Umbral");
@@ -659,25 +658,6 @@ public static partial class ConstructorCrater
         ancla.tono.clip = k.audio.tonosAncla[tono % k.audio.tonosAncla.Length];
         PrefabUtility.RecordPrefabInstancePropertyModifications(ancla.tono);
         return ancla;
-    }
-
-    /// <summary>
-    /// Las anclas que abren puertas (no las de los puentes) llevan un portal de piedra clara:
-    /// dos pilares y un dintel alrededor. Se distinguen de un vistazo: "esta abre algo".
-    /// </summary>
-    static void MarcoDePuerta(Kit k, Ancla ancla)
-    {
-        var t = ancla.transform;
-        var marco = Grupo(t.parent, ancla.name + "_Portal");
-        Vector3 atras = -t.forward * 0.25f;
-        foreach (float lado in new[] { -1f, 1f })
-        {
-            var pilar = Bloque(marco, lado < 0f ? "Pilar_Izq" : "Pilar_Der", t.position + t.right * (lado * 1.12f) + atras + Vector3.up * 1.4f,
-                new Vector3(0.22f, 2.8f, 0.3f), k.piedra);
-            pilar.transform.rotation = t.rotation;
-        }
-        var dintel = Bloque(marco, "Dintel", t.position + atras + Vector3.up * 2.9f, new Vector3(2.66f, 0.24f, 0.34f), k.piedra);
-        dintel.transform.rotation = t.rotation;
     }
 
     /// <summary>
