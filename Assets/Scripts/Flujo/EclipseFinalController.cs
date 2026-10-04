@@ -69,8 +69,8 @@ public class EclipseFinalController : MonoBehaviour
     [SerializeField] string[] creditos =
     {
         "CRÁTER",
-        "Proyecto académico · FADU · 2026",
-        "Gracias por jugar",
+        "Membrillo Games",
+        InterfazCrater.TarjetaCatedra,   // los logos de UBA FADU y de la Cátedra Campos Trilnick, y 2026
     };
 
     // banderas para que cada paso ocurra una sola vez aunque lo llamen de nuevo

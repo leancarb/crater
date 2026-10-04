@@ -557,6 +557,9 @@ public static partial class ConstructorCrater
 
         Asignar(interfaz, "linterna", linterna);
         Asignar(interfaz, "fuenteTitulo", AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Cinzel-Bold.ttf"));
+        // los logos de los créditos: si están las imágenes, se usan; si no, se arman en texto
+        Asignar(interfaz, "logoFacultad", CargarLogo("Assets/Art/Creditos/Logo_UBA_FADU.png"));
+        Asignar(interfaz, "logoCatedra", CargarLogo("Assets/Art/Creditos/Logo_Catedra_Campos_Trilnick.png"));
         Asignar(pausa, "interfaz", interfaz);
         Asignar(flujo, "linterna", linterna);
         Asignar(flujo, "interfaz", interfaz);
@@ -672,6 +675,20 @@ public static partial class ConstructorCrater
         luz.spotAngle = 70f;
         luz.innerSpotAngle = 35f;
         luz.transform.rotation = Quaternion.LookRotation(ancla.PuntoDeImpacto - luz.transform.position);
+    }
+
+    /// <summary>Carga una imagen como Sprite para la interfaz (la importa como Sprite si hace falta). Null si no está.</summary>
+    static Sprite CargarLogo(string ruta)
+    {
+        if (!(AssetImporter.GetAtPath(ruta) is TextureImporter importador)) return null;
+        if (importador.textureType != TextureImporterType.Sprite)
+        {
+            importador.textureType = TextureImporterType.Sprite;
+            importador.mipmapEnabled = false;
+            importador.alphaIsTransparency = true;
+            importador.SaveAndReimport();
+        }
+        return AssetDatabase.LoadAssetAtPath<Sprite>(ruta);
     }
 
     static Recogible ColocarRecogible(Kit k, Transform g, string nombre, FiltroDefinicion filtro, Vector3 posicion)

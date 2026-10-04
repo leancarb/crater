@@ -1,0 +1,7 @@
+Logos de los créditos finales (negro sobre fondo blanco o transparente, PNG):
+
+  Logo_UBA_FADU.png                  el logo de UBA, FADU (con el sello)
+  Logo_Catedra_Campos_Trilnick.png   el logo de la Cátedra Campos Trilnick
+
+Poné los archivos acá con esos nombres exactos y usá Crater › Reconstruir todo.
+Si no están, los créditos los arman en texto.

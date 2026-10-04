@@ -25,6 +25,9 @@ public class InterfazCrater : MonoBehaviour
     [SerializeField] Font fuente;
     [Tooltip("La letra de la palabra CRÁTER (Cinzel: mayúsculas talladas en piedra).")]
     [SerializeField] Font fuenteTitulo;
+    [Header("Créditos (si faltan, se arman en texto)")]
+    [SerializeField] Sprite logoFacultad;   // Assets/Art/Creditos/Logo_UBA_FADU.png
+    [SerializeField] Sprite logoCatedra;    // Assets/Art/Creditos/Logo_Catedra_Campos_Trilnick.png
 
     const float DuracionFundidoPrompt = 0.35f;
     static readonly Color ColorApagado = new Color(0.6f, 0.6f, 0.6f);
@@ -44,6 +47,7 @@ public class InterfazCrater : MonoBehaviour
     Text textoTitulo;
     Text textoSubtitulo;
     GameObject panelPausa;
+    CanvasGroup tarjetaCatedra;   // el logo de UBA FADU, el de la Cátedra Campos Trilnick y el año
 
     // se guarda la corrutina en curso para cortarla si llega otra indicación
     Coroutine rutinaPrompt;
@@ -191,9 +195,15 @@ public class InterfazCrater : MonoBehaviour
         foreach (string linea in lineas)
         {
             if (saltar != null && saltar()) break;
+            if (linea == TarjetaCatedra)
+            {
+                yield return MostrarTarjeta(saltar);
+                continue;
+            }
             textoTitulo.text = linea;
             textoTitulo.font = fuente;
             textoTitulo.fontSize = linea.Length > 16 ? 40 : 78;
+            if (linea == "CRÁTER") PonerPalabraCrater();
             textoTitulo.color = new Color(ColorTextoSobreBlanco.r, ColorTextoSobreBlanco.g, ColorTextoSobreBlanco.b, 0f);
             yield return FundirTexto(textoTitulo, 0f, 1f, 1.2f);
             for (float t = 0f; t < 2.8f && (saltar == null || !saltar()); t += Time.unscaledDeltaTime) yield return null;
@@ -207,6 +217,21 @@ public class InterfazCrater : MonoBehaviour
         yield return FundirTexto(textoTitulo, 0f, 1f, 2f);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+    }
+
+    /// <summary>La línea de los créditos que, en vez de texto, muestra la tarjeta de la cátedra con su logo.</summary>
+    public const string TarjetaCatedra = "@catedra";
+
+    IEnumerator MostrarTarjeta(System.Func<bool> saltar)
+    {
+        tarjetaCatedra.gameObject.SetActive(true);
+        for (float t = 0f; t < 1.2f; t += Time.unscaledDeltaTime) { tarjetaCatedra.alpha = t / 1.2f; yield return null; }
+        tarjetaCatedra.alpha = 1f;
+        for (float t = 0f; t < 3.4f && (saltar == null || !saltar()); t += Time.unscaledDeltaTime) yield return null;
+        float salida = saltar != null && saltar() ? 0.2f : 1.2f;
+        for (float t = 0f; t < salida; t += Time.unscaledDeltaTime) { tarjetaCatedra.alpha = 1f - t / salida; yield return null; }
+        tarjetaCatedra.alpha = 0f;
+        tarjetaCatedra.gameObject.SetActive(false);
     }
 
     void SombraDeTitulos(bool valor)
@@ -401,6 +426,40 @@ public class InterfazCrater : MonoBehaviour
             "F · Linterna      1 / 2 · Filtros      Q · Luz blanca\n\n" +
             "Esc · Seguir      R · Reiniciar      X · Salir";
         panelPausa.SetActive(false);
+
+        // créditos: la tarjeta de la facultad y la cátedra, con sus logos (negro sobre blanco)
+        var tarjeta = Crear("Catedra", raiz, Vector2.zero, Vector2.one);
+        tarjetaCatedra = tarjeta.AddComponent<CanvasGroup>();
+        tarjetaCatedra.alpha = 0f;
+
+        var facultad = Crear("Logo_UBA_FADU", tarjeta.transform, new Vector2(0.22f, 0.62f), new Vector2(0.78f, 0.84f));
+        if (logoFacultad != null) Logo(facultad, logoFacultad);
+        else
+        {
+            TextoSinSombra(Crear("UBA_FADU", facultad.transform, new Vector2(0f, 0.38f), new Vector2(1f, 1f)),
+                92, TextAnchor.MiddleCenter, Color.black, FontStyle.Normal).text = "<b>UBA,</b>FADU.";
+            TextoSinSombra(Crear("Nombres", facultad.transform, new Vector2(0f, 0f), new Vector2(1f, 0.36f)),
+                26, TextAnchor.MiddleCenter, Color.black, FontStyle.Normal).text =
+                "<b>Universidad de Buenos Aires</b>      Facultad de Arquitectura, Diseño y Urbanismo";
+        }
+
+        var logo = Crear("Logo_Catedra", tarjeta.transform, new Vector2(0.415f, 0.24f), new Vector2(0.585f, 0.56f));
+        if (logoCatedra != null) Logo(logo, logoCatedra);
+        else
+        {
+            TextoSinSombra(Crear("Catedra", logo.transform, new Vector2(0f, 0.73f), new Vector2(1f, 1f)),
+                64, TextAnchor.MiddleLeft, Color.black, FontStyle.Bold).text = "Cátedra";
+            var barra = Crear("Barra", logo.transform, new Vector2(0f, 0.63f), new Vector2(1f, 0.69f)).AddComponent<Image>();
+            barra.color = Color.black;
+            barra.raycastTarget = false;
+            var campos = TextoSinSombra(Crear("CamposTrilnick", logo.transform, new Vector2(0f, 0f), new Vector2(1f, 0.6f)),
+                64, TextAnchor.UpperLeft, Color.black, FontStyle.Bold);
+            campos.text = "Campos\nTrilnick";
+            campos.lineSpacing = 0.92f;
+        }
+        TextoSinSombra(Crear("Anio", tarjeta.transform, new Vector2(0.3f, 0.12f), new Vector2(0.7f, 0.19f)),
+            32, TextAnchor.MiddleCenter, ColorTextoSobreBlanco, FontStyle.Normal).text = "2026";
+        tarjeta.SetActive(false);
     }
 
     /// <summary>Un objeto de UI que ocupa el rectángulo entre anclaMin y anclaMax (fracciones de la pantalla).</summary>
@@ -414,6 +473,22 @@ public class InterfazCrater : MonoBehaviour
         rt.offsetMin = Vector2.zero;
         rt.offsetMax = Vector2.zero;
         return go;
+    }
+
+    static void Logo(GameObject go, Sprite sprite)
+    {
+        var imagen = go.AddComponent<Image>();
+        imagen.sprite = sprite;
+        imagen.preserveAspect = true;
+        imagen.raycastTarget = false;
+    }
+
+    Text TextoSinSombra(GameObject go, int tamanio, TextAnchor alineacion, Color color, FontStyle estilo)
+    {
+        var texto = CrearTexto(go, tamanio, alineacion, color);
+        texto.fontStyle = estilo;
+        Destroy(go.GetComponent<Shadow>());
+        return texto;
     }
 
     Text CrearTexto(GameObject go, int tamanio, TextAnchor alineacion, Color color)
