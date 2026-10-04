@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -149,6 +150,7 @@ public static partial class ConstructorCrater
         // los hilos de soles y lunas que llegan a la puerta (ConstructorCrater.Tallados.cs)
         ConstruirHilosDeLosSellos(k, g, refs, selloOeste, selloEste);
         ArteDeLosPasillosDeVuelta(k, g, selloOeste, selloEste);
+        refs.obelisco = MapaYObelisco(k, g, selloOeste, selloEste);
 
         // sobre la boca de cada pasillo de vuelta, en el anillo, un tallado con luz: se ve de lejos cuál ala está hecha
         void Faro(string nombre, float lado, ReceptorDeLuz sello)
@@ -167,6 +169,88 @@ public static partial class ConstructorCrater
         }
         Faro("Faro_Atajo_Oeste", -1f, selloOeste);
         Faro("Faro_Atajo_Este", 1f, selloEste);
+    }
+
+    /// <summary>
+    /// El centro de la rotonda deja de ser decorado:
+    ///  - Mapa del progreso: las columnas del lado oeste llevan soles y las del este lunas,
+    ///    en sus cuatro caras; se encienden con el sello de su ala. De un vistazo se ve qué falta.
+    ///  - Último paso: con los dos sellos, el obelisco (que mira a la puerta) despierta. Hay
+    ///    que encenderlo con la luz blanca y recién entonces se abre la puerta de los sellos.
+    /// Devuelve el obelisco (un Ancla de luz blanca), que la cinemática del sello habilita.
+    /// </summary>
+    static Ancla MapaYObelisco(Kit k, Transform g, ReceptorDeLuz selloOeste, ReceptorDeLuz selloEste)
+    {
+        var mapa = g.Find("Anillo_Del_Mapa");
+        if (mapa == null) throw new System.InvalidOperationException("Falta el anillo del mapa en la rotonda");
+        Vector3 centro = new Vector3(CentroRotonda.x, 0f, CentroRotonda.z);
+
+        // columnas: soles al oeste, lunas al este
+        var soles = new List<Renderer>();
+        var lunas = new List<Renderer>();
+        var marcas = Grupo(g, "Mapa_Del_Progreso");
+        foreach (var r in mapa.GetComponentsInChildren<Renderer>(true))
+        {
+            if (!r.name.StartsWith("Anillo_Columna")) continue;
+            var b = r.bounds;
+            float dx = b.center.x - centro.x;
+            if (Mathf.Abs(dx) < 0.5f) continue;   // las del eje norte-sur quedan neutras
+            bool oeste = dx < 0f;
+            for (int i = 0; i < 4; i++)
+            {
+                var dir = Quaternion.Euler(0f, i * 90f, 0f) * Vector3.forward;
+                var pos = new Vector3(b.center.x, 2.3f, b.center.z) + dir * (b.extents.x + 0.01f);
+                var glifo = Glifo(marcas, $"{r.name}_{i}", oeste ? Figura.Sol : Figura.LunaCreciente, pos, dir, 0.34f,
+                    oeste ? k.ambar : k.tallaLuna);
+                (oeste ? soles : lunas).Add(glifo);
+            }
+        }
+        foreach (bool oeste in new[] { true, false })
+        {
+            var lado = Grupo(marcas, oeste ? "Columnas_Sol" : "Columnas_Luna");
+            var testigo = lado.gameObject.AddComponent<TestigoDeSello>();
+            testigo.sello = oeste ? selloOeste : selloEste;
+            testigo.renderers = (oeste ? soles : lunas).ToArray();
+            if (!oeste) testigo.colorEncendido = ColorLuna;
+            testigo.emisionApagado = 0.02f;
+            testigo.luz = Luz(lado, "Luz", centro + new Vector3(oeste ? -3.5f : 3.5f, 3f, 0f), oeste ? LuzCalida : LuzFria, 0f, 7f, false);
+            testigo.intensidadLuz = 14f;
+        }
+
+        // el obelisco: un ancla de luz blanca, dormida hasta que estén los dos sellos
+        var obeliscoR = System.Array.Find(mapa.GetComponentsInChildren<Renderer>(true), r => r.name == "Anillo_Obelisco");
+        if (obeliscoR == null) throw new System.InvalidOperationException("SM_Mapa01_Recorrido.fbx no tiene Anillo_Obelisco");
+        var go = obeliscoR.gameObject;
+        go.layer = LayerMask.NameToLayer(CapaAncla);
+        var ob = obeliscoR.bounds;
+        float alto = ob.max.y;
+        var acentos = new List<Renderer>();
+        for (int i = 0; i < 4; i++)
+        {
+            var dir = Quaternion.Euler(0f, i * 90f, 0f) * Vector3.forward;
+            var pos = new Vector3(ob.center.x, alto - 1.1f, ob.center.z) + dir * (ob.extents.x + 0.01f);
+            var eclipse = Glifo(marcas, $"Obelisco_Eclipse_{i}", Figura.Eclipse, pos, dir, 0.9f, k.tallaEclipse);
+            eclipse.enabled = false;   // aparecen cuando el obelisco despierta
+            acentos.Add(eclipse);
+        }
+        var ancla = go.AddComponent<Ancla>();
+        ancla.canalRequerido = FiltroDefinicion.Canal.Ninguno;
+        ancla.permanente = true;
+        ancla.soloDeFrente = false;
+        ancla.acentos = acentos.ToArray();
+        ancla.colorApagada = new Color(0.12f, 0.13f, 0.16f);
+        ancla.colorEncendida = new Color(0.85f, 0.92f, 1f);
+        ancla.emisionMaxima = 3f;
+        ancla.intensidadLuz = 30f;
+        var punto = new GameObject("PuntoDeImpacto").transform;
+        punto.SetParent(go.transform, true);
+        punto.position = new Vector3(ob.center.x, 1.8f, ob.center.z);
+        ancla.puntoDeImpacto = punto;
+        ancla.brillo = Luz(marcas, "Luz_Obelisco", new Vector3(ob.center.x, alto + 0.6f, ob.center.z), ancla.colorEncendida, 0f, 14f, false);
+        ancla.tono = go.AddComponent<AudioSource>();
+        ConfigurarAudio(ancla.tono, k.audio.tonosAncla[k.audio.tonosAncla.Length - 1], 0.9f, false, true);
+        ancla.enabled = false;   // lo despierta la cinemática del segundo sello
+        return ancla;
     }
 
     /// <summary>

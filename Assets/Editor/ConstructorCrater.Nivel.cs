@@ -57,6 +57,7 @@ public static partial class ConstructorCrater
 
         // final
         public Compuerta cierreCresta, puertaSellos, atajoOeste, atajoEste;
+        public Ancla obelisco;
         public HiloDeTallados hiloSoles, hiloLunas, hiloEclipse;
         public ReceptorDeLuz selloOeste, selloEste;
         public AperturaTecho techoCresta;
@@ -614,6 +615,7 @@ public static partial class ConstructorCrater
         AsignarLista(cinematica, "hilos", new Object[] { refs.hiloSoles, refs.hiloLunas });
         Asignar(cinematica, "eclipse", refs.hiloEclipse);
         Asignar(cinematica, "puerta", refs.puertaSellos);
+        Asignar(cinematica, "obelisco", refs.obelisco);
         UnityEventTools.AddPersistentListener(refs.atajoOeste.alAbrirse, new UnityAction(flujo.NotificarSello));
         UnityEventTools.AddPersistentListener(refs.atajoEste.alAbrirse, new UnityAction(flujo.NotificarSello));
         UnityEventTools.AddPersistentListener(refs.zonaCresta.alEntrar, new UnityAction(flujo.EntrarCresta));

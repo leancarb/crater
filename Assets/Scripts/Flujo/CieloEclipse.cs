@@ -7,8 +7,9 @@ using UnityEngine;
 /// Los discos se reubican cada frame a 'distancia' de la cámara, en la dirección
 /// del sol, así parecen estar en el infinito. La dirección la da la luz del sol.
 ///
-/// La luna nueva no se ve de día: sólo su silueta sobre el sol. Por eso se pinta
-/// del color del cielo, y así desaparece en cuanto sale del disco solar.
+/// La luna nueva no se ve de día: sólo su silueta sobre el sol. Por eso arranca del
+/// color del cielo y se va oscureciendo hasta ser una silueta negra mientras tapa al sol,
+/// y el disco del sol baja su brillo para que su resplandor no se vea a través de ella.
 ///
 /// CÓMO FUNCIONA
 /// Al cambiar 'Progreso' (Aplicar) se interpolan entre día y totalidad: la intensidad y el
@@ -57,6 +58,8 @@ public class CieloEclipse : MonoBehaviour
     [SerializeField] Color ambienteSueloAtardecer = new Color(0.2f, 0.12f, 0.08f);
     [SerializeField] float nieblaAtardecer = 0.006f;
     [SerializeField] Color colorDiscoAtardecer = new Color(6f, 3.2f, 1.5f);
+    [Tooltip("El color (HDR) del disco del sol de día; se apaga a medida que la luna lo tapa.")]
+    [SerializeField] Color colorDiscoDia = new Color(6f, 5.4f, 4.4f);
 
     [Header("Totalidad")]
     // crepúsculo profundo: el cielo azul oscuro, el horizonte anaranjado (la luz que llega
@@ -74,13 +77,13 @@ public class CieloEclipse : MonoBehaviour
 
     [Header("Corona")]
     [SerializeField] Color colorCorona = new Color(0.8f, 0.88f, 1f);
-    [SerializeField] float intensidadCorona = 3f;
+    [SerializeField] float intensidadCorona = 1.6f;
 
     float progreso;
     bool visible;
     float ladoLuna = 1f;   // 1 = todavía no pasó, -1 = ya pasó (epílogo)
     bool atardecer;
-    Renderer rendererLuna;
+    Renderer rendererLuna, rendererSol;
     MaterialPropertyBlock bloque;
     static readonly int IdColor = Shader.PropertyToID("_BaseColor");
 
@@ -98,15 +101,6 @@ public class CieloEclipse : MonoBehaviour
         ladoLuna = -1f;
         atardecer = true;
         if (sol != null) sol.transform.rotation = Quaternion.Euler(giroSolAtardecer);
-        // el disco del sol, anaranjado
-        var disco = discoSol != null ? discoSol.GetComponent<Renderer>() : null;
-        if (disco != null)
-        {
-            var b = new MaterialPropertyBlock();
-            disco.GetPropertyBlock(b);
-            b.SetColor(IdColor, colorDiscoAtardecer);
-            disco.SetPropertyBlock(b);
-        }
         Progreso = 0f;
     }
 
@@ -114,6 +108,7 @@ public class CieloEclipse : MonoBehaviour
     {
         bloque = new MaterialPropertyBlock();
         if (discoLuna != null) rendererLuna = discoLuna.GetComponent<Renderer>();
+        if (discoSol != null) rendererSol = discoSol.GetComponent<Renderer>();
         Mostrar(false);
     }
 
@@ -210,9 +205,25 @@ public class CieloEclipse : MonoBehaviour
 
         if (rendererLuna != null)
         {
+            // al principio, del color del cielo (de día la luna nueva no se ve); a medida que
+            // tapa al sol se oscurece hasta ser una silueta negra: si siguiera del color del
+            // cielo, el mordisco del sol parecía un agujero que deja ver el cielo
+            float silueta = Mathf.SmoothStep(0f, 1f, (progreso - 0.12f) / 0.45f);
             rendererLuna.GetPropertyBlock(bloque);
-            bloque.SetColor(IdColor, cielo);
+            bloque.SetColor(IdColor, Color.Lerp(cielo, cielo * 0.08f, silueta));
             rendererLuna.SetPropertyBlock(bloque);
+        }
+
+        // el disco del sol baja su brillo mientras la luna lo tapa: si no, el resplandor (bloom)
+        // del sol se veía a través de la luna. En la totalidad no queda nada del sol
+        if (rendererSol != null)
+        {
+            float tapado = Mathf.SmoothStep(0f, 1f, (progreso - 0.55f) / 0.42f);
+            Color disco = (atardecer ? colorDiscoAtardecer : colorDiscoDia) * Mathf.Lerp(1f, 0.12f, tapado);
+            rendererSol.enabled = progreso < 0.985f;
+            rendererSol.GetPropertyBlock(bloque);
+            bloque.SetColor(IdColor, disco);
+            rendererSol.SetPropertyBlock(bloque);
         }
 
         if (corona != null)

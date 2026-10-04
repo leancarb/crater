@@ -159,9 +159,12 @@ public class RecorridoCraterTests
         yield return Caminar(new Vector3(6f, 0f, 19f));
         yield return EsperarCinematica();
 
-        // ---- los dos sellos abren el norte (al final de su cinemática): el Cruce
-        yield return Esperar(1f);
-        Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Cruce), "los dos sellos no abrieron la puerta del norte");
+        // ---- con los dos sellos despierta el obelisco: encenderlo con luz blanca abre el norte
+        Assert.That(Buscar<Compuerta>("Puerta_Sellos").Abierta, Is.False, "la puerta del norte se abrió sin el obelisco");
+        yield return Equipar(null);
+        yield return Iluminar(Buscar<Ancla>("Anillo_Obelisco"), 1f);
+        yield return Esperar(4f);
+        Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Cruce), "el obelisco no abrió la puerta del norte");
         yield return Caminar(new Vector3(0f, 0f, 22f));
         yield return Caminar(new Vector3(0f, 0f, 24f));
         yield return Caminar(new Vector3(0f, 0f, 32.3f));

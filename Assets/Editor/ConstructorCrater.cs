@@ -353,7 +353,8 @@ public static partial class ConstructorCrater
         float ang = Mathf.Atan2(v, u);
         const float borde = 0.28f;
         float rayos = 0.7f + 0.3f * Mathf.Sin(ang * 5f) * Mathf.Sin(ang * 3f + 1f);
-        float a = r < borde ? 1f : Mathf.Exp(-(r - borde) / (0.1f * rayos)) + 0.6f * Mathf.Exp(-(r - borde) / 0.02f);
+        // hueca: adentro del borde no hay nada (ahí está la luna), así no se ve nada a través de ella
+        float a = r < borde ? 0f : Mathf.Exp(-(r - borde) / (0.1f * rayos)) + 0.6f * Mathf.Exp(-(r - borde) / 0.02f);
         a *= Mathf.Clamp01((1f - r) * 4f);
         return new Color(1f, 1f, 1f, Mathf.Clamp01(a));
     }
