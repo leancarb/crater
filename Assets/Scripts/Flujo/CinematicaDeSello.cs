@@ -14,8 +14,8 @@ using UnityEngine;
 /// ven los hilos. Entonces apaga el control del jugador y la pausa y, sin mover la
 /// cámara de sus ojos, la gira hacia el hilo de ese sello (HiloDeTallados en modo
 /// manual) y lo enciende. Con todos los sellos gira hacia el eclipse, lo enciende y
-/// despierta el obelisco del centro: formar su eclipse (sol con SOL y luna con LUNA, a la vez)
-/// abre la puerta (que espera esta orden: 'abrirSoloPorOrden'). Sin obelisco, la abre directamente. Si se encienden los
+/// enciende el eclipse del obelisco del centro, después el de la puerta, y abre la puerta (que
+/// espera esta orden: 'abrirSoloPorOrden'). Si se encienden los
 /// dos antes de volver, se muestran uno después del otro. Al terminar, la mirada no
 /// vuelve atrás: el jugador sigue mirando hacia donde terminó la cinemática.
 /// </summary>
@@ -41,7 +41,7 @@ public class CinematicaDeSello : MonoBehaviour
     [SerializeField] HiloDeTallados eclipse;
     [SerializeField] Compuerta puerta;
     [SerializeField] float esperaPuerta = 3.5f;
-    [Tooltip("Si está, la puerta no se abre sola: con los dos sellos el obelisco despierta y hay que formar el eclipse.")]
+    [Tooltip("El obelisco del centro: con los dos sellos, la mirada pasa primero por su eclipse.")]
     [SerializeField] ObeliscoDelEclipse obelisco;
 
     // los campos estáticos sobreviven entre partidas en el editor: se limpian al dar Play
@@ -50,7 +50,6 @@ public class CinematicaDeSello : MonoBehaviour
 
     readonly Queue<int> pendientes = new Queue<int>();
     bool saltar;   // Espacio, Enter o A: termina la cinemática de golpe, con todo en su estado final
-    bool puertaAbierta;
     bool[] anotado;
 
     void Start() => anotado = new bool[sellos != null ? sellos.Length : 0];
@@ -58,12 +57,6 @@ public class CinematicaDeSello : MonoBehaviour
     void Update()
     {
         if (Reproduciendo && EntradaCrater.Saltar) saltar = true;
-        // el último paso: el eclipse del obelisco abre la puerta de los sellos
-        if (obelisco != null && obelisco.Resuelto && !puertaAbierta)
-        {
-            puertaAbierta = true;
-            if (puerta != null) puerta.Abrir();
-        }
         for (int i = 0; i < anotado.Length; i++)
         {
             if (anotado[i] || sellos[i] == null || !sellos[i].Activo) continue;
@@ -111,6 +104,13 @@ public class CinematicaDeSello : MonoBehaviour
         // (si los dos esperaban juntos, el eclipse va después del segundo hilo)
         if (TodosLosSellos() && pendientes.Count == 0)
         {
+            // primero el obelisco del centro: su sol y su luna ya brillan; se enciende su eclipse
+            if (obelisco != null)
+            {
+                yield return Girar(camara, Mirar(camara, obelisco.Centro), segundosPorTramo);
+                obelisco.Encender();
+                yield return Esperar(1.6f);
+            }
             if (eclipse != null)
             {
                 yield return Girar(camara, Mirar(camara, Centro(eclipse)), segundosPorTramo);
@@ -118,18 +118,8 @@ public class CinematicaDeSello : MonoBehaviour
                 yield return Esperar(eclipse.Duracion);
                 if (saltar) eclipse.Completar();
             }
-            if (obelisco != null)
-            {
-                // el obelisco despierta (aparecen su sol y su luna) y la mirada termina en él
-                obelisco.Despertar();
-                yield return Girar(camara, Mirar(camara, obelisco.Centro), segundosPorTramo);
-                yield return Esperar(1.2f);
-            }
-            else
-            {
-                if (puerta != null) puerta.Abrir();
-                yield return Esperar(esperaPuerta);
-            }
+            if (puerta != null) puerta.Abrir();
+            yield return Esperar(esperaPuerta);
         }
 
         // 3. la mirada queda donde terminó (la puerta, o el hilo): el jugador sigue desde ahí

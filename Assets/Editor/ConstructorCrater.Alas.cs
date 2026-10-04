@@ -199,10 +199,9 @@ public static partial class ConstructorCrater
     /// El centro de la rotonda deja de ser decorado:
     ///  - Mapa del progreso: las columnas del lado oeste llevan un sol en sus caras y las del
     ///    este una luna; se encienden con el sello de su ala. De un vistazo se ve qué falta.
-    ///  - El último puzzle, el eclipse: con los dos sellos el obelisco despierta. En su cara
-    ///    oeste aparece un sol y en la este una luna. Hay que encender el sol con el filtro SOL
-    ///    y la luna con el filtro LUNA (rodeando el obelisco); cada uno queda encendido. Con los
-    ///    dos, se enciende el eclipse de su cara sur y se abre la puerta de los sellos.
+    ///  - El obelisco, el reloj del eclipse: en su cara oeste un sol y en la este una luna, que se
+    ///    encienden con el sello de su ala. Con los dos, en la cinemática, se enciende el eclipse
+    ///    de su cara sur (mira a la puerta) y desde ahí la mirada va a la puerta, que se abre.
     /// </summary>
     static ObeliscoDelEclipse MapaYObelisco(Kit k, Transform g, ReceptorDeLuz selloOeste, ReceptorDeLuz selloEste)
     {
@@ -245,7 +244,8 @@ public static partial class ConstructorCrater
             testigo.intensidadLuz = 14f;
         }
 
-        // las caras del obelisco: el sol al oeste, la luna al este y el eclipse al sur
+        // las caras del obelisco: el sol al oeste y la luna al este, que se encienden con el sello
+        // de su ala; al sur, el eclipse, que se enciende en la cinemática del segundo sello
         var raiz = Grupo(g, "Obelisco_Del_Eclipse");
         var obelisco = raiz.gameObject.AddComponent<ObeliscoDelEclipse>();
         (Vector3 normal, Vector3 centro) Cara(Vector3 hacia, float y)
@@ -254,38 +254,22 @@ public static partial class ConstructorCrater
             foreach (var c in CarasVerticales(obeliscoR, y)) if (Vector3.Dot(c.normal, hacia) > Vector3.Dot(mejor.normal, hacia)) mejor = c;
             return mejor;
         }
-        Ancla CaraAncla(string nombre, Vector3 hacia, Figura figura, Material m, Color color, FiltroDefinicion.Canal canal, int tono)
+        void CaraDelSello(string nombre, Vector3 hacia, Figura figura, Material m, ReceptorDeLuz sello, bool luna)
         {
-            var (normal, punto) = Cara(hacia, 2f);
-            var go = new GameObject(nombre);
-            go.transform.SetParent(raiz, false);
-            go.transform.SetPositionAndRotation(punto + normal * 0.1f, Quaternion.LookRotation(normal));
-            go.layer = LayerMask.NameToLayer(CapaAncla);
-            var caja = go.AddComponent<BoxCollider>();
-            caja.isTrigger = true;
-            caja.size = new Vector3(0.9f, 0.9f, 0.15f);
-            var glifo = Glifo(go.transform, "Tallado", figura, punto, normal, 0.85f, m);
-            glifo.enabled = false;   // aparecen cuando el obelisco despierta
-            var ancla = go.AddComponent<Ancla>();
-            ancla.canalRequerido = canal;
-            ancla.permanente = true;   // una vez encendido, queda: se puede ir tranquilo al otro lado
-            ancla.soloDeFrente = true;
-            ancla.acentos = new[] { glifo };
-            ancla.colorApagada = color * 0.12f;
-            ancla.colorEncendida = color;
-            ancla.emisionMaxima = 3f;
-            ancla.intensidadLuz = 12f;
-            ancla.brillo = Luz(go.transform, "Brillo", punto + normal * 0.8f, color, 0f, 5f, false);
-            ancla.tono = go.AddComponent<AudioSource>();
-            ConfigurarAudio(ancla.tono, k.audio.tonosAncla[tono % k.audio.tonosAncla.Length], 0.8f, false, true);
-            ancla.enabled = false;
-            return ancla;
+            var (normal, punto) = Cara(hacia, 2.6f);
+            var cara = Grupo(raiz, nombre);
+            var testigo = cara.gameObject.AddComponent<TestigoDeSello>();
+            testigo.sello = sello;
+            testigo.renderers = new[] { Glifo(cara, "Tallado", figura, punto, normal, 0.95f, m) };
+            if (luna) testigo.colorEncendido = ColorLuna;
+            testigo.emisionApagado = 0.03f;
+            testigo.luz = Luz(cara, "Brillo", punto + normal * 0.9f, luna ? ColorLuna : new Color(1f, 0.55f, 0.2f), 0f, 5f, false);
+            testigo.intensidadLuz = 10f;
         }
-        obelisco.sol = CaraAncla("Obelisco_Sol", Vector3.left, Figura.Sol, k.ambar, new Color(1f, 0.42f, 0.1f), FiltroDefinicion.Canal.Cuerpo, 1);
-        obelisco.luna = CaraAncla("Obelisco_Luna", Vector3.right, Figura.LunaCreciente, k.tallaLuna, ColorLuna, FiltroDefinicion.Canal.Hueco, 3);
+        CaraDelSello("Obelisco_Sol", Vector3.left, Figura.Sol, k.ambar, selloOeste, false);
+        CaraDelSello("Obelisco_Luna", Vector3.right, Figura.LunaCreciente, k.tallaLuna, selloEste, true);
         var (normalSur, puntoSur) = Cara(Vector3.back, obeliscoR.bounds.max.y - 1.3f);
         obelisco.eclipse = Glifo(raiz, "Obelisco_Eclipse", Figura.Eclipse, puntoSur, normalSur, 1.1f, k.tallaEclipse);
-        obelisco.eclipse.enabled = false;
         obelisco.luz = Luz(raiz, "Luz_Eclipse", puntoSur + normalSur * 1.2f, new Color(0.85f, 0.92f, 1f), 0f, 12f, false);
         return obelisco;
     }

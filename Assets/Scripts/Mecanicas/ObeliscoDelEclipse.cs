@@ -1,66 +1,51 @@
 using UnityEngine;
 
 /// <summary>
-/// El último puzzle de la rotonda: el obelisco del centro. Duerme hasta que los dos
-/// sellos están encendidos; entonces despierta (Despertar) y en sus caras aparecen un sol
-/// (oeste) y una luna (este). Cada uno es un ancla: el sol se enciende con el filtro SOL y
-/// la luna con el filtro LUNA, y una vez encendidos quedan así. Con los dos se forma el
-/// eclipse: se enciende el de la cara sur y 'Resuelto' pasa a true (la cinemática del sello
-/// abre entonces la puerta).
+/// El obelisco del centro de la rotonda: el reloj del eclipse. En su cara oeste hay un sol y
+/// en la este una luna, que se encienden solos con el sello de su ala (TestigoDeSello). En la
+/// cara sur, mirando a la puerta de los sellos, un eclipse que se enciende cuando están los
+/// dos: lo pide la cinemática del segundo sello (Encender), justo antes de abrir la puerta.
 ///
 /// CÓMO FUNCIONA
-/// Las dos anclas empiezan deshabilitadas (la linterna no las ve) y con sus tallados
-/// ocultos. Despertar() las habilita y muestra. En Update, si las dos están activas, se
-/// marcan permanentes, se prende el eclipse (emisión y luz) y suena el tono de la luna.
+/// Encender() arranca una subida de brillo de 1,5 s: la emisión del eclipse y su luz.
 /// </summary>
 public class ObeliscoDelEclipse : MonoBehaviour
 {
-    public Ancla sol;
-    public Ancla luna;
     public Renderer eclipse;
     public Light luz;
     public Color colorEclipse = new Color(0.85f, 0.92f, 1f);
+    public float emisionApagado = 0.03f;
     public float intensidadLuz = 30f;
 
-    public bool Despierto { get; private set; }
-    public bool Resuelto { get; private set; }
+    public bool Encendido { get; private set; }
+
+    /// <summary>Hacia dónde mirar en la cinemática: el eclipse.</summary>
+    public Vector3 Centro => eclipse != null ? eclipse.transform.position : transform.position;
 
     static readonly int IdEmision = Shader.PropertyToID("_EmissionColor");
+    MaterialPropertyBlock bloque;
     float brillo;
 
-    public void Despertar()
-    {
-        if (Despierto) return;
-        Despierto = true;
-        foreach (var ancla in new[] { sol, luna })
-        {
-            if (ancla == null) continue;
-            ancla.enabled = true;
-            if (ancla.acentos != null) foreach (var r in ancla.acentos) if (r != null) r.enabled = true;
-        }
-    }
+    void Start() => Aplicar();
 
-    /// <summary>Hacia dónde mirar al despertarlo: entre el sol y la luna.</summary>
-    public Vector3 Centro => sol != null && luna != null ? (sol.PuntoDeImpacto + luna.PuntoDeImpacto) / 2f : transform.position;
+    public void Encender() => Encendido = true;
 
     void Update()
     {
-        if (Despierto && !Resuelto && sol != null && luna != null && sol.Activo && luna.Activo)
-        {
-            Resuelto = true;
-            sol.permanente = true;
-            luna.permanente = true;
-            if (eclipse != null) eclipse.enabled = true;
-        }
-        if (!Resuelto || brillo >= 1f) return;
+        if (!Encendido || brillo >= 1f) return;
         brillo = Mathf.MoveTowards(brillo, 1f, Time.deltaTime / 1.5f);
+        Aplicar();
+    }
+
+    void Aplicar()
+    {
         if (eclipse != null)
         {
-            var bloque = new MaterialPropertyBlock();
+            bloque ??= new MaterialPropertyBlock();
             eclipse.GetPropertyBlock(bloque);
-            bloque.SetColor(IdEmision, colorEclipse * (3f * brillo));
+            bloque.SetColor(IdEmision, colorEclipse * Mathf.Lerp(emisionApagado, 3f, brillo));
             eclipse.SetPropertyBlock(bloque);
         }
-        if (luz != null) { luz.enabled = true; luz.intensity = intensidadLuz * brillo; }
+        if (luz != null) { luz.enabled = brillo > 0.01f; luz.intensity = intensidadLuz * brillo; }
     }
 }
