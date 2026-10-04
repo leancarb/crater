@@ -691,9 +691,10 @@ public static partial class ConstructorCrater
 
     /// <summary>
     /// La primera imagen (png o jpg) cuyo nombre contenga alguna de las palabras. Se busca
-    /// primero en Assets/Art/Creditos y después en todo Assets. Si no hay, avisa en la Consola.
+    /// primero en Assets/Art/Creditos y después en todo Assets. Se usa como textura (RawImage):
+    /// no hace falta tocar cómo se importa. Si no hay, avisa en la Consola.
     /// </summary>
-    static Sprite BuscarLogo(params string[] palabras)
+    static Texture2D BuscarLogo(params string[] palabras)
     {
         foreach (var carpetas in new[] { new[] { "Assets/Art/Creditos" }, new[] { "Assets" } })
         {
@@ -703,25 +704,17 @@ public static partial class ConstructorCrater
                 string ruta = AssetDatabase.GUIDToAssetPath(guid);
                 string nombre = System.IO.Path.GetFileNameWithoutExtension(ruta).ToLowerInvariant();
                 foreach (var palabra in palabras)
-                    if (nombre.Contains(palabra)) return CargarLogo(ruta);
+                {
+                    if (!nombre.Contains(palabra)) continue;
+                    var textura = AssetDatabase.LoadAssetAtPath<Texture2D>(ruta);
+                    if (textura == null) continue;
+                    Debug.Log($"[CRÁTER] Logo de los créditos: {ruta}");
+                    return textura;
+                }
             }
         }
         Debug.LogWarning($"[CRÁTER] No encontré el logo \"{palabras[0]}\" para los créditos: poné la imagen en Assets/Art/Creditos. Por ahora va en texto.");
         return null;
-    }
-
-    /// <summary>Carga una imagen como Sprite para la interfaz (la importa como Sprite si hace falta). Null si no está.</summary>
-    static Sprite CargarLogo(string ruta)
-    {
-        if (!(AssetImporter.GetAtPath(ruta) is TextureImporter importador)) return null;
-        if (importador.textureType != TextureImporterType.Sprite)
-        {
-            importador.textureType = TextureImporterType.Sprite;
-            importador.mipmapEnabled = false;
-            importador.alphaIsTransparency = true;
-            importador.SaveAndReimport();
-        }
-        return AssetDatabase.LoadAssetAtPath<Sprite>(ruta);
     }
 
     static Recogible ColocarRecogible(Kit k, Transform g, string nombre, FiltroDefinicion filtro, Vector3 posicion)

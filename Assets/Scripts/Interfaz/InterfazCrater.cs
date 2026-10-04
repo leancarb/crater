@@ -24,8 +24,8 @@ public class InterfazCrater : MonoBehaviour
     [SerializeField] LinternaController linterna;
     [SerializeField] Font fuente;
     [Header("Créditos (si faltan, se arman en texto)")]
-    [SerializeField] Sprite logoFacultad;   // Assets/Art/Creditos/Logo_UBA_FADU.png
-    [SerializeField] Sprite logoCatedra;    // Assets/Art/Creditos/Logo_Catedra_Campos_Trilnick.png
+    [SerializeField] Texture2D logoFacultad;   // en Assets/Art/Creditos, una imagen que diga "fadu" o "uba"
+    [SerializeField] Texture2D logoCatedra;    // en Assets/Art/Creditos, una imagen que diga "campos" o "catedra"
 
     const float DuracionFundidoPrompt = 0.35f;
     static readonly Color ColorApagado = new Color(0.6f, 0.6f, 0.6f);
@@ -473,12 +473,17 @@ public class InterfazCrater : MonoBehaviour
         return go;
     }
 
-    static void Logo(GameObject go, Sprite sprite)
+    /// <summary>Una imagen que ocupa lo que puede del rectángulo de 'go' sin deformarse.</summary>
+    static void Logo(GameObject go, Texture2D textura)
     {
-        var imagen = go.AddComponent<Image>();
-        imagen.sprite = sprite;
-        imagen.preserveAspect = true;
+        var hijo = new GameObject("Imagen", typeof(RectTransform));
+        hijo.transform.SetParent(go.transform, false);
+        var imagen = hijo.AddComponent<RawImage>();
+        imagen.texture = textura;
         imagen.raycastTarget = false;
+        var proporcion = hijo.AddComponent<AspectRatioFitter>();
+        proporcion.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        proporcion.aspectRatio = (float)textura.width / Mathf.Max(1, textura.height);
     }
 
     Text TextoSinSombra(GameObject go, int tamanio, TextAnchor alineacion, Color color, FontStyle estilo)
