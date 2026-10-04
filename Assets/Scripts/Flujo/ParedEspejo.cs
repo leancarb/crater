@@ -27,9 +27,9 @@ public class ParedEspejo : MonoBehaviour
     [SerializeField] Renderer reflejo;
     [SerializeField] Light luzRebote;
     [Tooltip("Tamaño del reflejo respecto del círculo del haz sobre la pared.")]
-    [SerializeField] float tamanioReflejo = 1.4f;
-    [SerializeField] float intensidadReflejo = 16f;
-    [SerializeField] float intensidadRebote = 60f;
+    [SerializeField] float tamanioReflejo = 0.8f;
+    [SerializeField] float intensidadReflejo = 7f;
+    [SerializeField] float intensidadRebote = 28f;
     [Tooltip("Más alto = el reflejo sólo es fuerte si se apunta muy de frente.")]
     [SerializeField] float concentracion = 1.2f;
 
@@ -86,7 +86,7 @@ public class ParedEspejo : MonoBehaviour
             reflejo.transform.SetPositionAndRotation(toque + normal * 0.03f, Quaternion.LookRotation(-normal));
             reflejo.transform.localScale = Vector3.one * Mathf.Max(0.6f, radioHaz * 2f * tamanioReflejo);
             Color c = color * intensidadReflejo * k;
-            c.a = Mathf.Clamp01(k * 1.5f);
+            c.a = Mathf.Clamp01(k);
             reflejo.GetPropertyBlock(bloque);
             bloque.SetColor(IdColor, c);
             reflejo.SetPropertyBlock(bloque);
