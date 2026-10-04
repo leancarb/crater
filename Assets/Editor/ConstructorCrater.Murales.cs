@@ -8,10 +8,10 @@ using UnityEngine.Rendering;
 ///  - El pasaje (pared oeste): cuatro losas que cuentan el lore, de izquierda a derecha
 ///    caminando hacia el Umbral: el sol y la luna separados; el eclipse sobre la capilla;
 ///    el cráter que se abre (pozo, escalera, puerta); alguien con la luz que los revela.
-///  - El Umbral: una losa por acción, con la tecla tallada como tecla y el ícono de lo que
-///    hace. Oeste: mover (WASD + mouse), linterna (F), filtro sol (1: el puente aparece).
-///    Este: correr (Shift + W), luz blanca (Q: el ancla), filtro luna (2: la reja se abre).
-///    La linterna está más adelante, así se pasa por todas antes de agarrarla.
+///  - Cada control, en el momento en que se usa: con la tecla dibujada como tecla y el
+///    ícono de lo que hace. Al entrar al Umbral, mover (WASD + mouse); junto a la linterna,
+///    prenderla (F). En el pasillo de cada ala, junto a su filtro: filtro sol (1: el puente
+///    aparece) o filtro luna (2: la reja se abre), y enfrente Q (volver a la luz blanca).
 ///
 /// Todo es pintura mate sobre piedra clara: no brilla, porque lo que brilla se usa.
 ///
@@ -49,16 +49,24 @@ public static partial class ConstructorCrater
             Losa(k, lore, $"Lore_{i + 1}", new Vector3(-1.75f, 2.1f, zs[i]), Vector3.right, 2f, 1.4f, escenas[i]);
         Luz(lore, "Luz_Pasaje", new Vector3(0.6f, 3.4f, -28.75f), LuzCalida, 30f, 7f, false);
 
-        // --- el Umbral: los controles, una losa por acción
+        // --- el Umbral: cada control al lado de lo que enseña. Al entrar, moverse; junto a
+        // la linterna, prenderla. Los filtros se enseñan donde se juntan (MuralesDelFiltro).
         var controles = Grupo(murales, "Controles_Umbral");
-        void Control(string nombre, float lado, float z, System.Action<Kit, Lienzo> dibujo) =>
-            Losa(k, controles, nombre, new Vector3(lado * 6f, 1.8f, z), lado < 0f ? Vector3.right : Vector3.left, 2.4f, 1.5f, dibujo);
-        Control("Control_Mover", -1f, -21f, PanelMover);
-        Control("Control_Correr", 1f, -21f, PanelCorrer);
-        Control("Control_Linterna", -1f, -18f, PanelLinterna);
-        Control("Control_LuzBlanca", 1f, -18f, PanelLuzBlanca);
-        Control("Control_FiltroSol", -1f, -15f, PanelFiltroSol);
-        Control("Control_FiltroLuna", 1f, -15f, PanelFiltroLuna);
+        Losa(k, controles, "Control_Mover", new Vector3(-6f, 1.8f, -20f), Vector3.right, 2.4f, 1.5f, PanelMover);
+        Losa(k, controles, "Control_Linterna", new Vector3(6f, 1.8f, -10.5f), Vector3.left, 2.4f, 1.5f, PanelLinterna);
+    }
+
+    /// <summary>
+    /// En el pasillo de cada ala, donde se junta el filtro: de un lado su tecla y lo que hace;
+    /// del otro, Q para volver a la luz blanca (la que más alumbra). Coordenadas del ala sin correr.
+    /// </summary>
+    static void MuralesDelFiltro(Kit k, Transform g, float lado)
+    {
+        var murales = Grupo(g, "Murales_Filtro");
+        float x = lado * 16.5f;
+        Losa(k, murales, lado < 0f ? "Control_FiltroSol" : "Control_FiltroLuna", new Vector3(x, 1.9f, 3f), Vector3.back, 2.4f, 1.5f,
+            lado < 0f ? (System.Action<Kit, Lienzo>)PanelFiltroSol : PanelFiltroLuna);
+        Losa(k, murales, "Control_LuzBlanca", new Vector3(x, 1.9f, -1f), Vector3.forward, 2.4f, 1.5f, PanelLuzBlanca);
     }
 
     /// <summary>Una losa de piedra clara sobre la pared, con un marco y el dibujo pintado delante.</summary>
@@ -67,9 +75,11 @@ public static partial class ConstructorCrater
     {
         var losa = new GameObject(nombre).transform;
         losa.SetParent(padre, false);
-        // el origen queda en la cara de la losa; +Z local entra en la pared
-        losa.SetPositionAndRotation(enLaPared + afuera * 0.07f, Quaternion.LookRotation(-afuera));
-        Bloque(losa, "Piedra", losa.TransformPoint(new Vector3(0f, 0f, 0.05f)), new Vector3(ancho, alto, 0.12f), k.piedra);
+        // el origen queda en la cara de la losa; +Z local entra en la pared. La losa sobresale
+        // 15 cm, más que el relieve de la pared facetada (9 cm), así la pared no la tapa;
+        // la losa misma casi no tiene relieve (PerfilLosa)
+        losa.SetPositionAndRotation(enLaPared + afuera * 0.15f, Quaternion.LookRotation(-afuera));
+        Bloque(losa, "Losa_Piedra", losa.TransformPoint(new Vector3(0f, 0f, 0.08f)), new Vector3(ancho, alto, 0.2f), k.piedra);
 
         // el marco va al final: así el orden de las capas es el del dibujo (lo primero, atrás)
         var lienzo = new Lienzo();
@@ -87,7 +97,7 @@ public static partial class ConstructorCrater
             foreach (var _ in v) uvs.Add(new Vector2(0.5f, 0.5f));
             var go = new GameObject("Pintura_" + material.name);
             go.transform.SetParent(losa, false);
-            go.transform.localPosition = new Vector3(0f, 0f, -0.012f - 0.006f * c);
+            go.transform.localPosition = new Vector3(0f, 0f, -0.03f - 0.008f * c);
             go.AddComponent<MeshFilter>().sharedMesh = GuardarMalla(CrearMalla($"Mural_{nombre}_{c}", v, uvs));
             var r = go.AddComponent<MeshRenderer>();
             r.sharedMaterial = material;
@@ -178,21 +188,6 @@ public static partial class ConstructorCrater
         Linea(h, new Vector2(0.75f, -0.06f), new Vector2(0.75f, 0.1f), 0.02f);
         Flecha(h, new Vector2(0.56f, -0.1f), new Vector2(0.38f, -0.1f), 0.025f);
         Flecha(h, new Vector2(0.94f, -0.1f), new Vector2(1.04f, -0.1f), 0.025f);
-    }
-
-    static void PanelCorrer(Kit k, Lienzo l)
-    {
-        var h = l.En(k.pinturaHueso);
-        Tecla(h, -0.78f, 0.05f, 0.46f, 0.26f, Letra('^'));
-        Mas(h, -0.41f, 0.05f);
-        Tecla(h, -0.18f, 0.05f, 0.26f, 0.26f, Letra('W'));
-        // alguien corriendo, con las líneas de la velocidad detrás
-        Persona(h, 0.6f, -0.45f, 0.7f, 0.22f, 0.12f);
-        for (int i = 0; i < 3; i++)
-        {
-            float y = -0.05f + i * 0.14f;
-            Linea(h, new Vector2(0.14f + i * 0.04f, y), new Vector2(0.36f, y), 0.025f);
-        }
     }
 
     static void PanelLinterna(Kit k, Lienzo l)
@@ -383,7 +378,6 @@ public static partial class ConstructorCrater
             case 'Q': return new[] { ".###.", "#...#", "#...#", "#...#", "#.#.#", "#..#.", ".##.#" };
             case '1': return new[] { "..#..", ".##..", "..#..", "..#..", "..#..", "..#..", ".###." };
             case '2': return new[] { ".###.", "#...#", "....#", "...#.", "..#..", ".#...", "#####" };
-            case '^': return new[] { "..#..", ".###.", "#####", ".###.", ".###.", ".###.", "....." };
             default: return new string[0];
         }
     }

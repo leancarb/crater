@@ -162,7 +162,7 @@ public static partial class ConstructorCrater
         filtro.descripcion = descripcion;
         filtro.anguloCono = 28f;
         filtro.alcance = 15f;
-        filtro.intensidad = 420f;
+        filtro.intensidad = 230f;   // menos que la luz blanca (ver CrearPrefabs)
         filtro.tiempoDeCarga = 0.4f;
         filtro.sonidoAlEquipar = alEquipar;
         filtro.zumbido = zumbido;
@@ -585,8 +585,9 @@ public static partial class ConstructorCrater
         linterna.capaObstaculos = LayerMask.GetMask("Default");
         linterna.filtros = new System.Collections.Generic.List<FiltroDefinicion> { kit.cuerpo, kit.hueco };
         linterna.requiereRecogerla = true;
-        linterna.intensidadBase = 420f;
-        linterna.alcanceBase = 15f;
+        // la luz blanca alumbra bastante más que los filtros: dan ganas de volver a ella
+        linterna.intensidadBase = 950f;
+        linterna.alcanceBase = 18f;
         linterna.sonidoEncender = kit.audio.linternaEncender;
         linterna.sonidoApagar = kit.audio.linternaApagar;
         spot.range = linterna.alcanceBase;

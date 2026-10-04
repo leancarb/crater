@@ -104,7 +104,8 @@ public static partial class ConstructorCrater
             C($"Piso_Vuelta_{n}_Atajo", 15, -0.3f, 33.7f, 8, 0, 37.8f, k.piso);
             C($"Muro_Vuelta_{n}_Interior", 11.3f, -0.3f, 21.6f, 11, 7, 33.7f, k.basalto);
             C($"Muro_Vuelta_{n}_Atajo_Sur", 15, -0.3f, 33.4f, 11, 7, 33.7f, k.basalto);
-            C($"Muro_Vuelta_{n}_Exterior", 8, -0.3f, 24.2f, 7.7f, 7, 38.1f, k.basaltoMedio);
+            // arranca en el anillo: más al sur se metía en la rotonda y tapaba el primer tallado
+            C($"Muro_Vuelta_{n}_Exterior", 8, -0.3f, 24.8f, 7.7f, 7, 38.1f, k.basaltoMedio);
             C($"Muro_Vuelta_{n}_Fondo", 15.3f, -0.3f, 37.8f, 7.7f, 7, 38.1f, k.basalto);
             C($"Techo_Vuelta_{n}", 15.3f, 7, 27.6f, 7.7f, 7.3f, 38.1f, k.techo);
             Luz(g, $"Luz_Vuelta_{n}", new Vector3(X(9.5f), 5.5f, 33f), LuzCalida, 40f, 9f, false);
@@ -212,6 +213,7 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_Pasillo_O_Norte", -20, -0.3f, 3, -12.3f, 4.5f, 3.3f, k.basalto);
         Caja(g, "Techo_Pasillo_O", -20, 4.5f, -1.3f, -12.3f, 4.8f, 3.3f, k.techo);
         ColocarRecogible(k, g, "Recogible_Cuerpo", k.cuerpo, new Vector3(-16.5f, 0f, 1f));
+        MuralesDelFiltro(k, g, -1f);
         Luz(g, "Luz_Pasillo_O", new Vector3(-16f, 3.8f, 1f), LuzCalida, 50f, 8f, false);
 
         // ---- O1 · enseñar: un abismo y dos anclas juntas del otro lado (entran juntas en el cono)
@@ -285,6 +287,7 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_Pasillo_E_Norte", 12.3f, -0.3f, 3, 20, 4.5f, 3.3f, k.basalto);
         Caja(g, "Techo_Pasillo_E", 12.3f, 4.5f, -1.3f, 20, 4.8f, 3.3f, k.techo);
         ColocarRecogible(k, g, "Recogible_Hueco", k.hueco, new Vector3(16.5f, 0f, 1f));
+        MuralesDelFiltro(k, g, 1f);
         Luz(g, "Luz_Pasillo_E", new Vector3(16f, 3.8f, 1f), LuzFria, 50f, 8f, false);
 
         // ---- E1 · enseñar: un muro de rejas de lado a lado

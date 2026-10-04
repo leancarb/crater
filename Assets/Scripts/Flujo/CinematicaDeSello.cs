@@ -6,7 +6,7 @@ using UnityEngine;
 /// Cuando el jugador vuelve a la rotonda con un sello encendido, el juego toma la
 /// cámara (como en la cinemática del eclipse) y la gira hacia el hilo de tallados de
 /// ese sello, que se prende de a uno. Con los dos sellos, además se enciende el
-/// eclipse sobre la puerta y la puerta se abre a la vista. Después la mirada vuelve.
+/// eclipse sobre la puerta y la puerta se abre a la vista.
 ///
 /// CÓMO FUNCIONA
 /// Cada frame anota qué sellos se encendieron. Un sello encendido espera a que el
@@ -15,7 +15,8 @@ using UnityEngine;
 /// cámara de sus ojos, la gira hacia el hilo de ese sello (HiloDeTallados en modo
 /// manual) y lo enciende. Con todos los sellos gira hacia el eclipse, lo enciende y
 /// abre la puerta (que espera esta orden: 'abrirSoloPorOrden'). Si se encienden los
-/// dos antes de volver, se muestran uno después del otro.
+/// dos antes de volver, se muestran uno después del otro. Al terminar, la mirada no
+/// vuelve atrás: el jugador sigue mirando hacia donde terminó la cinemática.
 /// </summary>
 public class CinematicaDeSello : MonoBehaviour
 {
@@ -81,7 +82,6 @@ public class CinematicaDeSello : MonoBehaviour
 
         // la cámara no se mueve de los ojos del jugador: sólo gira, como en el eclipse
         var camara = jugador != null ? jugador.camara : Camera.main.transform;
-        Quaternion mirada = camara.rotation;
 
         // 1. hacia el hilo de este sello, que se prende de a uno
         if (i < hilos.Length && hilos[i] != null)
@@ -105,9 +105,12 @@ public class CinematicaDeSello : MonoBehaviour
             yield return new WaitForSeconds(esperaPuerta);
         }
 
-        // 3. la mirada vuelve a donde estaba
-        yield return Girar(camara, mirada, segundosPorTramo);
-        if (jugador != null) jugador.enabled = true;
+        // 3. la mirada queda donde terminó (la puerta, o el hilo): el jugador sigue desde ahí
+        if (jugador != null)
+        {
+            jugador.MirarHacia(camara.position + camara.forward * 10f);
+            jugador.enabled = true;
+        }
         if (pausa != null) pausa.enabled = true;
         Reproduciendo = false;
     }

@@ -25,9 +25,9 @@ Unity 6000.3 · URP (Forward+) · Input System.
 
 | Sala | Qué enseña |
 |---|---|
-| 00 Capilla (prólogo) | De día. Al salir, el eclipse abre el cráter en el valle: un pozo con una puerta en el borde |
+| 00 Capilla (prólogo) | De día. Al salir del atrio, el eclipse abre el cráter en el valle: un pozo con una puerta en el borde |
 | 01 Explanada | El fondo del pozo: se baja por la escalera de la puerta, sin cortes; un pasillo con murales del lore sigue al Umbral |
-| 02 Umbral | Murales que enseñan los controles sin texto; al fondo, la linterna; sostener la luz sobre un ancla abre la compuerta |
+| 02 Umbral | Murales que enseñan cada control sin texto, en el momento en que se usa; sostener la luz sobre un ancla abre la compuerta |
 | 03 Rotonda | Sala circular; las alas se entran por la mitad de cada costado, en cualquier orden. Oeste (filtro SOL): puente, puerta de dos anclas, anclas en el techo. Este (filtro LUNA): muro de rejas, trampilla al piso de abajo, escotilla en el techo. Cada una termina en un sello que abre un atajo |
 | 04 Cruce | Con los dos sellos se abre el norte: un ancla detrás de una reja, y un puente que termina contra una reja |
 | 05 Cresta | Se cierra a la espalda. La pared del fondo sólo refleja el propio foco. Apagar la linterna y adaptarse: aparecen tallados ocultos y se abre el techo |

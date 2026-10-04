@@ -54,6 +54,8 @@ public static partial class ConstructorCrater
     static readonly Perfil PerfilCrater = new Perfil(1.2f, new Vector3(0.35f, 0.3f, 0.35f), 2.5f, 6);
     // capilla: adobe y cal casi rectos, sólo un poco a mano
     static readonly Perfil PerfilCapilla = new Perfil(1f, new Vector3(0.04f, 0.03f, 0.04f), 2f, 7);
+    // losas de los murales: casi lisas, para que la pintura de adelante no quede tapada
+    static readonly Perfil PerfilLosa = new Perfil(0.6f, new Vector3(0.01f, 0.01f, 0.01f), 2f, 8);
 
     static Object contenedorMallas;
     static readonly Dictionary<Mesh, Mesh> mallasPlanas = new Dictionary<Mesh, Mesh>();
@@ -167,6 +169,7 @@ public static partial class ConstructorCrater
         if (nombre.StartsWith("Horizonte") || (t.parent != null && t.parent.name == "Horizonte")) return PerfilRoca;
         if (nombre.StartsWith("Cerro_")) return PerfilCerro;
         if (nombre == "Terreno" || nombre.StartsWith("Llano")) return PerfilSuelo;
+        if (nombre.StartsWith("Losa_")) return PerfilLosa;
         for (var p = t.parent; p != null; p = p.parent)
         {
             if (p.name == "Crater_Valle") return PerfilCrater;

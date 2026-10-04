@@ -37,12 +37,15 @@ public static partial class ConstructorCrater
     /// <summary>El azul de HUECO: frío y pálido, de luna.</summary>
     static readonly Color ColorLuna = new Color(0.6f, 0.74f, 1f);
 
+    const float SeparacionDeLaPared = 0.08f;
+
     /// <summary>Pone una figura de 'tamanio' metros sobre una pared, mirando hacia 'afuera'.</summary>
     static Renderer Glifo(Transform padre, string nombre, Figura figura, Vector3 posicion, Vector3 afuera, float tamanio, Material m)
     {
         var go = new GameObject(nombre);
         go.transform.SetParent(padre, false);
-        go.transform.SetPositionAndRotation(posicion, Quaternion.LookRotation(-afuera));
+        // un poco separada: las paredes facetadas tienen hasta 9 cm de relieve y la taparían
+        go.transform.SetPositionAndRotation(posicion + afuera.normalized * SeparacionDeLaPared, Quaternion.LookRotation(-afuera));
         go.transform.localScale = Vector3.one * tamanio;
         go.AddComponent<MeshFilter>().sharedMesh = MallaDeFigura(figura);
         var r = go.AddComponent<MeshRenderer>();

@@ -318,7 +318,8 @@ public static partial class ConstructorCrater
 
         // el jugador empieza acá: el prólogo lo lleva a la Explanada
         refs.jugador.transform.SetPositionAndRotation(refs.spawnCapilla.position, refs.spawnCapilla.rotation);
-        refs.zonaUmbralCapilla = Zona(g, "Zona_Umbral_Capilla", g.TransformPoint(new Vector3(0f, 1.5f, 7.6f)), new Vector3(2.4f, 3f, 0.8f));
+        // la cinemática arranca al salir del atrio por el arco, no apenas se cruza la puerta
+        refs.zonaUmbralCapilla = Zona(g, "Zona_Umbral_Capilla", g.TransformPoint(new Vector3(0f, 1.5f, 15.9f)), new Vector3(9f, 3f, 0.8f));
 
         ConstruirCraterDelValle(k, g, refs);
 
