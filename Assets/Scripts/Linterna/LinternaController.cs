@@ -164,6 +164,14 @@ public class LinternaController : MonoBehaviour
         ActualizarZumbido();
     }
 
+    /// <summary>Vuelve a la luz blanca aunque esté en medio de un cambio de filtro.</summary>
+    public void VolverALuzBlanca()
+    {
+        if (FiltroActual == null) return;
+        CambiandoFiltro = false;
+        EquiparFiltro(null);
+    }
+
     /// <summary>Copia los valores del filtro (o de la luz blanca) al Spot Light.</summary>
     void AplicarFiltro(FiltroDefinicion f)
     {

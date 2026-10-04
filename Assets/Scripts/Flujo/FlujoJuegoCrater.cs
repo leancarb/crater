@@ -157,6 +157,8 @@ public class FlujoJuegoCrater : MonoBehaviour
     {
         if (EtapaActual >= Etapa.Cresta) return;
         EtapaActual = Etapa.Cresta;
+        // en la Cresta la linterna vuelve a la luz blanca: es la que se refleja en las paredes
+        linterna?.VolverALuzBlanca();
         if (linterna == null || !linterna.Encendida) interfaz?.MostrarPromptTemporal("Esperá. Dejá que tus ojos se acostumbren.", 5f);
         eclipse?.HabilitarEnCresta();
     }

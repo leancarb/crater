@@ -83,7 +83,9 @@ public class ParedEspejo : MonoBehaviour
         if (reflejo != null)
         {
             reflejo.enabled = k > 0.001f;
-            reflejo.transform.SetPositionAndRotation(toque + normal * 0.03f, Quaternion.LookRotation(-normal));
+            // 15 cm delante de la pared: las caras de la piedra facetada sobresalen hasta 9 cm y,
+            // más cerca, tapaban el reflejo con manchas negras
+            reflejo.transform.SetPositionAndRotation(toque + normal * 0.15f, Quaternion.LookRotation(-normal));
             reflejo.transform.localScale = Vector3.one * Mathf.Max(0.6f, radioHaz * 2f * tamanioReflejo);
             Color c = color * intensidadReflejo * k;
             c.a = Mathf.Clamp01(k);
