@@ -315,6 +315,102 @@ public static partial class ConstructorCrater
 
     // ================================================================== el Cruce y la Cresta
 
+    /// <summary>
+    /// Los tallados de la Cresta, en piedra clara: se ven con la linterna y, al final, se
+    /// encienden con la luz que entra por el techo. Cuentan, sin decirlo, qué hacer: en el fondo, un
+    /// ojo abierto encandilado, el mismo ojo cerrado y, después, el cielo de estrellas; en las
+    /// paredes, alguien con la luz baja rodeado de estrellas, y un ojo cerrado con estrellas.
+    /// </summary>
+    static void TalladosDeLaCresta(Kit k, Transform raiz)
+    {
+        void Dibujo(string nombre, Vector3 enLaPared, Vector3 afuera, System.Action<List<Vector3>> trazar)
+        {
+            var v = new List<Vector3>();
+            trazar(v);
+            int n = v.Count;
+            for (int i = 0; i < n; i += 3) { v.Add(v[i]); v.Add(v[i + 2]); v.Add(v[i + 1]); }
+            var uvs = new List<Vector2>();
+            foreach (var _ in v) uvs.Add(new Vector2(0.5f, 0.5f));
+            var go = new GameObject(nombre);
+            go.transform.SetParent(raiz, false);
+            // separado de la pared: el relieve facetado (9 cm) no lo tapa
+            go.transform.SetPositionAndRotation(enLaPared + afuera * 0.14f, Quaternion.LookRotation(-afuera));
+            go.AddComponent<MeshFilter>().sharedMesh = GuardarMalla(CrearMalla("Latente_" + nombre, v, uvs));
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = k.tallaCresta;
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            Estatico(go);
+        }
+
+        // el fondo: el ojo encandilado, el ojo cerrado y las estrellas que aparecen
+        Dibujo("Fondo", new Vector3(0f, 5.4f, 99f), Vector3.back, v =>
+        {
+            OjoAbierto(v, -2.6f, 0f, 1.5f);
+            for (int i = 0; i < 10; i++)
+            {
+                float a = i * Mathf.PI / 5f;
+                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                Linea(v, new Vector2(-2.6f, 0f) + d * 0.95f, new Vector2(-2.6f, 0f) + d * 1.2f, 0.05f);
+            }
+            OjoCerrado(v, 0f, 0.1f, 1.5f);
+            foreach (var e in new[] { new Vector3(2.1f, 0.5f, 0.35f), new Vector3(2.9f, 0.1f, 0.25f), new Vector3(2.4f, -0.5f, 0.3f), new Vector3(3.3f, 0.75f, 0.2f), new Vector3(3.2f, -0.6f, 0.18f) })
+                FiguraEn(v, Figura.Estrella, e.x, e.y, e.z * 1.6f);
+        });
+
+        foreach (float z in new[] { 83.5f, 90.5f })
+            foreach (float lado in new[] { -1f, 1f })
+            {
+                bool figura = (z < 87f) == (lado < 0f);
+                Dibujo($"{(lado < 0f ? "Izq" : "Der")}_{z:0}", new Vector3(lado * 12f, 4.6f, z), lado < 0f ? Vector3.right : Vector3.left, v =>
+                {
+                    if (figura)
+                    {
+                        // alguien con la linterna colgando, apagada, y las estrellas alrededor
+                        Persona(v, 0f, -0.9f, 1.5f, 0.15f, 0f);
+                        Linterna(v, new Vector2(0.15f + 0.05f, -0.9f + 1.5f * 0.47f), -90f, 0.32f);
+                        foreach (var e in new[] { new Vector2(-0.9f, 0.6f), new Vector2(0.85f, 0.75f), new Vector2(-0.6f, -0.2f), new Vector2(1f, -0.1f) })
+                            FiguraEn(v, Figura.Estrella, e.x, e.y, 0.32f);
+                    }
+                    else
+                    {
+                        OjoCerrado(v, 0f, -0.2f, 1.6f);
+                        foreach (var e in new[] { new Vector2(-0.8f, 0.55f), new Vector2(0f, 0.8f), new Vector2(0.8f, 0.5f) })
+                            FiguraEn(v, Figura.Estrella, e.x, e.y, 0.35f);
+                    }
+                });
+            }
+    }
+
+    /// <summary>Un ojo abierto: los dos párpados en arco y la pupila.</summary>
+    static void OjoAbierto(List<Vector3> v, float cx, float cy, float ancho)
+    {
+        const int pasos = 12;
+        float h = ancho * 0.24f, g = ancho * 0.05f;
+        for (int i = 0; i < pasos; i++)
+        {
+            float t0 = -1f + 2f * i / pasos, t1 = -1f + 2f * (i + 1) / pasos;
+            foreach (float s in new[] { 1f, -1f })
+                Linea(v, new Vector2(cx + t0 * ancho / 2f, cy + s * (1f - t0 * t0) * h), new Vector2(cx + t1 * ancho / 2f, cy + s * (1f - t1 * t1) * h), g);
+        }
+        Disco(v, cx, cy, ancho * 0.13f, 10);
+    }
+
+    /// <summary>Un ojo cerrado: el párpado como un arco hacia abajo, con pestañas.</summary>
+    static void OjoCerrado(List<Vector3> v, float cx, float cy, float ancho)
+    {
+        const int pasos = 12;
+        float h = ancho * 0.2f, g = ancho * 0.05f;
+        Vector2 Punto(float t) => new Vector2(cx + t * ancho / 2f, cy - (1f - t * t) * h);
+        for (int i = 0; i < pasos; i++)
+            Linea(v, Punto(-1f + 2f * i / pasos), Punto(-1f + 2f * (i + 1) / pasos), g);
+        foreach (float t in new[] { -0.6f, -0.3f, 0f, 0.3f, 0.6f })
+        {
+            var p = Punto(t);
+            var d = new Vector2(t * 0.6f, -1f).normalized;
+            Linea(v, p, p + d * ancho * 0.14f, g * 0.7f);
+        }
+    }
+
     static void PanelRejaYAncla(Kit k, Lienzo l)
     {
         // detrás de una reja, un ancla: la luna abre la reja y el sol enciende el ancla

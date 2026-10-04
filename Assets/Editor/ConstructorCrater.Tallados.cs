@@ -447,7 +447,7 @@ public static partial class ConstructorCrater
     /// </summary>
     static void DespejarTallados(Kit k)
     {
-        var deTallado = new HashSet<Material> { k.ambar, k.motivoLatente, k.tallaLuna, k.tallaEclipse, k.pinturaSol, k.pinturaLuna, k.pinturaHueso };
+        var deTallado = new HashSet<Material> { k.ambar, k.motivoLatente, k.tallaLuna, k.tallaEclipse, k.pinturaSol, k.pinturaLuna, k.pinturaHueso, k.tallaCresta };
         var escena = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
         var tallados = new List<Renderer>();
         var modulos = new List<Transform>();

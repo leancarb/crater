@@ -467,25 +467,13 @@ public static partial class ConstructorCrater
         Par(-7f, 6f, 0.62f, "Umbral");
         ConstruirMurales(k, arte);
         foreach (float z in new[] { 29f, 41f, 56f, 64f }) Par(z, 6f, 0.82f, "Cruce");
-        foreach (float z in new[] { 80f, 87f, 94f }) Par(z, 12f, 1f, "Cresta");
-        // el fondo de la Cresta, la pared espejo: dos módulos a los costados
-        Modulo(k, modulos, "Modulo_Cresta_Fondo_Izq", new Vector3(-6f, 0f, 98.55f), 180f, 1.05f, k.piedra);
-        Modulo(k, modulos, "Modulo_Cresta_Fondo_Der", new Vector3(6f, 0f, 98.55f), 180f, 1.05f, k.piedra);
+        // (la Cresta no lleva módulos: sus siluetas oscuras cortaban el reflejo de la linterna)
 
-        var motivos = Grupo(arte, "MotivosTallados");
         // (en el fondo del pozo ya no hay murales a los lados del túnel: detrás de las paredes
         // de la escalera sólo se veían de canto y distraían entre los dibujos)
 
-        // tallados latentes: casi invisibles con la linterna, aparecen al adaptarse
-        var latentes = Grupo(arte, "MotivosLatentes_Cresta");
-        foreach (float z in new[] { 83.5f, 90.5f })
-        {
-            // altos: abajo, el reflejo de la linterna en las paredes los tapaba
-            Motivo(k, latentes, $"Latente_Izq_{z:0}", new Vector3(-11.93f, 3.4f, z), 90f, 1.1f, k.motivoLatente);
-            Motivo(k, latentes, $"Latente_Der_{z:0}", new Vector3(11.93f, 3.4f, z), -90f, 1.1f, k.motivoLatente);
-        }
-        // (más chico y más abajo que antes: la punta se metía en el techo)
-        Motivo(k, latentes, "Latente_Fondo", new Vector3(0f, 4.4f, 98.95f), 180f, 1.4f, k.motivoLatente);
+        // los tallados de la Cresta: ver ConstructorCrater.Murales.cs (TalladosDeLaCresta)
+        TalladosDeLaCresta(k, Grupo(arte, "MotivosLatentes_Cresta"));
         // lo que se ve desde el fondo del pozo es el valle de verdad (ConstructorCrater.Capilla.cs)
     }
 

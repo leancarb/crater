@@ -139,6 +139,7 @@ public static partial class ConstructorCrater
         public Material tallaLuna, tallaEclipse;   // los tallados de luna (HUECO) y del eclipse
         // pintura mate, sin brillo: el arte decorativo y los murales ("lo que brilla, se usa")
         public Material pinturaSol, pinturaLuna, pinturaHueso;
+        public Material tallaCresta;   // los tallados de la Cresta: claros, se ven con la linterna y brillan al final
 
         // estética low-poly (ver ConstructorCrater.Facetado.cs)
         public HashSet<Material> piedraFacetada, facetables;
@@ -223,6 +224,7 @@ public static partial class ConstructorCrater
         kit.pinturaSol = Opaco("PinturaSol", new Color(0.55f, 0.27f, 0.09f), 0.08f);
         kit.pinturaLuna = Opaco("PinturaLuna", new Color(0.3f, 0.38f, 0.55f), 0.08f);
         kit.pinturaHueso = Opaco("PinturaHueso", new Color(0.58f, 0.55f, 0.48f), 0.08f);
+        kit.tallaCresta = Emisivo(Opaco("TalladoCresta", new Color(0.62f, 0.66f, 0.74f), 0.1f), ColorLuna * 0.06f);
 
         kit.adobe = Opaco("CapillaAdobe", new Color(0.62f, 0.4f, 0.24f), 0.15f);
         kit.paja = Opaco("CapillaTechoPaja", new Color(0.3f, 0.21f, 0.1f), 0.05f);
@@ -351,27 +353,31 @@ public static partial class ConstructorCrater
     }
 
     /// <summary>
-    /// El destello del reflejo de la Cresta con los tallados adentro, como siluetas: una
-    /// chakana en el centro y cuatro rombos alrededor. El brillo de la propia linterna
-    /// muestra que hay algo en la pared que esa luz no deja ver.
+    /// El destello del reflejo de la Cresta con un ojo cerrado adentro, en silueta: el arco
+    /// del párpado y las pestañas. El propio brillo sugiere qué hacer, sin decirlo.
     /// </summary>
     static Color PixelResplandorTallado(float u, float v)
     {
         float r = Mathf.Sqrt(u * u + v * v);
         float brillo = Mathf.Pow(Mathf.Clamp01(1f - r), 1.6f);
-        // la chakana: tres rectángulos (u, v en -1 … 1)
-        const float c = 0.1f;
-        bool chakana = (Mathf.Abs(u) < c && Mathf.Abs(v) < 3f * c) || (Mathf.Abs(u) < 3f * c && Mathf.Abs(v) < c)
-                       || (Mathf.Abs(u) < 2f * c && Mathf.Abs(v) < 2f * c);
-        bool rombo = false;
-        for (int i = 0; i < 4; i++)
+        // el párpado: y = 0,12 - (1 - t²)·0,2 con t = u / 0,5 (para |u| < 0,5)
+        bool ojo = false;
+        if (Mathf.Abs(u) < 0.5f)
         {
-            float a = (i * 90f + 45f) * Mathf.Deg2Rad;
-            float du = u - Mathf.Cos(a) * 0.52f, dv = v - Mathf.Sin(a) * 0.52f;
-            rombo |= Mathf.Abs(du) + Mathf.Abs(dv) < 0.11f;
+            float t = u / 0.5f;
+            float y = 0.12f - (1f - t * t) * 0.2f;
+            ojo = Mathf.Abs(v - y) < 0.035f;
         }
-        float silueta = chakana || rombo ? 0.12f : 1f;
-        return new Color(1f, 1f, 1f, Mathf.Clamp01(brillo * silueta));
+        // las pestañas: segmentos cortos hacia abajo desde el párpado
+        foreach (float t in new[] { -0.6f, -0.3f, 0f, 0.3f, 0.6f })
+        {
+            var p = new Vector2(t * 0.5f, 0.12f - (1f - t * t) * 0.2f);
+            var d = new Vector2(t * 0.6f, -1f).normalized;
+            var q = new Vector2(u, v) - p;
+            float a = Mathf.Clamp(Vector2.Dot(q, d), 0f, 0.13f);
+            if ((q - d * a).magnitude < 0.022f) ojo = true;
+        }
+        return new Color(1f, 1f, 1f, Mathf.Clamp01(brillo * (ojo ? 0.1f : 1f)));
     }
 
     static Color PixelCorona(float u, float v)
