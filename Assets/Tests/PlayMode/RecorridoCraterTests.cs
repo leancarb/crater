@@ -159,10 +159,19 @@ public class RecorridoCraterTests
         yield return Caminar(new Vector3(6f, 0f, 19f));
         yield return EsperarCinematica();
 
-        // ---- con los dos sellos despierta el obelisco: encenderlo con luz blanca abre el norte
+        // ---- con los dos sellos despierta el obelisco: el sol con SOL y la luna con LUNA, a la vez
         Assert.That(Buscar<Compuerta>("Puerta_Sellos").Abierta, Is.False, "la puerta del norte se abrió sin el obelisco");
-        yield return Equipar(null);
-        yield return Iluminar(Buscar<Ancla>("Anillo_Obelisco"), 1f);
+        var obelisco = Object.FindFirstObjectByType<ObeliscoDelEclipse>();
+        yield return Equipar(cuerpo);
+        yield return Caminar(new Vector3(0f, 0f, 19.6f));
+        yield return Caminar(new Vector3(-3f, 0f, 19.6f));
+        yield return Iluminar(obelisco.sol, 0.8f);
+        yield return Equipar(hueco);
+        yield return Caminar(new Vector3(0f, 0f, 19.6f));
+        yield return Caminar(new Vector3(3f, 0f, 19.6f));
+        yield return Iluminar(obelisco.luna, 0.8f);
+        yield return Esperar(0.3f);
+        Assert.That(obelisco.Resuelto, Is.True, "el sol y la luna del obelisco no formaron el eclipse");
         yield return Esperar(4f);
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Cruce), "el obelisco no abrió la puerta del norte");
         yield return Caminar(new Vector3(0f, 0f, 22f));

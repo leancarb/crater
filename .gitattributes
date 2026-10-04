@@ -170,5 +170,3 @@ Packages/packages-lock.json linguist-generated
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
 
-# la letra del título va sin LFS (es chica y así se descarga con el repo)
-Assets/Fonts/*.ttf -filter -diff -merge binary

@@ -57,7 +57,7 @@ public static partial class ConstructorCrater
 
         // final
         public Compuerta cierreCresta, puertaSellos, atajoOeste, atajoEste;
-        public Ancla obelisco;
+        public ObeliscoDelEclipse obelisco;
         public HiloDeTallados hiloSoles, hiloLunas, hiloEclipse;
         public ReceptorDeLuz selloOeste, selloEste;
         public AperturaTecho techoCresta;
@@ -238,14 +238,22 @@ public static partial class ConstructorCrater
     /// </summary>
     static void ConstruirParedEspejo(Kit k, Transform g)
     {
-        var espejo = new GameObject("ParedEspejo");
-        espejo.transform.SetParent(g, false);
-        espejo.transform.position = new Vector3(0f, 3.85f, 99f);
-        var paredEspejo = espejo.AddComponent<ParedEspejo>();
-        var reflejo = Plano(espejo.transform, "Reflejo", k.resplandor);
-        var rebote = Luz(espejo.transform, "LuzRebote", new Vector3(0f, 1.6f, 98.4f), Color.white, 0f, 12f, false);
-        Asignar(paredEspejo, "reflejo", reflejo);
-        Asignar(paredEspejo, "luzRebote", rebote);
+        // todas las paredes de la Cresta devuelven el reflejo (el fondo, los costados y la entrada)
+        void Pared(string nombre, Vector3 centro, Vector3 haciaAdentro)
+        {
+            var espejo = new GameObject(nombre);
+            espejo.transform.SetParent(g, false);
+            espejo.transform.SetPositionAndRotation(centro, Quaternion.LookRotation(haciaAdentro));
+            var paredEspejo = espejo.AddComponent<ParedEspejo>();
+            var reflejo = Plano(espejo.transform, "Reflejo", k.resplandor);
+            var rebote = Luz(espejo.transform, "LuzRebote", centro - haciaAdentro * 0.6f, Color.white, 0f, 12f, false);
+            Asignar(paredEspejo, "reflejo", reflejo);
+            Asignar(paredEspejo, "luzRebote", rebote);
+        }
+        Pared("ParedEspejo", new Vector3(0f, 3.85f, 99f), Vector3.forward);
+        Pared("ParedEspejo_Oeste", new Vector3(-12f, 3.85f, 87f), Vector3.left);
+        Pared("ParedEspejo_Este", new Vector3(12f, 3.85f, 87f), Vector3.right);
+        Pared("ParedEspejo_Entrada", new Vector3(0f, 3.85f, 75f), Vector3.back);
     }
 
     /// <summary>
@@ -471,10 +479,12 @@ public static partial class ConstructorCrater
         var latentes = Grupo(arte, "MotivosLatentes_Cresta");
         foreach (float z in new[] { 83.5f, 90.5f })
         {
-            Motivo(k, latentes, $"Latente_Izq_{z:0}", new Vector3(-11.93f, 1.4f, z), 90f, 1.1f, k.motivoLatente);
-            Motivo(k, latentes, $"Latente_Der_{z:0}", new Vector3(11.93f, 1.4f, z), -90f, 1.1f, k.motivoLatente);
+            // altos: abajo, el reflejo de la linterna en las paredes los tapaba
+            Motivo(k, latentes, $"Latente_Izq_{z:0}", new Vector3(-11.93f, 3.4f, z), 90f, 1.1f, k.motivoLatente);
+            Motivo(k, latentes, $"Latente_Der_{z:0}", new Vector3(11.93f, 3.4f, z), -90f, 1.1f, k.motivoLatente);
         }
-        Motivo(k, latentes, "Latente_Fondo", new Vector3(0f, 5.2f, 98.95f), 180f, 1.6f, k.motivoLatente);
+        // (más chico y más abajo que antes: la punta se metía en el techo)
+        Motivo(k, latentes, "Latente_Fondo", new Vector3(0f, 4.4f, 98.95f), 180f, 1.4f, k.motivoLatente);
         // lo que se ve desde el fondo del pozo es el valle de verdad (ConstructorCrater.Capilla.cs)
     }
 
@@ -556,7 +566,6 @@ public static partial class ConstructorCrater
         tono.ignoreListenerPause = true;
 
         Asignar(interfaz, "linterna", linterna);
-        Asignar(interfaz, "fuenteTitulo", AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Cinzel-Bold.ttf"));
         // los logos de los créditos: si están las imágenes, se usan; si no, se arman en texto
         // (cualquier imagen de Assets/Art/Creditos cuyo nombre diga "fadu" o "uba", y "campos" o "catedra")
         Asignar(interfaz, "logoFacultad", BuscarLogo("fadu", "uba"));
@@ -569,6 +578,8 @@ public static partial class ConstructorCrater
         Asignar(eclipse, "adaptacion", adaptacion);
         Asignar(eclipse, "linterna", linterna);
         Asignar(eclipse, "interfaz", interfaz);
+        var latentes = GameObject.Find("MotivosLatentes_Cresta");
+        if (latentes != null) AsignarLista(eclipse, "arteCresta", latentes.GetComponentsInChildren<Renderer>());
         Asignar(eclipse, "flujo", flujo);
         Asignar(eclipse, "pausa", pausa);
         Asignar(eclipse, "jugador", refs.jugador.transform);
@@ -678,18 +689,24 @@ public static partial class ConstructorCrater
         luz.transform.rotation = Quaternion.LookRotation(ancla.PuntoDeImpacto - luz.transform.position);
     }
 
-    /// <summary>La primera imagen (png o jpg) de Assets/Art/Creditos cuyo nombre contenga alguna de las palabras.</summary>
+    /// <summary>
+    /// La primera imagen (png o jpg) cuyo nombre contenga alguna de las palabras. Se busca
+    /// primero en Assets/Art/Creditos y después en todo Assets. Si no hay, avisa en la Consola.
+    /// </summary>
     static Sprite BuscarLogo(params string[] palabras)
     {
-        const string carpeta = "Assets/Art/Creditos";
-        if (!AssetDatabase.IsValidFolder(carpeta)) return null;
-        foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { carpeta }))
+        foreach (var carpetas in new[] { new[] { "Assets/Art/Creditos" }, new[] { "Assets" } })
         {
-            string ruta = AssetDatabase.GUIDToAssetPath(guid);
-            string nombre = System.IO.Path.GetFileNameWithoutExtension(ruta).ToLowerInvariant();
-            foreach (var palabra in palabras)
-                if (nombre.Contains(palabra)) return CargarLogo(ruta);
+            if (!AssetDatabase.IsValidFolder(carpetas[0])) continue;
+            foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", carpetas))
+            {
+                string ruta = AssetDatabase.GUIDToAssetPath(guid);
+                string nombre = System.IO.Path.GetFileNameWithoutExtension(ruta).ToLowerInvariant();
+                foreach (var palabra in palabras)
+                    if (nombre.Contains(palabra)) return CargarLogo(ruta);
+            }
         }
+        Debug.LogWarning($"[CRÁTER] No encontré el logo \"{palabras[0]}\" para los créditos: poné la imagen en Assets/Art/Creditos. Por ahora va en texto.");
         return null;
     }
 

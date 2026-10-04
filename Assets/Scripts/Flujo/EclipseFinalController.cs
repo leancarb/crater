@@ -62,6 +62,10 @@ public class EclipseFinalController : MonoBehaviour
     [SerializeField] AudioSource musicaCreditos;
     [SerializeField] float volumenMusica = 0.6f;
 
+    [Header("El arte de la Cresta: se ilumina junto con la luz que entra por el techo")]
+    [SerializeField] Renderer[] arteCresta;
+    [SerializeField] Color brilloArte = new Color(0.6f, 0.74f, 1f) * 3f;
+
     [Header("Créditos")]
     [Tooltip("Si el jugador no va al lugar del cráter, los créditos llegan solos.")]
     [SerializeField] float segundosHastaCreditos = 120f;
@@ -126,8 +130,10 @@ public class EclipseFinalController : MonoBehaviour
             if (camara != null) camara.backgroundColor = Color.Lerp(fondoDesde, cieloBlanco, luz);
             RenderSettings.ambientSkyColor = Color.Lerp(cieloDesde, Color.white * 2f, luz);
             RenderSettings.ambientEquatorColor = Color.Lerp(horizonteDesde, Color.white, luz);
+            IluminarArte(luz);
             yield return null;
         }
+        IluminarArte(1f);
 
         // 2. todo blanco: el último destello y silencio
         var control = jugador != null ? jugador.GetComponent<JugadorFPS>() : null;
@@ -269,6 +275,24 @@ public class EclipseFinalController : MonoBehaviour
             yield return null;
         }
         musicaCreditos.volume = volumenMusica;
+    }
+
+    static readonly int IdEmision = Shader.PropertyToID("_EmissionColor");
+    MaterialPropertyBlock bloqueArte;
+
+    /// <summary>Los tallados de la Cresta suben su brillo con la luz del techo (0 a 1).</summary>
+    void IluminarArte(float luz)
+    {
+        if (arteCresta == null) return;
+        bloqueArte ??= new MaterialPropertyBlock();
+        foreach (var r in arteCresta)
+        {
+            if (r == null) continue;
+            var emision = r.sharedMaterial != null && r.sharedMaterial.HasProperty(IdEmision) ? r.sharedMaterial.GetColor(IdEmision) : Color.black;
+            r.GetPropertyBlock(bloqueArte);
+            bloqueArte.SetColor(IdEmision, Color.Lerp(emision, brilloArte, luz));
+            r.SetPropertyBlock(bloqueArte);
+        }
     }
 
     IEnumerator EsperarReal(float segundos)

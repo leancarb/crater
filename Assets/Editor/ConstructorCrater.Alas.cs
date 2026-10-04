@@ -171,39 +171,68 @@ public static partial class ConstructorCrater
         Faro("Faro_Atajo_Este", 1f, selloEste);
     }
 
+    /// <summary>Las cuatro caras verticales de una pieza del FBX (una columna, el obelisco):
+    /// hacia dónde mira cada una y su centro a la altura 'y'.</summary>
+    static List<(Vector3 normal, Vector3 centro)> CarasVerticales(Renderer r, float y)
+    {
+        var caras = new List<(Vector3, Vector3)>();
+        var malla = r.GetComponent<MeshFilter>().sharedMesh;
+        var t = r.transform;
+        Vector3 centro = t.TransformPoint(malla.bounds.center);
+        for (int eje = 0; eje < 3; eje++)
+        {
+            var local = Vector3.zero;
+            local[eje] = 1f;
+            Vector3 mundo = t.TransformVector(local * malla.bounds.extents[eje]);
+            if (Mathf.Abs(mundo.y) > 0.5f * mundo.magnitude) continue;   // el eje vertical (la altura de la pieza)
+            foreach (float signo in new[] { -1f, 1f })
+            {
+                var n = new Vector3(mundo.x, 0f, mundo.z) * signo;
+                var c = centro + n;
+                caras.Add((n.normalized, new Vector3(c.x, y, c.z)));
+            }
+        }
+        return caras;
+    }
+
     /// <summary>
     /// El centro de la rotonda deja de ser decorado:
-    ///  - Mapa del progreso: las columnas del lado oeste llevan soles y las del este lunas,
-    ///    en sus cuatro caras; se encienden con el sello de su ala. De un vistazo se ve qué falta.
-    ///  - Último paso: con los dos sellos, el obelisco (que mira a la puerta) despierta. Hay
-    ///    que encenderlo con la luz blanca y recién entonces se abre la puerta de los sellos.
-    /// Devuelve el obelisco (un Ancla de luz blanca), que la cinemática del sello habilita.
+    ///  - Mapa del progreso: las columnas del lado oeste llevan un sol en sus caras y las del
+    ///    este una luna; se encienden con el sello de su ala. De un vistazo se ve qué falta.
+    ///  - El último puzzle, el eclipse: con los dos sellos el obelisco despierta. En su cara
+    ///    oeste aparece un sol y en la este una luna. Hay que encender el sol con el filtro SOL
+    ///    y, antes de que se apague, la luna con el filtro LUNA (hay que rodear el obelisco y
+    ///    cambiar de filtro a tiempo). Con los dos a la vez, se enciende el eclipse de su cara
+    ///    sur y se abre la puerta de los sellos.
     /// </summary>
-    static Ancla MapaYObelisco(Kit k, Transform g, ReceptorDeLuz selloOeste, ReceptorDeLuz selloEste)
+    static ObeliscoDelEclipse MapaYObelisco(Kit k, Transform g, ReceptorDeLuz selloOeste, ReceptorDeLuz selloEste)
     {
         var mapa = g.Find("Anillo_Del_Mapa");
         if (mapa == null) throw new System.InvalidOperationException("Falta el anillo del mapa en la rotonda");
         Vector3 centro = new Vector3(CentroRotonda.x, 0f, CentroRotonda.z);
+        var marcas = Grupo(g, "Mapa_Del_Progreso");
 
-        // columnas: soles al oeste, lunas al este
+        // el obelisco: se gira en su lugar para que sus caras miren a los cuatro puntos cardinales
+        var obeliscoR = System.Array.Find(mapa.GetComponentsInChildren<Renderer>(true), r => r.name == "Anillo_Obelisco");
+        if (obeliscoR == null) throw new System.InvalidOperationException("SM_Mapa01_Recorrido.fbx no tiene Anillo_Obelisco");
+        var caraUno = CarasVerticales(obeliscoR, 0f)[0].normal;
+        float giro = Mathf.Atan2(caraUno.z, caraUno.x) * Mathf.Rad2Deg;   // de esa cara a +x
+        giro = Mathf.Repeat(giro + 45f, 90f) - 45f;                        // el giro más chico
+        obeliscoR.transform.RotateAround(obeliscoR.bounds.center, Vector3.up, giro);
+
+        // columnas: un sol (oeste) o una luna (este) en cada cara
         var soles = new List<Renderer>();
         var lunas = new List<Renderer>();
-        var marcas = Grupo(g, "Mapa_Del_Progreso");
         foreach (var r in mapa.GetComponentsInChildren<Renderer>(true))
         {
             if (!r.name.StartsWith("Anillo_Columna")) continue;
-            var b = r.bounds;
-            float dx = b.center.x - centro.x;
+            float dx = r.bounds.center.x - centro.x;
             if (Mathf.Abs(dx) < 0.5f) continue;   // las del eje norte-sur quedan neutras
             bool oeste = dx < 0f;
-            for (int i = 0; i < 4; i++)
-            {
-                var dir = Quaternion.Euler(0f, i * 90f, 0f) * Vector3.forward;
-                var pos = new Vector3(b.center.x, 2.3f, b.center.z) + dir * (b.extents.x + 0.01f);
-                var glifo = Glifo(marcas, $"{r.name}_{i}", oeste ? Figura.Sol : Figura.LunaCreciente, pos, dir, 0.34f,
-                    oeste ? k.ambar : k.tallaLuna);
-                (oeste ? soles : lunas).Add(glifo);
-            }
+            int i = 0;
+            foreach (var (normal, cara) in CarasVerticales(r, 2.3f))
+                (oeste ? soles : lunas).Add(Glifo(marcas, $"{r.name}_{i++}", oeste ? Figura.Sol : Figura.LunaCreciente,
+                    cara + normal * 0.02f, normal, 0.3f, oeste ? k.ambar : k.tallaLuna, separar: false));
         }
         foreach (bool oeste in new[] { true, false })
         {
@@ -217,40 +246,49 @@ public static partial class ConstructorCrater
             testigo.intensidadLuz = 14f;
         }
 
-        // el obelisco: un ancla de luz blanca, dormida hasta que estén los dos sellos
-        var obeliscoR = System.Array.Find(mapa.GetComponentsInChildren<Renderer>(true), r => r.name == "Anillo_Obelisco");
-        if (obeliscoR == null) throw new System.InvalidOperationException("SM_Mapa01_Recorrido.fbx no tiene Anillo_Obelisco");
-        var go = obeliscoR.gameObject;
-        go.layer = LayerMask.NameToLayer(CapaAncla);
-        var ob = obeliscoR.bounds;
-        float alto = ob.max.y;
-        var acentos = new List<Renderer>();
-        for (int i = 0; i < 4; i++)
+        // las caras del obelisco: el sol al oeste, la luna al este y el eclipse al sur
+        var raiz = Grupo(g, "Obelisco_Del_Eclipse");
+        var obelisco = raiz.gameObject.AddComponent<ObeliscoDelEclipse>();
+        (Vector3 normal, Vector3 centro) Cara(Vector3 hacia, float y)
         {
-            var dir = Quaternion.Euler(0f, i * 90f, 0f) * Vector3.forward;
-            var pos = new Vector3(ob.center.x, alto - 1.1f, ob.center.z) + dir * (ob.extents.x + 0.01f);
-            var eclipse = Glifo(marcas, $"Obelisco_Eclipse_{i}", Figura.Eclipse, pos, dir, 0.9f, k.tallaEclipse);
-            eclipse.enabled = false;   // aparecen cuando el obelisco despierta
-            acentos.Add(eclipse);
+            var mejor = CarasVerticales(obeliscoR, y)[0];
+            foreach (var c in CarasVerticales(obeliscoR, y)) if (Vector3.Dot(c.normal, hacia) > Vector3.Dot(mejor.normal, hacia)) mejor = c;
+            return mejor;
         }
-        var ancla = go.AddComponent<Ancla>();
-        ancla.canalRequerido = FiltroDefinicion.Canal.Ninguno;
-        ancla.permanente = true;
-        ancla.soloDeFrente = false;
-        ancla.acentos = acentos.ToArray();
-        ancla.colorApagada = new Color(0.12f, 0.13f, 0.16f);
-        ancla.colorEncendida = new Color(0.85f, 0.92f, 1f);
-        ancla.emisionMaxima = 3f;
-        ancla.intensidadLuz = 30f;
-        var punto = new GameObject("PuntoDeImpacto").transform;
-        punto.SetParent(go.transform, true);
-        punto.position = new Vector3(ob.center.x, 1.8f, ob.center.z);
-        ancla.puntoDeImpacto = punto;
-        ancla.brillo = Luz(marcas, "Luz_Obelisco", new Vector3(ob.center.x, alto + 0.6f, ob.center.z), ancla.colorEncendida, 0f, 14f, false);
-        ancla.tono = go.AddComponent<AudioSource>();
-        ConfigurarAudio(ancla.tono, k.audio.tonosAncla[k.audio.tonosAncla.Length - 1], 0.9f, false, true);
-        ancla.enabled = false;   // lo despierta la cinemática del segundo sello
-        return ancla;
+        Ancla CaraAncla(string nombre, Vector3 hacia, Figura figura, Material m, Color color, FiltroDefinicion.Canal canal, int tono)
+        {
+            var (normal, punto) = Cara(hacia, 2f);
+            var go = new GameObject(nombre);
+            go.transform.SetParent(raiz, false);
+            go.transform.SetPositionAndRotation(punto + normal * 0.1f, Quaternion.LookRotation(normal));
+            go.layer = LayerMask.NameToLayer(CapaAncla);
+            var caja = go.AddComponent<BoxCollider>();
+            caja.isTrigger = true;
+            caja.size = new Vector3(0.9f, 0.9f, 0.15f);
+            var glifo = Glifo(go.transform, "Tallado", figura, punto, normal, 0.85f, m);
+            glifo.enabled = false;   // aparecen cuando el obelisco despierta
+            var ancla = go.AddComponent<Ancla>();
+            ancla.canalRequerido = canal;
+            ancla.retencion = 6f;
+            ancla.soloDeFrente = true;
+            ancla.acentos = new[] { glifo };
+            ancla.colorApagada = color * 0.12f;
+            ancla.colorEncendida = color;
+            ancla.emisionMaxima = 3f;
+            ancla.intensidadLuz = 12f;
+            ancla.brillo = Luz(go.transform, "Brillo", punto + normal * 0.8f, color, 0f, 5f, false);
+            ancla.tono = go.AddComponent<AudioSource>();
+            ConfigurarAudio(ancla.tono, k.audio.tonosAncla[tono % k.audio.tonosAncla.Length], 0.8f, false, true);
+            ancla.enabled = false;
+            return ancla;
+        }
+        obelisco.sol = CaraAncla("Obelisco_Sol", Vector3.left, Figura.Sol, k.ambar, new Color(1f, 0.42f, 0.1f), FiltroDefinicion.Canal.Cuerpo, 1);
+        obelisco.luna = CaraAncla("Obelisco_Luna", Vector3.right, Figura.LunaCreciente, k.tallaLuna, ColorLuna, FiltroDefinicion.Canal.Hueco, 3);
+        var (normalSur, puntoSur) = Cara(Vector3.back, obeliscoR.bounds.max.y - 1.3f);
+        obelisco.eclipse = Glifo(raiz, "Obelisco_Eclipse", Figura.Eclipse, puntoSur, normalSur, 1.1f, k.tallaEclipse);
+        obelisco.eclipse.enabled = false;
+        obelisco.luz = Luz(raiz, "Luz_Eclipse", puntoSur + normalSur * 1.2f, new Color(0.85f, 0.92f, 1f), 0f, 12f, false);
+        return obelisco;
     }
 
     /// <summary>

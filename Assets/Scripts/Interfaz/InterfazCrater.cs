@@ -23,8 +23,6 @@ public class InterfazCrater : MonoBehaviour
 {
     [SerializeField] LinternaController linterna;
     [SerializeField] Font fuente;
-    [Tooltip("La letra de la palabra CRÁTER (Cinzel: mayúsculas talladas en piedra).")]
-    [SerializeField] Font fuenteTitulo;
     [Header("Créditos (si faltan, se arman en texto)")]
     [SerializeField] Sprite logoFacultad;   // Assets/Art/Creditos/Logo_UBA_FADU.png
     [SerializeField] Sprite logoCatedra;    // Assets/Art/Creditos/Logo_Catedra_Campos_Trilnick.png
@@ -151,12 +149,12 @@ public class InterfazCrater : MonoBehaviour
         yield return Fundir(Color.black, 1f, 0f, 2.5f);
     }
 
-    /// <summary>"CRÁTER" con su letra, grande y espaciada, como una inscripción.</summary>
+    /// <summary>"CRÁTER", el título.</summary>
     void PonerPalabraCrater()
     {
-        textoTitulo.font = fuenteTitulo != null ? fuenteTitulo : fuente;
-        textoTitulo.fontSize = fuenteTitulo != null ? 96 : 78;
-        textoTitulo.text = fuenteTitulo != null ? "C R Á T E R" : "CRÁTER";
+        textoTitulo.font = fuente;
+        textoTitulo.fontSize = 78;
+        textoTitulo.text = "CRÁTER";
     }
 
     /// <summary>
