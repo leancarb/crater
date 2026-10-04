@@ -558,8 +558,9 @@ public static partial class ConstructorCrater
         Asignar(interfaz, "linterna", linterna);
         Asignar(interfaz, "fuenteTitulo", AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Cinzel-Bold.ttf"));
         // los logos de los créditos: si están las imágenes, se usan; si no, se arman en texto
-        Asignar(interfaz, "logoFacultad", CargarLogo("Assets/Art/Creditos/Logo_UBA_FADU.png"));
-        Asignar(interfaz, "logoCatedra", CargarLogo("Assets/Art/Creditos/Logo_Catedra_Campos_Trilnick.png"));
+        // (cualquier imagen de Assets/Art/Creditos cuyo nombre diga "fadu" o "uba", y "campos" o "catedra")
+        Asignar(interfaz, "logoFacultad", BuscarLogo("fadu", "uba"));
+        Asignar(interfaz, "logoCatedra", BuscarLogo("campos", "catedra", "cátedra"));
         Asignar(pausa, "interfaz", interfaz);
         Asignar(flujo, "linterna", linterna);
         Asignar(flujo, "interfaz", interfaz);
@@ -675,6 +676,21 @@ public static partial class ConstructorCrater
         luz.spotAngle = 70f;
         luz.innerSpotAngle = 35f;
         luz.transform.rotation = Quaternion.LookRotation(ancla.PuntoDeImpacto - luz.transform.position);
+    }
+
+    /// <summary>La primera imagen (png o jpg) de Assets/Art/Creditos cuyo nombre contenga alguna de las palabras.</summary>
+    static Sprite BuscarLogo(params string[] palabras)
+    {
+        const string carpeta = "Assets/Art/Creditos";
+        if (!AssetDatabase.IsValidFolder(carpeta)) return null;
+        foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { carpeta }))
+        {
+            string ruta = AssetDatabase.GUIDToAssetPath(guid);
+            string nombre = System.IO.Path.GetFileNameWithoutExtension(ruta).ToLowerInvariant();
+            foreach (var palabra in palabras)
+                if (nombre.Contains(palabra)) return CargarLogo(ruta);
+        }
+        return null;
     }
 
     /// <summary>Carga una imagen como Sprite para la interfaz (la importa como Sprite si hace falta). Null si no está.</summary>

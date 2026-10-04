@@ -1,7 +1,8 @@
-Logos de los créditos finales (negro sobre fondo blanco o transparente, PNG):
+Logos de los créditos finales (negro sobre fondo blanco o transparente, PNG o JPG).
 
-  Logo_UBA_FADU.png                  el logo de UBA, FADU (con el sello)
-  Logo_Catedra_Campos_Trilnick.png   el logo de la Cátedra Campos Trilnick
+Poné las imágenes en esta carpeta. Se reconocen por el nombre:
+  - el de la facultad: que el nombre diga "fadu" o "uba"      (por ejemplo "fadu logo.png")
+  - el de la cátedra:  que el nombre diga "campos" o "catedra" (por ejemplo "campos logo.jpg")
 
-Poné los archivos acá con esos nombres exactos y usá Crater › Reconstruir todo.
+Después: Crater › Reconstruir todo.
 Si no están, los créditos los arman en texto.
