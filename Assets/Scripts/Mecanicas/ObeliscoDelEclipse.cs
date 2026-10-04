@@ -4,9 +4,9 @@ using UnityEngine;
 /// El último puzzle de la rotonda: el obelisco del centro. Duerme hasta que los dos
 /// sellos están encendidos; entonces despierta (Despertar) y en sus caras aparecen un sol
 /// (oeste) y una luna (este). Cada uno es un ancla: el sol se enciende con el filtro SOL y
-/// la luna con el filtro LUNA, y se mantienen unos segundos encendidos. Con los dos a la
-/// vez se forma el eclipse: se enciende el de la cara sur, los dos quedan prendidos para
-/// siempre y 'Resuelto' pasa a true (la cinemática del sello abre entonces la puerta).
+/// la luna con el filtro LUNA, y una vez encendidos quedan así. Con los dos se forma el
+/// eclipse: se enciende el de la cara sur y 'Resuelto' pasa a true (la cinemática del sello
+/// abre entonces la puerta).
 ///
 /// CÓMO FUNCIONA
 /// Las dos anclas empiezan deshabilitadas (la linterna no las ve) y con sus tallados

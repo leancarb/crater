@@ -165,6 +165,7 @@ public static partial class ConstructorCrater
         var ancla = CrearAnclaEnEscena(k, g, "Ancla_Umbral", new Vector3(-5.1f, 0f, -10f), Quaternion.Euler(0f, 90f, 0f),
             FiltroDefinicion.Canal.Ninguno, 2f, 0);
         AnclaDeLuzBlanca(k, g, ancla);
+        BaseDePuerta(k, ancla);
 
         // compuerta: una losa que se hunde en el piso
         var compuertaGO = new GameObject("Compuerta_Umbral");
@@ -658,6 +659,20 @@ public static partial class ConstructorCrater
         ancla.tono.clip = k.audio.tonosAncla[tono % k.audio.tonosAncla.Length];
         PrefabUtility.RecordPrefabInstancePropertyModifications(ancla.tono);
         return ancla;
+    }
+
+    /// <summary>
+    /// Las anclas que abren puertas (no las de los puentes) se paran sobre una base de piedra
+    /// clara de dos escalones: se distinguen de un vistazo, "esta abre algo".
+    /// </summary>
+    static void BaseDePuerta(Kit k, Ancla ancla)
+    {
+        var t = ancla.transform;
+        var base_ = Grupo(t.parent, ancla.name + "_Base");
+        var abajo = Bloque(base_, "Escalon_Abajo", t.position + Vector3.up * 0.06f, new Vector3(2.6f, 0.12f, 1.9f), k.piedra);
+        var arriba = Bloque(base_, "Escalon_Arriba", t.position + Vector3.up * 0.18f, new Vector3(2.1f, 0.12f, 1.5f), k.piedra);
+        abajo.transform.rotation = t.rotation;
+        arriba.transform.rotation = t.rotation;
     }
 
     /// <summary>

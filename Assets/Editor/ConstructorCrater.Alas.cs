@@ -201,9 +201,8 @@ public static partial class ConstructorCrater
     ///    este una luna; se encienden con el sello de su ala. De un vistazo se ve qué falta.
     ///  - El último puzzle, el eclipse: con los dos sellos el obelisco despierta. En su cara
     ///    oeste aparece un sol y en la este una luna. Hay que encender el sol con el filtro SOL
-    ///    y, antes de que se apague, la luna con el filtro LUNA (hay que rodear el obelisco y
-    ///    cambiar de filtro a tiempo). Con los dos a la vez, se enciende el eclipse de su cara
-    ///    sur y se abre la puerta de los sellos.
+    ///    y la luna con el filtro LUNA (rodeando el obelisco); cada uno queda encendido. Con los
+    ///    dos, se enciende el eclipse de su cara sur y se abre la puerta de los sellos.
     /// </summary>
     static ObeliscoDelEclipse MapaYObelisco(Kit k, Transform g, ReceptorDeLuz selloOeste, ReceptorDeLuz selloEste)
     {
@@ -269,7 +268,7 @@ public static partial class ConstructorCrater
             glifo.enabled = false;   // aparecen cuando el obelisco despierta
             var ancla = go.AddComponent<Ancla>();
             ancla.canalRequerido = canal;
-            ancla.retencion = 6f;
+            ancla.permanente = true;   // una vez encendido, queda: se puede ir tranquilo al otro lado
             ancla.soloDeFrente = true;
             ancla.acentos = new[] { glifo };
             ancla.colorApagada = color * 0.12f;
@@ -370,6 +369,8 @@ public static partial class ConstructorCrater
         Caja(g, "Techo_O2", -36.3f, 6, 9.3f, -19.7f, 6.3f, 21.3f, k.techo);
         var p1 = CrearAnclaEnEscena(k, g, "Ancla_O_Puerta_A", new Vector3(-27f, 0f, 10.1f), Quaternion.identity, FiltroDefinicion.Canal.Cuerpo, 4f, 1);
         var p2 = CrearAnclaEnEscena(k, g, "Ancla_O_Puerta_B", new Vector3(-31f, 0f, 20.2f), Quaternion.Euler(0f, 135f, 0f), FiltroDefinicion.Canal.Cuerpo, 4f, 3);
+        BaseDePuerta(k, p1);
+        BaseDePuerta(k, p2);
         CompuertaLosa(k, g, "Puerta_O_Dos_Anclas", new Vector3(-19.85f, 1.75f, 12f), new Vector3(0.3f, 3.5f, 3f),
             new Vector3(0f, -3.8f, 0f), 0.7f, true, p1, p2);
         Luz(g, "Luz_O2", new Vector3(-28f, 5.3f, 15f), LuzCalida, 110f, 14f, true);
@@ -390,6 +391,7 @@ public static partial class ConstructorCrater
         // el sello, detrás de un tabique: desde la otra orilla no se lo ve
         Caja(g, "Tabique_O3", -19.7f, -0.3f, 21.5f, -14.3f, 6, 21.8f, k.basaltoMedio);
         var sello = CrearAnclaEnEscena(k, g, "Sello_Oeste", new Vector3(-18.6f, 0f, 24.5f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 0f, 5);
+        BaseDePuerta(k, sello);
         sello.permanente = true;
         PrefabUtility.RecordPrefabInstancePropertyModifications(sello);
         refs.atajoOeste = CompuertaLosa(k, g, "Atajo_Oeste", new Vector3(-12.15f, 2f, 24.75f), new Vector3(0.3f, 4f, 3.5f),
