@@ -79,7 +79,7 @@ public class PrologoCapilla : MonoBehaviour
     [SerializeField] float profundidadOculta = 6f;
     [SerializeField] Color colorPuerta = new Color(0.75f, 0.85f, 1f);
     [SerializeField] float brilloPuertaReposo = 1.2f;
-    [SerializeField] float brilloDestello = 14f;
+    [SerializeField] float brilloDestello = 9f;
 
     [Header("Pruebas")]
     [Tooltip("Arrancar directo en la Explanada, sin prólogo.")]
@@ -101,7 +101,7 @@ public class PrologoCapilla : MonoBehaviour
     float[] alturasVisibles;
     Vector3 escalaTapa;
     Collider colliderTapa;
-    Vector3 escalaDestello;
+    Vector3 escalaDestello, posicionDestello;
     bool cinematicaHecha;
     bool entrando;
     bool saltar;
@@ -123,7 +123,11 @@ public class PrologoCapilla : MonoBehaviour
             escalaTapa = tapa.localScale;
             colliderTapa = tapa.GetComponent<Collider>();
         }
-        if (destello != null) escalaDestello = destello.transform.localScale;
+        if (destello != null)
+        {
+            escalaDestello = destello.transform.localScale;
+            posicionDestello = destello.transform.position;
+        }
     }
 
     void Start()
@@ -374,9 +378,14 @@ public class PrologoCapilla : MonoBehaviour
     {
         if (destello == null) return;
         destello.enabled = d > 0.001f;
-        destello.transform.localScale = escalaDestello * Mathf.Lerp(0.2f, 9f, d);
+        destello.transform.localScale = escalaDestello * Mathf.Lerp(0.3f, 7.5f, d);
         if (camara != null)
+        {
+            // un poco hacia la cámara: así el quad no se corta contra el suelo ni los pilares
+            Vector3 haciaLaCamara = (camara.position - posicionDestello).normalized;
+            destello.transform.position = posicionDestello + haciaLaCamara * 2.5f;
             destello.transform.rotation = Quaternion.LookRotation(destello.transform.position - camara.position);
+        }
         Color c = colorPuerta * brilloDestello * d;
         c.a = d;
         destello.GetPropertyBlock(bloque);

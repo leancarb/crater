@@ -411,7 +411,7 @@ public static partial class ConstructorCrater
             Adorno(puerta, "Contorno_Der", umbral + new Vector3(0.72f, 1.45f, -0.05f), new Vector3(0.06f, 2.9f, 0.06f), k.puertaEclipse),
             Adorno(puerta, "Contorno_Dintel", umbral + new Vector3(0f, 2.93f, -0.05f), new Vector3(1.5f, 0.06f, 0.06f), k.puertaEclipse),
         };
-        var destello = Plano(puerta, "Destello", k.resplandor);
+        var destello = Plano(puerta, "Destello", k.destello);
         destello.transform.position = umbral + new Vector3(0f, 1.45f, -0.25f);
         refs.destelloValle = destello;
 

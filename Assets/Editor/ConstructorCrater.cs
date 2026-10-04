@@ -135,7 +135,8 @@ public static partial class ConstructorCrater
         public Material adobe, paja, piedraCapilla, tierra;
         public Material cal, madera, cardon, pajaBrava, vela;
         public Material huella, espejo, puertaEclipse, luzEclipse, resplandor, corona, discoSol, discoLuna;
-        public Material resplandorTallado;   // el reflejo de la Cresta: en el destello se ven los tallados
+        public Material resplandorTallado;
+        public Material destello;            // el destello de la puerta del cráter al abrirse   // el reflejo de la Cresta: en el destello se ven los tallados
         public Material tallaLuna, tallaEclipse;   // los tallados de luna (HUECO) y del eclipse
         // pintura mate, sin brillo: el arte decorativo y los murales ("lo que brilla, se usa")
         public Material pinturaSol, pinturaLuna, pinturaHueso;
@@ -242,6 +243,7 @@ public static partial class ConstructorCrater
         kit.puertaEclipse = Emisivo(Opaco("PuertaEclipse", new Color(0.05f, 0.06f, 0.08f), 0.3f), new Color(0.75f, 0.85f, 1f) * 1.2f);
         kit.luzEclipse = Emisivo(Opaco("LuzEclipse", new Color(0.8f, 0.85f, 1f), 0f), new Color(0.75f, 0.85f, 1f) * 2.5f);
         kit.resplandor = Aditivo("Resplandor", Textura("Resplandor", 128, PixelResplandor));
+        kit.destello = Aditivo("DestelloPuerta", Textura("DestelloPuerta", 512, PixelDestello));
         kit.resplandorTallado = Aditivo("ResplandorTallado", Textura("ResplandorTallado", 256, PixelResplandorTallado));
         kit.corona = Aditivo("CoronaEclipse", Textura("Corona", 256, PixelCorona));
         kit.discoSol = SinLuz("DiscoSol", new Color(6f, 5.4f, 4.4f));
@@ -380,6 +382,23 @@ public static partial class ConstructorCrater
         return new Color(1f, 1f, 1f, Mathf.Clamp01(brillo * (ojo ? 0.1f : 1f)));
     }
 
+    /// <summary>
+    /// El destello de la puerta: un núcleo chico muy brillante, un halo suave que se apaga de
+    /// a poco y dos rayos finos (horizontal y vertical, más débil). Llega a cero antes del borde
+    /// del quad, así no se ve el cuadrado.
+    /// </summary>
+    static Color PixelDestello(float u, float v)
+    {
+        float r = Mathf.Sqrt(u * u + v * v);
+        float nucleo = Mathf.Exp(-r * r / 0.004f);
+        float halo = Mathf.Exp(-r / 0.16f) * 0.55f + Mathf.Exp(-r / 0.42f) * 0.18f;
+        float rayoH = Mathf.Exp(-Mathf.Abs(v) / 0.008f) * Mathf.Exp(-Mathf.Abs(u) / 0.38f) * 0.7f;
+        float rayoV = Mathf.Exp(-Mathf.Abs(u) / 0.006f) * Mathf.Exp(-Mathf.Abs(v) / 0.22f) * 0.35f;
+        float borde = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((1f - r) / 0.25f));
+        float a = Mathf.Clamp01((nucleo + halo + rayoH + rayoV) * borde);
+        return new Color(1f, 1f, 1f, a);
+    }
+
     static Color PixelCorona(float u, float v)
     {
         // el sol ocupa r < 0,29 (el quad mide 3,4 diámetros solares)
@@ -429,6 +448,8 @@ public static partial class ConstructorCrater
         var importador = (TextureImporter)AssetImporter.GetAtPath(ruta);
         importador.wrapMode = TextureWrapMode.Clamp;
         importador.alphaIsTransparency = true;
+        // sin compresión: los degradés de los brillos se escalonaban (se veían de baja calidad)
+        importador.textureCompression = TextureImporterCompression.Uncompressed;
         importador.SaveAndReimport();
         return AssetDatabase.LoadAssetAtPath<Texture2D>(ruta);
     }
