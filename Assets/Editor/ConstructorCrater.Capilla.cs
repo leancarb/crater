@@ -267,9 +267,7 @@ public static partial class ConstructorCrater
         ParedInvisible("Borde_Norte_Oeste", new Vector3(-29.5f, 3f, 66f), new Vector3(1f, 6f, 27f));
         ParedInvisible("Borde_Norte_Este", new Vector3(29.5f, 3f, 66f), new Vector3(1f, 6f, 27f));
 
-        // el camino del inicio al mirador, y dos apachetas (pilas de piedra) que marcan el paso
-        var senda = CajaLocal(paisaje, "Senda_Norte", new Vector3(0f, -0.09f, 63f), new Vector3(1.4f, 0.02f, 18f), k.piedraCapilla);
-        Object.DestroyImmediate(senda.GetComponent<Collider>());
+        // dos apachetas (pilas de piedra) que marcan el paso del mirador
         foreach (float lado in new[] { -1f, 1f })
             for (int i = 0; i < 3; i++)
             {
