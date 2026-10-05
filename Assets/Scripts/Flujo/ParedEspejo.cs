@@ -38,6 +38,7 @@ public class ParedEspejo : MonoBehaviour
 
     MaterialPropertyBlock bloque;
     static readonly int IdColor = Shader.PropertyToID("_BaseColor");
+    static readonly int IdRecorte = Shader.PropertyToID("_BaseMap_ST");
 
     void Awake()
     {
@@ -88,16 +89,22 @@ public class ParedEspejo : MonoBehaviour
             reflejo.enabled = k > 0.001f;
             // 15 cm delante de la pared: las caras de la piedra facetada sobresalen hasta 9 cm y,
             // más cerca, tapaban el reflejo con manchas negras
-            // el reflejo no se sale de la pared: en las esquinas se cortaba contra la de al lado
-            float lado = Mathf.Min(Mathf.Max(0.6f, radioHaz * 2f * tamanioReflejo), tamanio.x, tamanio.y);
-            float mx = (tamanio.x - lado) * 0.5f, my = (tamanio.y - lado) * 0.5f;
-            Vector3 centro = transform.TransformPoint(new Vector3(Mathf.Clamp(local.x, -mx, mx), Mathf.Clamp(local.y, -my, my), 0f));
+            // el reflejo sigue al haz hasta el borde de la pared: lo que se pasaría del borde se
+            // recorta (el quad se achica y su textura se corre igual), así llega a la esquina sin
+            // meterse en la pared de al lado
+            float lado = Mathf.Max(0.6f, radioHaz * 2f * tamanioReflejo);
+            float x0 = Mathf.Max(local.x - lado * 0.5f, -tamanio.x * 0.5f), x1 = Mathf.Min(local.x + lado * 0.5f, tamanio.x * 0.5f);
+            float y0 = Mathf.Max(local.y - lado * 0.5f, -tamanio.y * 0.5f), y1 = Mathf.Min(local.y + lado * 0.5f, tamanio.y * 0.5f);
+            Vector3 centro = transform.TransformPoint(new Vector3((x0 + x1) * 0.5f, (y0 + y1) * 0.5f, 0f));
             reflejo.transform.SetPositionAndRotation(centro + normal * 0.15f, Quaternion.LookRotation(-normal));
-            reflejo.transform.localScale = Vector3.one * lado;
+            reflejo.transform.localScale = new Vector3(Mathf.Max(0.01f, x1 - x0), Mathf.Max(0.01f, y1 - y0), 1f);
+            var recorte = new Vector4((x1 - x0) / lado, (y1 - y0) / lado,
+                (x0 - (local.x - lado * 0.5f)) / lado, (y0 - (local.y - lado * 0.5f)) / lado);
             Color c = color * intensidadReflejo * k;
             c.a = Mathf.Clamp01(k);
             reflejo.GetPropertyBlock(bloque);
             bloque.SetColor(IdColor, c);
+            bloque.SetVector(IdRecorte, recorte);
             reflejo.SetPropertyBlock(bloque);
         }
 
