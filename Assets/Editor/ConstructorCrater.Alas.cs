@@ -38,6 +38,23 @@ public static partial class ConstructorCrater
     /// <summary>Centro (a nivel del piso) y radio de la rotonda circular.</summary>
     static readonly Vector3 CentroRotonda = new Vector3(0f, 0f, 12f);
     const float RadioRotonda = 15f;
+    /// <summary>
+    /// Un óculo en el techo (se ve el eclipse) con su haz de luz que baja hasta 'piso':
+    /// vuelve a mostrar la meta y lleva la mirada a lo que hay debajo.
+    /// </summary>
+    static void OculoConHaz(Kit k, Transform g, string nombre, Vector3 techo, float diametro, float piso)
+    {
+        Oculo(k, g, nombre, techo, diametro, 70f, 9f);
+        var haz = Grupo(g, nombre + "_Haz_Visible");
+        float alto = techo.y - piso;
+        for (int i = 0; i < 2; i++)
+        {
+            var plano = Plano(haz, $"Haz_{i}", k.hazDeLuz);
+            plano.transform.SetPositionAndRotation(new Vector3(techo.x, piso + alto / 2f, techo.z), Quaternion.Euler(0f, 45f + i * 90f, 0f));
+            plano.transform.localScale = new Vector3(diametro * 0.95f, alto, 1f);
+        }
+    }
+
     /// <summary>Lo que baja la plaza del centro de la rotonda.</summary>
     const float ProfundidadPlaza = -1.2f;
     /// <summary>Radio de la plaza hundida (adentro de los escalones).</summary>
@@ -436,6 +453,8 @@ public static partial class ConstructorCrater
         refs.atajoOeste = CompuertaLosa(k, g, "Atajo_Oeste", new Vector3(-12.15f, 2f, 24.75f), new Vector3(0.3f, 4f, 3.5f),
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Oeste", new Vector3(-16f, 5.3f, 24.5f), LuzCalida, 70f, 10f, false);
+        // arriba del sello, un óculo: se vuelve a ver el eclipse (la meta) y su haz lleva al sello
+        OculoConHaz(k, g, "Oculo_Sello_Oeste", new Vector3(-17.4f, 5.97f, 24.5f), 1.8f, 0f);
         ParedInteriorDelAla(k, g, -1f, -9f);
         MuralesAlaOeste(k, g);
         DecorarAlaOeste(k, g, sello);
@@ -533,6 +552,7 @@ public static partial class ConstructorCrater
         refs.atajoEste = CompuertaLosa(k, g, "Atajo_Este", new Vector3(12.15f, 2f, 25.15f), new Vector3(0.3f, 4f, 2.7f),
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Este", new Vector3(16f, 5f, 25f), LuzFria, 60f, 9f, false);
+        OculoConHaz(k, g, "Oculo_Sello_Este", new Vector3(14.6f, 5.97f, 25.3f), 1.8f, 0f);
         ParedInteriorDelAla(k, g, 1f, -3.8f, 23.8f);
         MuralesAlaEste(k, g);
         DecorarAlaEste(k, g, sello);
