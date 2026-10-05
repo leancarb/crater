@@ -62,11 +62,12 @@ public class CieloEclipse : MonoBehaviour
     // crepúsculo profundo: el cielo azul oscuro, el horizonte anaranjado (la luz que llega
     // de afuera de la sombra de la luna) y el suelo todavía visible
     [SerializeField] Color solTotalidad = new Color(0.6f, 0.62f, 0.85f);
-    [SerializeField] float intensidadTotalidad = 0.3f;
-    [SerializeField] Color cieloTotalidad = new Color(0.07f, 0.09f, 0.18f);
-    [SerializeField] Color ambienteCieloTotalidad = new Color(0.17f, 0.19f, 0.3f);
-    [SerializeField] Color ambienteHorizonteTotalidad = new Color(0.26f, 0.16f, 0.12f);
-    [SerializeField] Color ambienteSueloTotalidad = new Color(0.07f, 0.06f, 0.06f);
+    // (más clara que antes: en la totalidad hay que caminar hasta la puerta del cráter)
+    [SerializeField] float intensidadTotalidad = 0.6f;
+    [SerializeField] Color cieloTotalidad = new Color(0.12f, 0.15f, 0.28f);
+    [SerializeField] Color ambienteCieloTotalidad = new Color(0.3f, 0.33f, 0.48f);
+    [SerializeField] Color ambienteHorizonteTotalidad = new Color(0.42f, 0.3f, 0.24f);
+    [SerializeField] Color ambienteSueloTotalidad = new Color(0.15f, 0.13f, 0.12f);
 
     [Header("Niebla")]
     [Tooltip("Más baja que la del epílogo: si no, la niebla se come los discos.")]

@@ -400,6 +400,20 @@ public static partial class ConstructorCrater
         bordes.AddRange(refs.paredesEscalera);
         refs.bordesCrater = bordes.ToArray();
 
+        // el camino alrededor del cráter: desde el mirador (norte) el borde de roca no deja
+        // pasar y la puerta está del otro lado, al sur. Mojones de piedra con una luz chica
+        // arriba rodean el cráter por los dos lados hasta la puerta (se ven en la totalidad)
+        var camino = Grupo(g, "Camino_Del_Borde");
+        foreach (float lado in new[] { 1f, -1f })
+            for (float a = 70f; a > -80f; a -= 18f)
+            {
+                float ang = (lado > 0f ? a : 180f - a) * Mathf.Deg2Rad;
+                var pie = centro + new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)) * 14.4f;
+                Bloque(camino, "Mojon", pie + Vector3.up * 0.35f, new Vector3(0.28f, 0.8f, 0.28f), k.piedraCapilla);
+                var luz = Bloque(camino, "Vela", pie + Vector3.up * 0.86f, new Vector3(0.16f, 0.2f, 0.16f), k.vela);
+                Object.DestroyImmediate(luz.GetComponent<Collider>());
+            }
+
         // la tapa: tierra sobre el agujero, se abre desde el centro. Está fuera del grupo
         // del cráter porque en el epílogo vuelve a cerrarse (y se puede pisar)
         var tapa = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
