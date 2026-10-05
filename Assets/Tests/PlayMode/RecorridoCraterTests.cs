@@ -57,10 +57,11 @@ public class RecorridoCraterTests
 
         // Prólogo: salir de la capilla dispara el eclipse; por la puerta del cráter se baja caminando
         Vector3 capilla = Buscar<Transform>("SpawnCapilla").position;
-        Vector3 atrio = Buscar<Transform>("SpawnAtrio").position;
+        Vector3 valle = Buscar<Transform>("SpawnValle").position;
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Prologo));
-        Assert.That(Vector3.Distance(jugador.transform.position, atrio), Is.LessThan(1f), "el jugador no empieza en el atrio");
-        yield return Caminar(Buscar<ZonaJugador>("Zona_Umbral_Capilla").transform.position + Vector3.forward * 0.6f);
+        Assert.That(Vector3.Distance(jugador.transform.position, valle), Is.LessThan(1f), "el jugador no empieza en el valle, frente a la capilla");
+        // se acerca a la capilla: al cruzar el arco del atrio empieza el eclipse
+        yield return Caminar(Buscar<ZonaJugador>("Zona_Umbral_Capilla").transform.position);
         yield return Esperar(0.2f);
         Assert.That(prologo.Reproduciendo, Is.True, "salir de la capilla no disparó la cinemática");
         for (float t = 0f; t < 40f && prologo.Reproduciendo; t += Time.deltaTime) yield return null;

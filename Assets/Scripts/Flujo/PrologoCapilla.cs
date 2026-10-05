@@ -67,6 +67,8 @@ public class PrologoCapilla : MonoBehaviour
     [Header("Tiempos (segundos)")]
     [SerializeField] float mirarAlSol = 2.5f;
     [SerializeField] float duracionEclipse = 7f;
+    [Tooltip("Si el jugador no cruza el arco del atrio, el eclipse empieza solo después de estos segundos (0 = nunca).")]
+    [SerializeField] float segundosHastaEclipse = 45f;
     [SerializeField] float pausaTotalidad = 1.2f;
     [SerializeField] float bajarMirada = 2.5f;
     [SerializeField] float revelado = 4f;
@@ -105,6 +107,7 @@ public class PrologoCapilla : MonoBehaviour
     bool cinematicaHecha;
     bool entrando;
     bool saltar;
+    float tiempoAntesDelEclipse;
     MaterialPropertyBlock bloque;
     static readonly int IdEmision = Shader.PropertyToID("_EmissionColor");
     static readonly int IdColor = Shader.PropertyToID("_BaseColor");
@@ -155,6 +158,13 @@ public class PrologoCapilla : MonoBehaviour
     {
         // se puede saltear siempre, sin aviso en pantalla (Espacio, Enter o A)
         if (Reproduciendo && EntradaCrater.Saltar) saltar = true;
+
+        // si el jugador no se acerca a la capilla, el eclipse llega igual
+        if (Activo && !cinematicaHecha && segundosHastaEclipse > 0f)
+        {
+            tiempoAntesDelEclipse += Time.deltaTime;
+            if (tiempoAntesDelEclipse >= segundosHastaEclipse) IniciarCinematica();
+        }
     }
 
     // ---------------------------------------------------------------- cinemática

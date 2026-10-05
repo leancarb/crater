@@ -328,12 +328,14 @@ public static partial class ConstructorCrater
         refs.spawnCapilla.SetParent(g, false);
         refs.spawnCapilla.localPosition = new Vector3(0f, 0.05f, -4.5f);
 
-        // el jugador empieza afuera, en el atrio, entre la puerta de la capilla y el arco, mirando
-        // al valle (la capilla queda a la espalda). En el epílogo despierta adentro (SpawnCapilla)
-        var spawnAtrio = new GameObject("SpawnAtrio").transform;
-        spawnAtrio.SetParent(g, false);
-        spawnAtrio.localPosition = new Vector3(0.8f, 0.05f, 9.8f);
-        refs.jugador.transform.SetPositionAndRotation(spawnAtrio.position, spawnAtrio.rotation);
+        // el jugador empieza afuera, en el valle, mirando la capilla de lejos (antes del borde
+        // del cráter, que todavía no existe). Al acercarse y cruzar el arco del atrio empieza el
+        // eclipse. En el epílogo despierta adentro (SpawnCapilla)
+        var spawnValle = new GameObject("SpawnValle").transform;
+        spawnValle.SetParent(g, false);
+        spawnValle.localPosition = new Vector3(2.6f, 0.05f, 20.5f);
+        spawnValle.localRotation = Quaternion.LookRotation(new Vector3(-2.6f, 0f, -18.5f));   // hacia la fachada
+        refs.jugador.transform.SetPositionAndRotation(spawnValle.position, spawnValle.rotation);
         // la cinemática arranca al salir del atrio por el arco, no apenas se cruza la puerta
         refs.zonaUmbralCapilla = Zona(g, "Zona_Umbral_Capilla", g.TransformPoint(new Vector3(0f, 1.5f, 15.9f)), new Vector3(9f, 3f, 0.8f));
 
