@@ -247,7 +247,8 @@ public static partial class ConstructorCrater
             C($"Muro_Vuelta_{n}_Exterior", 8, -0.3f, 24.8f, 7.7f, 7, 38.1f, k.basaltoMedio);
             C($"Muro_Vuelta_{n}_Fondo", 15.3f, -0.3f, 37.8f, 7.7f, 7, 38.1f, k.basalto);
             C($"Techo_Vuelta_{n}", 15.3f, 7, 27.6f, 7.7f, 7.3f, 38.1f, k.techo);
-            Luz(g, $"Luz_Vuelta_{n}", new Vector3(X(9.5f), 5.5f, 33f), LuzCalida, 40f, 9f, false);
+            // con sombras: sin ellas atravesaba la pared y se veía una franja cálida en el ala
+            Luz(g, $"Luz_Vuelta_{n}", new Vector3(X(9.5f), 5.5f, 33f), LuzCalida, 40f, 9f, true);
         }
 
         // (el óculo de la rotonda va sobre el obelisco: ver MapaYObelisco)
@@ -307,7 +308,7 @@ public static partial class ConstructorCrater
             testigo.renderers = new[] { tallado };
             testigo.colorEncendido = lado < 0f ? new Color(1f, 0.42f, 0.1f) : ColorLuna;
             testigo.emisionApagado = 0.02f;
-            testigo.luz = Luz(g, nombre + "_Luz", CentroRotonda + dir * (RadioRotonda - 1.6f) + Vector3.up * 5f, lado < 0f ? LuzCalida : LuzFria, 0f, 9f, false);
+            testigo.luz = Luz(g, nombre + "_Luz", CentroRotonda + dir * (RadioRotonda - 1.6f) + Vector3.up * 5f, lado < 0f ? LuzCalida : LuzFria, 0f, 9f, true);
             testigo.intensidadLuz = 45f;
         }
         Faro("Faro_Atajo_Oeste", -1f, selloOeste);
