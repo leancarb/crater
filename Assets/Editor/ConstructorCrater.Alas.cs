@@ -55,6 +55,30 @@ public static partial class ConstructorCrater
         }
     }
 
+    /// <summary>
+    /// Red de seguridad debajo de un abismo: el fondo está a 3 m (no es un vacío que reinicia),
+    /// con paredes que lo cierran y una rampa angosta pegada al lado de donde se viene, que
+    /// sube sólo hasta esa orilla. El que cae vuelve a subir y lo intenta de nuevo, sin cortes.
+    /// 'aLoLargoDeX': el abismo es una zanja a lo largo de z (paredes en x0 y x1); si no, a lo largo de x.
+    /// </summary>
+    static void RedDeSeguridad(Kit k, Transform g, string nombre, float x0, float x1, float z0, float z1,
+                               Vector3 rampaAbajo, Vector3 rampaArriba, bool aLoLargoDeX)
+    {
+        Caja(g, $"Red_{nombre}_Fondo", x0, -3.3f, z0, x1, -3f, z1, k.piso);
+        if (aLoLargoDeX)
+        {
+            Caja(g, $"Red_{nombre}_Pared_A", x0 - 0.3f, -3.3f, z0, x0, -0.3f, z1, k.basalto);
+            Caja(g, $"Red_{nombre}_Pared_B", x1, -3.3f, z0, x1 + 0.3f, -0.3f, z1, k.basalto);
+        }
+        else
+        {
+            Caja(g, $"Red_{nombre}_Pared_A", x0, -3.3f, z0 - 0.3f, x1, -0.3f, z0, k.basalto);
+            Caja(g, $"Red_{nombre}_Pared_B", x0, -3.3f, z1, x1, -0.3f, z1 + 0.3f, k.basalto);
+        }
+        Rampa(g, $"Red_{nombre}_Rampa", rampaAbajo, rampaArriba, 1.1f, k.piedra);
+        Luz(g, $"Luz_Red_{nombre}", (rampaAbajo + rampaArriba) / 2f + Vector3.up * 0.8f, LuzCalida, 14f, 6f, false);
+    }
+
     /// <summary>Lo que baja la plaza del centro de la rotonda.</summary>
     const float ProfundidadPlaza = -1.2f;
     /// <summary>Radio de la plaza hundida (adentro de los escalones).</summary>
@@ -411,6 +435,7 @@ public static partial class ConstructorCrater
         var e1 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_A", new Vector3(-32f, 0f, -0.15f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3f, 0);
         var e2 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_B", new Vector3(-32f, 0f, 2.15f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3f, 2);
         Puente(k, g, "Puente_O_Ensenar", new Vector3(-26f, 0f, 1f), new Vector3(-28.5f, 0f, 1f), 3.6f, e1, e2);
+        RedDeSeguridad(k, g, "O1", -28.5f, -26f, -7f, 9f, new Vector3(-26.65f, -3f, 8.4f), new Vector3(-26.65f, 0f, 3.6f), true);
         Luz(g, "Luz_O1", new Vector3(-28f, 5.3f, 1f), LuzCalida, 120f, 15f, true);
         Motivo(k, g, "Mural_O1", new Vector3(-35.93f, 0.6f, -4f), 90f, 0.8f, k.pinturaSol);
 
@@ -575,6 +600,7 @@ public static partial class ConstructorCrater
         var oculta = CrearAnclaEnEscena(k, g, "Ancla_N_Oculta", new Vector3(3.2f, 0f, 38.5f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 6f, 2);
         Reja(k, g, "Reja_N_Tapa", new Vector3(3.2f, 0f, 36.8f), 0f, new Vector3(0.9f, 1f, 1f));
         Puente(k, g, "Puente_N_Reja", new Vector3(0f, 0f, 33f), new Vector3(0f, 0f, 35.5f), 3.6f, vista, oculta);
+        RedDeSeguridad(k, g, "N1", -6f, 6f, 33f, 35.5f, new Vector3(2.4f, -3f, 33.6f), new Vector3(5.8f, 0f, 33.6f), false);
         Luz(g, "Luz_N1", new Vector3(0f, 5.3f, 30.5f), LuzCalida, 110f, 14f, true);
         Luz(g, "Luz_N1_Fondo", new Vector3(0f, 5.3f, 39.5f), LuzFria, 80f, 11f, false);
 
@@ -585,6 +611,7 @@ public static partial class ConstructorCrater
         var b1 = CrearAnclaEnEscena(k, g, "Ancla_N_Borde_A", new Vector3(-1.3f, 0f, 43.2f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 8f, 1);
         var b2 = CrearAnclaEnEscena(k, g, "Ancla_N_Borde_B", new Vector3(1.3f, 0f, 43.2f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 8f, 3);
         Puente(k, g, "Puente_N_Borde", new Vector3(0f, 0f, 45f), new Vector3(0f, 0f, 50.5f), 3.6f, b1, b2);
+        RedDeSeguridad(k, g, "N2", -6f, 6f, 45f, 50.5f, new Vector3(4.35f, -3f, 50f), new Vector3(4.35f, 0f, 45.6f), false);
         Reja(k, g, "Reja_N_Borde_A", new Vector3(-3f, 0f, 51.2f));
         Reja(k, g, "Reja_N_Borde_B", new Vector3(3f, 0f, 51.2f));
         Caja(g, "Muro_Rejas_N_Arriba", -6, 4.6f, 50.75f, 6, 6, 51.65f, k.basalto);
