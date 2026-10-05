@@ -38,6 +38,40 @@ public static partial class ConstructorCrater
     /// <summary>Centro (a nivel del piso) y radio de la rotonda circular.</summary>
     static readonly Vector3 CentroRotonda = new Vector3(0f, 0f, 12f);
     const float RadioRotonda = 15f;
+    /// <summary>Lo que baja la plaza del centro de la rotonda.</summary>
+    const float ProfundidadPlaza = -1.2f;
+    /// <summary>Radio de la plaza hundida (adentro de los escalones).</summary>
+    const float RadioPlaza = 8f;
+
+    /// <summary>
+    /// El piso de la rotonda: un anillo de bloques a nivel (r 9,5 … 15,4), cuatro escalones de
+    /// 30 cm que bajan hacia el centro y el fondo de la plaza, 1,2 m más abajo.
+    /// </summary>
+    static void PisoHundido(Kit k, Transform g)
+    {
+        Vector3 c = new Vector3(CentroRotonda.x, 0f, CentroRotonda.z);
+        void Anillo(string nombre, float r0, float r1, float tope, float fondo, int bloques)
+        {
+            float rm = (r0 + r1) / 2f;
+            float ancho = 2f * Mathf.PI * r1 / bloques * 1.2f;
+            for (int i = 0; i < bloques; i++)
+            {
+                float ang = (i + 0.5f) * 360f / bloques;
+                var dir = new Vector3(Mathf.Cos(ang * Mathf.Deg2Rad), 0f, Mathf.Sin(ang * Mathf.Deg2Rad));
+                var b = Bloque(g, $"{nombre}_{i:00}", c + dir * rm + Vector3.up * ((tope + fondo) / 2f),
+                    new Vector3(ancho, tope - fondo, r1 - r0), k.piso);
+                b.transform.rotation = Quaternion.LookRotation(dir);
+            }
+        }
+        Anillo("Piso_Rotonda_Anillo", 9.5f, 15.6f, 0f, -0.3f, 40);
+        for (int e = 0; e < 3; e++)
+            Anillo($"Escalon_Plaza_{e}", 9.5f - (e + 1) * 0.5f, 9.5f - e * 0.5f, -0.3f * (e + 1), ProfundidadPlaza - 0.3f, 36);
+        Caja(g, "Piso_Plaza", c.x - RadioPlaza - 0.4f, ProfundidadPlaza - 0.3f, c.z - RadioPlaza - 0.4f,
+            c.x + RadioPlaza + 0.4f, ProfundidadPlaza, c.z + RadioPlaza + 0.4f, k.piso);
+        // lo que queda fuera del anillo de bloques en las esquinas (debajo de la pared) se rellena
+        Caja(g, "Piso_Rotonda_Base", -RadioRotonda - 0.6f, -1.8f, -3.3f, RadioRotonda + 0.6f, ProfundidadPlaza - 0.3f, 27.6f, k.piso);
+    }
+
     /// <summary>Cuánto se corre cada ala desde donde la arma su código: hacia afuera y al norte.</summary>
     static readonly Vector3 CorrimientoAlaOeste = new Vector3(-3f, 0f, 11f), CorrimientoAlaEste = new Vector3(3f, 0f, 11f);
 
@@ -49,7 +83,11 @@ public static partial class ConstructorCrater
     static void ConstruirRotonda(Kit k, Transform g, Referencias refs)
     {
         float cz = CentroRotonda.z;
-        Caja(g, "Piso_Rotonda", -RadioRotonda, -0.3f, -3, RadioRotonda, 0, 27, k.piso);
+        // el piso es una plaza hundida (como un templete semisubterráneo): un anillo a nivel por
+        // donde se entra y se sale, y en el centro, 1,2 m más abajo y con cuatro escalones
+        // alrededor, el anillo de columnas y el obelisco. Al entrar desde el Umbral se ve todo
+        // de arriba: las dos alas, el obelisco y la puerta del norte (vista privilegiada)
+        PisoHundido(k, g);
         Caja(g, "Techo_Rotonda", -RadioRotonda - 0.6f, 7, -3.3f, RadioRotonda + 0.6f, 7.3f, 27.6f, k.techo);
 
         // la pared: un anillo de bloques con aberturas (ángulos desde +x, en sentido antihorario)
@@ -113,7 +151,7 @@ public static partial class ConstructorCrater
         }
 
         // (el óculo de la rotonda va sobre el obelisco: ver MapaYObelisco)
-        ConstruirAnilloDelMapa(k, g, new Vector3(0f, 0.12f, cz), 0.4f);
+        ConstruirAnilloDelMapa(k, g, new Vector3(0f, ProfundidadPlaza + 0.12f, cz), 0.4f);
 
         Luz(g, "Luz_Rotonda", new Vector3(0f, 5.8f, 4f), LuzCalida, 150f, 17f, true);
         Luz(g, "Luz_Rotonda_Norte", new Vector3(0f, 5.8f, 21f), LuzCalida, 110f, 15f, false);
@@ -233,7 +271,7 @@ public static partial class ConstructorCrater
             if (Mathf.Abs(dx) < 0.5f) continue;   // las del eje norte-sur quedan neutras
             bool oeste = dx < 0f;
             int i = 0;
-            foreach (var (normal, cara) in CarasVerticales(r, 2.3f))
+            foreach (var (normal, cara) in CarasVerticales(r, r.bounds.min.y + 2.3f))
                 (oeste ? soles : lunas).Add(Glifo(marcas, $"{r.name}_{i++}", oeste ? Figura.Sol : Figura.LunaCreciente,
                     cara + normal * 0.02f, normal, 0.3f, oeste ? k.ambar : k.tallaLuna, separar: false));
         }
@@ -261,7 +299,7 @@ public static partial class ConstructorCrater
         }
         void CaraDelSello(string nombre, Vector3 hacia, Figura figura, Material m, ReceptorDeLuz sello, bool luna)
         {
-            var (normal, punto) = Cara(hacia, 2.6f);
+            var (normal, punto) = Cara(hacia, obeliscoR.bounds.min.y + 2.6f);
             var cara = Grupo(raiz, nombre);
             var testigo = cara.gameObject.AddComponent<TestigoDeSello>();
             testigo.sello = sello;
@@ -285,8 +323,8 @@ public static partial class ConstructorCrater
         for (int i = 0; i < 2; i++)
         {
             var plano = Plano(haz, $"Haz_{i}", k.hazDeLuz);
-            plano.transform.SetPositionAndRotation(new Vector3(arriba.x, 3.5f, arriba.z), Quaternion.Euler(0f, 45f + i * 90f, 0f));
-            plano.transform.localScale = new Vector3(2.6f, 7f, 1f);
+            plano.transform.SetPositionAndRotation(new Vector3(arriba.x, (7f + ProfundidadPlaza) / 2f, arriba.z), Quaternion.Euler(0f, 45f + i * 90f, 0f));
+            plano.transform.localScale = new Vector3(2.6f, 7f - ProfundidadPlaza, 1f);
         }
         return obelisco;
     }
