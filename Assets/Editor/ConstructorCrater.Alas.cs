@@ -139,8 +139,13 @@ public static partial class ConstructorCrater
     /// </summary>
     static void ConstruirPuertaDeLosSellos(Kit k, Transform g, Referencias refs, ReceptorDeLuz selloOeste, ReceptorDeLuz selloEste)
     {
-        refs.puertaSellos = CompuertaLosa(k, g, "Puerta_Sellos", new Vector3(0f, 2f, 27.15f), new Vector3(4f, 4f, 0.3f),
+        // la losa no toca el piso: por la rendija de abajo se escapa luz de lo que hay del otro
+        // lado. Se sabe que hay algo detrás, pero no qué (misterio)
+        refs.puertaSellos = CompuertaLosa(k, g, "Puerta_Sellos", new Vector3(0f, 2.06f, 27.15f), new Vector3(4f, 3.88f, 0.3f),
             new Vector3(0f, -4.4f, 0f), 3f, false, selloOeste, selloEste);
+        var rendija = Bloque(g, "Rendija_Sellos", new Vector3(0f, 0.01f, 27.15f), new Vector3(3.9f, 0.02f, 0.3f), k.luzEclipse);
+        Object.DestroyImmediate(rendija.GetComponent<Collider>());
+        Luz(g, "Luz_Detras_Sellos", new Vector3(0f, 0.5f, 28.6f), new Color(0.85f, 0.92f, 1f), 22f, 6f, true);
 
         // la abre la cinemática del segundo sello, a la vista (CinematicaDeSello)
         refs.puertaSellos.abrirSoloPorOrden = true;

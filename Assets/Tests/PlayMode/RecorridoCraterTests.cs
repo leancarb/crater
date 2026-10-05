@@ -55,17 +55,29 @@ public class RecorridoCraterTests
         var cuerpo = linterna.filtros[0];
         var hueco = linterna.filtros[1];
 
-        // Prólogo: salir de la capilla dispara el eclipse; por la puerta del cráter se baja caminando
+        // Prólogo: se arranca lejos, mirando la capilla. Caminando hacia ella la luna tapa el sol;
+        // en el mirador (el paso entre los cerros) llega la totalidad y la tierra se abre adelante
         Vector3 capilla = Buscar<Transform>("SpawnCapilla").position;
         Vector3 valle = Buscar<Transform>("SpawnValle").position;
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Prologo));
-        Assert.That(Vector3.Distance(jugador.transform.position, valle), Is.LessThan(1f), "el jugador no empieza en el valle, frente a la capilla");
-        // se acerca a la capilla: al cruzar el arco del atrio empieza el eclipse
-        yield return Caminar(Buscar<ZonaJugador>("Zona_Umbral_Capilla").transform.position);
+        Assert.That(Vector3.Distance(jugador.transform.position, valle), Is.LessThan(1f), "el jugador no empieza en el valle");
+        var cielo = Object.FindFirstObjectByType<CieloEclipse>();
+        yield return Caminar(valle + Vector3.back * 8f);
+        Assert.That(cielo.Progreso, Is.GreaterThan(0.2f), "caminar hacia la capilla no hizo avanzar el eclipse");
+        yield return Caminar(Buscar<ZonaJugador>("Zona_Mirador").transform.position);
         yield return Esperar(0.2f);
-        Assert.That(prologo.Reproduciendo, Is.True, "salir de la capilla no disparó la cinemática");
+        Assert.That(prologo.Reproduciendo, Is.True, "llegar al mirador no abrió el cráter");
         for (float t = 0f; t < 40f && prologo.Reproduciendo; t += Time.deltaTime) yield return null;
-        Assert.That(prologo.Reproduciendo, Is.False, "la cinemática del eclipse no terminó");
+        Assert.That(prologo.Reproduciendo, Is.False, "la apertura del cráter no terminó");
+        Assert.That(cielo.Progreso, Is.EqualTo(1f).Within(0.001f), "no llegó la totalidad");
+
+        // rodeando el cráter por el este (a 13 m de su centro) hasta la puerta, del lado de la capilla
+        Vector3 crater = Buscar<ZonaJugador>("Zona_Puerta_Crater").transform.position;
+        foreach (float grados in new[] { 70f, 30f, -10f, -50f, -80f })
+        {
+            float a = grados * Mathf.Deg2Rad;
+            yield return Caminar(crater + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 13.2f);
+        }
 
         // por la puerta del borde y la escalera, hasta el fondo del pozo (la Explanada)
         yield return Caminar(Buscar<Transform>("Puerta").position + Vector3.forward * 1.2f);

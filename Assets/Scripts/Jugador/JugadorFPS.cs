@@ -20,6 +20,8 @@ public class JugadorFPS : MonoBehaviour
 {
     [Header("Movimiento")]
     public float velocidad = 2.6f;
+    [Tooltip("Lo usa el prólogo mientras se abre el cráter: se puede mirar, pero no caminar.")]
+    public bool movimientoBloqueado;
     [Tooltip("Multiplica la velocidad mientras se mantiene Shift.")]
     public float multiplicadorCorrer = 2.2f;
     public float gravedad = -18f;
@@ -86,7 +88,8 @@ public class JugadorFPS : MonoBehaviour
 
     void Mover(float delta)
     {
-        Vector2 entrada = EntradaCrater.Movimiento();
+        // con el movimiento bloqueado (la tierra tiembla) se puede mirar pero no caminar
+        Vector2 entrada = movimientoBloqueado ? Vector2.zero : EntradaCrater.Movimiento();
         // la entrada (x, y) se convierte a una dirección en el mundo según hacia dónde mira el cuerpo
         float rapidez = velocidad * (EntradaCrater.Correr ? multiplicadorCorrer : 1f);
         Vector3 deseada = (transform.right * entrada.x + transform.forward * entrada.y) * rapidez;

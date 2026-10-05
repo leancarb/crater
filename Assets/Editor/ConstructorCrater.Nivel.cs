@@ -53,7 +53,8 @@ public static partial class ConstructorCrater
         public Transform tapaCrater, puertaValle;
         public Renderer[] contornoValle;
         public Renderer destelloValle;
-        public ZonaJugador zonaUmbralCapilla, zonaPuertaCrater;
+        public ZonaJugador zonaUmbralCapilla, zonaPuertaCrater, zonaMirador;
+        public Transform spawnValle;
 
         // final
         public Compuerta cierreCresta, puertaSellos, atajoOeste, atajoEste;
@@ -328,15 +329,19 @@ public static partial class ConstructorCrater
         refs.spawnCapilla.SetParent(g, false);
         refs.spawnCapilla.localPosition = new Vector3(0f, 0.05f, -4.5f);
 
-        // el jugador empieza afuera, en el valle, mirando la capilla de lejos (antes del borde
-        // del cráter, que todavía no existe). Al acercarse y cruzar el arco del atrio empieza el
-        // eclipse. En el epílogo despierta adentro (SpawnCapilla)
+        // el jugador empieza lejos, del otro lado del valle, mirando la capilla: es la meta. El
+        // sol está arriba de ella. Caminando hacia ella, la luna tapa el sol; en el mirador
+        // (el paso entre los dos cerros) llega la totalidad y la tierra se abre adelante, entre
+        // él y la capilla. Sin cinemática: la cámara es siempre suya (PrologoCapilla).
+        // En el epílogo despierta adentro de la capilla (SpawnCapilla)
         var spawnValle = new GameObject("SpawnValle").transform;
         spawnValle.SetParent(g, false);
-        spawnValle.localPosition = new Vector3(2.6f, 0.05f, 20.5f);
-        spawnValle.localRotation = Quaternion.LookRotation(new Vector3(-2.6f, 0f, -18.5f));   // hacia la fachada
+        spawnValle.localPosition = new Vector3(0f, 0.05f, 72f);
+        spawnValle.localRotation = Quaternion.LookRotation(Vector3.back);   // hacia la capilla
         refs.jugador.transform.SetPositionAndRotation(spawnValle.position, spawnValle.rotation);
-        // la cinemática arranca al salir del atrio por el arco, no apenas se cruza la puerta
+        refs.spawnValle = spawnValle;
+        refs.zonaMirador = Zona(g, "Zona_Mirador", g.TransformPoint(new Vector3(0f, 1.5f, 52f)), new Vector3(60f, 3f, 1.2f));
+        // el umbral del atrio: en el epílogo, salir por el arco cierra la demo
         refs.zonaUmbralCapilla = Zona(g, "Zona_Umbral_Capilla", g.TransformPoint(new Vector3(0f, 1.5f, 15.9f)), new Vector3(9f, 3f, 0.8f));
 
         ConstruirCraterDelValle(k, g, refs);
@@ -347,7 +352,8 @@ public static partial class ConstructorCrater
 
         var solGO = new GameObject("Sol_Epilogo");
         solGO.transform.SetParent(g, false);
-        solGO.transform.rotation = Quaternion.Euler(28f, 200f, 0f);
+        // de mañana, arriba de la capilla vista desde el camino: delante del jugador
+        solGO.transform.rotation = Quaternion.Euler(20f, 0f, 0f);
         refs.sol = solGO.AddComponent<Light>();
         refs.sol.type = LightType.Directional;
         // mañana en el prólogo; en el epílogo CieloEclipse lo baja al atardecer
@@ -593,6 +599,8 @@ public static partial class ConstructorCrater
 
         Asignar(prologo, "jugador", refs.jugador.GetComponent<JugadorFPS>());
         Asignar(prologo, "cielo", refs.cielo);
+        Asignar(prologo, "inicioCamino", refs.spawnValle);
+        Asignar(prologo, "mirador", refs.zonaMirador.transform);
         Asignar(prologo, "eclipse", eclipse);
         Asignar(prologo, "flujo", flujo);
         Asignar(prologo, "interfaz", interfaz);
@@ -633,7 +641,7 @@ public static partial class ConstructorCrater
         UnityEventTools.AddPersistentListener(refs.zonaCresta.alEntrar, new UnityAction(refs.cierreCresta.Abrir));
         UnityEventTools.AddPersistentListener(refs.zonaFinal.alEntrar, new UnityAction(eclipse.CerrarDemo));
         UnityEventTools.AddPersistentListener(adaptacion.alAdaptarse, new UnityAction(eclipse.AlCompletarAdaptacion));
-        UnityEventTools.AddPersistentListener(refs.zonaUmbralCapilla.alEntrar, new UnityAction(prologo.IniciarCinematica));
+        UnityEventTools.AddPersistentListener(refs.zonaMirador.alEntrar, new UnityAction(prologo.IniciarCinematica));
         // en el epílogo, salir del atrio también cierra la demo (en el prólogo CerrarDemo no hace nada)
         UnityEventTools.AddPersistentListener(refs.zonaUmbralCapilla.alEntrar, new UnityAction(eclipse.CerrarDemo));
         refs.zonaUmbralCapilla.unaVez = false;

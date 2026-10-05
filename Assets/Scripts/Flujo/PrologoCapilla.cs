@@ -7,24 +7,26 @@ using UnityEngine.Rendering;
 /// <summary>
 /// El comienzo: la capilla de día, el eclipse y el cráter que aparece en el valle.
 ///
-///  1. El jugador arranca en la capilla, libre, sin indicaciones.
-///  2. Al cruzar el umbral (zona) arranca la cinemática, sin control:
-///     mira al sol, la luna lo tapa, los pájaros se callan, la tierra del valle se
-///     abre en un pozo, el borde del cráter sube y en el borde destella una puerta.
-///  3. El pozo es el cráter de verdad: la Explanada está en el fondo. Al cruzar la
+///  1. El jugador arranca lejos, del otro lado del valle, mirando la capilla: es la meta.
+///     El sol está arriba de ella, delante del jugador.
+///  2. Mientras camina hacia la capilla, la luna va tapando el sol (sin cinemática: la
+///     cámara es siempre del jugador). Los pájaros se callan cerca de la totalidad.
+///  3. En el mirador, un paso angosto entre dos cerros que encuadra la capilla, llega la
+///     totalidad y, adelante, entre el jugador y la capilla, la tierra se abre: sube el
+///     borde del cráter y destella su puerta. Mientras tiembla, se puede mirar pero no caminar.
+///  4. El pozo es el cráter de verdad: la Explanada está en el fondo. Al cruzar la
 ///     puerta se baja caminando por una escalera hasta el fondo. No hay corte: la
 ///     luz, la niebla y el sonido pasan de a poco del valle al cráter.
 ///
-/// Guarda el ambiente del cráter tal como lo dejó el constructor y lo restaura
-/// al entrar. Después de verla una vez, la cinemática se salta con Espacio.
+/// Guarda el ambiente del cráter tal como lo dejó el constructor y lo restaura al entrar.
+/// La apertura del cráter se saltea con Espacio, Enter o A.
 ///
 /// CÓMO FUNCIONA
-/// Mientras dura la cinemática, JugadorFPS está apagado y este script mueve la cámara
-/// directamente. El cráter del valle existe en la escena desde el principio: sólo está
-/// escondido (el borde bajo tierra y una tapa de tierra sobre el pozo). "Revelarlo" es
-/// animar esas posiciones y escalas. Si ya se vio una vez (se guarda en PlayerPrefs),
-/// se puede saltar. La zona de entrada cubre todo el pozo: se baje por donde se baje,
-/// el ambiente cambia.
+/// Cada frame mide cuánto avanzó el jugador del inicio al mirador (o cuánto tiempo pasó)
+/// y le da ese progreso al cielo. El cráter del valle existe en la escena desde el
+/// principio: sólo está escondido (el borde bajo tierra y una tapa de tierra sobre el
+/// pozo). "Revelarlo" es animar esas posiciones y escalas. La zona de entrada cubre todo
+/// el pozo: se baje por donde se baje, el ambiente cambia.
 /// </summary>
 public class PrologoCapilla : MonoBehaviour
 {
@@ -64,13 +66,19 @@ public class PrologoCapilla : MonoBehaviour
     [Tooltip("El brillo de la puerta.")]
     [SerializeField] AudioSource sonidoDestello;
 
+    [Header("El camino: el eclipse avanza mientras el jugador camina hacia la capilla")]
+    [Tooltip("Donde empieza el jugador.")]
+    [SerializeField] Transform inicioCamino;
+    [Tooltip("El mirador entre los dos cerros: al llegar, totalidad y se abre el cráter adelante.")]
+    [SerializeField] Transform mirador;
+    [Tooltip("Hasta dónde llega el eclipse sólo caminando (el resto, al llegar al mirador).")]
+    [SerializeField] float progresoAntesDelMirador = 0.88f;
+    [Tooltip("Si el jugador no camina, el eclipse avanza igual: llega al mirador en estos segundos, y se abre el cráter al doble.")]
+    [SerializeField] float segundosHastaEclipse = 50f;
+
     [Header("Tiempos (segundos)")]
-    [SerializeField] float mirarAlSol = 2.5f;
-    [SerializeField] float duracionEclipse = 7f;
-    [Tooltip("Si el jugador no cruza el arco del atrio, el eclipse empieza solo después de estos segundos (0 = nunca).")]
-    [SerializeField] float segundosHastaEclipse = 45f;
+    [SerializeField] float duracionTotalidad = 2.5f;
     [SerializeField] float pausaTotalidad = 1.2f;
-    [SerializeField] float bajarMirada = 2.5f;
     [SerializeField] float revelado = 4f;
     [SerializeField] float duracionDestello = 2.2f;
     [SerializeField] float pausaFinal = 1f;
@@ -107,7 +115,7 @@ public class PrologoCapilla : MonoBehaviour
     bool cinematicaHecha;
     bool entrando;
     bool saltar;
-    float tiempoAntesDelEclipse;
+    float tiempoAntesDelEclipse, avance;
     MaterialPropertyBlock bloque;
     static readonly int IdEmision = Shader.PropertyToID("_EmissionColor");
     static readonly int IdColor = Shader.PropertyToID("_BaseColor");
@@ -159,68 +167,81 @@ public class PrologoCapilla : MonoBehaviour
         // se puede saltear siempre, sin aviso en pantalla (Espacio, Enter o A)
         if (Reproduciendo && EntradaCrater.Saltar) saltar = true;
 
-        // si el jugador no se acerca a la capilla, el eclipse llega igual
-        if (Activo && !cinematicaHecha && segundosHastaEclipse > 0f)
-        {
-            tiempoAntesDelEclipse += Time.deltaTime;
-            if (tiempoAntesDelEclipse >= segundosHastaEclipse) IniciarCinematica();
-        }
+        if (Activo && !cinematicaHecha) AvanzarEclipse();
     }
 
-    // ---------------------------------------------------------------- cinemática
+    // ---------------------------------------------------------------- el camino y el eclipse
 
-    /// <summary>Conectado a la zona del umbral de la capilla.</summary>
+    /// <summary>
+    /// Sin cinemática: el sol está sobre la capilla, delante del jugador, y la luna lo va
+    /// tapando a medida que camina hacia ella (o con el tiempo, si se queda quieto). Nunca
+    /// retrocede. Cerca de la totalidad se callan los pájaros y entra el grave.
+    /// </summary>
+    void AvanzarEclipse()
+    {
+        float porCamino = 0f;
+        if (jugador != null && inicioCamino != null && mirador != null)
+        {
+            Vector3 recorrido = mirador.position - inicioCamino.position;
+            recorrido.y = 0f;
+            Vector3 hecho = jugador.transform.position - inicioCamino.position;
+            hecho.y = 0f;
+            porCamino = Mathf.Clamp01(Vector3.Dot(hecho, recorrido.normalized) / Mathf.Max(0.01f, recorrido.magnitude));
+        }
+        tiempoAntesDelEclipse += Time.deltaTime;
+        float porTiempo = segundosHastaEclipse > 0f ? tiempoAntesDelEclipse / segundosHastaEclipse : 0f;
+        avance = Mathf.Max(avance, Mathf.Clamp01(Mathf.Max(porCamino, porTiempo)));
+        float k = avance * progresoAntesDelMirador;
+        if (cielo != null) cielo.Progreso = k;
+        if (pajaros != null) pajaros.volume = volumenPajaros * (1f - Mathf.Clamp01((k - 0.7f) / 0.15f));
+        if (graveEclipse != null)
+        {
+            if (k > 0.75f && !graveEclipse.isPlaying) { graveEclipse.volume = 0f; graveEclipse.Play(); }
+            if (graveEclipse.isPlaying) graveEclipse.volume = volumenGrave * 0.5f * Mathf.Clamp01((k - 0.75f) / 0.13f);
+        }
+        // si no se acerca nunca, el cráter se abre igual (donde esté, mirando a la capilla)
+        if (porTiempo >= 2f) IniciarCinematica();
+    }
+
+    /// <summary>Conectado a la zona del mirador (y por las dudas al umbral del atrio).</summary>
     public void IniciarCinematica()
     {
         if (!Activo || cinematicaHecha) return;
         cinematicaHecha = true;
-        StartCoroutine(Cinematica());
+        StartCoroutine(Revelacion());
     }
 
     /// <summary>
-    /// La cinemática en pasos. Cada paso es un Animar(duración, k => ...), donde k va
-    /// de 0 a 1 a lo largo de la duración. Si el jugador salta, cada Animar termina de
-    /// golpe con k = 1, así el estado final siempre queda bien aplicado.
+    /// En el mirador: la totalidad y, adelante, entre el jugador y la capilla, la tierra se abre
+    /// en el cráter y destella su puerta. La cámara es del jugador todo el tiempo: sólo no puede
+    /// caminar mientras tiembla la tierra. Cada paso es un Animar(duración, k => ...); si el
+    /// jugador saltea, cada uno termina de golpe con k = 1 y el estado final queda bien aplicado.
     /// </summary>
-    IEnumerator Cinematica()
+    IEnumerator Revelacion()
     {
         Reproduciendo = true;
         saltar = false;
-        if (jugador != null) jugador.enabled = false;
+        if (jugador != null) { jugador.ReiniciarMovimiento(); jugador.movimientoBloqueado = true; }
         Transform camara = jugador != null ? jugador.camara : Camera.main.transform;
 
-        // 1. la mirada sube al sol
-        Quaternion desde = camara.rotation;
-        Quaternion haciaSol = Quaternion.LookRotation(cielo.DireccionSol);
-        yield return Animar(mirarAlSol, k => camara.rotation = Quaternion.Slerp(desde, haciaSol, Suave(k)));
-
-        // 2. la luna tapa el sol; los pájaros se callan de golpe cerca de la totalidad
+        // 1. totalidad
+        float desde = cielo != null ? cielo.Progreso : 0f;
         float volPajaros = pajaros != null ? pajaros.volume : 0f;
-        if (graveEclipse != null) { graveEclipse.volume = 0f; graveEclipse.Play(); }
-        yield return Animar(duracionEclipse, k =>
+        if (graveEclipse != null && !graveEclipse.isPlaying) { graveEclipse.volume = 0f; graveEclipse.Play(); }
+        float volGrave = graveEclipse != null ? graveEclipse.volume : 0f;
+        yield return Animar(duracionTotalidad, k =>
         {
-            cielo.Progreso = k;
-            if (pajaros != null) pajaros.volume = volPajaros * (1f - Mathf.Clamp01((k - 0.78f) / 0.06f));
-            if (graveEclipse != null) graveEclipse.volume = volumenGrave * Mathf.Clamp01((k - 0.8f) / 0.2f);
+            if (cielo != null) cielo.Progreso = Mathf.Lerp(desde, 1f, Suave(k));
+            if (pajaros != null) pajaros.volume = volPajaros * (1f - k);
+            if (graveEclipse != null) graveEclipse.volume = Mathf.Lerp(volGrave, volumenGrave, k);
         });
-
-        // 3. totalidad
         yield return Esperar(pausaTotalidad);
 
-        // 4. la mirada baja al valle mientras el cráter aparece
-        desde = camara.rotation;
-        Vector3 objetivo = puerta != null ? puerta.position + Vector3.up * 1.2f : camara.position + Vector3.forward;
-        Quaternion haciaCrater = Quaternion.LookRotation(objetivo - camara.position);
-        float total = Mathf.Max(bajarMirada, revelado);
+        // 2. adelante, la tierra se abre: sube el borde del cráter
         if (sonidoRevelado != null && !saltar) sonidoRevelado.Play();
-        yield return Animar(total, k =>
-        {
-            float t = k * total;
-            camara.rotation = Quaternion.Slerp(desde, haciaCrater, Suave(Mathf.Clamp01(t / bajarMirada)));
-            AplicarRevelado(Mathf.Clamp01(t / revelado));
-        });
+        yield return Animar(revelado, k => AplicarRevelado(k));
 
-        // 5. el reflejo de la puerta: sube rápido, baja lento
+        // 3. el reflejo de la puerta: sube rápido, baja lento
         if (sonidoDestello != null && !saltar) sonidoDestello.Play();
         yield return Animar(duracionDestello, k =>
         {
@@ -232,18 +253,14 @@ public class PrologoCapilla : MonoBehaviour
         yield return Esperar(pausaFinal);
 
         // estado final, también si se saltó
-        cielo.Progreso = 1f;
+        if (cielo != null) cielo.Progreso = 1f;
         if (pajaros != null) { pajaros.volume = 0f; pajaros.Stop(); }
         if (graveEclipse != null) { if (!graveEclipse.isPlaying) graveEclipse.Play(); graveEclipse.volume = volumenGrave; }
         AplicarRevelado(1f);
         FijarDestello(0f, camara);
         FijarBrilloPuerta(brilloPuertaReposo);
 
-        if (jugador != null)
-        {
-            jugador.MirarHacia(saltar ? objetivo : camara.position + camara.forward);
-            jugador.enabled = true;
-        }
+        if (jugador != null) jugador.movimientoBloqueado = false;
         PlayerPrefs.SetInt(ClaveVista, 1);
         PlayerPrefs.Save();
         Reproduciendo = false;

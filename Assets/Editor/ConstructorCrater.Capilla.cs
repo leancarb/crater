@@ -179,7 +179,8 @@ public static partial class ConstructorCrater
         // el terreno jugable: una sola malla con el agujero del cráter (es también su collider)
         var terreno = new GameObject("Terreno");
         terreno.transform.SetParent(paisaje, false);
-        var malla = MallaSueloConHueco("Terreno_ConHueco", -30f, 30f, 5f, 55f, -0.1f, CraterEnLaCapilla, RadioPozo + 0.3f);
+        // (llega hasta z 80: el camino del prólogo arranca del otro lado del cráter)
+        var malla = MallaSueloConHueco("Terreno_ConHueco", -30f, 30f, 5f, 80f, -0.1f, CraterEnLaCapilla, RadioPozo + 0.3f);
         terreno.AddComponent<MeshFilter>().sharedMesh = malla;
         terreno.AddComponent<MeshRenderer>().sharedMaterial = k.tierra;
         terreno.AddComponent<MeshCollider>().sharedMesh = malla;
@@ -193,10 +194,10 @@ public static partial class ConstructorCrater
             Object.DestroyImmediate(llano.GetComponent<Collider>());
             llano.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
         }
-        Llano("Llano_Norte", -210f, 210f, 50f, 240f);
+        Llano("Llano_Norte", -210f, 210f, 75f, 240f);
         Llano("Llano_Sur", -210f, 210f, -180f, 10f);
-        Llano("Llano_Oeste", -210f, -25f, 10f, 50f);
-        Llano("Llano_Este", 25f, 210f, 10f, 50f);
+        Llano("Llano_Oeste", -210f, -25f, 10f, 75f);
+        Llano("Llano_Este", 25f, 210f, 10f, 75f);
 
         var azar = new System.Random(23);
         float Azar(float min, float max) => min + (float)azar.NextDouble() * (max - min);
@@ -214,8 +215,49 @@ public static partial class ConstructorCrater
                 if (!colision) Object.DestroyImmediate(pieza.GetComponent<Collider>());
             }
         }
-        Cerro("Cerro_A", new Vector3(-16f, 0f, 50f), 22f, 8f, 7f, true);
-        Cerro("Cerro_B", new Vector3(14f, 0f, 53f), 20f, 6f, 7f, true);
+        // los dos cerros del mirador: dejan un paso angosto en el medio (el camino), que
+        // encuadra la capilla con el sol arriba. Ahí llega la totalidad
+        Cerro("Cerro_A", new Vector3(-20.5f, 0f, 55f), 20f, 8f, 7f, true);
+        Cerro("Cerro_B", new Vector3(18.5f, 0f, 57f), 18f, 6f, 7f, true);
+        // detrás del inicio el valle sigue: cerros altos que se ven (sin colisión, apoyados arriba
+        // del nivel, que está abajo) y paredes invisibles en el borde del terreno
+        void CerroAlto(string nombre, Vector3 centro, float ancho, float alto, float fondo)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                float h = alto * Azar(0.55f, 1f);
+                var pieza = CajaLocal(paisaje, $"{nombre}_{i}",
+                    centro + new Vector3(Azar(-ancho, ancho) * 0.3f, h / 2f - 0.3f, Azar(-fondo, fondo) * 0.3f),
+                    new Vector3(ancho * Azar(0.6f, 1f), h, fondo * Azar(0.6f, 1f)), i == 1 ? k.huella : k.tierra);
+                pieza.transform.localRotation = Quaternion.Euler(0f, Azar(-30f, 30f), 0f);
+                Object.DestroyImmediate(pieza.GetComponent<Collider>());
+            }
+        }
+        CerroAlto("Cerro_Fondo", new Vector3(0f, 0f, 84f), 40f, 9f, 6f);
+        CerroAlto("Cerro_Fondo_Izq", new Vector3(-27f, 0f, 70f), 8f, 8f, 22f);
+        CerroAlto("Cerro_Fondo_Der", new Vector3(27f, 0f, 70f), 8f, 7f, 22f);
+        void ParedInvisible(string nombre, Vector3 centro, Vector3 tamanio)
+        {
+            var pared = new GameObject(nombre);
+            pared.transform.SetParent(paisaje, false);
+            pared.transform.localPosition = centro;
+            pared.AddComponent<BoxCollider>().size = tamanio;
+        }
+        ParedInvisible("Borde_Norte", new Vector3(0f, 3f, 79f), new Vector3(60f, 6f, 1f));
+        ParedInvisible("Borde_Norte_Oeste", new Vector3(-29.5f, 3f, 66f), new Vector3(1f, 6f, 27f));
+        ParedInvisible("Borde_Norte_Este", new Vector3(29.5f, 3f, 66f), new Vector3(1f, 6f, 27f));
+
+        // el camino del inicio al mirador, y dos apachetas (pilas de piedra) que marcan el paso
+        var senda = CajaLocal(paisaje, "Senda_Norte", new Vector3(0f, -0.09f, 63f), new Vector3(1.4f, 0.02f, 18f), k.piedraCapilla);
+        Object.DestroyImmediate(senda.GetComponent<Collider>());
+        foreach (float lado in new[] { -1f, 1f })
+            for (int i = 0; i < 3; i++)
+            {
+                float t = 0.75f - i * 0.2f;
+                var piedra = CajaLocal(paisaje, $"Apacheta_{(lado < 0f ? "Izq" : "Der")}_{i}", new Vector3(lado * 2.6f, 0.2f + i * 0.42f, 55f),
+                    new Vector3(t, 0.45f, t), k.piedraCapilla);
+                piedra.transform.localRotation = Quaternion.Euler(0f, i * 27f + lado * 10f, 0f);
+            }
         Cerro("Cerro_C", new Vector3(-31f, 0f, 30f), 7f, 9f, 40f, true);
         Cerro("Cerro_D", new Vector3(31f, 0f, 28f), 7f, 7f, 40f, true);
         Cerro("Cerro_E", new Vector3(0f, 0f, -15f), 34f, 5f, 6f, true);
@@ -238,17 +280,17 @@ public static partial class ConstructorCrater
             Vector3.Distance(p, CraterEnLaCapilla) > RadioPozo + 3.5f &&     // cráter
             !(Mathf.Abs(p.x) < 6f && p.z < 17f);                            // atrio
         int cardones = 0, intentos = 0;
-        while (cardones < 16 && intentos++ < 200)
+        while (cardones < 22 && intentos++ < 260)
         {
-            var p = new Vector3(Azar(-26f, 26f), 0f, Azar(-6f, 50f));
+            var p = new Vector3(Azar(-26f, 26f), 0f, Azar(-6f, 76f));
             if (!Libre(p)) continue;
             Cardon(k, paisaje, $"Cardon_{cardones++:00}", p, Azar(2.2f, 4.2f), azar);
         }
         int matas = 0;
         intentos = 0;
-        while (matas < 60 && intentos++ < 400)
+        while (matas < 80 && intentos++ < 520)
         {
-            var p = new Vector3(Azar(-28f, 28f), 0f, Azar(-8f, 54f));
+            var p = new Vector3(Azar(-28f, 28f), 0f, Azar(-8f, 77f));
             if (!Libre(p)) continue;
             PajaBrava(k, paisaje, $"Paja_{matas++:00}", p, azar);
         }
