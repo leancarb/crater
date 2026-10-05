@@ -187,6 +187,16 @@ public static partial class ConstructorCrater
         terreno.AddComponent<MeshCollider>().sharedMesh = malla;
         Estatico(terreno);
 
+        // más allá, de donde se arranca: lomas. Desde la loma del inicio se ve la capilla a lo
+        // lejos; bajando, las lomas la tapan y uno se pierde un poco, hasta que reaparece
+        var relieve = new GameObject("Terreno_Relieve");
+        relieve.transform.SetParent(paisaje, false);
+        var mallaRelieve = MallaRelieve("Terreno_Relieve", -45f, 45f, 80f, 165f, -0.1f);
+        relieve.AddComponent<MeshFilter>().sharedMesh = mallaRelieve;
+        relieve.AddComponent<MeshRenderer>().sharedMaterial = k.tierra;
+        relieve.AddComponent<MeshCollider>().sharedMesh = mallaRelieve;
+        Estatico(relieve);
+
         // el piso sigue más allá, sin colisión: un marco alrededor del terreno, metido 5 m
         // debajo de él para que no queden rendijas. Abajo está el nivel: no hace sombra
         void Llano(string nombre, float x0, float x1, float z0, float z1)
@@ -234,7 +244,11 @@ public static partial class ConstructorCrater
                 if (!colision) Object.DestroyImmediate(pieza.GetComponent<Collider>());
             }
         }
-        CerroAlto("Cerro_Fondo", new Vector3(0f, 0f, 84f), 40f, 9f, 6f);
+        // alrededor de las lomas del inicio: cerros altos a los costados y atrás
+        foreach (float lado in new[] { -1f, 1f })
+            foreach (float z in new[] { 98f, 128f, 156f })
+                CerroAlto($"Cerro_Lomas_{(lado < 0f ? "Izq" : "Der")}_{z:0}", new Vector3(lado * Azar(52f, 58f), 0f, z), 14f, Azar(9f, 14f), 26f);
+        CerroAlto("Cerro_Lomas_Fondo", new Vector3(0f, 0f, 178f), 70f, 13f, 10f);
         CerroAlto("Cerro_Fondo_Izq", new Vector3(-27f, 0f, 70f), 8f, 8f, 22f);
         CerroAlto("Cerro_Fondo_Der", new Vector3(27f, 0f, 70f), 8f, 7f, 22f);
         void ParedInvisible(string nombre, Vector3 centro, Vector3 tamanio)
@@ -244,7 +258,12 @@ public static partial class ConstructorCrater
             pared.transform.localPosition = centro;
             pared.AddComponent<BoxCollider>().size = tamanio;
         }
-        ParedInvisible("Borde_Norte", new Vector3(0f, 3f, 79f), new Vector3(60f, 6f, 1f));
+        // (las lomas: de x ±44 y hasta z 165)
+        ParedInvisible("Borde_Hombro_Oeste", new Vector3(-36.75f, 3f, 79.5f), new Vector3(15.5f, 6f, 1f));
+        ParedInvisible("Borde_Hombro_Este", new Vector3(36.75f, 3f, 79.5f), new Vector3(15.5f, 6f, 1f));
+        ParedInvisible("Borde_Lomas_Oeste", new Vector3(-44f, 5f, 122.5f), new Vector3(1f, 10f, 86f));
+        ParedInvisible("Borde_Lomas_Este", new Vector3(44f, 5f, 122.5f), new Vector3(1f, 10f, 86f));
+        ParedInvisible("Borde_Lomas_Fondo", new Vector3(0f, 5f, 165f), new Vector3(89f, 10f, 1f));
         ParedInvisible("Borde_Norte_Oeste", new Vector3(-29.5f, 3f, 66f), new Vector3(1f, 6f, 27f));
         ParedInvisible("Borde_Norte_Este", new Vector3(29.5f, 3f, 66f), new Vector3(1f, 6f, 27f));
 
@@ -273,7 +292,8 @@ public static partial class ConstructorCrater
             Vector3 mundo = g.TransformPoint(pos);
             float alcance = Mathf.Max(ancho, fondo) * 0.6f;
             bool sobreElNivel = Mathf.Abs(mundo.x) < 41f + alcance && mundo.z > -50f - alcance && mundo.z < 104f + alcance;
-            if (!sobreElNivel) Cerro($"Horizonte_{ang:000}", pos, ancho, alto, fondo, false);
+            bool sobreLasLomas = Mathf.Abs(pos.x) < 70f + alcance && pos.z > 70f - alcance && pos.z < 185f + alcance;
+            if (!sobreElNivel && !sobreLasLomas) Cerro($"Horizonte_{ang:000}", pos, ancho, alto, fondo, false);
         }
 
         // cardones y paja brava, fuera del camino y del cráter
@@ -296,6 +316,86 @@ public static partial class ConstructorCrater
             if (!Libre(p)) continue;
             PajaBrava(k, paisaje, $"Paja_{matas++:00}", p, azar);
         }
+        VestirLomas(k, paisaje);
+    }
+
+    /// <summary>Cardones, paja y apachetas sobre las lomas del inicio (a la altura del relieve).</summary>
+    static void VestirLomas(Kit k, Transform paisaje)
+    {
+        var azar = new System.Random(57);
+        float Azar(float min, float max) => min + (float)azar.NextDouble() * (max - min);
+        Vector3 Sobre(float x, float z) => new Vector3(x, AlturaRelieve(x, z) - 0.1f, z);
+        for (int i = 0, n = 0; n < 20 && i < 200; i++)
+        {
+            float x = Azar(-40f, 40f), z = Azar(84f, 160f);
+            if (Mathf.Abs(x) < 4f) continue;   // la línea del inicio a la capilla
+            Cardon(k, paisaje, $"Cardon_Loma_{n++:00}", Sobre(x, z), Azar(2.2f, 4.4f), azar);
+        }
+        for (int i = 0; i < 70; i++)
+            PajaBrava(k, paisaje, $"Paja_Loma_{i:00}", Sobre(Azar(-42f, 42f), Azar(82f, 162f)), azar);
+        // apachetas chicas que van marcando por dónde se baja, entre las lomas
+        var marcas = new[] { new Vector2(2.4f, 141f), new Vector2(-4.5f, 126f), new Vector2(4.8f, 111f), new Vector2(-2.6f, 96f) };
+        for (int m = 0; m < marcas.Length; m++)
+            for (int i = 0; i < 3; i++)
+            {
+                float t = 0.6f - i * 0.16f;
+                var piedra = CajaLocal(paisaje, $"Apacheta_Loma_{m}_{i}", Sobre(marcas[m].x, marcas[m].y) + Vector3.up * (0.2f + i * 0.36f),
+                    new Vector3(t, 0.38f, t), k.piedraCapilla);
+                piedra.transform.localRotation = Quaternion.Euler(0f, i * 31f + m * 17f, 0f);
+            }
+    }
+
+    /// <summary>
+    /// La altura de las lomas del inicio (local de la capilla): un ondulado suave y unas
+    /// lomas redondas que tapan la vista desde los bajos. Vale 0 en los bordes (z 80, x ±45,
+    /// z 165), donde se junta con el terreno plano y los llanos.
+    /// </summary>
+    static float AlturaRelieve(float x, float z)
+    {
+        float borde = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(80f, 94f, z))
+                    * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(165f, 155f, z))
+                    * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(45f, 36f, Mathf.Abs(x)));
+        float h = 0.7f + 0.35f * (Mathf.Sin(x * 0.21f + z * 0.13f) + Mathf.Sin(z * 0.17f - x * 0.09f));
+        // (x, z, alto, radio): la del inicio, una en el medio del camino que tapa la capilla
+        // desde los bajos, y otras a los costados que obligan a rodear
+        var lomas = new[]
+        {
+            new Vector4(0f, 152f, 2.2f, 9f), new Vector4(0f, 118f, 4.2f, 7f),
+            new Vector4(-11f, 132f, 4.5f, 8f), new Vector4(12f, 140f, 3.8f, 8f),
+            new Vector4(13f, 104f, 4.5f, 8f), new Vector4(-12f, 98f, 3.5f, 7f),
+            new Vector4(-24f, 115f, 5f, 10f), new Vector4(25f, 122f, 5f, 10f), new Vector4(3f, 91f, 1.6f, 5f),
+        };
+        foreach (var l in lomas)
+            h += l.z * Mathf.Exp(-((x - l.x) * (x - l.x) + (z - l.y) * (z - l.y)) / (l.w * l.w));
+        return Mathf.Max(0f, h) * borde;
+    }
+
+    /// <summary>Las lomas como malla facetada: una grilla de ~3 m con los vértices de adentro corridos.</summary>
+    static Mesh MallaRelieve(string nombre, float x0, float x1, float z0, float z1, float y)
+    {
+        var azar = new System.Random(61);
+        float Azar() => (float)azar.NextDouble() - 0.5f;
+        int nx = Mathf.CeilToInt((x1 - x0) / 3f), nz = Mathf.CeilToInt((z1 - z0) / 3f);
+        var p = new Vector3[nx + 1, nz + 1];
+        for (int i = 0; i <= nx; i++)
+            for (int j = 0; j <= nz; j++)
+            {
+                float x = Mathf.Lerp(x0, x1, (float)i / nx), z = Mathf.Lerp(z0, z1, (float)j / nz);
+                // el borde queda fijo (y recto): ahí se junta con el terreno plano
+                if (i > 0 && i < nx && j > 0 && j < nz) { x += Azar() * 1.3f; z += Azar() * 1.3f; }
+                p[i, j] = new Vector3(x, y + AlturaRelieve(x, z), z);
+            }
+        var vertices = new System.Collections.Generic.List<Vector3>();
+        var uvs = new System.Collections.Generic.List<Vector2>();
+        for (int i = 0; i < nx; i++)
+            for (int j = 0; j < nz; j++)
+            {
+                // en este orden las caras quedan boca arriba
+                Vector3 a = p[i, j], b = p[i, j + 1], c = p[i + 1, j + 1], d = p[i + 1, j];
+                Triangulo(vertices, uvs, a, b, c, PixelDeFaceta((a + b + c) / 3f));
+                Triangulo(vertices, uvs, a, c, d, PixelDeFaceta((a + c + d) / 3f));
+            }
+        return GuardarMalla(CrearMalla(nombre, vertices, uvs));
     }
 
     static void Cardon(Kit k, Transform padre, string nombre, Vector3 pie, float alto, System.Random azar)

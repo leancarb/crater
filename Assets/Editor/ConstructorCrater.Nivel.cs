@@ -202,18 +202,20 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_Corredor_Izq", -2.3f, -0.3f, 68.5f, -2, 6, 75, k.basalto);
         Caja(g, "Muro_Corredor_Der", 2, -0.3f, 68.5f, 2.3f, 6, 75, k.basalto);
         Caja(g, "Techo_Corredor", -2.3f, 6, 68.5f, 2.3f, 6.3f, 75, k.techo);
-        // dos tabiques en zigzag y sin luz: por un momento no se ve hacia dónde se va (perderse
-        // un poco); al salir se abre la Cresta de golpe
-        Caja(g, "Tabique_Corredor_A", -2, -0.3f, 70.3f, 0.8f, 6, 70.6f, k.basalto);
-        Caja(g, "Tabique_Corredor_B", -0.8f, -0.3f, 72.4f, 2, 6, 72.7f, k.basalto);
+        // (el "perderse un poco" quedó al principio, en las lomas del valle.) Al fondo del
+        // corredor, en el umbral de la Cresta, una luz pálida llama desde la antesala
+        Luz(g, "Luz_Llamado_Cresta", new Vector3(0f, 2.2f, 76.2f), new Color(0.85f, 0.9f, 1f), 35f, 7f, false);
+        var umbralCresta = Bloque(g, "Umbral_Cresta_Luz", new Vector3(0f, 0.01f, 74.85f), new Vector3(3.8f, 0.02f, 0.3f), k.luzEclipse);
+        Object.DestroyImmediate(umbralCresta.GetComponent<Collider>());
         Caja(g, "Cierre_Hondonada_Izq", -6.3f, -0.3f, 68.5f, -2, 6, 68.8f, k.basalto);
         Caja(g, "Cierre_Hondonada_Der", 2, -0.3f, 68.5f, 6.3f, 6, 68.8f, k.basalto);
 
         Caja(g, "Piso_Cresta", -12, -0.3f, 75, 12, 0, 99, k.piso);
         Caja(g, "Muro_Cresta_Izq", -12.3f, -0.3f, 75, -12, 8, 99, k.basalto);
         Caja(g, "Muro_Cresta_Der", 12, -0.3f, 75, 12.3f, 8, 99, k.basaltoMedio);
-        // el fondo es una pared pulida: devuelve el reflejo del propio foco
-        Caja(g, "Muro_Cresta_Fondo", -12.3f, -0.3f, 99, 12.3f, 8, 99.3f, k.espejo);
+        // (el reflejo del foco lo hace ParedEspejo: si la piedra fuera pulida, la luz de la sala
+        // dejaba un punto azul brillante en el fondo)
+        Caja(g, "Muro_Cresta_Fondo", -12.3f, -0.3f, 99, 12.3f, 8, 99.3f, k.basalto);
         Caja(g, "Muro_Cresta_Frente_Izq", -12.3f, -0.3f, 74.7f, -2, 8, 75, k.basalto);
         Caja(g, "Muro_Cresta_Frente_Der", 2, -0.3f, 74.7f, 12.3f, 8, 75, k.basalto);
         Caja(g, "Dintel_Corredor", -2, 6, 74.7f, 2, 8, 75, k.basalto);
@@ -343,7 +345,8 @@ public static partial class ConstructorCrater
         // En el epílogo despierta adentro de la capilla (SpawnCapilla)
         var spawnValle = new GameObject("SpawnValle").transform;
         spawnValle.SetParent(g, false);
-        spawnValle.localPosition = new Vector3(0f, 0.05f, 72f);
+        // en la loma del inicio, lejos (a casi 100 m del mirador): desde ahí se ve la capilla
+        spawnValle.localPosition = new Vector3(0f, AlturaRelieve(0f, 150f) - 0.05f, 150f);
         spawnValle.localRotation = Quaternion.LookRotation(Vector3.back);   // hacia la capilla
         refs.jugador.transform.SetPositionAndRotation(spawnValle.position, spawnValle.rotation);
         refs.spawnValle = spawnValle;

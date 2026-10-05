@@ -74,7 +74,7 @@ public class PrologoCapilla : MonoBehaviour
     [Tooltip("Hasta dónde llega el eclipse sólo caminando (el resto, al llegar al mirador).")]
     [SerializeField] float progresoAntesDelMirador = 0.88f;
     [Tooltip("Si el jugador no camina, el eclipse avanza igual: llega al mirador en estos segundos, y se abre el cráter al doble.")]
-    [SerializeField] float segundosHastaEclipse = 50f;
+    [SerializeField] float segundosHastaEclipse = 80f;
 
     [Header("Tiempos (segundos)")]
     [SerializeField] float duracionTotalidad = 2.5f;

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.Events;
 using UnityEngine;
+using UnityEngine.Events;
 
 /// <summary>
 /// El corazón del recorrido: una rotonda con dos alas que se hacen en cualquier
@@ -61,7 +63,8 @@ public static partial class ConstructorCrater
     /// orilla de donde se viene, con una luz cálida y un mural que sólo se ve desde ahí (lo
     /// que se gana por caerse). Una escalera de verdad sube por un hueco del piso y deja al
     /// jugador antes del desafío, de cara a intentarlo otra vez; arriba de la escalera, una
-    /// luz marca la salida desde abajo.
+    /// luz marca la salida desde abajo. Desde arriba el hueco no se ve: lo tapa una losa al ras
+    /// que sólo se corre cuando se llega al pie de la escalera desde la gruta.
     /// 'fondo': la planta de la gruta (x0, z0, x1, z1). La escalera arranca en 'pie' (al nivel
     /// del fondo) y sube hacia 'haciaArriba' (x o z, horizontal). El hueco que deja en el piso
     /// de arriba lo devuelve 'HuecoDeEscalera' (el piso se arma con PisoConHueco).
@@ -91,21 +94,30 @@ public static partial class ConstructorCrater
         var rampa = Rampa(escalera, $"Red_{nombre}_Rampa_Invisible", abajo, arriba, AnchoEscaleraRed, k.piedra);
         Object.DestroyImmediate(rampa.GetComponent<MeshRenderer>());
 
-        // un pretil bajo alrededor del hueco del piso, salvo por donde se sale
-        Vector3 medioHueco = (abajo + arriba) / 2f;
-        Vector3 ladoLargo = lateral * (AnchoEscaleraRed / 2f + 0.08f);
-        foreach (float s in new[] { 1f, -1f })
-        {
-            // sólo del lado abierto (el otro es la pared de la sala): se prueba si toca la gruta
-            Vector3 c = new Vector3(medioHueco.x, 0.45f, medioHueco.z) + ladoLargo * s;
-            if (!fondo.Contains(new Vector2(c.x, c.z))) continue;
-            Bloque(escalera, $"Pretil_{(s > 0f ? "A" : "B")}", c, Abs(haciaArriba * LargoEscaleraRed + lateral * 0.16f) + Vector3.up * 0.9f, k.basaltoMedio);
-        }
-        Vector3 fin = new Vector3(pie.x, 0.45f, pie.z) - haciaArriba * 0.08f;
-        Bloque(escalera, "Pretil_Pie", fin, Abs(haciaArriba * 0.16f + lateral * (AnchoEscaleraRed + 0.32f)) + Vector3.up * 0.9f, k.basaltoMedio);
+        // el hueco del piso lo tapa una losa al ras: desde arriba no se ve ninguna escalera (si
+        // no, parecía el camino). Al llegar al pie de la escalera desde la gruta, la losa se
+        // corre de costado, por debajo del piso de la sala, y queda abierta
+        Vector3 haciaLaSala = lateral;
+        Vector3 medio = (abajo + arriba) / 2f;
+        if (!fondo.Contains(new Vector2(medio.x + lateral.x * 1.3f, medio.z + lateral.z * 1.3f))) haciaLaSala = -lateral;
+        var raiz = new GameObject($"Red_{nombre}_Tapa");
+        raiz.transform.SetParent(red, false);
+        raiz.transform.position = new Vector3(medio.x, -0.17f, medio.z);
+        Bloque(raiz.transform, "Losa", raiz.transform.position,
+            Abs(haciaArriba * (LargoEscaleraRed + 0.04f) + lateral * (AnchoEscaleraRed + 0.04f)) + Vector3.up * 0.3f, k.piso, false);
+        var sonido = raiz.AddComponent<AudioSource>();
+        ConfigurarAudio(sonido, k.audio.compuerta, 0.7f, false, true);
+        var tapa = raiz.AddComponent<Compuerta>();
+        tapa.desplazamiento = haciaLaSala * (AnchoEscaleraRed + 0.15f) + Vector3.down * 0.14f;
+        tapa.duracion = 1.2f;
+        tapa.sonido = sonido;
+        var zona = Zona(red, $"Zona_Red_{nombre}_Escalera", new Vector3(pie.x, FondoRed + 1f, pie.z) - haciaArriba * 0.6f,
+            Abs(haciaArriba * 1.6f + lateral * 2.4f) + Vector3.up * 2f);
+        UnityEventTools.AddPersistentListener(zona.alEntrar, new UnityAction(tapa.Abrir));
 
         // la luz que marca la salida (se ve desde el fondo, arriba de la escalera) y la del mural
-        Luz(red, $"Luz_Red_{nombre}_Salida", arriba + haciaArriba * 0.4f + Vector3.up * 0.9f, LuzCalida, 16f, 6f, false);
+        // (abajo de la losa: desde la sala no se ve)
+        Luz(red, $"Luz_Red_{nombre}_Salida", arriba - haciaArriba * 1.1f + Vector3.down * 0.9f, LuzCalida, 14f, 5f, false);
         Luz(red, $"Luz_Red_{nombre}_Gruta", new Vector3(mural.x, FondoRed + 1.9f, mural.z) + Quaternion.Euler(0f, giroMural, 0f) * Vector3.forward * 1.6f,
             LuzCalida, 10f, 5.5f, false);
         Motivo(k, red, $"Mural_Red_{nombre}", mural, giroMural, 0.7f, pintura);
@@ -505,8 +517,8 @@ public static partial class ConstructorCrater
         Luz(g, "Luz_O1", new Vector3(-28f, 5.3f, 1f), LuzCalida, 120f, 15f, true);
         Motivo(k, g, "Mural_O1", new Vector3(-35.93f, 0.6f, -4f), 90f, 0.8f, k.pinturaSol);
 
-        // ---- O2 · probar: la puerta se sostiene abierta mientras las dos anclas estén encendidas.
-        // Están lejos una de otra: se enciende una, se barre a la otra y se corre por la retención
+        // ---- O2 · probar: la puerta tiene una sola ancla, lejos, en el rincón del fondo. Las
+        // puertas se distinguen de los puentes: un ancla, y una vez abiertas quedan abiertas
         Caja(g, "Piso_O2", -36, -0.3f, 9.3f, -20, 0, 21, k.piso);
         Caja(g, "Muro_O2_Oeste", -36.3f, -0.3f, 9.3f, -36, 6, 21.3f, k.basalto);
         Caja(g, "Muro_O2_Norte", -36.3f, -0.3f, 21, -19.7f, 6, 21.3f, k.basalto);
@@ -514,12 +526,10 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_O2_Este_Norte", -20, -0.3f, 13.5f, -19.7f, 6, 21.3f, k.basaltoMedio);
         Caja(g, "Dintel_O2_Puerta", -20, 3.5f, 10.5f, -19.7f, 6, 13.5f, k.basaltoMedio);
         Caja(g, "Techo_O2", -36.3f, 6, 9.3f, -19.7f, 6.3f, 21.3f, k.techo);
-        var p1 = CrearAnclaEnEscena(k, g, "Ancla_O_Puerta_A", new Vector3(-27f, 0f, 10.1f), Quaternion.identity, FiltroDefinicion.Canal.Cuerpo, 4f, 1);
-        var p2 = CrearAnclaEnEscena(k, g, "Ancla_O_Puerta_B", new Vector3(-31f, 0f, 20.2f), Quaternion.Euler(0f, 135f, 0f), FiltroDefinicion.Canal.Cuerpo, 4f, 3);
+        var p1 = CrearAnclaEnEscena(k, g, "Ancla_O_Puerta", new Vector3(-31f, 0f, 20.2f), Quaternion.Euler(0f, 135f, 0f), FiltroDefinicion.Canal.Cuerpo, 4f, 3);
         BaseDePuerta(k, p1);
-        BaseDePuerta(k, p2);
-        CompuertaLosa(k, g, "Puerta_O_Dos_Anclas", new Vector3(-19.85f, 1.75f, 12f), new Vector3(0.3f, 3.5f, 3f),
-            new Vector3(0f, -3.8f, 0f), 0.7f, true, p1, p2);
+        CompuertaLosa(k, g, "Puerta_O_Ancla", new Vector3(-19.85f, 1.75f, 12f), new Vector3(0.3f, 3.5f, 3f),
+            new Vector3(0f, -3.8f, 0f), 1.5f, false, p1);
         Luz(g, "Luz_O2", new Vector3(-28f, 5.3f, 15f), LuzCalida, 110f, 14f, true);
 
         // ---- O3 · torcer: otro abismo; las anclas cuelgan del techo, sobre la otra orilla

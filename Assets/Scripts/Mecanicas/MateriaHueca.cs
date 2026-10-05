@@ -20,7 +20,9 @@ using UnityEngine.Rendering;
 public class MateriaHueca : ReceptorDeLuz
 {
     [Header("Disolución")]
-    [Range(0f, 1f)] public float opacidadMinima = 0.1f;   // cuánto se sigue viendo disuelta
+    [Range(0f, 1f)] public float opacidadMinima = 0.05f;  // cuánto se sigue viendo disuelta
+    [Tooltip("Con el filtro LUNA puesto, toda la materia hueca se ve así de traslúcida (aunque siga sólida).")]
+    [Range(0f, 1f)] public float opacidadConLuna = 0.45f;
     public float velocidadDeTransicion = 4f;              // disolución por segundo (4 = un cuarto de segundo)
     [Tooltip("Colliders que se apagan al disolverse. Vacío = todos los no-trigger del objeto.")]
     public Collider[] solidos;
@@ -43,6 +45,7 @@ public class MateriaHueca : ReceptorDeLuz
     Color[] coloresBase;       // color original de cada material, para escalar sólo el alfa
     int jugadoresDentro;       // contador del trigger (un contador tolera entradas y salidas repetidas)
     bool sombrasApagadas;
+    float conLuna;             // 0 … 1: qué tanto está puesto el filtro LUNA (con transición)
 
     void Awake() => Inicializar();
 
@@ -85,8 +88,14 @@ public class MateriaHueca : ReceptorDeLuz
         // tapa algo que la linterna busca: el sello late, para decir "primero yo"
         float pulsoTapada = Tapado && Solido ? 0.35f + 0.35f * Mathf.Sin(Time.time * 12f) : 0f;
 
+        // con el filtro LUNA puesto se ve a través: anuncia que se puede pasar
+        var linterna = LinternaController.Instancia;
+        bool luna = linterna != null && linterna.Encendida && linterna.FiltroActual != null
+                    && linterna.FiltroActual.canal == canalRequerido;
+        conLuna = Mathf.MoveTowards(conLuna, luna ? 1f : 0f, 3f * delta);
+
         // transparencia: el alfa del color base baja hasta 'opacidadMinima'
-        float alfa = Mathf.Lerp(1f, opacidadMinima, Disolucion);
+        float alfa = Mathf.Lerp(1f, opacidadMinima, Disolucion) * Mathf.Lerp(1f, opacidadConLuna, conLuna);
         for (int i = 0; i < renderers.Length; i++)
         {
             var r = renderers[i];

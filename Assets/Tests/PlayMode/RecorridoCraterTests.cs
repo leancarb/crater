@@ -63,8 +63,8 @@ public class RecorridoCraterTests
         Assert.That(Vector3.Distance(jugador.transform.position, valle), Is.LessThan(1f), "el jugador no empieza en el valle");
         var cielo = Object.FindFirstObjectByType<CieloEclipse>();
         Vector3 haciaLaCapilla = Buscar<Transform>("SpawnValle").forward;
-        yield return Caminar(valle + haciaLaCapilla * 8f);
-        Assert.That(cielo.Progreso, Is.GreaterThan(0.2f), "caminar hacia la capilla no hizo avanzar el eclipse");
+        yield return Caminar(valle + haciaLaCapilla * 25f);
+        Assert.That(cielo.Progreso, Is.GreaterThan(0.15f), "caminar hacia la capilla no hizo avanzar el eclipse");
         yield return Caminar(Buscar<ZonaJugador>("Zona_Mirador").transform.position);
         yield return Esperar(0.2f);
         Assert.That(prologo.Reproduciendo, Is.True, "llegar al mirador no abrió el cráter");
@@ -108,12 +108,11 @@ public class RecorridoCraterTests
         yield return Caminar(O(-33f, 8f));
         yield return Caminar(O(-33f, 11.5f));
 
-        // la puerta que se sostiene con dos anclas lejanas
+        // la puerta de una sola ancla, en el rincón del fondo: queda abierta
         yield return Caminar(O(-21.5f, 12f));
-        yield return Iluminar(Buscar<Ancla>("Ancla_O_Puerta_A"), 0.6f);
-        yield return Iluminar(Buscar<Ancla>("Ancla_O_Puerta_B"), 0.6f);
+        yield return Iluminar(Buscar<Ancla>("Ancla_O_Puerta"), 0.6f);
         yield return Esperar(0.7f);
-        Assert.That(Buscar<Compuerta>("Puerta_O_Dos_Anclas").Abierta, Is.True, "las dos anclas no abrieron la puerta");
+        Assert.That(Buscar<Compuerta>("Puerta_O_Ancla").Abierta, Is.True, "el ancla no abrió la puerta");
         yield return Caminar(O(-18f, 12f));
 
         // anclas colgadas del techo, y el sello detrás del tabique
@@ -204,12 +203,7 @@ public class RecorridoCraterTests
         yield return Caminar(new Vector3(0f, 0f, 62f));
 
         // Cresta: el corredor se cierra a la espalda
-        // el corredor oscuro en zigzag
-        yield return Caminar(new Vector3(0f, 0f, 69.3f));
-        yield return Caminar(new Vector3(1.4f, 0f, 69.6f));
-        yield return Caminar(new Vector3(1.4f, 0f, 71.5f));
-        yield return Caminar(new Vector3(-1.4f, 0f, 71.5f));
-        yield return Caminar(new Vector3(-1.4f, 0f, 73.6f));
+        // por el corredor, hacia la luz del umbral
         yield return Caminar(new Vector3(0f, 0f, 75.6f));
         yield return Caminar(new Vector3(0f, 0f, 84f));
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Cresta));
