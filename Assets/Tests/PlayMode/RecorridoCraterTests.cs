@@ -210,7 +210,13 @@ public class RecorridoCraterTests
         yield return Caminar(new Vector3(0f, 0f, 62f));
 
         // Cresta: el corredor se cierra a la espalda
-        yield return Caminar(new Vector3(0f, 0f, 70f));
+        // el corredor oscuro en zigzag
+        yield return Caminar(new Vector3(0f, 0f, 69.3f));
+        yield return Caminar(new Vector3(1.4f, 0f, 69.6f));
+        yield return Caminar(new Vector3(1.4f, 0f, 71.5f));
+        yield return Caminar(new Vector3(-1.4f, 0f, 71.5f));
+        yield return Caminar(new Vector3(-1.4f, 0f, 73.6f));
+        yield return Caminar(new Vector3(0f, 0f, 75.6f));
         yield return Caminar(new Vector3(0f, 0f, 84f));
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Cresta));
         yield return Esperar(3f);

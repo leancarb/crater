@@ -202,6 +202,10 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_Corredor_Izq", -2.3f, -0.3f, 68.5f, -2, 6, 75, k.basalto);
         Caja(g, "Muro_Corredor_Der", 2, -0.3f, 68.5f, 2.3f, 6, 75, k.basalto);
         Caja(g, "Techo_Corredor", -2.3f, 6, 68.5f, 2.3f, 6.3f, 75, k.techo);
+        // dos tabiques en zigzag y sin luz: por un momento no se ve hacia dónde se va (perderse
+        // un poco); al salir se abre la Cresta de golpe
+        Caja(g, "Tabique_Corredor_A", -2, -0.3f, 70.3f, 0.8f, 6, 70.6f, k.basalto);
+        Caja(g, "Tabique_Corredor_B", -0.8f, -0.3f, 72.4f, 2, 6, 72.7f, k.basalto);
         Caja(g, "Cierre_Hondonada_Izq", -6.3f, -0.3f, 68.5f, -2, 6, 68.8f, k.basalto);
         Caja(g, "Cierre_Hondonada_Der", 2, -0.3f, 68.5f, 6.3f, 6, 68.8f, k.basalto);
 
