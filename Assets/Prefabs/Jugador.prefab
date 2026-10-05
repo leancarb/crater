@@ -790,7 +790,6 @@ GameObject:
   - component: {fileID: 3615469335088281156}
   - component: {fileID: 7611405347759861615}
   - component: {fileID: 2088662702858059176}
-  - component: {fileID: 8297092091470550429}
   m_Layer: 10
   m_Name: Jugador
   m_TagString: Player
@@ -963,22 +962,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 0c44a35181d1a094c9679eb4ffc7461d, type: 3}
   - {fileID: 8300000, guid: cc7767c295f4d5e49be76644dfeebbec, type: 3}
   - {fileID: 8300000, guid: 5ffe19836177edd4d8645338c46f4274, type: 3}
---- !u!114 &8297092091470550429
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5551675914236298118}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 753f82d47f1bc7342815ba09670dbe8f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Crater::RespawnPorCaida
-  alturaDeCaida: -10
-  tiempoEstableRequerido: 0.5
-  intervaloDeRegistro: 0.35
-  interfaz: {fileID: 0}
 --- !u!1 &6762086970483003434
 GameObject:
   m_ObjectHideFlags: 0

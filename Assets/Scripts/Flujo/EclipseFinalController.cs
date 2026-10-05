@@ -173,7 +173,6 @@ public class EclipseFinalController : MonoBehaviour
             jugador.SetPositionAndRotation(spawnCapilla.position, spawnCapilla.rotation);
             control?.Orientar(spawnCapilla.rotation);
             control?.ReiniciarMovimiento();
-            jugador.GetComponent<RespawnPorCaida>()?.RegistrarPuntoSeguro(spawnCapilla.position, spawnCapilla.rotation);
             Physics.SyncTransforms();
         }
 

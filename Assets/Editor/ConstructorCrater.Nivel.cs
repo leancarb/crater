@@ -320,14 +320,17 @@ public static partial class ConstructorCrater
     static void ConstruirCapilla(Kit k, Transform g, Referencias refs)
     {
         // el valle va arriba del nivel, con el cráter del valle justo sobre el pozo de la Explanada
-        g.position = new Vector3(CentroPozo.x, AlturaValle, CentroPozo.z) - CraterEnLaCapilla;
+        // girado 180° alrededor del cráter: la capilla queda al norte del pozo y el camino del
+        // prólogo llega desde el sur, de frente a la boca del cráter (que está en el borde sur)
+        g.rotation = Quaternion.Euler(0f, 180f, 0f);
+        g.position = new Vector3(CentroPozo.x, AlturaValle, CentroPozo.z) - g.rotation * CraterEnLaCapilla;
 
         ConstruirEdificioCapilla(k, g);
         ConstruirPaisajeCapilla(k, g);
 
         // el guiño: adentro, sobre la puerta, la espiral tallada de las anclas. Sólo aparece
         // en el epílogo, frente a donde despierta el jugador: el cráter dejó una marca
-        refs.guino = Motivo(k, g, "Guino_Tallado", g.TransformPoint(new Vector3(0f, 3.3f, 6.8f)), 180f, 0.45f, k.ambar);
+        refs.guino = Motivo(k, g, "Guino_Tallado", g.TransformPoint(new Vector3(0f, 3.3f, 6.8f)), 180f + g.eulerAngles.y, 0.45f, k.ambar);
 
         refs.spawnCapilla = new GameObject("SpawnCapilla").transform;
         refs.spawnCapilla.SetParent(g, false);
@@ -357,7 +360,7 @@ public static partial class ConstructorCrater
         var solGO = new GameObject("Sol_Epilogo");
         solGO.transform.SetParent(g, false);
         // de mañana, arriba de la capilla vista desde el camino: delante del jugador
-        solGO.transform.rotation = Quaternion.Euler(20f, 0f, 0f);
+        solGO.transform.rotation = g.rotation * Quaternion.Euler(20f, 0f, 0f);
         refs.sol = solGO.AddComponent<Light>();
         refs.sol.type = LightType.Directional;
         // mañana en el prólogo; en el epílogo CieloEclipse lo baja al atardecer
@@ -388,7 +391,7 @@ public static partial class ConstructorCrater
         for (int i = 0; i < piezas; i++)
         {
             float ang = i * 360f / piezas;
-            // hueco hacia la capilla (sur): ahí está la puerta
+            // hueco al sur, de donde llega el camino: ahí está la boca de la escalera
             if (Mathf.Abs(Mathf.DeltaAngle(ang, 270f)) < 12f) continue;
             var dir = new Vector3(Mathf.Cos(ang * Mathf.Deg2Rad), 0f, Mathf.Sin(ang * Mathf.Deg2Rad));
             float alto = Azar(2.2f, 3.6f);
@@ -400,15 +403,13 @@ public static partial class ConstructorCrater
         bordes.AddRange(refs.paredesEscalera);
         refs.bordesCrater = bordes.ToArray();
 
-        // el camino alrededor del cráter: desde el mirador (norte) el borde de roca no deja
-        // pasar y la puerta está del otro lado, al sur. Mojones de piedra con una luz chica
-        // arriba rodean el cráter por los dos lados hasta la puerta (se ven en la totalidad)
+        // de frente a la boca (el camino llega desde el sur): dos pares de mojones con una
+        // luz chica marcan la entrada, que se ve en la totalidad
         var camino = Grupo(g, "Camino_Del_Borde");
-        foreach (float lado in new[] { 1f, -1f })
-            for (float a = 70f; a > -80f; a -= 18f)
+        foreach (float z in new[] { -14.6f, -17.4f })
+            foreach (float lado in new[] { -1f, 1f })
             {
-                float ang = (lado > 0f ? a : 180f - a) * Mathf.Deg2Rad;
-                var pie = centro + new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)) * 14.4f;
+                var pie = centro + new Vector3(lado * 1.9f, 0f, z);
                 Bloque(camino, "Mojon", pie + Vector3.up * 0.35f, new Vector3(0.28f, 0.8f, 0.28f), k.piedraCapilla);
                 var luz = Bloque(camino, "Vela", pie + Vector3.up * 0.86f, new Vector3(0.16f, 0.2f, 0.16f), k.vela);
                 Object.DestroyImmediate(luz.GetComponent<Collider>());
@@ -426,23 +427,26 @@ public static partial class ConstructorCrater
         tapa.GetComponent<Renderer>().sharedMaterial = k.tierra;
         refs.tapaCrater = tapa.transform;
 
-        // la puerta: dos pilares y un dintel de basalto en el borde sur, con el contorno que
-        // destella. Del otro lado empieza la escalera que baja al fondo (ConstruirPozo)
+        // la entrada no es una puerta: es una abertura en el piso. En el borde sur, la escalera
+        // se hunde en la tierra entre dos cordones bajos de basalto; el contorno que destella
+        // está acostado en el suelo, alrededor de la boca. Ver ConstruirPozo y ConstruirEscalera
         Vector3 umbral = centro + new Vector3(0f, 0f, -RadioPozo);
-        var puerta = Grupo(crater, "Puerta");
+        var puerta = Grupo(crater, "Boca_Crater");
         puerta.position = umbral;
         refs.puertaValle = puerta;
-        Bloque(puerta, "Pilar_Izq", umbral + new Vector3(-0.95f, 1.5f, 0f), new Vector3(0.4f, 3.2f, 0.4f), k.basaltoMedio, false);
-        Bloque(puerta, "Pilar_Der", umbral + new Vector3(0.95f, 1.5f, 0f), new Vector3(0.4f, 3.2f, 0.4f), k.basaltoMedio, false);
-        Bloque(puerta, "Dintel", umbral + new Vector3(0f, 3.2f, 0f), new Vector3(2.3f, 0.4f, 0.45f), k.basalto, false);
+        Bloque(puerta, "Umbral_Boca", umbral + new Vector3(0f, 0.04f, -0.55f), new Vector3(4.6f, 0.25f, 0.5f), k.basaltoMedio, false);
+        foreach (float lado in new[] { -1f, 1f })
+            Bloque(puerta, lado < 0f ? "Cordon_Izq" : "Cordon_Der", umbral + new Vector3(lado * 2.1f, 0.12f, 1.2f),
+                new Vector3(0.45f, 0.48f, 3.8f), k.basaltoMedio, false);
         refs.contornoValle = new[]
         {
-            Adorno(puerta, "Contorno_Izq", umbral + new Vector3(-0.72f, 1.45f, -0.05f), new Vector3(0.06f, 2.9f, 0.06f), k.puertaEclipse),
-            Adorno(puerta, "Contorno_Der", umbral + new Vector3(0.72f, 1.45f, -0.05f), new Vector3(0.06f, 2.9f, 0.06f), k.puertaEclipse),
-            Adorno(puerta, "Contorno_Dintel", umbral + new Vector3(0f, 2.93f, -0.05f), new Vector3(1.5f, 0.06f, 0.06f), k.puertaEclipse),
+            Adorno(puerta, "Contorno_Izq", umbral + new Vector3(-1.9f, 0.38f, 1.2f), new Vector3(0.07f, 0.04f, 3.4f), k.puertaEclipse),
+            Adorno(puerta, "Contorno_Der", umbral + new Vector3(1.9f, 0.38f, 1.2f), new Vector3(0.07f, 0.04f, 3.4f), k.puertaEclipse),
+            Adorno(puerta, "Contorno_Umbral", umbral + new Vector3(0f, 0.18f, -0.29f), new Vector3(3.7f, 0.04f, 0.07f), k.puertaEclipse),
         };
+        // el destello sale de la boca, como luz que sube del pozo
         var destello = Plano(puerta, "Destello", k.destello);
-        destello.transform.position = umbral + new Vector3(0f, 1.45f, -0.25f);
+        destello.transform.position = umbral + new Vector3(0f, 0.9f, 1.6f);
         refs.destelloValle = destello;
 
         // epílogo: el pasto aplastado donde estuvo
@@ -613,7 +617,6 @@ public static partial class ConstructorCrater
         Asignar(eclipse, "tonoFinal", tono);
         Asignar(eclipse, "campana", campana);
         Asignar(eclipse, "musicaCreditos", musica);
-        Asignar(refs.jugador.GetComponent<RespawnPorCaida>(), "interfaz", interfaz);
 
         Asignar(prologo, "jugador", refs.jugador.GetComponent<JugadorFPS>());
         Asignar(prologo, "cielo", refs.cielo);

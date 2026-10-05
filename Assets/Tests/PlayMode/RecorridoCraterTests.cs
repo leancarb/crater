@@ -62,7 +62,8 @@ public class RecorridoCraterTests
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.Prologo));
         Assert.That(Vector3.Distance(jugador.transform.position, valle), Is.LessThan(1f), "el jugador no empieza en el valle");
         var cielo = Object.FindFirstObjectByType<CieloEclipse>();
-        yield return Caminar(valle + Vector3.back * 8f);
+        Vector3 haciaLaCapilla = Buscar<Transform>("SpawnValle").forward;
+        yield return Caminar(valle + haciaLaCapilla * 8f);
         Assert.That(cielo.Progreso, Is.GreaterThan(0.2f), "caminar hacia la capilla no hizo avanzar el eclipse");
         yield return Caminar(Buscar<ZonaJugador>("Zona_Mirador").transform.position);
         yield return Esperar(0.2f);
@@ -71,16 +72,9 @@ public class RecorridoCraterTests
         Assert.That(prologo.Reproduciendo, Is.False, "la apertura del cráter no terminó");
         Assert.That(cielo.Progreso, Is.EqualTo(1f).Within(0.001f), "no llegó la totalidad");
 
-        // rodeando el cráter por el este (a 13 m de su centro) hasta la puerta, del lado de la capilla
-        Vector3 crater = Buscar<ZonaJugador>("Zona_Puerta_Crater").transform.position;
-        foreach (float grados in new[] { 70f, 30f, -10f, -50f, -80f })
-        {
-            float a = grados * Mathf.Deg2Rad;
-            yield return Caminar(crater + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * 13.2f);
-        }
-
-        // por la puerta del borde y la escalera, hasta el fondo del pozo (la Explanada)
-        yield return Caminar(Buscar<Transform>("Puerta").position + Vector3.forward * 1.2f);
+        // derecho hasta la boca del cráter (una abertura en el piso, del lado del camino),
+        // y por la escalera hasta el fondo del pozo (la Explanada)
+        yield return Caminar(Buscar<Transform>("Boca_Crater").position + Vector3.forward * 1.2f);
         yield return Caminar(new Vector3(0f, 0f, -33.8f));
         Assert.That(jugador.transform.position.y, Is.LessThan(0.5f), "la escalera del pozo no llega al fondo");
         Assert.That(prologo.EnElCrater, Is.True, "bajar al pozo no avisó que se entró al cráter");

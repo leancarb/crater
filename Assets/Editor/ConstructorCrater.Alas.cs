@@ -26,8 +26,8 @@ using UnityEngine;
 ///
 /// CÓMO FUNCIONA
 /// Igual que el resto del nivel: cajas en coordenadas de mundo (Caja: esquina mínima
-/// y máxima), prefabs (anclas, puentes, rejas) y luces. Donde hay un abismo, las
-/// paredes bajan hasta y = -9 (caerse ahí devuelve al último suelo firme). Las rejas
+/// y máxima), prefabs (anclas, puentes, rejas) y luces. Debajo de cada abismo hay una
+/// red de seguridad (una gruta con escalera, ver RedDeSeguridad): no hay reaparición. Las rejas
 /// cortan la luz (ver LinternaController): lo que está detrás no se enciende hasta
 /// disolverlas. Los sellos son receptores 'permanentes'.
 /// </summary>
@@ -56,28 +56,86 @@ public static partial class ConstructorCrater
     }
 
     /// <summary>
-    /// Red de seguridad debajo de un abismo: el fondo está a 3 m (no es un vacío que reinicia),
-    /// con paredes que lo cierran y una rampa angosta pegada al lado de donde se viene, que
-    /// sube sólo hasta esa orilla. El que cae vuelve a subir y lo intenta de nuevo, sin cortes.
-    /// 'aLoLargoDeX': el abismo es una zanja a lo largo de z (paredes en x0 y x1); si no, a lo largo de x.
+    /// Red de seguridad debajo de un abismo (como en "Spatial Communication in Level Design"):
+    /// caerse no reinicia ni corta. Se cae 3 m a una gruta que sigue por debajo del piso de la
+    /// orilla de donde se viene, con una luz cálida y un mural que sólo se ve desde ahí (lo
+    /// que se gana por caerse). Una escalera de verdad sube por un hueco del piso y deja al
+    /// jugador antes del desafío, de cara a intentarlo otra vez; arriba de la escalera, una
+    /// luz marca la salida desde abajo.
+    /// 'fondo': la planta de la gruta (x0, z0, x1, z1). La escalera arranca en 'pie' (al nivel
+    /// del fondo) y sube hacia 'haciaArriba' (x o z, horizontal). El hueco que deja en el piso
+    /// de arriba lo devuelve 'HuecoDeEscalera' (el piso se arma con PisoConHueco).
     /// </summary>
-    static void RedDeSeguridad(Kit k, Transform g, string nombre, float x0, float x1, float z0, float z1,
-                               Vector3 rampaAbajo, Vector3 rampaArriba, bool aLoLargoDeX)
+    static void RedDeSeguridad(Kit k, Transform g, string nombre, UnityEngine.Rect fondo, Vector3 pie, Vector3 haciaArriba,
+                               Vector3 mural, float giroMural, Material pintura)
     {
-        Caja(g, $"Red_{nombre}_Fondo", x0, -3.3f, z0, x1, -3f, z1, k.piso);
-        if (aLoLargoDeX)
+        var red = Grupo(g, $"Red_{nombre}");
+        Caja(red, $"Red_{nombre}_Fondo", fondo.xMin, FondoRed - 0.3f, fondo.yMin, fondo.xMax, FondoRed, fondo.yMax, k.piso);
+
+        // la escalera: escalones de piedra macizos (sin collider) y una rampa invisible que
+        // pasa por el medio de cada uno, como la del cráter: se sube sin saltitos
+        var escalera = Grupo(red, $"Red_{nombre}_Escalera");
+        Vector3 lateral = Vector3.Cross(Vector3.up, haciaArriba);
+        float alzada = -FondoRed / EscalonesRed, pisada = LargoEscaleraRed / EscalonesRed;
+        for (int i = 0; i < EscalonesRed; i++)
         {
-            Caja(g, $"Red_{nombre}_Pared_A", x0 - 0.3f, -3.3f, z0, x0, -0.3f, z1, k.basalto);
-            Caja(g, $"Red_{nombre}_Pared_B", x1, -3.3f, z0, x1 + 0.3f, -0.3f, z1, k.basalto);
+            float tope = FondoRed + (i + 1) * alzada;
+            Vector3 centro = pie + haciaArriba * ((i + 0.5f) * pisada);
+            var escalon = Bloque(escalera, $"Escalon_{i:00}",
+                new Vector3(centro.x, (FondoRed - 0.3f + tope) / 2f, centro.z),
+                Abs(haciaArriba * (pisada + 0.02f) + lateral * AnchoEscaleraRed) + Vector3.up * (tope - FondoRed + 0.3f),
+                i % 2 == 0 ? k.piedra : k.basaltoMedio);
+            Object.DestroyImmediate(escalon.GetComponent<Collider>());
         }
-        else
+        Vector3 abajo = new Vector3(pie.x, FondoRed, pie.z), arriba = abajo + haciaArriba * LargoEscaleraRed + Vector3.up * -FondoRed;
+        var rampa = Rampa(escalera, $"Red_{nombre}_Rampa_Invisible", abajo, arriba, AnchoEscaleraRed, k.piedra);
+        Object.DestroyImmediate(rampa.GetComponent<MeshRenderer>());
+
+        // un pretil bajo alrededor del hueco del piso, salvo por donde se sale
+        Vector3 medioHueco = (abajo + arriba) / 2f;
+        Vector3 ladoLargo = lateral * (AnchoEscaleraRed / 2f + 0.08f);
+        foreach (float s in new[] { 1f, -1f })
         {
-            Caja(g, $"Red_{nombre}_Pared_A", x0, -3.3f, z0 - 0.3f, x1, -0.3f, z0, k.basalto);
-            Caja(g, $"Red_{nombre}_Pared_B", x0, -3.3f, z1, x1, -0.3f, z1 + 0.3f, k.basalto);
+            // sólo del lado abierto (el otro es la pared de la sala): se prueba si toca la gruta
+            Vector3 c = new Vector3(medioHueco.x, 0.45f, medioHueco.z) + ladoLargo * s;
+            if (!fondo.Contains(new Vector2(c.x, c.z))) continue;
+            Bloque(escalera, $"Pretil_{(s > 0f ? "A" : "B")}", c, Abs(haciaArriba * LargoEscaleraRed + lateral * 0.16f) + Vector3.up * 0.9f, k.basaltoMedio);
         }
-        Rampa(g, $"Red_{nombre}_Rampa", rampaAbajo, rampaArriba, 1.1f, k.piedra);
-        Luz(g, $"Luz_Red_{nombre}", (rampaAbajo + rampaArriba) / 2f + Vector3.up * 0.8f, LuzCalida, 14f, 6f, false);
+        Vector3 fin = new Vector3(pie.x, 0.45f, pie.z) - haciaArriba * 0.08f;
+        Bloque(escalera, "Pretil_Pie", fin, Abs(haciaArriba * 0.16f + lateral * (AnchoEscaleraRed + 0.32f)) + Vector3.up * 0.9f, k.basaltoMedio);
+
+        // la luz que marca la salida (se ve desde el fondo, arriba de la escalera) y la del mural
+        Luz(red, $"Luz_Red_{nombre}_Salida", arriba + haciaArriba * 0.4f + Vector3.up * 0.9f, LuzCalida, 16f, 6f, false);
+        Luz(red, $"Luz_Red_{nombre}_Gruta", new Vector3(mural.x, FondoRed + 1.9f, mural.z) + Quaternion.Euler(0f, giroMural, 0f) * Vector3.forward * 1.6f,
+            LuzCalida, 10f, 5.5f, false);
+        Motivo(k, red, $"Mural_Red_{nombre}", mural, giroMural, 0.7f, pintura);
     }
+
+    /// <summary>El hueco que la escalera de la red deja en el piso de arriba (x0, z0, x1, z1).</summary>
+    static UnityEngine.Rect HuecoDeEscalera(Vector3 pie, Vector3 haciaArriba)
+    {
+        Vector3 lateral = Vector3.Cross(Vector3.up, haciaArriba) * (AnchoEscaleraRed / 2f);
+        Vector3 a = pie + lateral, b = pie - lateral + haciaArriba * LargoEscaleraRed;
+        return UnityEngine.Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.z, b.z), Mathf.Max(a.x, b.x), Mathf.Max(a.z, b.z));
+    }
+
+    /// <summary>Un piso (x0 … x1, z0 … z1, de -0,3 a 0) con un hueco rectangular: hasta cuatro losas.</summary>
+    static void PisoConHueco(Kit k, Transform g, string nombre, float x0, float z0, float x1, float z1, UnityEngine.Rect hueco)
+    {
+        void Losa(string sufijo, float a0, float b0, float a1, float b1)
+        {
+            if (a1 - a0 > 0.01f && b1 - b0 > 0.01f) Caja(g, nombre + sufijo, a0, -0.3f, b0, a1, 0, b1, k.piso);
+        }
+        Losa("", x0, z0, hueco.xMin, z1);
+        Losa("_B", hueco.xMax, z0, x1, z1);
+        Losa("_C", hueco.xMin, z0, hueco.xMax, hueco.yMin);
+        Losa("_D", hueco.xMin, hueco.yMax, hueco.xMax, z1);
+    }
+
+    static Vector3 Abs(Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
+
+    const float FondoRed = -3f, LargoEscaleraRed = 3.6f, AnchoEscaleraRed = 1.2f;
+    const int EscalonesRed = 12;
 
     /// <summary>Lo que baja la plaza del centro de la rotonda.</summary>
     const float ProfundidadPlaza = -1.2f;
@@ -180,7 +238,8 @@ public static partial class ConstructorCrater
             float X(float x) => lado * x;   // se arma del lado oeste y se espeja
             void C(string nombre, float xa, float y0, float za, float xb, float y1, float zb, Material m) =>
                 Caja(g, nombre, Mathf.Min(X(xa), X(xb)), y0, za, Mathf.Max(X(xa), X(xb)), y1, zb, m);
-            C($"Piso_Vuelta_{n}", 11, -0.3f, 27, 8, 0, 33.7f, k.piso);
+            // arranca adentro del anillo del piso: entre el anillo y el pasillo quedaba un pozo
+            C($"Piso_Vuelta_{n}", 11, -0.3f, 21.6f, 8, 0, 33.7f, k.piso);
             C($"Piso_Vuelta_{n}_Atajo", 15, -0.3f, 33.7f, 8, 0, 37.8f, k.piso);
             C($"Muro_Vuelta_{n}_Interior", 11.3f, -0.3f, 21.6f, 11, 7, 33.7f, k.basalto);
             C($"Muro_Vuelta_{n}_Atajo_Sur", 15, -0.3f, 33.4f, 11, 7, 33.7f, k.basalto);
@@ -421,7 +480,9 @@ public static partial class ConstructorCrater
         Luz(g, "Luz_Pasillo_O", new Vector3(-16f, 3.8f, 1f), LuzCalida, 50f, 8f, false);
 
         // ---- O1 · enseñar: un abismo y dos anclas juntas del otro lado (entran juntas en el cono)
-        Caja(g, "Piso_O1_Este", -26, -0.3f, -7, -20, 0, 9, k.piso);
+        // la red de seguridad del abismo: la escalera sube pegada a la pared de la entrada
+        var pieO1 = new Vector3(-20.6f, 0f, -6f);
+        PisoConHueco(k, g, "Piso_O1_Este", -26, -7, -20, 9, HuecoDeEscalera(pieO1, Vector3.forward));
         Caja(g, "Piso_O1_Oeste", -36, -0.3f, -7, -28.5f, 0, 9, k.piso);
         Caja(g, "Muro_O1_Este_Sur", -20, -9, -7.3f, -19.7f, 6, -1, k.basaltoMedio);
         Caja(g, "Muro_O1_Este_Norte", -20, -9, 3, -19.7f, 6, 9.3f, k.basaltoMedio);
@@ -437,7 +498,9 @@ public static partial class ConstructorCrater
         var e1 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_A", new Vector3(-32f, 0f, -0.15f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3f, 0);
         var e2 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_B", new Vector3(-32f, 0f, 2.15f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3f, 2);
         Puente(k, g, "Puente_O_Ensenar", new Vector3(-26f, 0f, 1f), new Vector3(-28.5f, 0f, 1f), 3.6f, e1, e2);
-        RedDeSeguridad(k, g, "O1", -28.5f, -26f, -7f, 9f, new Vector3(-26.65f, -3f, 8.4f), new Vector3(-26.65f, 0f, 3.6f), true);
+        RedDeSeguridad(k, g, "O1", UnityEngine.Rect.MinMaxRect(-28.5f, -7f, -20f, 9f), pieO1, Vector3.forward,
+            new Vector3(-28.5f, -2.4f, 3.5f), 90f, k.pinturaSol);
+        Caja(g, "Red_O1_Pared_Lejos", -28.8f, FondoRed - 0.3f, -7, -28.5f, -0.3f, 9, k.basalto);
         Luz(g, "Luz_O1", new Vector3(-28f, 5.3f, 1f), LuzCalida, 120f, 15f, true);
         Motivo(k, g, "Mural_O1", new Vector3(-35.93f, 0.6f, -4f), 90f, 0.8f, k.pinturaSol);
 
@@ -459,7 +522,16 @@ public static partial class ConstructorCrater
         Luz(g, "Luz_O2", new Vector3(-28f, 5.3f, 15f), LuzCalida, 110f, 14f, true);
 
         // ---- O3 · torcer: otro abismo; las anclas cuelgan del techo, sobre la otra orilla
-        Caja(g, "Piso_O3_Cerca", -19.7f, -0.3f, 9.3f, -12.3f, 0, 15, k.piso);
+        // la red: la gruta sigue por debajo de la orilla de acá; la escalera sube pegada a la
+        // pared sur y sale junto a la puerta de la sala de antes
+        var pieO3 = new Vector3(-13.5f, 0f, 9.9f);
+        PisoConHueco(k, g, "Piso_O3_Cerca", -19.7f, 9.3f, -12.3f, 15, HuecoDeEscalera(pieO3, Vector3.left));
+        RedDeSeguridad(k, g, "O3", UnityEngine.Rect.MinMaxRect(-19.7f, 9.3f, -12.3f, 17.5f), pieO3, Vector3.left,
+            new Vector3(-16f, -2.4f, 17.5f), 180f, k.pinturaSol);
+        Caja(g, "Red_O3_Pared_Sur", -19.7f, FondoRed - 0.3f, 9, -12.3f, -0.3f, 9.3f, k.basalto);
+        // (corrida hacia adentro: la puerta de la sala de antes se hunde justo del otro lado)
+        Caja(g, "Red_O3_Pared_Oeste", -19.7f, FondoRed - 0.3f, 9.3f, -19.4f, -0.3f, 15, k.basalto);
+        Caja(g, "Red_O3_Pared_Lejos", -19.7f, FondoRed - 0.3f, 17.5f, -12.3f, -0.3f, 17.8f, k.basalto);
         Caja(g, "Piso_O3_Lejos", -19.7f, -0.3f, 17.5f, -12.3f, 0, 27, k.piso);
         Caja(g, "Muro_O3_Sur", -19.7f, -0.3f, 9, -12.3f, 6, 9.3f, k.basalto);
         Caja(g, "Muro_O3_Oeste_Bajo", -20, -9, 15, -19.7f, -0.3f, 17.5f, k.basalto);
@@ -597,13 +669,19 @@ public static partial class ConstructorCrater
 
         // ---- N1 · una de las anclas del puente está detrás de una reja: HUECO para
         // destaparla, cambiar a CUERPO y encenderla antes de que la reja se cierre
-        Caja(g, "Piso_N1_Cerca", -6, -0.3f, 27.3f, 6, 0, 33, k.piso);
-        Caja(g, "Piso_N1_Lejos", -6, -0.3f, 35.5f, 6, 0, 45, k.piso);
+        // las redes de los dos abismos: grutas debajo de cada orilla de acá, con su escalera
+        var pieN1 = new Vector3(5.4f, 0f, 32.4f);
+        var pieN2 = new Vector3(-5.4f, 0f, 39.4f);
+        PisoConHueco(k, g, "Piso_N1_Cerca", -6, 27.3f, 6, 33, HuecoDeEscalera(pieN1, Vector3.back));
+        PisoConHueco(k, g, "Piso_N1_Lejos", -6, 35.5f, 6, 45, HuecoDeEscalera(pieN2, Vector3.forward));
         var vista = CrearAnclaEnEscena(k, g, "Ancla_N_Vista", new Vector3(-3.2f, 0f, 38.5f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 6f, 0);
         var oculta = CrearAnclaEnEscena(k, g, "Ancla_N_Oculta", new Vector3(3.2f, 0f, 38.5f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 6f, 2);
         Reja(k, g, "Reja_N_Tapa", new Vector3(3.2f, 0f, 36.8f), 0f, new Vector3(0.9f, 1f, 1f));
         Puente(k, g, "Puente_N_Reja", new Vector3(0f, 0f, 33f), new Vector3(0f, 0f, 35.5f), 3.6f, vista, oculta);
-        RedDeSeguridad(k, g, "N1", -6f, 6f, 33f, 35.5f, new Vector3(2.4f, -3f, 33.6f), new Vector3(5.8f, 0f, 33.6f), false);
+        RedDeSeguridad(k, g, "N1", UnityEngine.Rect.MinMaxRect(-6f, 27.9f, 6f, 35.5f), pieN1, Vector3.back,
+            new Vector3(-2.5f, -2.4f, 35.5f), 180f, k.pinturaLuna);
+        Caja(g, "Red_N1_Pared_Sur", -6, FondoRed - 0.3f, 27.6f, 6, -0.3f, 27.9f, k.basalto);
+        Caja(g, "Red_N_Pared_Medio", -6, FondoRed - 0.3f, 35.5f, 6, -0.3f, 35.8f, k.basalto);
         Luz(g, "Luz_N1", new Vector3(0f, 5.3f, 30.5f), LuzCalida, 110f, 14f, true);
         Luz(g, "Luz_N1_Fondo", new Vector3(0f, 5.3f, 39.5f), LuzFria, 80f, 11f, false);
 
@@ -614,7 +692,9 @@ public static partial class ConstructorCrater
         var b1 = CrearAnclaEnEscena(k, g, "Ancla_N_Borde_A", new Vector3(-1.3f, 0f, 43.2f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 8f, 1);
         var b2 = CrearAnclaEnEscena(k, g, "Ancla_N_Borde_B", new Vector3(1.3f, 0f, 43.2f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 8f, 3);
         Puente(k, g, "Puente_N_Borde", new Vector3(0f, 0f, 45f), new Vector3(0f, 0f, 50.5f), 3.6f, b1, b2);
-        RedDeSeguridad(k, g, "N2", -6f, 6f, 45f, 50.5f, new Vector3(4.35f, -3f, 50f), new Vector3(4.35f, 0f, 45.6f), false);
+        RedDeSeguridad(k, g, "N2", UnityEngine.Rect.MinMaxRect(-6f, 35.8f, 6f, 50.5f), pieN2, Vector3.forward,
+            new Vector3(2.5f, -2.4f, 50.5f), 180f, k.pinturaSol);
+        Caja(g, "Red_N2_Pared_Lejos", -6, FondoRed - 0.3f, 50.5f, 6, -0.3f, 50.8f, k.basalto);
         Reja(k, g, "Reja_N_Borde_A", new Vector3(-3f, 0f, 51.2f));
         Reja(k, g, "Reja_N_Borde_B", new Vector3(3f, 0f, 51.2f));
         Caja(g, "Muro_Rejas_N_Arriba", -6, 4.6f, 50.75f, 6, 6, 51.65f, k.basalto);

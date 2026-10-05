@@ -166,8 +166,8 @@ public static partial class ConstructorCrater
         filtro.descripcion = descripcion;
         filtro.anguloCono = 28f;
         filtro.alcance = 15f;
-        // menos que la luz blanca (950, ver CrearPrefabs) pero no tanto: con 230 parecía que la
-        // linterna se apagaba al poner un filtro
+        // bastante menos que la luz blanca (2000, ver CrearPrefabs) pero no tanto: con 230
+        // parecía que la linterna se apagaba al poner un filtro
         filtro.intensidad = 520f;
         filtro.tiempoDeCarga = 0.4f;
         filtro.sonidoAlEquipar = alEquipar;
@@ -620,7 +620,6 @@ public static partial class ConstructorCrater
         var fps = raiz.AddComponent<JugadorFPS>();
         fps.fuentePasos = fuentePasos;
         fps.pasos = kit.audio.pasos;
-        raiz.AddComponent<RespawnPorCaida>();
 
         var camaraGO = new GameObject("Camara") { tag = "MainCamera" };
         camaraGO.transform.SetParent(raiz.transform, false);
@@ -654,8 +653,10 @@ public static partial class ConstructorCrater
         linterna.filtros = new System.Collections.Generic.List<FiltroDefinicion> { kit.cuerpo, kit.hueco };
         linterna.requiereRecogerla = true;
         // la luz blanca alumbra bastante más que los filtros: dan ganas de volver a ella
-        linterna.intensidadBase = 950f;
-        linterna.alcanceBase = 18f;
+        // (más del triple que un filtro y más lejos: la diferencia se nota apenas se cambia)
+        linterna.intensidadBase = 2000f;
+        linterna.alcanceBase = 24f;
+        linterna.anguloBase = 36f;
         linterna.sonidoEncender = kit.audio.linternaEncender;
         linterna.sonidoApagar = kit.audio.linternaApagar;
         spot.range = linterna.alcanceBase;

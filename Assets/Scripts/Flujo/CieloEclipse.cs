@@ -48,7 +48,7 @@ public class CieloEclipse : MonoBehaviour
 
     [Header("Atardecer (epílogo)")]
     [Tooltip("Giro de la luz del sol: bajo, frente a la puerta de la capilla.")]
-    [SerializeField] Vector3 giroSolAtardecer = new Vector3(11f, 160f, 0f);
+    [SerializeField] Vector3 giroSolAtardecer = new Vector3(11f, 340f, 0f);
     [SerializeField] Color solAtardecer = new Color(1f, 0.56f, 0.3f);
     [SerializeField] float intensidadAtardecer = 1.4f;
     [SerializeField] Color cieloAtardecer = new Color(0.94f, 0.6f, 0.42f);

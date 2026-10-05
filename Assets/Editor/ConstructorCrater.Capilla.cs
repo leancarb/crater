@@ -141,7 +141,8 @@ public static partial class ConstructorCrater
                 CajaLocal(edificio, "Banco_Pata_B", new Vector3(x + 1.1f, 0.22f, z), new Vector3(0.08f, 0.45f, 0.38f), k.madera);
             }
 
-        var interior = Luz(edificio, "Luz_Interior", Vector3.zero, new Color(1f, 0.8f, 0.6f), 45f, 12f, false);
+        // con sombras: la capilla queda encima del nivel y sin ellas la luz se colaba abajo
+        var interior = Luz(edificio, "Luz_Interior", Vector3.zero, new Color(1f, 0.8f, 0.6f), 45f, 12f, true);
         interior.transform.localPosition = new Vector3(0f, 3.5f, -1f);
 
         // ---------------------------------------------------------------- atrio
@@ -221,7 +222,7 @@ public static partial class ConstructorCrater
         Cerro("Cerro_B", new Vector3(18.5f, 0f, 57f), 18f, 6f, 7f, true);
         // detrás del inicio el valle sigue: cerros altos que se ven (sin colisión, apoyados arriba
         // del nivel, que está abajo) y paredes invisibles en el borde del terreno
-        void CerroAlto(string nombre, Vector3 centro, float ancho, float alto, float fondo)
+        void CerroAlto(string nombre, Vector3 centro, float ancho, float alto, float fondo, bool colision = false)
         {
             for (int i = 0; i < 3; i++)
             {
@@ -230,7 +231,7 @@ public static partial class ConstructorCrater
                     centro + new Vector3(Azar(-ancho, ancho) * 0.3f, h / 2f - 0.3f, Azar(-fondo, fondo) * 0.3f),
                     new Vector3(ancho * Azar(0.6f, 1f), h, fondo * Azar(0.6f, 1f)), i == 1 ? k.huella : k.tierra);
                 pieza.transform.localRotation = Quaternion.Euler(0f, Azar(-30f, 30f), 0f);
-                Object.DestroyImmediate(pieza.GetComponent<Collider>());
+                if (!colision) Object.DestroyImmediate(pieza.GetComponent<Collider>());
             }
         }
         CerroAlto("Cerro_Fondo", new Vector3(0f, 0f, 84f), 40f, 9f, 6f);
@@ -260,7 +261,8 @@ public static partial class ConstructorCrater
             }
         Cerro("Cerro_C", new Vector3(-31f, 0f, 30f), 7f, 9f, 40f, true);
         Cerro("Cerro_D", new Vector3(31f, 0f, 28f), 7f, 7f, 40f, true);
-        Cerro("Cerro_E", new Vector3(0f, 0f, -15f), 34f, 5f, 6f, true);
+        // (detrás de la capilla: queda encima del nivel, así que no baja de la superficie)
+        CerroAlto("Cerro_E", new Vector3(0f, 0f, -15f), 34f, 5f, 6f, true);
 
         // horizonte: cordones lejanos, sin colisión. Ninguno encima del nivel, que está abajo
         for (float ang = 0f; ang < 360f; ang += Azar(14f, 22f))

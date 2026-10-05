@@ -428,7 +428,6 @@ public class PrologoCapilla : MonoBehaviour
         jugador.transform.SetPositionAndRotation(destino.position, destino.rotation);
         jugador.Orientar(destino.rotation);
         jugador.ReiniciarMovimiento();
-        jugador.GetComponent<RespawnPorCaida>()?.RegistrarPuntoSeguro(destino.position, destino.rotation);
         Physics.SyncTransforms();
         if (cc != null) cc.enabled = true;
     }

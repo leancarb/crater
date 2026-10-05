@@ -60,7 +60,7 @@ Dónde tocar:
 
 Desde **Window › General › Test Runner**:
 
-- **EditMode** — reglas de las mecánicas (carga, retención, puentes, rejas, compuerta, respawn).
+- **EditMode** — reglas de las mecánicas (carga, retención, puentes, rejas, compuerta).
 - **PlayMode** — recorre la escena real de punta a punta caminando y apuntando la linterna.
   Si una pieza del nivel se mueve y un puzzle deja de poder resolverse, falla.
 

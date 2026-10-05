@@ -337,24 +337,6 @@ public class CraterGameplayTests
         Assert.That(compuerta.transform.localPosition.y, Is.EqualTo(0f).Within(0.01f));
     }
 
-    [Test]
-    public void RespawnDevuelveAlUltimoPuntoSeguro()
-    {
-        var go = Crear("Jugador");
-        var controlador = go.AddComponent<CharacterController>();
-        go.AddComponent<JugadorFPS>();
-        var respawn = go.AddComponent<RespawnPorCaida>();
-        var seguro = new Vector3(4f, 2f, 8f);
-        respawn.RegistrarPuntoSeguro(seguro, Quaternion.Euler(0f, 90f, 0f));
-        go.transform.position = new Vector3(0f, -30f, 0f);
-
-        respawn.Respawn();
-
-        Assert.That(go.transform.position, Is.EqualTo(seguro + Vector3.up * 0.15f));
-        Assert.That(Mathf.DeltaAngle(go.transform.eulerAngles.y, 90f), Is.EqualTo(0f).Within(0.01f));
-        Assert.That(controlador.enabled, Is.True);
-    }
-
     static void Invocar(object objetivo, string metodo, params object[] argumentos)
     {
         objetivo.GetType().GetMethod(metodo, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
