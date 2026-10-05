@@ -414,7 +414,9 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_Pasillo_O_Sur", -20, -0.3f, -1.3f, -12.3f, 4.5f, -1, k.basalto);
         Caja(g, "Muro_Pasillo_O_Norte", -20, -0.3f, 3, -12.3f, 4.5f, 3.3f, k.basalto);
         Caja(g, "Techo_Pasillo_O", -20, 4.5f, -1.3f, -12.3f, 4.8f, 3.3f, k.techo);
-        ColocarRecogible(k, g, "Recogible_Cuerpo", k.cuerpo, new Vector3(-16.5f, 0f, 1f));
+        // el filtro no está en el pasillo sino adentro de la primera sala, a la vista del abismo:
+        // primero se ve el problema (no se puede cruzar), después se encuentra la solución
+        ColocarRecogible(k, g, "Recogible_Cuerpo", k.cuerpo, new Vector3(-23f, 0f, 6.5f));
         MuralesDelFiltro(k, g, -1f);
         Luz(g, "Luz_Pasillo_O", new Vector3(-16f, 3.8f, 1f), LuzCalida, 50f, 8f, false);
 
@@ -495,7 +497,8 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_Pasillo_E_Sur", 12.3f, -0.3f, -1.3f, 20, 4.5f, -1, k.basalto);
         Caja(g, "Muro_Pasillo_E_Norte", 12.3f, -0.3f, 3, 20, 4.5f, 3.3f, k.basalto);
         Caja(g, "Techo_Pasillo_E", 12.3f, 4.5f, -1.3f, 20, 4.8f, 3.3f, k.techo);
-        ColocarRecogible(k, g, "Recogible_Hueco", k.hueco, new Vector3(16.5f, 0f, 1f));
+        // (como en el ala sol: el filtro está en la sala, a la vista del muro de rejas)
+        ColocarRecogible(k, g, "Recogible_Hueco", k.hueco, new Vector3(23f, 0f, 6.5f));
         MuralesDelFiltro(k, g, 1f);
         Luz(g, "Luz_Pasillo_E", new Vector3(16f, 3.8f, 1f), LuzFria, 50f, 8f, false);
 

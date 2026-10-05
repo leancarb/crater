@@ -98,8 +98,11 @@ public static partial class ConstructorCrater
     {
         var murales = Grupo(g, "Murales_Filtro");
         float x = lado * 16.5f;
-        Losa(k, murales, lado < 0f ? "Control_FiltroSol" : "Control_FiltroLuna", new Vector3(x, 1.9f, 3f), Vector3.back, 2.4f, 1.5f,
+        // el del filtro, en la pared norte de la primera sala, encima de donde está el filtro
+        var filtro = new Vector3(lado * 23.5f, 1.9f, 9f);
+        Losa(k, murales, lado < 0f ? "Control_FiltroSol" : "Control_FiltroLuna", filtro, Vector3.back, 2.4f, 1.5f,
             lado < 0f ? (System.Action<Kit, Lienzo>)PanelFiltroSol : PanelFiltroLuna);
+        LuzDeMural(murales, filtro, Vector3.back, 2.4f);
         Losa(k, murales, "Control_LuzBlanca", new Vector3(x, 1.9f, -1f), Vector3.forward, 2.4f, 1.5f, PanelLuzBlanca);
         LuzDeMural(murales, new Vector3(x, 1.2f, 1f), Vector3.zero, 2.4f);   // en el medio del pasillo: alumbra las dos
     }

@@ -105,6 +105,8 @@ public class RecorridoCraterTests
         yield return Caminar(new Vector3(-9f, 0f, 4f));
         yield return Caminar(new Vector3(-13f, 0f, 12f));
         yield return Caminar(O(-16.5f, 1f));
+        yield return Caminar(O(-21f, 1f));
+        yield return Caminar(O(-23f, 6.5f));   // el filtro está en la sala, a la vista del abismo
         Assert.That(linterna.EstaDesbloqueado(cuerpo), Is.True, "no se pudo recoger CUERPO");
         yield return Equipar(cuerpo);
         yield return CruzarPuente("Puente_O_Ensenar", O(-24.8f, 1f), O(-29.6f, 1f), "Ancla_O_Ensenar_A", "Ancla_O_Ensenar_B");
@@ -140,6 +142,8 @@ public class RecorridoCraterTests
         yield return Caminar(new Vector3(9f, 0f, 6f));
         yield return Caminar(new Vector3(13f, 0f, 12f));
         yield return Caminar(E(16.5f, 1f));
+        yield return Caminar(E(21f, 1f));
+        yield return Caminar(E(23f, 6.5f));
         Assert.That(linterna.EstaDesbloqueado(hueco), Is.True, "no se pudo recoger HUECO");
         yield return Equipar(hueco);
         yield return Atravesar("Reja_E_Ensenar_A", E(25.8f, -2f), E(30f, -2f));
