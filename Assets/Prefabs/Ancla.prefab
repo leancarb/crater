@@ -711,6 +711,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Crater::Ancla
   canalRequerido: 1
   retencion: 3
+  permanente: 0
+  soloDeFrente: 1
   puntoDeImpacto: {fileID: 9044413365957643290}
   alActivarse:
     m_PersistentCalls:

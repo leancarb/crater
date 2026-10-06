@@ -416,9 +416,9 @@ Light:
   serializedVersion: 12
   m_Type: 0
   m_Color: {r: 1, g: 0.95, b: 0.86, a: 1}
-  m_Intensity: 420
-  m_Range: 15
-  m_SpotAngle: 30
+  m_Intensity: 2000
+  m_Range: 24
+  m_SpotAngle: 36
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
@@ -591,9 +591,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 035615c2c9d8d084db596def6128fd93, type: 2}
   filtrosDesbloqueados: []
   colorBase: {r: 1, g: 0.95, b: 0.86, a: 1}
-  anguloBase: 30
-  alcanceBase: 15
-  intensidadBase: 420
+  anguloBase: 36
+  alcanceBase: 24
+  intensidadBase: 2000
   demoraDeCambio: 0.6
   requiereRecogerla: 1
   sonidoEncender: {fileID: 8300000, guid: 35d6dc5d11af85b44bab697a3298e9de, type: 3}
@@ -948,6 +948,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Crater::JugadorFPS
   velocidad: 2.6
+  movimientoBloqueado: 0
+  multiplicadorCorrer: 2.2
   gravedad: -18
   suavizado: 8
   camara: {fileID: 4368139536976273029}
