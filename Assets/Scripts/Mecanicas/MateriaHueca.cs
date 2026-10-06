@@ -20,8 +20,7 @@ using UnityEngine.Rendering;
 public class MateriaHueca : ReceptorDeLuz
 {
     [Header("Disolución")]
-    [Range(0f, 1f)] public float opacidadMinima = 0.05f;  // cuánto se sigue viendo disuelta
-    [Tooltip("Con el filtro LUNA puesto, toda la materia hueca se ve así de traslúcida (aunque siga sólida).")]
+    [Range(0f, 1f)] public float opacidadMinima = 0.05f;
     [Range(0f, 1f)] public float opacidadConLuna = 0.45f;
     public float velocidadDeTransicion = 4f;              // disolución por segundo (4 = un cuarto de segundo)
     [Tooltip("Colliders que se apagan al disolverse. Vacío = todos los no-trigger del objeto.")]
@@ -45,7 +44,8 @@ public class MateriaHueca : ReceptorDeLuz
     Color[] coloresBase;       // color original de cada material, para escalar sólo el alfa
     int jugadoresDentro;       // contador del trigger (un contador tolera entradas y salidas repetidas)
     bool sombrasApagadas;
-    float conLuna;             // 0 … 1: qué tanto está puesto el filtro LUNA (con transición)
+    float tiempoSiseo;
+    float volumenSiseo;
 
     void Awake() => Inicializar();
 
@@ -69,7 +69,7 @@ public class MateriaHueca : ReceptorDeLuz
 
     protected override void AlActualizar(float delta)
     {
-        if (coloresBase == null) Inicializar();
+        if (coloresBase == null || bloque == null || coloresBase.Length != renderers.Length) Inicializar();
 
         // avanza hacia 1 si está activa, hacia 0 si no
         Disolucion = Mathf.MoveTowards(Disolucion, Activo ? 1f : 0f, velocidadDeTransicion * delta);
@@ -88,14 +88,11 @@ public class MateriaHueca : ReceptorDeLuz
         // tapa algo que la linterna busca: el sello late, para decir "primero yo"
         float pulsoTapada = Tapado && Solido ? 0.35f + 0.35f * Mathf.Sin(Time.time * 12f) : 0f;
 
-        // con el filtro LUNA puesto se ve a través: anuncia que se puede pasar
-        var linterna = LinternaController.Instancia;
-        bool luna = linterna != null && linterna.Encendida && linterna.FiltroActual != null
-                    && linterna.FiltroActual.canal == canalRequerido;
-        conLuna = Mathf.MoveTowards(conLuna, luna ? 1f : 0f, 3f * delta);
-
         // transparencia: el alfa del color base baja hasta 'opacidadMinima'
-        float alfa = Mathf.Lerp(1f, opacidadMinima, Disolucion) * Mathf.Lerp(1f, opacidadConLuna, conLuna);
+        var linterna = LinternaController.Instancia;
+        bool luna = linterna != null && linterna.FiltroActual != null &&
+            linterna.FiltroActual.canal == FiltroDefinicion.Canal.Hueco;
+        float alfa = Mathf.Lerp(luna ? opacidadConLuna : 1f, opacidadMinima, Disolucion);
         for (int i = 0; i < renderers.Length; i++)
         {
             var r = renderers[i];
@@ -119,12 +116,24 @@ public class MateriaHueca : ReceptorDeLuz
                 if (r != null) r.shadowCastingMode = apagarSombras ? ShadowCastingMode.Off : ShadowCastingMode.On;
         }
 
-        // siseo continuo mientras está disuelta
-        if (siseo != null)
+        // Una transición sonora por activación. Estar disuelta o ser permanente
+        // no debe mantener un bucle, ni reiniciarlo cuando AudioListener pausa.
+        if (siseo != null && tiempoSiseo > 0f)
         {
-            if (Activo && !siseo.isPlaying) siseo.Play();
-            if (!Activo && siseo.isPlaying) siseo.Stop();
+            tiempoSiseo = Mathf.Max(0f, tiempoSiseo - delta);
+            siseo.volume = volumenSiseo * Mathf.Clamp01(tiempoSiseo / 0.2f);
+            if (tiempoSiseo <= 0f) siseo.Stop();
         }
+    }
+
+    protected override void Activar()
+    {
+        base.Activar();
+        if (siseo == null) return;
+        if (volumenSiseo <= 0f) volumenSiseo = siseo.volume;
+        tiempoSiseo = 0.7f;
+        siseo.volume = volumenSiseo;
+        siseo.Play();
     }
 
     // el trigger grande avisa cuándo el jugador está "adentro" de la reja
@@ -141,5 +150,7 @@ public class MateriaHueca : ReceptorDeLuz
     void OnDisable()
     {
         jugadoresDentro = 0;
+        tiempoSiseo = 0f;
+        if (siseo != null) siseo.Stop();
     }
 }

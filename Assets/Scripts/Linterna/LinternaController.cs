@@ -41,9 +41,9 @@ public class LinternaController : MonoBehaviour
 
     [Header("Luz blanca (sin filtro)")]
     public Color colorBase = new Color(1f, 0.95f, 0.86f);
-    public float anguloBase = 30f;
-    public float alcanceBase = 14f;
-    public float intensidadBase = 800f;
+    public float anguloBase = 36f;
+    public float alcanceBase = 24f;
+    public float intensidadBase = 2000f;
 
     [Header("Ajustes")]
     public float demoraDeCambio = 0.6f;
@@ -102,7 +102,7 @@ public class LinternaController : MonoBehaviour
 
     void Update()
     {
-        if (!PausaCrater.EnPausa) LeerEntrada();
+        if (!PausaCrater.EnPausa && !CinematicaDeSello.Reproduciendo) LeerEntrada();
 
         // se recalculan en IluminarReceptores
         HayObjetivo = false;
@@ -117,6 +117,15 @@ public class LinternaController : MonoBehaviour
         {
             // MoveTowards: la intensidad se acerca al objetivo de a poco, sin saltos
             float objetivo = CambiandoFiltro ? IntensidadActual * 0.08f : IntensidadActual;
+            // Mantener legible la pintura y la respuesta del tallado cercano: limitar iluminancia, conservando
+            // potencia a distancia y el alcance del haz y de los receptores.
+            if (FiltroActual != null && Physics.Raycast(spot.transform.position, spot.transform.forward,
+                out var superficie, 20f, capaObstaculos, QueryTriggerInteraction.Ignore))
+            {
+                float distancia = Mathf.Max(0.4f, superficie.distance);
+                float distanciaReferencia = FiltroActual == null ? 20f : 8f;
+                objetivo *= Mathf.Min(1f, distancia * distancia / (distanciaReferencia * distanciaReferencia));
+            }
             spot.intensity = Mathf.MoveTowards(spot.intensity, objetivo, IntensidadActual * 6f * Time.deltaTime);
         }
 
@@ -127,7 +136,6 @@ public class LinternaController : MonoBehaviour
     void LeerEntrada()
     {
         if (!Disponible) return;   // todavía no la encontró
-        if (CinematicaDeSello.Reproduciendo) return;   // durante la cinemática no se toca
 
         if (EntradaCrater.Linterna)
             Encender(!Encendida);

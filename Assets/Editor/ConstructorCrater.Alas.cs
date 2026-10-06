@@ -1,37 +1,12 @@
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.Events;
 using UnityEngine;
-using UnityEngine.Events;
 
 /// <summary>
-/// El corazón del recorrido: una rotonda con dos alas que se hacen en cualquier
-/// orden, y el Cruce, donde hay que usar los dos filtros juntos.
-///
-///                         CRESTA
-///                           |
-///                    N3  Antesala         z 51 … 68,5
-///                    N2  Puente al borde  z 42 … 51   (anclas a la espalda, reja al final)
-///                    N1  Ancla tapada     z 27 … 42   (una de las anclas detrás de una reja)
-///                           |  puerta de los sellos
-///   O3 Pozo alto ─atajo─ ROTONDA ─atajo─ E3 Rampa y escotilla
-///   O2 Dos anclas  |     (z -3 … 27)     |  E2 Trampilla / galería de abajo
-///   O1 Puente ─pasillo─┘   UMBRAL   └─pasillo─ E1 Muro de rejas
-///
-/// Ala oeste (CUERPO): enseñar (dos anclas juntas), probar (una puerta que se sostiene
-/// con dos anclas lejanas), torcer (anclas colgadas del techo). Al final, un sello
-/// escondido detrás de un tabique, que abre un atajo a la rotonda.
-/// Ala este (HUECO): enseñar (muro de rejas), probar (la salida es una trampilla en
-/// el piso), torcer (una escotilla en el techo de la rampa). Al final, el sello: una
-/// placa de materia hueca que queda disuelta, y su atajo.
-/// Los dos sellos abren la puerta del norte.
-///
-/// CÓMO FUNCIONA
-/// Igual que el resto del nivel: cajas en coordenadas de mundo (Caja: esquina mínima
-/// y máxima), prefabs (anclas, puentes, rejas) y luces. Debajo de cada abismo hay una
-/// red de seguridad (una gruta con escalera, ver RedDeSeguridad): no hay reaparición. Las rejas
-/// cortan la luz (ver LinternaController): lo que está detrás no se enciende hasta
-/// disolverlas. Los sellos son receptores 'permanentes'.
+/// Alas originales restauradas; LUNA conserva dos entradas y un ramal sin salida.
+/// El Cruce nuevo conserva el nicho, el puente descentrado y la isla segura.
+/// Los generadores trabajan en coordenadas de diseño; AmpliarSubsuelo ensancha
+/// el conjunto final conservando las conexiones y la escala del jugador.
 /// </summary>
 public static partial class ConstructorCrater
 {
@@ -40,149 +15,6 @@ public static partial class ConstructorCrater
     /// <summary>Centro (a nivel del piso) y radio de la rotonda circular.</summary>
     static readonly Vector3 CentroRotonda = new Vector3(0f, 0f, 12f);
     const float RadioRotonda = 15f;
-    /// <summary>
-    /// Un óculo en el techo (se ve el eclipse) con su haz de luz que baja hasta 'piso':
-    /// vuelve a mostrar la meta y lleva la mirada a lo que hay debajo.
-    /// </summary>
-    static void OculoConHaz(Kit k, Transform g, string nombre, Vector3 techo, float diametro, float piso)
-    {
-        Oculo(k, g, nombre, techo, diametro, 70f, 9f);
-        var haz = Grupo(g, nombre + "_Haz_Visible");
-        float alto = techo.y - piso;
-        for (int i = 0; i < 2; i++)
-        {
-            var plano = Plano(haz, $"Haz_{i}", k.hazDeLuz);
-            plano.transform.SetPositionAndRotation(new Vector3(techo.x, piso + alto / 2f, techo.z), Quaternion.Euler(0f, 45f + i * 90f, 0f));
-            plano.transform.localScale = new Vector3(diametro * 0.95f, alto, 1f);
-        }
-    }
-
-    /// <summary>
-    /// Red de seguridad debajo de un abismo (como en "Spatial Communication in Level Design"):
-    /// caerse no reinicia ni corta. Se cae 3 m a una gruta que sigue por debajo del piso de la
-    /// orilla de donde se viene, con una luz cálida y un mural que sólo se ve desde ahí (lo
-    /// que se gana por caerse). Una escalera de verdad sube por un hueco del piso y deja al
-    /// jugador antes del desafío, de cara a intentarlo otra vez; arriba de la escalera, una
-    /// luz marca la salida desde abajo. Desde arriba el hueco no se ve: lo tapa una losa al ras
-    /// que sólo se corre cuando se llega al pie de la escalera desde la gruta.
-    /// 'fondo': la planta de la gruta (x0, z0, x1, z1). La escalera arranca en 'pie' (al nivel
-    /// del fondo) y sube hacia 'haciaArriba' (x o z, horizontal). El hueco que deja en el piso
-    /// de arriba lo devuelve 'HuecoDeEscalera' (el piso se arma con PisoConHueco).
-    /// </summary>
-    static void RedDeSeguridad(Kit k, Transform g, string nombre, UnityEngine.Rect fondo, Vector3 pie, Vector3 haciaArriba,
-                               Vector3 mural, float giroMural, Material pintura)
-    {
-        var red = Grupo(g, $"Red_{nombre}");
-        Caja(red, $"Red_{nombre}_Fondo", fondo.xMin, FondoRed - 0.3f, fondo.yMin, fondo.xMax, FondoRed, fondo.yMax, k.piso);
-
-        // la escalera: escalones de piedra macizos (sin collider) y una rampa invisible que
-        // pasa por el medio de cada uno, como la del cráter: se sube sin saltitos
-        var escalera = Grupo(red, $"Red_{nombre}_Escalera");
-        Vector3 lateral = Vector3.Cross(Vector3.up, haciaArriba);
-        float alzada = -FondoRed / EscalonesRed, pisada = LargoEscaleraRed / EscalonesRed;
-        for (int i = 0; i < EscalonesRed; i++)
-        {
-            float tope = FondoRed + (i + 1) * alzada;
-            Vector3 centro = pie + haciaArriba * ((i + 0.5f) * pisada);
-            var escalon = Bloque(escalera, $"Escalon_{i:00}",
-                new Vector3(centro.x, (FondoRed - 0.3f + tope) / 2f, centro.z),
-                Abs(haciaArriba * (pisada + 0.02f) + lateral * AnchoEscaleraRed) + Vector3.up * (tope - FondoRed + 0.3f),
-                i % 2 == 0 ? k.piedra : k.basaltoMedio);
-            Object.DestroyImmediate(escalon.GetComponent<Collider>());
-        }
-        Vector3 abajo = new Vector3(pie.x, FondoRed, pie.z), arriba = abajo + haciaArriba * LargoEscaleraRed + Vector3.up * -FondoRed;
-        var rampa = Rampa(escalera, $"Red_{nombre}_Rampa_Invisible", abajo, arriba, AnchoEscaleraRed, k.piedra);
-        Object.DestroyImmediate(rampa.GetComponent<MeshRenderer>());
-
-        // el hueco del piso lo tapa una losa al ras: desde arriba no se ve ninguna escalera (si
-        // no, parecía el camino). Al llegar al pie de la escalera desde la gruta, la losa se
-        // corre de costado, por debajo del piso de la sala, y queda abierta
-        Vector3 haciaLaSala = lateral;
-        Vector3 medio = (abajo + arriba) / 2f;
-        if (!fondo.Contains(new Vector2(medio.x + lateral.x * 1.3f, medio.z + lateral.z * 1.3f))) haciaLaSala = -lateral;
-        var raiz = new GameObject($"Red_{nombre}_Tapa");
-        raiz.transform.SetParent(red, false);
-        raiz.transform.position = new Vector3(medio.x, -0.17f, medio.z);
-        Bloque(raiz.transform, "Losa", raiz.transform.position,
-            Abs(haciaArriba * (LargoEscaleraRed + 0.04f) + lateral * (AnchoEscaleraRed + 0.04f)) + Vector3.up * 0.3f, k.piso, false);
-        var sonido = raiz.AddComponent<AudioSource>();
-        ConfigurarAudio(sonido, k.audio.compuerta, 0.7f, false, true);
-        var tapa = raiz.AddComponent<Compuerta>();
-        tapa.desplazamiento = haciaLaSala * (AnchoEscaleraRed + 0.15f) + Vector3.down * 0.14f;
-        tapa.duracion = 1.2f;
-        tapa.sonido = sonido;
-        var zona = Zona(red, $"Zona_Red_{nombre}_Escalera", new Vector3(pie.x, FondoRed + 1f, pie.z) - haciaArriba * 0.6f,
-            Abs(haciaArriba * 1.6f + lateral * 2.4f) + Vector3.up * 2f);
-        UnityEventTools.AddPersistentListener(zona.alEntrar, new UnityAction(tapa.Abrir));
-
-        // la luz que marca la salida (se ve desde el fondo, arriba de la escalera) y la del mural
-        // (abajo de la losa: desde la sala no se ve)
-        Luz(red, $"Luz_Red_{nombre}_Salida", arriba - haciaArriba * 1.1f + Vector3.down * 0.9f, LuzCalida, 14f, 5f, false);
-        Luz(red, $"Luz_Red_{nombre}_Gruta", new Vector3(mural.x, FondoRed + 1.9f, mural.z) + Quaternion.Euler(0f, giroMural, 0f) * Vector3.forward * 1.6f,
-            LuzCalida, 10f, 5.5f, false);
-        Motivo(k, red, $"Mural_Red_{nombre}", mural, giroMural, 0.7f, pintura);
-    }
-
-    /// <summary>El hueco que la escalera de la red deja en el piso de arriba (x0, z0, x1, z1).</summary>
-    static UnityEngine.Rect HuecoDeEscalera(Vector3 pie, Vector3 haciaArriba)
-    {
-        Vector3 lateral = Vector3.Cross(Vector3.up, haciaArriba) * (AnchoEscaleraRed / 2f);
-        Vector3 a = pie + lateral, b = pie - lateral + haciaArriba * LargoEscaleraRed;
-        return UnityEngine.Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.z, b.z), Mathf.Max(a.x, b.x), Mathf.Max(a.z, b.z));
-    }
-
-    /// <summary>Un piso (x0 … x1, z0 … z1, de -0,3 a 0) con un hueco rectangular: hasta cuatro losas.</summary>
-    static void PisoConHueco(Kit k, Transform g, string nombre, float x0, float z0, float x1, float z1, UnityEngine.Rect hueco)
-    {
-        void Losa(string sufijo, float a0, float b0, float a1, float b1)
-        {
-            if (a1 - a0 > 0.01f && b1 - b0 > 0.01f) Caja(g, nombre + sufijo, a0, -0.3f, b0, a1, 0, b1, k.piso);
-        }
-        Losa("", x0, z0, hueco.xMin, z1);
-        Losa("_B", hueco.xMax, z0, x1, z1);
-        Losa("_C", hueco.xMin, z0, hueco.xMax, hueco.yMin);
-        Losa("_D", hueco.xMin, hueco.yMax, hueco.xMax, z1);
-    }
-
-    static Vector3 Abs(Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
-
-    const float FondoRed = -3f, LargoEscaleraRed = 3.6f, AnchoEscaleraRed = 1.2f;
-    const int EscalonesRed = 12;
-
-    /// <summary>Lo que baja la plaza del centro de la rotonda.</summary>
-    const float ProfundidadPlaza = -1.2f;
-    /// <summary>Radio de la plaza hundida (adentro de los escalones).</summary>
-    const float RadioPlaza = 8f;
-
-    /// <summary>
-    /// El piso de la rotonda: un anillo de bloques a nivel (r 9,5 … 15,4), cuatro escalones de
-    /// 30 cm que bajan hacia el centro y el fondo de la plaza, 1,2 m más abajo.
-    /// </summary>
-    static void PisoHundido(Kit k, Transform g)
-    {
-        Vector3 c = new Vector3(CentroRotonda.x, 0f, CentroRotonda.z);
-        void Anillo(string nombre, float r0, float r1, float tope, float fondo, int bloques)
-        {
-            float rm = (r0 + r1) / 2f;
-            float ancho = 2f * Mathf.PI * r1 / bloques * 1.2f;
-            for (int i = 0; i < bloques; i++)
-            {
-                float ang = (i + 0.5f) * 360f / bloques;
-                var dir = new Vector3(Mathf.Cos(ang * Mathf.Deg2Rad), 0f, Mathf.Sin(ang * Mathf.Deg2Rad));
-                var b = Bloque(g, $"{nombre}_{i:00}", c + dir * rm + Vector3.up * ((tope + fondo) / 2f),
-                    new Vector3(ancho, tope - fondo, r1 - r0), k.piso);
-                b.transform.rotation = Quaternion.LookRotation(dir);
-            }
-        }
-        Anillo("Piso_Rotonda_Anillo", 9.5f, 15.6f, 0f, -0.3f, 40);
-        for (int e = 0; e < 3; e++)
-            Anillo($"Escalon_Plaza_{e}", 9.5f - (e + 1) * 0.5f, 9.5f - e * 0.5f, -0.3f * (e + 1), ProfundidadPlaza - 0.3f, 36);
-        Caja(g, "Piso_Plaza", c.x - RadioPlaza - 0.4f, ProfundidadPlaza - 0.3f, c.z - RadioPlaza - 0.4f,
-            c.x + RadioPlaza + 0.4f, ProfundidadPlaza, c.z + RadioPlaza + 0.4f, k.piso);
-        // lo que queda fuera del anillo de bloques en las esquinas (debajo de la pared) se rellena
-        Caja(g, "Piso_Rotonda_Base", -RadioRotonda - 0.6f, -1.8f, -3.3f, RadioRotonda + 0.6f, ProfundidadPlaza - 0.3f, 27.6f, k.piso);
-    }
-
     /// <summary>Cuánto se corre cada ala desde donde la arma su código: hacia afuera y al norte.</summary>
     static readonly Vector3 CorrimientoAlaOeste = new Vector3(-3f, 0f, 11f), CorrimientoAlaEste = new Vector3(3f, 0f, 11f);
 
@@ -194,12 +26,14 @@ public static partial class ConstructorCrater
     static void ConstruirRotonda(Kit k, Transform g, Referencias refs)
     {
         float cz = CentroRotonda.z;
-        // el piso es una plaza hundida (como un templete semisubterráneo): un anillo a nivel por
-        // donde se entra y se sale, y en el centro, 1,2 m más abajo y con cuatro escalones
-        // alrededor, el anillo de columnas y el obelisco. Al entrar desde el Umbral se ve todo
-        // de arriba: las dos alas, el obelisco y la puerta del norte (vista privilegiada)
-        PisoHundido(k, g);
-        Caja(g, "Techo_Rotonda", -RadioRotonda - 0.6f, 7, -3.3f, RadioRotonda + 0.6f, 7.3f, 27.6f, k.techo);
+        PisoAnular(k, g, "Piso_Rotonda", 6.5f, 15f, 0f, true);
+        PisoAnular(k, g, "Piso_Plaza_Hundida", 0f, 3.8f, -1.2f);
+        // Una única escalinata circular, transitable desde cualquier dirección.
+        for (int i = 0; i < 6; i++)
+            PisoAnular(k, g, $"Escalon_Plaza_Circular_{i}", 6.05f - i * 0.45f,
+                6.5f - i * 0.45f, -0.2f * (i + 1));
+        // Apertura física sobre el obelisco; el techo no tapa el cielo.
+        ConstruirTechoCircular(k, g);
 
         // la pared: un anillo de bloques con aberturas (ángulos desde +x, en sentido antihorario)
         var aberturas = new[]
@@ -250,8 +84,7 @@ public static partial class ConstructorCrater
             float X(float x) => lado * x;   // se arma del lado oeste y se espeja
             void C(string nombre, float xa, float y0, float za, float xb, float y1, float zb, Material m) =>
                 Caja(g, nombre, Mathf.Min(X(xa), X(xb)), y0, za, Mathf.Max(X(xa), X(xb)), y1, zb, m);
-            // arranca adentro del anillo del piso: entre el anillo y el pasillo quedaba un pozo
-            C($"Piso_Vuelta_{n}", 11, -0.3f, 21.6f, 8, 0, 33.7f, k.piso);
+            C($"Piso_Vuelta_{n}", 11, -0.3f, 22, 8, 0, 33.7f, k.piso);
             C($"Piso_Vuelta_{n}_Atajo", 15, -0.3f, 33.7f, 8, 0, 37.8f, k.piso);
             C($"Muro_Vuelta_{n}_Interior", 11.3f, -0.3f, 21.6f, 11, 7, 33.7f, k.basalto);
             C($"Muro_Vuelta_{n}_Atajo_Sur", 15, -0.3f, 33.4f, 11, 7, 33.7f, k.basalto);
@@ -259,12 +92,11 @@ public static partial class ConstructorCrater
             C($"Muro_Vuelta_{n}_Exterior", 8, -0.3f, 24.8f, 7.7f, 7, 38.1f, k.basaltoMedio);
             C($"Muro_Vuelta_{n}_Fondo", 15.3f, -0.3f, 37.8f, 7.7f, 7, 38.1f, k.basalto);
             C($"Techo_Vuelta_{n}", 15.3f, 7, 27.6f, 7.7f, 7.3f, 38.1f, k.techo);
-            // con sombras: sin ellas atravesaba la pared y se veía una franja cálida en el ala
             Luz(g, $"Luz_Vuelta_{n}", new Vector3(X(9.5f), 5.5f, 33f), LuzCalida, 40f, 9f, true);
         }
 
         // (el óculo de la rotonda va sobre el obelisco: ver MapaYObelisco)
-        ConstruirAnilloDelMapa(k, g, new Vector3(0f, ProfundidadPlaza + 0.12f, cz), 0.4f);
+        ConstruirAnilloDelMapa(k, g, new Vector3(0f, -1.08f, cz), 0.4f);
 
         Luz(g, "Luz_Rotonda", new Vector3(0f, 5.8f, 4f), LuzCalida, 150f, 17f, true);
         Luz(g, "Luz_Rotonda_Norte", new Vector3(0f, 5.8f, 21f), LuzCalida, 110f, 15f, false);
@@ -290,13 +122,10 @@ public static partial class ConstructorCrater
     /// </summary>
     static void ConstruirPuertaDeLosSellos(Kit k, Transform g, Referencias refs, ReceptorDeLuz selloOeste, ReceptorDeLuz selloEste)
     {
-        // la losa no toca el piso: por la rendija de abajo se escapa luz de lo que hay del otro
-        // lado. Se sabe que hay algo detrás, pero no qué (misterio)
-        refs.puertaSellos = CompuertaLosa(k, g, "Puerta_Sellos", new Vector3(0f, 2.06f, 27.15f), new Vector3(4f, 3.88f, 0.3f),
+        refs.puertaSellos = CompuertaLosa(k, g, "Puerta_Sellos", new Vector3(0f, 2f, 27.15f), new Vector3(4f, 4f, 0.3f),
             new Vector3(0f, -4.4f, 0f), 3f, false, selloOeste, selloEste);
-        var rendija = Bloque(g, "Rendija_Sellos", new Vector3(0f, 0.01f, 27.15f), new Vector3(3.9f, 0.02f, 0.3f), k.luzEclipse);
-        Object.DestroyImmediate(rendija.GetComponent<Collider>());
-        Luz(g, "Luz_Detras_Sellos", new Vector3(0f, 0.5f, 28.6f), new Color(0.85f, 0.92f, 1f), 22f, 6f, true);
+        Luz(g, "Luz_Bajo_Puerta_Sellos", new Vector3(0f, 0.25f, 27.55f), new Color(0.85f, 0.92f, 1f), 28f, 5f, true);
+        Adorno(g, "Rendija_Puerta_Sellos", new Vector3(0f, 0.055f, 26.96f), new Vector3(3.8f, 0.05f, 0.02f), k.puertaEclipse);
 
         // la abre la cinemática del segundo sello, a la vista (CinematicaDeSello)
         refs.puertaSellos.abrirSoloPorOrden = true;
@@ -325,6 +154,18 @@ public static partial class ConstructorCrater
         }
         Faro("Faro_Atajo_Oeste", -1f, selloOeste);
         Faro("Faro_Atajo_Este", 1f, selloEste);
+        // Dos apoyos discretos: relacionan los sellos de cada ala con esta puerta.
+        foreach (bool oeste in new[] { true, false })
+        {
+            var marca = Glifo(g, oeste ? "Requisito_SOL" : "Requisito_LUNA", oeste ? Figura.Sol : Figura.LunaCreciente,
+                new Vector3(oeste ? -2.35f : 2.35f, 2.9f, 26.2f), Vector3.back, 0.55f,
+                oeste ? k.ambar : k.tallaLuna, false);
+            var estado = marca.gameObject.AddComponent<TestigoDeSello>();
+            estado.sello = oeste ? selloOeste : selloEste;
+            estado.renderers = new[] { marca };
+            estado.colorEncendido = oeste ? new Color(1, 0.42f, 0.1f) : ColorLuna;
+            estado.emisionApagado = 0.03f;
+        }
     }
 
     /// <summary>Las cuatro caras verticales de una pieza del FBX (una columna, el obelisco):
@@ -384,8 +225,8 @@ public static partial class ConstructorCrater
             if (Mathf.Abs(dx) < 0.5f) continue;   // las del eje norte-sur quedan neutras
             bool oeste = dx < 0f;
             int i = 0;
-            foreach (var (normal, cara) in CarasVerticales(r, r.bounds.min.y + 2.3f))
-                (oeste ? soles : lunas).Add(Glifo(marcas, $"{r.name}_{i++}", oeste ? Figura.Sol : Figura.LunaCreciente,
+            foreach (var (normal, cara) in CarasVerticales(r, 2.3f))
+                (oeste ? soles : lunas).Add(Glifo(r.transform, $"{r.name}_{i++}", oeste ? Figura.Sol : Figura.LunaCreciente,
                     cara + normal * 0.02f, normal, 0.3f, oeste ? k.ambar : k.tallaLuna, separar: false));
         }
         foreach (bool oeste in new[] { true, false })
@@ -403,6 +244,7 @@ public static partial class ConstructorCrater
         // las caras del obelisco: el sol al oeste y la luna al este, que se encienden con el sello
         // de su ala; al sur, el eclipse, que se enciende en la cinemática del segundo sello
         var raiz = Grupo(g, "Obelisco_Del_Eclipse");
+        raiz.SetParent(obeliscoR.transform, true);
         var obelisco = raiz.gameObject.AddComponent<ObeliscoDelEclipse>();
         (Vector3 normal, Vector3 centro) Cara(Vector3 hacia, float y)
         {
@@ -412,7 +254,7 @@ public static partial class ConstructorCrater
         }
         void CaraDelSello(string nombre, Vector3 hacia, Figura figura, Material m, ReceptorDeLuz sello, bool luna)
         {
-            var (normal, punto) = Cara(hacia, obeliscoR.bounds.min.y + 2.6f);
+            var (normal, punto) = Cara(hacia, 2.6f);
             var cara = Grupo(raiz, nombre);
             var testigo = cara.gameObject.AddComponent<TestigoDeSello>();
             testigo.sello = sello;
@@ -428,17 +270,12 @@ public static partial class ConstructorCrater
         obelisco.eclipse = Glifo(raiz, "Obelisco_Eclipse", Figura.Eclipse, puntoSur, normalSur, 1.1f, k.tallaEclipse);
         obelisco.luz = Luz(raiz, "Luz_Eclipse", puntoSur + normalSur * 1.2f, new Color(0.85f, 0.92f, 1f), 0f, 12f, false);
 
-        // arriba del obelisco, un círculo en el techo: si se mira para arriba se ve el eclipse,
-        // y entra un haz de luz que cae sobre el obelisco e invita a mirar por ahí
-        var arriba = new Vector3(obeliscoR.bounds.center.x, 6.97f, obeliscoR.bounds.center.z);
-        Oculo(k, g, "Oculo_Rotonda", arriba, 2.8f, 120f, 12f);
-        var haz = Grupo(g, "Haz_Oculo");
-        for (int i = 0; i < 2; i++)
-        {
-            var plano = Plano(haz, $"Haz_{i}", k.hazDeLuz);
-            plano.transform.SetPositionAndRotation(new Vector3(arriba.x, (7f + ProfundidadPlaza) / 2f, arriba.z), Quaternion.Euler(0f, 45f + i * 90f, 0f));
-            plano.transform.localScale = new Vector3(2.6f, 7f - ProfundidadPlaza, 1f);
-        }
+        // Luz suave del cielo, sin imagen de eclipse pegada al techo.
+        var luzCielo = Luz(g, "Luz_Abertura_Rotonda", new Vector3(0, 6.9f, 12),
+            new Color(0.55f, 0.64f, 0.82f), 18f, 10f, true);
+        luzCielo.type = LightType.Spot;
+        luzCielo.spotAngle = 68f;
+        luzCielo.transform.rotation = Quaternion.Euler(90, 0, 0);
         return obelisco;
     }
 
@@ -463,11 +300,12 @@ public static partial class ConstructorCrater
         // centrar: el medio del piso en 'centro', su cara de arriba a la altura de 'centro'
         Bounds b = piso.bounds;
         mapa.transform.position += centro - new Vector3(b.center.x, b.max.y, b.center.z);
-        // girar alrededor del centro hasta que el obelisco quede al norte (+z)
+        // El obelisco vuelve al centro de la plaza, con su modelo original.
+        // Las columnas conservan el anillo y sus tallados de progreso.
         if (obelisco != null)
         {
-            Vector3 hacia = obelisco.bounds.center - centro;
-            mapa.transform.RotateAround(centro, Vector3.up, -Mathf.Atan2(hacia.x, hacia.z) * Mathf.Rad2Deg);
+            Vector3 medio = obelisco.bounds.center;
+            obelisco.transform.position += new Vector3(centro.x - medio.x, 0, centro.z - medio.z);
         }
 
         Pintar(mapa, r => r.name.Contains("Obelisco") ? k.piedra : r.name.Contains("Piso") ? k.piso : k.basaltoMedio);
@@ -477,7 +315,40 @@ public static partial class ConstructorCrater
         Estatico(mapa);
     }
 
-    // ================================================================== ala oeste: CUERPO
+    // ================================================================== recorridos nuevos
+
+    // Todos los pasos son de al menos 3,2 m; no se necesita salto. Las paredes y
+    // las vistas hacen legible la ruta; no se añaden indicadores en el piso.
+    static void TabiqueConPaso(Kit k, Transform g, string nombre, bool horizontal,
+        float eje, float desde, float hasta, float pasoDesde, float pasoHasta)
+    {
+        void C(string sufijo, float a, float b, float y0, float y1)
+        {
+            if (b <= a) return;
+            if (horizontal) Caja(g, nombre + sufijo, a, y0, eje - 0.15f, b, y1, eje + 0.15f, k.basaltoMedio);
+            else Caja(g, nombre + sufijo, eje - 0.15f, y0, a, eje + 0.15f, y1, b, k.basaltoMedio);
+        }
+        C("_A", desde, pasoDesde, -3.8f, 6f);
+        C("_B", pasoHasta, hasta, -3.8f, 6f);
+        C("_Dintel", pasoDesde, pasoHasta, 4.8f, 6f);
+    }
+
+    static void PasilloFiltroNuevo(Kit k, Transform g, float lado)
+    {
+        float xa = lado < 0 ? -20f : 12.3f, xb = lado < 0 ? -12.3f : 20f;
+        string n = lado < 0 ? "O" : "E";
+        Caja(g, "Piso_Pasillo_" + n, xa, -0.3f, -1, xb, 0, 3, k.piso);
+        Caja(g, "Muro_Pasillo_" + n + "_Sur", xa, -0.3f, -1.3f, xb, 4.5f, -1, k.basalto);
+        Caja(g, "Muro_Pasillo_" + n + "_Norte", xa, -0.3f, 3, xb, 4.5f, 3.3f, k.basalto);
+        Caja(g, "Techo_Pasillo_" + n, xa, 4.5f, -1.3f, xb, 4.8f, 3.3f, k.techo);
+        ColocarRecogible(k, g, lado < 0 ? "Recogible_Cuerpo" : "Recogible_Hueco",
+            lado < 0 ? k.cuerpo : k.hueco, new Vector3(lado * 23.5f, 0f, 1f));
+        MuralesDelFiltro(k, g, lado);
+        Luz(g, "Luz_Pasillo_" + n, new Vector3(lado * 16f, 3.8f, 1f), lado < 0 ? LuzCalida : LuzFria, 50f, 8f, false);
+    }
+
+    static Ancla AnclaSolarNueva(Kit k, Transform g, string nombre, Vector3 pie, float giro, float retencion, int tono)
+        => CrearAnclaEnEscena(k, g, nombre, pie, Quaternion.Euler(0, giro, 0), FiltroDefinicion.Canal.Cuerpo, retencion, tono);
 
     static ReceptorDeLuz ConstruirAlaOeste(Kit k, Transform g, Referencias refs)
     {
@@ -486,16 +357,13 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_Pasillo_O_Sur", -20, -0.3f, -1.3f, -12.3f, 4.5f, -1, k.basalto);
         Caja(g, "Muro_Pasillo_O_Norte", -20, -0.3f, 3, -12.3f, 4.5f, 3.3f, k.basalto);
         Caja(g, "Techo_Pasillo_O", -20, 4.5f, -1.3f, -12.3f, 4.8f, 3.3f, k.techo);
-        // el filtro no está en el pasillo sino adentro de la primera sala, a la vista del abismo:
-        // primero se ve el problema (no se puede cruzar), después se encuentra la solución
-        ColocarRecogible(k, g, "Recogible_Cuerpo", k.cuerpo, new Vector3(-23f, 0f, 6.5f));
+        ColocarRecogible(k, g, "Recogible_Cuerpo", k.cuerpo, new Vector3(-23f, 0f, 1f));
         MuralesDelFiltro(k, g, -1f);
         Luz(g, "Luz_Pasillo_O", new Vector3(-16f, 3.8f, 1f), LuzCalida, 50f, 8f, false);
 
         // ---- O1 · enseñar: un abismo y dos anclas juntas del otro lado (entran juntas en el cono)
-        // la red de seguridad del abismo: la escalera sube pegada a la pared de la entrada
-        var pieO1 = new Vector3(-20.6f, 0f, -6f);
-        PisoConHueco(k, g, "Piso_O1_Este", -26, -7, -20, 9, HuecoDeEscalera(pieO1, Vector3.forward));
+        PisoConHueco(k, g, "Piso_O1_Este", new Rect(-26f, -7f, 6f, 16f), new Rect(-25.7f, 5.5f, 4.9f, 2f));
+        RedDeSeguridad(k, g, "O1", new Vector3(-26f, 0f, 1f), Vector3.left, 16f, 2.5f, 5.5f);
         Caja(g, "Piso_O1_Oeste", -36, -0.3f, -7, -28.5f, 0, 9, k.piso);
         Caja(g, "Muro_O1_Este_Sur", -20, -9, -7.3f, -19.7f, 6, -1, k.basaltoMedio);
         Caja(g, "Muro_O1_Este_Norte", -20, -9, 3, -19.7f, 6, 9.3f, k.basaltoMedio);
@@ -508,17 +376,13 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_O1_Norte_Bajo", -35, -9, 9, -31, -0.3f, 9.3f, k.basalto);
         Caja(g, "Dintel_O1_Norte", -35, 4, 9, -31, 6, 9.3f, k.basalto);
         Caja(g, "Techo_O1", -36.3f, 6, -7.3f, -19.7f, 6.3f, 9.3f, k.techo);
-        var e1 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_A", new Vector3(-32f, 0f, -0.15f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3f, 0);
-        var e2 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_B", new Vector3(-32f, 0f, 2.15f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3f, 2);
+        var e1 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_A", new Vector3(-32f, 0f, -0.15f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3.2f, 0);
+        var e2 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_B", new Vector3(-32f, 0f, 2.15f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3.2f, 2);
         Puente(k, g, "Puente_O_Ensenar", new Vector3(-26f, 0f, 1f), new Vector3(-28.5f, 0f, 1f), 3.6f, e1, e2);
-        RedDeSeguridad(k, g, "O1", UnityEngine.Rect.MinMaxRect(-28.5f, -7f, -20f, 9f), pieO1, Vector3.forward,
-            new Vector3(-28.5f, -2.4f, 3.5f), 90f, k.pinturaSol);
-        Caja(g, "Red_O1_Pared_Lejos", -28.8f, FondoRed - 0.3f, -7, -28.5f, -0.3f, 9, k.basalto);
         Luz(g, "Luz_O1", new Vector3(-28f, 5.3f, 1f), LuzCalida, 120f, 15f, true);
         Motivo(k, g, "Mural_O1", new Vector3(-35.93f, 0.6f, -4f), 90f, 0.8f, k.pinturaSol);
 
-        // ---- O2 · probar: la puerta tiene una sola ancla, lejos, en el rincón del fondo. Las
-        // puertas se distinguen de los puentes: un ancla, y una vez abiertas quedan abiertas
+        // ---- O2 · probar: buscar la única ancla al fondo abre la puerta para siempre.
         Caja(g, "Piso_O2", -36, -0.3f, 9.3f, -20, 0, 21, k.piso);
         Caja(g, "Muro_O2_Oeste", -36.3f, -0.3f, 9.3f, -36, 6, 21.3f, k.basalto);
         Caja(g, "Muro_O2_Norte", -36.3f, -0.3f, 21, -19.7f, 6, 21.3f, k.basalto);
@@ -526,31 +390,25 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_O2_Este_Norte", -20, -0.3f, 13.5f, -19.7f, 6, 21.3f, k.basaltoMedio);
         Caja(g, "Dintel_O2_Puerta", -20, 3.5f, 10.5f, -19.7f, 6, 13.5f, k.basaltoMedio);
         Caja(g, "Techo_O2", -36.3f, 6, 9.3f, -19.7f, 6.3f, 21.3f, k.techo);
-        var p1 = CrearAnclaEnEscena(k, g, "Ancla_O_Puerta", new Vector3(-31f, 0f, 20.2f), Quaternion.Euler(0f, 135f, 0f), FiltroDefinicion.Canal.Cuerpo, 4f, 3);
+        var p1 = CrearAnclaEnEscena(k, g, "Ancla_O_Puerta", new Vector3(-31f, 0f, 19.8f), Quaternion.Euler(0f, 135f, 0f), FiltroDefinicion.Canal.Cuerpo, 0f, 3);
+        p1.permanente = true;
+        PrefabUtility.RecordPrefabInstancePropertyModifications(p1);
         BaseDePuerta(k, p1);
         CompuertaLosa(k, g, "Puerta_O_Ancla", new Vector3(-19.85f, 1.75f, 12f), new Vector3(0.3f, 3.5f, 3f),
-            new Vector3(0f, -3.8f, 0f), 1.5f, false, p1);
+            new Vector3(0f, -3.8f, 0f), 0.7f, false, p1);
         Luz(g, "Luz_O2", new Vector3(-28f, 5.3f, 15f), LuzCalida, 110f, 14f, true);
 
         // ---- O3 · torcer: otro abismo; las anclas cuelgan del techo, sobre la otra orilla
-        // la red: la gruta sigue por debajo de la orilla de acá; la escalera sube pegada a la
-        // pared sur y sale junto a la puerta de la sala de antes
-        var pieO3 = new Vector3(-13.5f, 0f, 9.9f);
-        PisoConHueco(k, g, "Piso_O3_Cerca", -19.7f, 9.3f, -12.3f, 15, HuecoDeEscalera(pieO3, Vector3.left));
-        RedDeSeguridad(k, g, "O3", UnityEngine.Rect.MinMaxRect(-19.7f, 9.3f, -12.3f, 17.5f), pieO3, Vector3.left,
-            new Vector3(-16f, -2.4f, 17.5f), 180f, k.pinturaSol);
-        Caja(g, "Red_O3_Pared_Sur", -19.7f, FondoRed - 0.3f, 9, -12.3f, -0.3f, 9.3f, k.basalto);
-        // (corrida hacia adentro: la puerta de la sala de antes se hunde justo del otro lado)
-        Caja(g, "Red_O3_Pared_Oeste", -19.7f, FondoRed - 0.3f, 9.3f, -19.4f, -0.3f, 15, k.basalto);
-        Caja(g, "Red_O3_Pared_Lejos", -19.7f, FondoRed - 0.3f, 17.5f, -12.3f, -0.3f, 17.8f, k.basalto);
+        PisoConHueco(k, g, "Piso_O3_Cerca", new Rect(-19.7f, 9.3f, 7.4f, 5.7f), new Rect(-14.6f, 9.8f, 2f, 4.9f));
+        RedDeSeguridad(k, g, "O3", new Vector3(-16f, 0f, 15f), Vector3.forward, 7.4f, 2.5f, 2.4f);
         Caja(g, "Piso_O3_Lejos", -19.7f, -0.3f, 17.5f, -12.3f, 0, 27, k.piso);
         Caja(g, "Muro_O3_Sur", -19.7f, -0.3f, 9, -12.3f, 6, 9.3f, k.basalto);
         Caja(g, "Muro_O3_Oeste_Bajo", -20, -9, 15, -19.7f, -0.3f, 17.5f, k.basalto);
         Caja(g, "Muro_O3_Oeste_Norte", -20, -0.3f, 21.3f, -19.7f, 6, 27.3f, k.basalto);
         Caja(g, "Muro_O3_Norte", -20, -0.3f, 27, -12.3f, 6, 27.3f, k.basalto);
         Caja(g, "Techo_O3", -20, 6, 9.3f, -12.3f, 6.3f, 27.3f, k.techo);
-        var t1 = CrearAnclaEnEscena(k, g, "Ancla_O_Torcer_A", new Vector3(-16.6f, 6f, 19.3f), Quaternion.Euler(180f, 0f, 0f), FiltroDefinicion.Canal.Cuerpo, 4.5f, 2);
-        var t2 = CrearAnclaEnEscena(k, g, "Ancla_O_Torcer_B", new Vector3(-15.4f, 6f, 19.3f), Quaternion.Euler(180f, 0f, 0f), FiltroDefinicion.Canal.Cuerpo, 4.5f, 4);
+        var t1 = CrearAnclaEnEscena(k, g, "Ancla_O_Torcer_A", new Vector3(-16.6f, 5.6f, 19.3f), Quaternion.Euler(180f, 0f, 0f), FiltroDefinicion.Canal.Cuerpo, 4.4f, 2);
+        var t2 = CrearAnclaEnEscena(k, g, "Ancla_O_Torcer_B", new Vector3(-15.4f, 5.6f, 19.3f), Quaternion.Euler(180f, 0f, 0f), FiltroDefinicion.Canal.Cuerpo, 4.4f, 4);
         Puente(k, g, "Puente_O_Torcer", new Vector3(-16f, 0f, 15f), new Vector3(-16f, 0f, 17.5f), 3.4f, t1, t2);
         Luz(g, "Luz_O3", new Vector3(-16f, 5.3f, 12f), LuzCalida, 90f, 12f, true);
 
@@ -563,8 +421,8 @@ public static partial class ConstructorCrater
         refs.atajoOeste = CompuertaLosa(k, g, "Atajo_Oeste", new Vector3(-12.15f, 2f, 24.75f), new Vector3(0.3f, 4f, 3.5f),
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
         Luz(g, "Luz_Sello_Oeste", new Vector3(-16f, 5.3f, 24.5f), LuzCalida, 70f, 10f, false);
-        // arriba del sello, un óculo: se vuelve a ver el eclipse (la meta) y su haz lleva al sello
-        OculoConHaz(k, g, "Oculo_Sello_Oeste", new Vector3(-17.4f, 5.97f, 24.5f), 1.8f, 0f);
+        Oculo(k, g, "Oculo_Sello_Oeste", new Vector3(-18.6f, 5.97f, 24.5f), 1.5f, 65f, 9f);
+        HazSobreSello(k, g, "Haz_Sello_Oeste", new Vector3(-18.6f, 3f, 24.5f), 6f);
         ParedInteriorDelAla(k, g, -1f, -9f);
         MuralesAlaOeste(k, g);
         DecorarAlaOeste(k, g, sello);
@@ -580,8 +438,7 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_Pasillo_E_Sur", 12.3f, -0.3f, -1.3f, 20, 4.5f, -1, k.basalto);
         Caja(g, "Muro_Pasillo_E_Norte", 12.3f, -0.3f, 3, 20, 4.5f, 3.3f, k.basalto);
         Caja(g, "Techo_Pasillo_E", 12.3f, 4.5f, -1.3f, 20, 4.8f, 3.3f, k.techo);
-        // (como en el ala sol: el filtro está en la sala, a la vista del muro de rejas)
-        ColocarRecogible(k, g, "Recogible_Hueco", k.hueco, new Vector3(23f, 0f, 6.5f));
+        ColocarRecogible(k, g, "Recogible_Hueco", k.hueco, new Vector3(23.5f, 0f, 1f));
         MuralesDelFiltro(k, g, 1f);
         Luz(g, "Luz_Pasillo_E", new Vector3(16f, 3.8f, 1f), LuzFria, 50f, 8f, false);
 
@@ -599,18 +456,24 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_Rejas_E1_Sur", 27.6f, -0.3f, -7, 28.4f, 6, -5, k.basaltoMedio);
         Caja(g, "Muro_Rejas_E1_Norte", 27.6f, -0.3f, 7, 28.4f, 6, 9, k.basaltoMedio);
         Caja(g, "Muro_Rejas_E1_Arriba", 27.6f, 4.6f, -5, 28.4f, 6, 7, k.basaltoMedio);
+        // Dos elecciones reales: el ramal sur termina en una cámara cerrada.
+        // La pared impide corregir la elección pasando detrás de las dos rejas.
+        Caja(g, "Separador_Decision_Luna", 28.4f, -0.3f, 0.85f, 36, 6, 1.15f, k.basaltoMedio);
+        Caja(g, "Pantalla_Ciega_Luna", 30.5f, -0.3f, -5f, 30.9f, 6f, 7f, k.basaltoMedio);
+        Luz(g, "Luz_Giro_Luna_Sur", new Vector3(29.6f, 2f, -5.8f), LuzFria, 18f, 4.5f, true);
+        Luz(g, "Luz_Giro_Luna_Norte", new Vector3(29.6f, 2f, 7.8f), LuzFria, 18f, 4.5f, true);
         Reja(k, g, "Reja_E_Ensenar_A", new Vector3(28f, 0f, -2f), 90f);
         Reja(k, g, "Reja_E_Ensenar_B", new Vector3(28f, 0f, 4f), 90f);
         Luz(g, "Luz_E1", new Vector3(24f, 5.3f, 1f), LuzFria, 110f, 14f, true);
-        Luz(g, "Luz_E1_Fondo", new Vector3(32f, 5.3f, 1f), LuzFria, 70f, 10f, false);
+        Luz(g, "Luz_E1_Fondo", new Vector3(34f, 4.5f, 1f), LuzFria, 24f, 4f, true);
         Motivo(k, g, "Mural_E1", new Vector3(35.93f, 0.6f, -4f), -90f, 0.8f, k.pinturaLuna);
 
         // ---- E2 · probar: la sala no tiene salida. El camino es la trampilla del piso,
         // que da a una galería 3,5 m más abajo; ahí otra reja tapa el túnel
         Caja(g, "Piso_E2_Sur", 20, -0.3f, 9.3f, 36, 0, 15.4f, k.piso);
         Caja(g, "Piso_E2_Norte", 20, -0.3f, 20, 36, 0, 21, k.piso);
-        Caja(g, "Piso_E2_Este", 27, -0.3f, 15.4f, 36, 0, 20, k.piso);
-        Caja(g, "Piso_E2_Oeste", 20, -0.3f, 15.4f, 21, 0, 20, k.piso);
+        Caja(g, "Piso_E2_Este", 26.3f, -0.3f, 15.4f, 36, 0, 20, k.piso);
+        Caja(g, "Piso_E2_Oeste", 20, -0.3f, 15.4f, 23.3f, 0, 20, k.piso);
         Caja(g, "Muro_E2_Oeste", 19.7f, -0.3f, 9.3f, 20, 6, 21.3f, k.basaltoMedio);
         Caja(g, "Muro_E2_Oeste_Bajo_Sur", 19.7f, -3.8f, 9.3f, 20, -0.3f, 16, k.basaltoMedio);
         Caja(g, "Muro_E2_Oeste_Bajo_Norte", 19.7f, -3.8f, 19, 20, -0.3f, 21.3f, k.basaltoMedio);
@@ -619,7 +482,10 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_E2_Este", 36, -0.3f, 9.3f, 36.3f, 6, 21.3f, k.basalto);
         Caja(g, "Techo_E2", 19.7f, 6, 9.3f, 36.3f, 6.3f, 21.3f, k.techo);
         Trampilla(k, g, "Trampilla_E", new Vector3(24f, -0.45f, 15.4f));
-        Luz(g, "Luz_E2", new Vector3(28f, 5.3f, 15f), LuzFria, 90f, 14f, true);
+        Rampa(g, "Rampa_Descenso_E2", new Vector3(24.8f, 0, 15.4f), new Vector3(24.8f, -3.5f, 20f), 3f, k.piso);
+        Caja(g, "Pretil_Descenso_E2_Oeste", 23.05f, -3.8f, 15.4f, 23.3f, 0.9f, 20f, k.basalto);
+        Caja(g, "Pretil_Descenso_E2_Este", 26.3f, -3.8f, 15.4f, 26.55f, 0.9f, 20f, k.basalto);
+        Luz(g, "Luz_E2", new Vector3(28f, 5.3f, 15f), LuzFria, 70f, 7f, true);
 
         Caja(g, "Piso_Galeria_E", 20, -3.8f, 12, 28, -3.5f, 21, k.piso);
         Caja(g, "Muro_Galeria_E_Sur", 20, -3.8f, 11.7f, 28.3f, -0.3f, 12, k.basalto);
@@ -627,7 +493,7 @@ public static partial class ConstructorCrater
         Reja(k, g, "Reja_E_Galeria", new Vector3(21.5f, -3.5f, 17.5f), 90f, new Vector3(1f, 0.7f, 1f));
         Caja(g, "Relleno_Galeria_E_Sur", 21.2f, -3.8f, 12, 21.8f, -0.3f, 14.5f, k.basalto);
         Caja(g, "Relleno_Galeria_E_Norte", 21.2f, -3.8f, 20.5f, 21.8f, -0.3f, 21, k.basalto);
-        Luz(g, "Luz_Galeria_E", new Vector3(24.5f, -1.2f, 13.5f), LuzFria, 40f, 8f, false);
+        Luz(g, "Luz_Galeria_E", new Vector3(22.6f, -1.2f, 18f), LuzFria, 18f, 4f, true);
 
         // ---- E3 · torcer: una trinchera, otra reja, y una rampa que sube a la plataforma;
         // arriba de la rampa, acostada como un techo, la escotilla: hay que mirar para arriba
@@ -638,9 +504,15 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_E3_Norte", 12.3f, -0.3f, 27, 20, 6, 27.3f, k.basalto);
         Caja(g, "Muro_E3_Este_Norte", 19.7f, -0.3f, 21.3f, 20, 6, 27.3f, k.basalto);
         Caja(g, "Techo_E3", 12.3f, 6, 9.3f, 20, 6.3f, 27.3f, k.techo);
-        Reja(k, g, "Reja_E_Trinchera", new Vector3(18.05f, -3.5f, 14f), 0f, new Vector3(0.55f, 1f, 1f));
+        var trinchera = Reja(k, g, "Reja_E_Trinchera", new Vector3(18.05f, -3.5f, 14f), 0f, new Vector3(0.55f, 1f, 1f));
+        trinchera.permanente = true;
+        PrefabUtility.RecordPrefabInstancePropertyModifications(trinchera);
         Rampa(g, "Rampa_E3", new Vector3(14.5f, -3.5f, 13f), new Vector3(14.5f, 0f, 21f), 3.8f, k.piso);
-        Trampilla(k, g, "Escotilla_E", new Vector3(15.5f, 0.45f, 16.4f));
+        var salidaRampa = Reja(k, g, "Escotilla_E", new Vector3(14.5f, -0.35f, 20.2f), 0f, new Vector3(0.64f, 0.75f, 1f));
+        salidaRampa.permanente = true;
+        PrefabUtility.RecordPrefabInstancePropertyModifications(salidaRampa);
+        foreach (float x in new[] { 12.45f, 16.55f })
+            Rampa(g, "Pretil_Rampa_E3", new Vector3(x, -2.6f, 13f), new Vector3(x, 0.9f, 21f), 0.25f, k.basalto);
         Luz(g, "Luz_Trinchera_E", new Vector3(16f, 2.5f, 12f), LuzFria, 90f, 13f, true);
 
         // el sello, detrás de un tabique: una placa de materia hueca que queda disuelta
@@ -651,25 +523,12 @@ public static partial class ConstructorCrater
         Glifo(tallado.transform, "Estrella_A", Figura.Estrella, new Vector3(13.95f, 1.35f, 26.95f), Vector3.back, 0.28f, k.tallaLuna);
         Glifo(tallado.transform, "Estrella_B", Figura.Estrella, new Vector3(15.25f, 0.4f, 26.95f), Vector3.back, 0.22f, k.tallaLuna);
         var sello = Reja(k, g, "Sello_Este", new Vector3(14.6f, 0f, 26.55f), 180f, new Vector3(0.5f, 0.5f, 0.5f));
-        sello.permanente = true;
-        // no es una reja (parecía que se pasaba por ahí): es una placa redonda de materia hueca,
-        // apoyada contra la pared sobre la luna tallada. Se usa la mecánica de la reja, sin sus barras
-        foreach (var r in sello.GetComponentsInChildren<Renderer>(true))
-        {
-            r.enabled = false;
-            PrefabUtility.RecordPrefabInstancePropertyModifications(r);
-        }
-        var placa = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        placa.name = "Placa_Sello";
-        Object.DestroyImmediate(placa.GetComponent<Collider>());
-        placa.transform.SetParent(sello.transform, false);
-        placa.transform.SetPositionAndRotation(new Vector3(14.6f, 0.9f, 26.78f), Quaternion.Euler(90f, 0f, 0f));
-        // 1,7 m de diámetro en el mundo (el prefab de la reja está a media escala)
-        Vector3 escalaSello = sello.transform.lossyScale;
-        placa.transform.localScale = new Vector3(1.7f / escalaSello.x, 0.05f / escalaSello.y, 1.7f / escalaSello.z);
-        placa.GetComponent<Renderer>().sharedMaterial = k.rejaSello;
+        foreach (var r in sello.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
+        var placa = Cilindro(sello.transform, "Placa_Sello", new Vector3(0f, 1.7f, 0f), new Vector3(2.8f, 0.07f, 2.8f), k.rejaBasalto);
+        placa.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
         sello.renderers = new[] { placa.GetComponent<Renderer>() };
         sello.sellos = sello.renderers;
+        sello.permanente = true;
         PrefabUtility.RecordPrefabInstancePropertyModifications(sello);
         // el tallado de atrás de la placa se enciende cuando la placa queda disuelta
         var testigo = tallado.AddComponent<TestigoDeSello>();
@@ -680,58 +539,119 @@ public static partial class ConstructorCrater
         // el atajo arranca detrás del tabique: si no, al abrirse dejaba ver por una rendija la sala de antes
         refs.atajoEste = CompuertaLosa(k, g, "Atajo_Este", new Vector3(12.15f, 2f, 25.15f), new Vector3(0.3f, 4f, 2.7f),
             new Vector3(0f, -4.4f, 0f), 2.5f, false, sello);
-        Luz(g, "Luz_Sello_Este", new Vector3(16f, 5f, 25f), LuzFria, 60f, 9f, false);
-        OculoConHaz(k, g, "Oculo_Sello_Este", new Vector3(14.6f, 5.97f, 25.3f), 1.8f, 0f);
+        Luz(g, "Luz_Sello_Este", new Vector3(16f, 5f, 25f), LuzFria, 45f, 6f, true);
+        Oculo(k, g, "Oculo_Sello_Este", new Vector3(14.6f, 5.97f, 25.8f), 1.5f, 65f, 9f);
+        HazSobreSello(k, g, "Haz_Sello_Este", new Vector3(14.6f, 3f, 25.8f), 6f);
         ParedInteriorDelAla(k, g, 1f, -3.8f, 23.8f);
         MuralesAlaEste(k, g);
         DecorarAlaEste(k, g, sello);
         return sello;
     }
 
-    // ================================================================== el Cruce: los dos filtros
-
     static void ConstruirCruce(Kit k, Transform g)
     {
-        Caja(g, "Muro_Cruce_Izq", -6.3f, -9, 27.3f, -6, 6, 68.5f, k.basaltoMedio);
-        Caja(g, "Muro_Cruce_Der", 6, -9, 27.3f, 6.3f, 6, 68.5f, k.basalto);
+        Caja(g, "Muro_Cruce_Izq", -6.3f, -3.8f, 27.3f, -6, 6, 68.5f, k.basaltoMedio);
+        Caja(g, "Muro_Cruce_Der", 6, -3.8f, 27.3f, 6.3f, 6, 68.5f, k.basalto);
         Caja(g, "Techo_Cruce", -6.3f, 6, 27.3f, 6.3f, 6.3f, 68.5f, k.techo);
+        // Patio de lectura: una ancla visible y otra en un nicho lunar.
+        // La solución se observa desde suelo firme, antes del puente descentrado.
+        PisoConHueco(k, g, "Piso_N_Lectura", new Rect(-6, 27.3f, 12, 8.7f), new Rect(3.3f, 30.8f, 2, 4.9f));
+        PisoConHueco(k, g, "Piso_N_Intermedio", new Rect(-6, 40, 12, 8), new Rect(-5.3f, 42.8f, 2, 4.9f));
+        var a = AnclaSolarNueva(k, g, "Ancla_N_Vista", new Vector3(-3, 0, 42), 180, 6.4f, 0);
+        var b = AnclaSolarNueva(k, g, "Ancla_N_Oculta", new Vector3(3, 0, 42.5f), 180, 6.4f, 2);
+        var nicho = Reja(k, g, "Reja_N_Tapa", new Vector3(3, 0, 40.8f), 0, new Vector3(0.6f, 1, 1));
+        nicho.retencion = 10; PrefabUtility.RecordPrefabInstancePropertyModifications(nicho);
+        Caja(g, "Nicho_N_Izq", 1.05f, -0.3f, 40.8f, 1.2f, 4.8f, 44, k.basalto);
+        Caja(g, "Nicho_N_Der", 4.8f, -0.3f, 40.8f, 4.95f, 4.8f, 44, k.basalto);
+        Caja(g, "Nicho_N_Fondo", 1.05f, -0.3f, 44, 4.95f, 4.8f, 44.3f, k.basalto);
+        Puente(k, g, "Puente_N_Reja", new Vector3(-2, 0, 36), new Vector3(-2, 0, 40), 3.4f, a, b);
+        RedDeSeguridad(k, g, "N1", new Vector3(0, 0, 36), Vector3.forward, 12, 4, 4.3f);
+        Luz(g, "Luz_N_Lectura", new Vector3(-3, 5.3f, 34), LuzCalida, 100, 13, true);
 
-        // ---- N1 · una de las anclas del puente está detrás de una reja: HUECO para
-        // destaparla, cambiar a CUERPO y encenderla antes de que la reja se cierre
-        // las redes de los dos abismos: grutas debajo de cada orilla de acá, con su escalera
-        var pieN1 = new Vector3(5.4f, 0f, 32.4f);
-        var pieN2 = new Vector3(-5.4f, 0f, 39.4f);
-        PisoConHueco(k, g, "Piso_N1_Cerca", -6, 27.3f, 6, 33, HuecoDeEscalera(pieN1, Vector3.back));
-        PisoConHueco(k, g, "Piso_N1_Lejos", -6, 35.5f, 6, 45, HuecoDeEscalera(pieN2, Vector3.forward));
-        var vista = CrearAnclaEnEscena(k, g, "Ancla_N_Vista", new Vector3(-3.2f, 0f, 38.5f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 6f, 0);
-        var oculta = CrearAnclaEnEscena(k, g, "Ancla_N_Oculta", new Vector3(3.2f, 0f, 38.5f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 6f, 2);
-        Reja(k, g, "Reja_N_Tapa", new Vector3(3.2f, 0f, 36.8f), 0f, new Vector3(0.9f, 1f, 1f));
-        Puente(k, g, "Puente_N_Reja", new Vector3(0f, 0f, 33f), new Vector3(0f, 0f, 35.5f), 3.6f, vista, oculta);
-        RedDeSeguridad(k, g, "N1", UnityEngine.Rect.MinMaxRect(-6f, 27.9f, 6f, 35.5f), pieN1, Vector3.back,
-            new Vector3(-2.5f, -2.4f, 35.5f), 180f, k.pinturaLuna);
-        Caja(g, "Red_N1_Pared_Sur", -6, FondoRed - 0.3f, 27.6f, 6, -0.3f, 27.9f, k.basalto);
-        Caja(g, "Red_N_Pared_Medio", -6, FondoRed - 0.3f, 35.5f, 6, -0.3f, 35.8f, k.basalto);
-        Luz(g, "Luz_N1", new Vector3(0f, 5.3f, 30.5f), LuzCalida, 110f, 14f, true);
-        Luz(g, "Luz_N1_Fondo", new Vector3(0f, 5.3f, 39.5f), LuzFria, 80f, 11f, false);
+        // Isla segura: primer tramo SOL, pausa sobre piedra, LUNA revela las
+        // anclas del segundo tramo. No se exige apuntar durante una caída.
+        var c = AnclaSolarNueva(k, g, "Ancla_N_Borde_A", new Vector3(-1.2f, 0, 46), 180, 4.8f, 1);
+        var d = AnclaSolarNueva(k, g, "Ancla_N_Borde_B", new Vector3(1.2f, 0, 46), 180, 4.8f, 3);
+        Puente(k, g, "Puente_N_Borde", new Vector3(0, 0, 48), new Vector3(0, 0, 51), 3.2f, c, d);
+        Caja(g, "Isla_Segura_Cruce", -1.8f, -3.3f, 51, 1.8f, 0, 53, k.piedra);
+        Caja(g, "Piso_N_Salida", -6, -0.3f, 56, 6, 0, 68.5f, k.piso);
+        var e = AnclaSolarNueva(k, g, "Ancla_N_Salida_A", new Vector3(-1, 0, 59), 180, 5.6f, 2);
+        var f = AnclaSolarNueva(k, g, "Ancla_N_Salida_B", new Vector3(1, 0, 59), 180, 5.6f, 4);
+        Puente(k, g, "Puente_N_Salida", new Vector3(0, 0, 53), new Vector3(0, 0, 56), 3.2f, e, f);
+        TabiqueConPaso(k, g, "Piel_N_Salida", true, 57, -6, 6, -2, 2);
+        var salida = Reja(k, g, "Reja_N_Salida", new Vector3(0, 0, 57), 0, new Vector3(4f / 6f, 1, 1));
+        salida.retencion = 10; PrefabUtility.RecordPrefabInstancePropertyModifications(salida);
+        RedDeSeguridad(k, g, "N2", new Vector3(0, 0, 48), Vector3.forward, 12, 8, -4.3f);
+        Oculo(k, g, "Oculo_Isla_Segura", new Vector3(0, 5.97f, 52), 2.4f, 95, 10);
+        Luz(g, "Luz_N_Isla", new Vector3(0, 5.3f, 52), LuzCalida, 65, 10, false);
+        Luz(g, "Luz_N_Salida", new Vector3(0, 5.3f, 63), LuzFria, 65, 11, false);
+        // El Cruce conserva sus murales decorativos; los paneles explicativos
+        // superpuestos fueron descartados y no deben regenerarse.
+    }
 
-        // ---- N2 · el puente se sostiene con anclas que quedan a la espalda y termina contra
-        // una reja: parado arriba, cambiar a HUECO y pasar antes de que se apague
-        Caja(g, "Piso_N2_Lejos", -6, -0.3f, 50.5f, 6, 0, 68.5f, k.piso);
-        // miran al sur: se encienden antes de subir al puente y después quedan a la espalda
-        var b1 = CrearAnclaEnEscena(k, g, "Ancla_N_Borde_A", new Vector3(-1.3f, 0f, 43.2f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 8f, 1);
-        var b2 = CrearAnclaEnEscena(k, g, "Ancla_N_Borde_B", new Vector3(1.3f, 0f, 43.2f), Quaternion.Euler(0f, 180f, 0f), FiltroDefinicion.Canal.Cuerpo, 8f, 3);
-        Puente(k, g, "Puente_N_Borde", new Vector3(0f, 0f, 45f), new Vector3(0f, 0f, 50.5f), 3.6f, b1, b2);
-        RedDeSeguridad(k, g, "N2", UnityEngine.Rect.MinMaxRect(-6f, 35.8f, 6f, 50.5f), pieN2, Vector3.forward,
-            new Vector3(2.5f, -2.4f, 50.5f), 180f, k.pinturaSol);
-        Caja(g, "Red_N2_Pared_Lejos", -6, FondoRed - 0.3f, 50.5f, 6, -0.3f, 50.8f, k.basalto);
-        Reja(k, g, "Reja_N_Borde_A", new Vector3(-3f, 0f, 51.2f));
-        Reja(k, g, "Reja_N_Borde_B", new Vector3(3f, 0f, 51.2f));
-        Caja(g, "Muro_Rejas_N_Arriba", -6, 4.6f, 50.75f, 6, 6, 51.65f, k.basalto);
-        Oculo(k, g, "Oculo_Cruce", new Vector3(0f, 5.97f, 47.8f), 3.2f, 120f, 10f);
-        Luz(g, "Luz_N2", new Vector3(0f, 5.3f, 44f), LuzCalida, 90f, 12f, false);
+    // ================================================================== recuperación sin teletransporte
 
-        // ---- N3 · la antesala de la Cresta
-        Luz(g, "Luz_N3", new Vector3(0f, 5.3f, 61f), LuzFria, 70f, 11f, false);
+    static void PisoConHueco(Kit k, Transform g, string nombre, Rect piso, Rect hueco)
+    {
+        Caja(g, nombre + "_Sur", piso.xMin, -0.3f, piso.yMin, piso.xMax, 0f, hueco.yMin, k.piso);
+        Caja(g, nombre + "_Norte", piso.xMin, -0.3f, hueco.yMax, piso.xMax, 0f, piso.yMax, k.piso);
+        Caja(g, nombre + "_Oeste", piso.xMin, -0.3f, hueco.yMin, hueco.xMin, 0f, hueco.yMax, k.piso);
+        Caja(g, nombre + "_Este", hueco.xMax, -0.3f, hueco.yMin, piso.xMax, 0f, hueco.yMax, k.piso);
+    }
+
+    /// <summary>El abismo termina 3 m abajo. La escalera vuelve hacia la orilla de partida.</summary>
+    static void RedDeSeguridad(Kit k, Transform g, string nombre, Vector3 borde, Vector3 haciaAbismo,
+                               float ancho, float largoAbismo, float ladoEscalera)
+    {
+        var red = Grupo(g, "Red_" + nombre);
+        red.SetPositionAndRotation(borde, Quaternion.LookRotation(haciaAbismo));
+        Vector3 P(float x, float y, float z) => red.TransformPoint(new Vector3(x, y, z));
+        GameObject C(string n, float x0, float y0, float z0, float x1, float y1, float z1) =>
+            Bloque(red, n, P((x0 + x1) / 2f, (y0 + y1) / 2f, (z0 + z1) / 2f),
+                new Vector3(x1 - x0, y1 - y0, z1 - z0), k.basaltoMedio);
+        C("Piso_Gruta", -ancho / 2f, -3.3f, -5.7f, ancho / 2f, -3f, largoAbismo);
+        C("Muro_Gruta_Fondo", -ancho / 2f, -3.3f, -6f, ancho / 2f, -0.3f, -5.7f);
+        C("Muro_Gruta_Lejos", -ancho / 2f, -3.3f, largoAbismo, ancho / 2f, -0.3f, largoAbismo + 0.3f);
+        C("Muro_Gruta_Izq", -ancho / 2f - 0.3f, -3.3f, -5.7f, -ancho / 2f, -0.3f, largoAbismo);
+        C("Muro_Gruta_Der", ancho / 2f, -3.3f, -5.7f, ancho / 2f + 0.3f, -0.3f, largoAbismo);
+        Luz(red, "Luz_Gruta", P(0f, -1.1f, -2f), LuzCalida, 32f, 8f, true);
+        Losa(k, red, "Mural_Gruta_" + nombre, P(nombre == "O1" ? 0f : -ancho * 0.2f, -1.5f, -5.7f),
+            red.forward, Mathf.Min(3f, ancho * 0.4f), 1.6f, PanelValleEclipse);
+        Luz(red, "Luz_Pie_Escalera", P(ladoEscalera, -1.3f, -0.2f), LuzCalida, 18f, 4f, true);
+        if (nombre == "O1") ConstruirRinconGruta(k, red, ancho);
+        HuecoDeEscalera(k, red, nombre, ladoEscalera);
+    }
+
+    static void HuecoDeEscalera(Kit k, Transform red, string nombre, float x)
+    {
+        Vector3 P(float y, float z) => red.TransformPoint(new Vector3(x, y, z));
+        const int escalones = 20;
+        for (int i = 0; i < escalones; i++)
+        {
+            float z = Mathf.Lerp(-0.3f, -5.2f, (i + 0.5f) / escalones);
+            float y = Mathf.Lerp(-3f, 0f, (i + 0.5f) / escalones);
+            var escalon = Bloque(red, $"Escalon_Red_{nombre}_{i:00}", P(y - 0.12f, z),
+                new Vector3(2f, 0.24f, 4.9f / escalones + 0.025f), k.piso);
+            Object.DestroyImmediate(escalon.GetComponent<Collider>());
+        }
+        var rampa = Rampa(red, "Rampa_Red_" + nombre, P(-3f, -0.3f), P(0f, -5.2f), 2f, k.piso);
+        rampa.GetComponent<Renderer>().enabled = false;
+        var tapa = CompuertaLosa(k, red, "Losa_Red_" + nombre, P(-0.14f, -2.75f),
+            new Vector3(2f, 0.28f, 4.9f), new Vector3(2.5f, 0f, 0f), 1f, false);
+        tapa.abrirSoloPorOrden = true;
+        var zona = Zona(red, "Pie_Escalera_" + nombre, P(-1.9f, 0f), new Vector3(2.5f, 2.2f, 1.2f));
+        UnityEditor.Events.UnityEventTools.AddPersistentListener(zona.alEntrar, tapa.Abrir);
+    }
+
+    static void HazSobreSello(Kit k, Transform g, string nombre, Vector3 centro, float alto)
+    {
+        var haz = Grupo(g, nombre);
+        for (int i = 0; i < 2; i++)
+        {
+            var plano = Plano(haz, "Haz_" + i, k.hazDeLuz);
+            plano.transform.SetPositionAndRotation(centro, Quaternion.Euler(0f, 45f + i * 90f, 0f));
+            plano.transform.localScale = new Vector3(1.4f, alto, 1f);
+        }
     }
 
     // ================================================================== piezas

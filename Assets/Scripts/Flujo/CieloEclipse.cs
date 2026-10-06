@@ -19,7 +19,7 @@ using UnityEngine;
 /// oscuro y el horizonte encendido alrededor. El paisaje se sigue viendo.
 ///
 /// El prólogo es de mañana (sol blanco, cielo azul limpio) y el epílogo, al atardecer:
-/// PonerDespues() baja el sol frente a la puerta de la capilla y pasa la luz, el
+/// PonerDespues() mueve el sol a otro sector del horizonte y pasa la luz, el
 /// ambiente y la niebla a los tonos cálidos del 'Atardecer'. Así se nota que pasó el día.
 /// </summary>
 public class CieloEclipse : MonoBehaviour
@@ -34,7 +34,7 @@ public class CieloEclipse : MonoBehaviour
     [Tooltip("Tiene que quedar dentro del plano lejano de la cámara.")]
     [SerializeField] float distancia = 150f;
     [Tooltip("Diámetro aparente del sol, en grados. El real es 0,53; más grande se lee mejor.")]
-    [SerializeField] float diametroAngular = 4f;
+    [SerializeField] float diametroAngular = 7f;
     [Tooltip("Separación inicial de la luna, en radios del sol.")]
     [SerializeField] float separacionInicial = 2.4f;
 
@@ -46,9 +46,13 @@ public class CieloEclipse : MonoBehaviour
     [SerializeField] Color ambienteHorizonteDia = new Color(0.5f, 0.5f, 0.46f);
     [SerializeField] Color ambienteSueloDia = new Color(0.22f, 0.18f, 0.12f);
 
+    [Header("Dirección durante el recorrido")]
+    [SerializeField, Range(45f, 85f)] float alturaSolSubsuelo = 75f;
+    Quaternion giroExterior;
+    bool giroExteriorGuardado;
+
     [Header("Atardecer (epílogo)")]
-    [Tooltip("Giro de la luz del sol: bajo, frente a la puerta de la capilla.")]
-    [SerializeField] Vector3 giroSolAtardecer = new Vector3(11f, 340f, 0f);
+    [SerializeField] Vector2 direccionAtardecer = new Vector2(18f, 30f);
     [SerializeField] Color solAtardecer = new Color(1f, 0.56f, 0.3f);
     [SerializeField] float intensidadAtardecer = 1.4f;
     [SerializeField] Color cieloAtardecer = new Color(0.94f, 0.6f, 0.42f);
@@ -62,12 +66,11 @@ public class CieloEclipse : MonoBehaviour
     // crepúsculo profundo: el cielo azul oscuro, el horizonte anaranjado (la luz que llega
     // de afuera de la sombra de la luna) y el suelo todavía visible
     [SerializeField] Color solTotalidad = new Color(0.6f, 0.62f, 0.85f);
-    // (más clara que antes: en la totalidad hay que caminar hasta la puerta del cráter)
-    [SerializeField] float intensidadTotalidad = 0.6f;
-    [SerializeField] Color cieloTotalidad = new Color(0.12f, 0.15f, 0.28f);
-    [SerializeField] Color ambienteCieloTotalidad = new Color(0.3f, 0.33f, 0.48f);
-    [SerializeField] Color ambienteHorizonteTotalidad = new Color(0.42f, 0.3f, 0.24f);
-    [SerializeField] Color ambienteSueloTotalidad = new Color(0.15f, 0.13f, 0.12f);
+    [SerializeField] float intensidadTotalidad = 0.5f;
+    [SerializeField] Color cieloTotalidad = new Color(0.07f, 0.09f, 0.18f);
+    [SerializeField] Color ambienteCieloTotalidad = new Color(0.26f, 0.29f, 0.4f);
+    [SerializeField] Color ambienteHorizonteTotalidad = new Color(0.34f, 0.24f, 0.2f);
+    [SerializeField] Color ambienteSueloTotalidad = new Color(0.13f, 0.12f, 0.12f);
 
     [Header("Niebla")]
     [Tooltip("Más baja que la del epílogo: si no, la niebla se come los discos.")]
@@ -98,7 +101,7 @@ public class CieloEclipse : MonoBehaviour
     {
         ladoLuna = -1f;
         atardecer = true;
-        if (sol != null) sol.transform.rotation = Quaternion.Euler(giroSolAtardecer);
+        if (sol != null) sol.transform.rotation = Quaternion.Euler(direccionAtardecer.x, direccionAtardecer.y, 0f);
         // el disco del sol, anaranjado
         if (rendererSol != null)
         {
@@ -111,16 +114,24 @@ public class CieloEclipse : MonoBehaviour
 
     void Awake()
     {
-        bloque = new MaterialPropertyBlock();
+        GuardarDireccionExterior();
+        PrepararReferencias();
+        Mostrar(false);
+    }
+
+    void PrepararReferencias()
+    {
+        bloque ??= new MaterialPropertyBlock();
         if (discoLuna != null) rendererLuna = discoLuna.GetComponent<Renderer>();
         if (discoSol != null) rendererSol = discoSol.GetComponent<Renderer>();
-        Mostrar(false);
     }
 
     /// <summary>Prende el cielo del exterior (discos, sol, niebla clara) o lo apaga del todo.</summary>
     public void Mostrar(bool valor)
     {
+        PrepararReferencias();
         visible = valor;
+        if (valor) UsarDireccionExterior();
         if (discoSol != null) discoSol.gameObject.SetActive(valor);
         if (discoLuna != null) discoLuna.gameObject.SetActive(valor);
         if (corona != null) corona.gameObject.SetActive(valor);
@@ -128,7 +139,43 @@ public class CieloEclipse : MonoBehaviour
         if (valor) Aplicar();
     }
 
-    void LateUpdate()
+    /// <summary>Los mismos discos del exterior, sin cambiar la luz ambiente interior.</summary>
+    public void MostrarEnSubsuelo()
+    {
+        PrepararReferencias();
+        visible = true;
+        GuardarDireccionExterior();
+        if (sol != null) sol.transform.rotation = Quaternion.Euler(alturaSolSubsuelo, giroExterior.eulerAngles.y, 0f);
+        if (discoSol != null) discoSol.gameObject.SetActive(true);
+        if (discoLuna != null) discoLuna.gameObject.SetActive(true);
+        if (corona != null) corona.gameObject.SetActive(true);
+        if (sol != null) sol.enabled = false;
+        if (rendererLuna != null)
+        {
+            rendererLuna.GetPropertyBlock(bloque);
+            bloque.SetColor(IdColor, Camera.main != null ? Camera.main.backgroundColor : Color.black);
+            rendererLuna.SetPropertyBlock(bloque);
+        }
+    }
+
+    void GuardarDireccionExterior()
+    {
+        if (giroExteriorGuardado || sol == null) return;
+        giroExterior = sol.transform.rotation;
+        giroExteriorGuardado = true;
+    }
+
+    /// <summary>Vuelve al horizonte inicial sin alterar el estado ni la luz del eclipse.</summary>
+    public void UsarDireccionExterior()
+    {
+        GuardarDireccionExterior();
+        if (sol != null) sol.transform.rotation = giroExterior;
+    }
+
+    void LateUpdate() => ActualizarVista();
+
+    /// <summary>Actualiza el cielo también para las capturas del editor.</summary>
+    public void ActualizarVista()
     {
         if (visible) Posicionar();
     }

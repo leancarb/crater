@@ -25,6 +25,15 @@ public static class OpcionesCrater
     public static float Brillo { get; private set; }
     public static float Volumen { get; private set; } = 1f;
 
+    public static bool AyudasEscritas { get; private set; }
+
+    public static void AlternarAyudas()
+    {
+        AyudasEscritas = !AyudasEscritas;
+        PlayerPrefs.SetInt("crater.ayudas", AyudasEscritas ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+
     static bool cargadas;
 
     // al empezar cada partida (también al reiniciar el Play en el editor)
@@ -42,6 +51,7 @@ public static class OpcionesCrater
         CampoDeVision = PlayerPrefs.GetFloat("crater.fov", 70f);
         Brillo = PlayerPrefs.GetFloat("crater.brillo", 0f);
         Volumen = PlayerPrefs.GetFloat("crater.volumen", 1f);
+        AyudasEscritas = PlayerPrefs.GetInt("crater.ayudas", 0) == 1;
         cargadas = true;
     }
 

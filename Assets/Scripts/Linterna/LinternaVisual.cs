@@ -51,6 +51,7 @@ public class LinternaVisual : MonoBehaviour
         if (modelo.gameObject.activeSelf != visible) modelo.gameObject.SetActive(visible);
         if (!visible) return;
 
+        bloque ??= new MaterialPropertyBlock();
         float delta = Time.deltaTime;
 
         // balanceo: el modelo se corre al revés de hacia donde se mira, como si tuviera peso

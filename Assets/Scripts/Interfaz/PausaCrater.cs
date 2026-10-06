@@ -47,8 +47,15 @@ public class PausaCrater : MonoBehaviour
 
         if (EnPausa)
         {
-            if (EntradaCrater.Presionada(UnityEngine.InputSystem.Key.R)) ReiniciarEscena();
-            else if (EntradaCrater.Presionada(UnityEngine.InputSystem.Key.X)) Salir();
+            if (EntradaCrater.AlternarAyudas)
+            {
+                OpcionesCrater.AlternarAyudas();
+                if (!OpcionesCrater.AyudasEscritas) interfaz?.OcultarPrompt();
+                interfaz?.MostrarPausa(true);
+            }
+            if (EntradaCrater.Seguir) Reanudar();
+            else if (EntradaCrater.Reiniciar) ReiniciarEscena();
+            else if (EntradaCrater.Salir) Salir();
         }
         else if (Cursor.lockState != CursorLockMode.Locked && EntradaCrater.ClicIzquierdo)
         {

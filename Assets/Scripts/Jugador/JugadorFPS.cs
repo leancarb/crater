@@ -20,13 +20,13 @@ public class JugadorFPS : MonoBehaviour
 {
     [Header("Movimiento")]
     public float velocidad = 2.6f;
-    [Tooltip("Lo usa el prólogo mientras se abre el cráter: se puede mirar, pero no caminar.")]
-    public bool movimientoBloqueado;
     [Tooltip("Multiplica la velocidad mientras se mantiene Shift.")]
     public float multiplicadorCorrer = 2.2f;
     public float gravedad = -18f;
     [Tooltip("Suavizado del arranque y la frenada. Más alto = más ágil.")]
     public float suavizado = 8f;
+    [Tooltip("Impide caminar durante la apertura del cráter; conserva el control de la mirada.")]
+    public bool movimientoBloqueado;
 
     [Header("Cámara")]
     public Transform camara;
@@ -43,6 +43,13 @@ public class JugadorFPS : MonoBehaviour
     [Header("Pasos")]
     public AudioSource fuentePasos;
     public AudioClip[] pasos;
+    public AudioClip[] pasosTierra;
+    public AudioClip[] pasosMadera;
+    public AudioClip[] pasosMetal;
+    public SuperficieDePasos.Tipo UltimaSuperficie { get; private set; }
+    public int PasosEmitidos { get; private set; }
+    public bool UltimoPasoCorriendo { get; private set; }
+    public float CadenciaPasos { get; private set; }
 
     CharacterController cc;
     Vector3 velocidadActual;   // velocidad horizontal suavizada
@@ -88,13 +95,12 @@ public class JugadorFPS : MonoBehaviour
 
     void Mover(float delta)
     {
-        // con el movimiento bloqueado (la tierra tiembla) se puede mirar pero no caminar
         Vector2 entrada = movimientoBloqueado ? Vector2.zero : EntradaCrater.Movimiento();
         // la entrada (x, y) se convierte a una dirección en el mundo según hacia dónde mira el cuerpo
         float rapidez = velocidad * (EntradaCrater.Correr ? multiplicadorCorrer : 1f);
         Vector3 deseada = (transform.right * entrada.x + transform.forward * entrada.y) * rapidez;
         // suavizado exponencial: se siente igual a 30 o a 144 FPS
-        velocidadActual = Vector3.Lerp(velocidadActual, deseada, 1f - Mathf.Exp(-suavizado * delta));
+        velocidadActual = movimientoBloqueado ? Vector3.zero : Vector3.Lerp(velocidadActual, deseada, 1f - Mathf.Exp(-suavizado * delta));
 
         // en el piso, una caída chica constante lo mantiene pegado (bajando rampas, por ejemplo)
         if (cc.isGrounded && caida < 0f) caida = -2f;
@@ -112,8 +118,12 @@ public class JugadorFPS : MonoBehaviour
         if (camara == null) return;
 
         // 0 = quieto, 1 = caminando a velocidad máxima (en el aire no hay cabeceo)
-        float rapidez = cc.isGrounded ? Mathf.Clamp01(new Vector2(velocidadActual.x, velocidadActual.z).magnitude / velocidad) : 0f;
-        ciclo += rapidez * pasosPorSegundo * Mathf.PI * delta;
+        float avance = cc.isGrounded ? new Vector2(cc.velocity.x, cc.velocity.z).magnitude / velocidad : 0f;
+        float rapidez = Mathf.Clamp01(avance);
+        bool corriendo = avance > 1.25f;
+        // La zancada se alarga al correr, pero la cadencia también aumenta.
+        CadenciaPasos = pasosPorSegundo * (avance > 1 ? 1 + (avance - 1) * 0.55f : avance);
+        ciclo += CadenciaPasos * Mathf.PI * delta;
 
         // la cabeza baja en cada paso (|sen|) y se mece un poco de costado (cos)
         float onda = Mathf.Sin(ciclo);
@@ -129,9 +139,26 @@ public class JugadorFPS : MonoBehaviour
             ultimoPaso = paso;
             if (rapidez > 0.3f && fuentePasos != null && pasos != null && pasos.Length > 0)
             {
-                // altura y clip al azar: dos pasos nunca suenan idénticos
-                fuentePasos.pitch = Random.Range(0.92f, 1.08f);
-                fuentePasos.PlayOneShot(pasos[Random.Range(0, pasos.Length)], Mathf.Lerp(0.5f, 1f, rapidez));
+                var banco = pasos;
+                UltimaSuperficie = SuperficieDePasos.Tipo.Piedra;
+                if (Physics.Raycast(transform.position + Vector3.up * 0.5f, Vector3.down, out var suelo, 1.2f,
+                    ~LayerMask.GetMask("Jugador"), QueryTriggerInteraction.Ignore))
+                {
+                    var material = suelo.collider.GetComponentInParent<SuperficieDePasos>();
+                    if (material != null) UltimaSuperficie = material.tipo;
+                    else if (suelo.collider.GetComponentInParent<SuperficieTierra>() != null) UltimaSuperficie = SuperficieDePasos.Tipo.Tierra;
+                }
+                switch (UltimaSuperficie)
+                {
+                    case SuperficieDePasos.Tipo.Tierra: banco = pasosTierra; break;
+                    case SuperficieDePasos.Tipo.Madera: banco = pasosMadera; break;
+                    case SuperficieDePasos.Tipo.Metal: banco = pasosMetal; break;
+                }
+                if (banco == null || banco.Length == 0) banco = pasos;
+                UltimoPasoCorriendo = corriendo;
+                PasosEmitidos++;
+                fuentePasos.pitch = corriendo ? Random.Range(1.02f, 1.14f) : Random.Range(0.92f, 1.05f);
+                fuentePasos.PlayOneShot(banco[Random.Range(0, banco.Length)], corriendo ? 1f : Mathf.Lerp(0.45f, 0.75f, rapidez));
             }
         }
     }

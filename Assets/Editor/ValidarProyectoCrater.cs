@@ -106,6 +106,18 @@ public static class ValidarProyectoCrater
                 Comprobar(linterna.requiereRecogerla, "La linterna tiene que empezar sin recoger.", problemas);
             }
 
+            var colecciones=Todos<ColeccionPiedras>();
+            Comprobar(colecciones.Length==1,"Debe haber una colección opcional.",problemas);
+            var coleccion=colecciones.FirstOrDefault();var piezas=Todos<PiezaTallada>();
+            Comprobar(piezas.Length==6 && piezas.Select(p=>p.identificador).Distinct().Count()==6 && piezas.Select(p=>p.indice).OrderBy(i=>i).SequenceEqual(Enumerable.Range(0,6)),"Las seis piedras necesitan IDs e índices únicos.",problemas);
+            if(coleccion!=null)
+            {
+                Comprobar(coleccion.piezas!=null && coleccion.piezas.Length==6 && coleccion.piezas.All(p=>p!=null && p.coleccion==coleccion),"Referencias de piedras incompletas.",problemas);
+                Comprobar(coleccion.conjunto!=null && coleccion.conjunto.fragmentos.Length==6 && coleccion.conjunto.fragmentos.All(r=>r!=null) && coleccion.conjunto.proyeccion!=null && coleccion.conjunto.nota!=null && coleccion.conjunto.voces!=null && coleccion.conjunto.voces.Length==6 && coleccion.conjunto.voces.All(v=>v!=null),"Conjunto opcional incompleto.",problemas);
+                Comprobar(coleccion.jugador!=null && coleccion.camara!=null && coleccion.interfaz!=null && coleccion.flujo!=null && coleccion.prologo!=null,"La colección debe respetar controles y flujo.",problemas);
+            }
+            Comprobar(Todos<AguaEnCuenco>().Length==1 && Todos<AguaEnCuenco>().All(a=>a.sonda!=null && a.sonda.resolution==64),"Falta el reflejo limitado a 64px.",problemas);
+            Comprobar(Todos<ParticleSystem>().Where(p=>p.name=="Polvo_Abertura").All(p=>p.main.maxParticles<=20),"Polvo por encima del presupuesto.",problemas);
             var recogibles = Todos<Recogible>();
             Comprobar(recogibles.Count(r => r.filtro == null) == 1, "Tiene que haber una única linterna para recoger.", problemas);
             Comprobar(recogibles.Count(r => r.filtro == cuerpo) == 1 && recogibles.Count(r => r.filtro == hueco) == 1,
@@ -141,7 +153,7 @@ public static class ValidarProyectoCrater
             // todas las compuertas se abren con receptores, salvo el cierre de la Cresta (lo cierra la zona)
             var compuertas = Todos<Compuerta>();
             Compuerta Compuerta(string nombre) => compuertas.FirstOrDefault(c => c.name == nombre);
-            Comprobar(compuertas.Where(c => c.name != "Cierre_Cresta").All(c => c.receptores.Count > 0 && c.receptores.All(r => r != null)),
+            Comprobar(compuertas.Where(c => c.name != "Cierre_Cresta" && !c.name.StartsWith("Losa_Red_")).All(c => c.receptores.Count > 0 && c.receptores.All(r => r != null)),
                 "Hay una compuerta sin receptores (sólo el cierre de la Cresta puede no tenerlos).", problemas);
             Comprobar(Compuerta("Cierre_Cresta") != null, "Falta el cierre de la Cresta.", problemas);
             foreach (var nombre in new[] { "Compuerta_Umbral", "Puerta_Sellos", "Atajo_Oeste", "Atajo_Este" })
@@ -150,10 +162,17 @@ public static class ValidarProyectoCrater
             Comprobar(sellos != null && sellos.receptores.Count == 2 && sellos.receptores.All(r => r != null && r.permanente),
                 "La puerta de los sellos tiene que abrirse con los dos sellos, y los sellos tienen que ser permanentes.", problemas);
 
-            // Cresta, umbral de la capilla, el pozo del cráter y el lugar del cráter (epílogo)
+            // Cresta, mirador, pozo, lugar del cráter y escaleras de recuperación
             var zonas = Todos<ZonaJugador>();
-            Comprobar(zonas.Length == 4 && zonas.All(z => TieneOyentes(z.alEntrar) && z.GetComponent<Collider>().isTrigger),
-                "Tiene que haber 4 zonas (Cresta, umbral de la capilla, pozo del cráter y lugar del cráter), todas triggers conectados.", problemas);
+            Comprobar(zonas.Length == 8 && zonas.All(z => TieneOyentes(z.alEntrar) && z.GetComponent<Collider>().isTrigger),
+                "Tiene que haber 8 zonas conectadas: Cresta, mirador, pozo, epílogo y cuatro escaleras de recuperación.", problemas);
+            foreach (string n in new[] { "O1", "O3", "N1", "N2" })
+                Comprobar(Compuerta("Losa_Red_" + n) != null && zonas.Any(z => z.name == "Pie_Escalera_" + n),
+                    $"Falta la recuperación de {n}.", problemas);
+            Comprobar(Todos<PuenteLuz>().All(p => p.anclas.Count == 2), "Cada puente debe tener dos anclas.", problemas);
+            var puertaSol = Compuerta("Puerta_O_Ancla");
+            Comprobar(puertaSol != null && !puertaSol.sostenida && puertaSol.receptores.Count == 1,
+                "La puerta del ala SOL debe tener una ancla y quedar abierta.", problemas);
 
             Comprobar(Todos<PrologoCapilla>().Length == 1 && Todos<CieloEclipse>().Length == 1,
                 "Falta el prólogo de la capilla o el cielo del eclipse.", problemas);

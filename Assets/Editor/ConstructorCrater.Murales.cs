@@ -60,8 +60,6 @@ public static partial class ConstructorCrater
                 Losa(k, cruce, $"Friso_Cruce_{(lado < 0f ? "Izq" : "Der")}_{z:0}", new Vector3(lado * 6f, 4f, z),
                     lado < 0f ? Vector3.right : Vector3.left, 4f, 0.8f, (kk, l) => FrisoCerros(l.En(kk.pinturaHueso), 4f, 0.8f));
         // y losas grandes, a la altura de los ojos
-        Losa(k, cruce, "Mural_Cruce_Reja_Y_Ancla", new Vector3(-6f, 1.9f, 35f), Vector3.right, 3f, 1.9f, PanelRejaYAncla);
-        Losa(k, cruce, "Mural_Cruce_Camino", new Vector3(6f, 1.9f, 35f), Vector3.left, 3f, 1.9f, PanelCaminoDeLuz);
         Losa(k, cruce, "Mural_Cruce_Valle", new Vector3(-6f, 1.9f, 60f), Vector3.right, 3f, 1.9f, PanelValleEclipse);
         Losa(k, cruce, "Mural_Cruce_Chakana", new Vector3(6f, 1.9f, 60f), Vector3.left, 3f, 1.9f, PanelChakanaGrande);
 
@@ -97,14 +95,21 @@ public static partial class ConstructorCrater
     static void MuralesDelFiltro(Kit k, Transform g, float lado)
     {
         var murales = Grupo(g, "Murales_Filtro");
-        float x = lado * 16.5f;
-        // el del filtro, en la pared norte de la primera sala, encima de donde está el filtro
-        var filtro = new Vector3(lado * 23.5f, 1.9f, 9f);
-        Losa(k, murales, lado < 0f ? "Control_FiltroSol" : "Control_FiltroLuna", filtro, Vector3.back, 2.4f, 1.5f,
+        // Una estela baja al lado del filtro reúne control, herramienta y primer
+        // problema en el mismo encuadre, sin ocupar el recorrido central (z = 1).
+        float x = lado < 0f ? -24.8f : 25.3f;
+        var normal = new Vector3(-lado, 0f, 0.35f).normalized;
+        var punto = new Vector3(x, 1.55f, -4.2f);
+        Losa(k, murales, lado < 0f ? "Control_FiltroSol" : "Control_FiltroLuna", punto, normal, 2.2f, 1.5f,
             lado < 0f ? (System.Action<Kit, Lienzo>)PanelFiltroSol : PanelFiltroLuna);
-        LuzDeMural(murales, filtro, Vector3.back, 2.4f);
-        Losa(k, murales, "Control_LuzBlanca", new Vector3(x, 1.9f, -1f), Vector3.forward, 2.4f, 1.5f, PanelLuzBlanca);
-        LuzDeMural(murales, new Vector3(x, 1.2f, 1f), Vector3.zero, 2.4f);   // en el medio del pasillo: alumbra las dos
+        var baseEstela = Bloque(murales, "Pie_Estela_Filtro", new Vector3(x, 0.45f, -4.2f), new Vector3(0.6f, 0.9f, 1.3f), k.piedra);
+        baseEstela.transform.rotation = Quaternion.LookRotation(normal);
+        // La luz blanca se enseña más adelante: nunca detrás de la primera estela.
+        var puntoBlanca = new Vector3(lado * 24.2f, 1.9f, -6.88f);
+        var normalBlanca = Vector3.forward;
+        Losa(k, murales, "Control_LuzBlanca", puntoBlanca, normalBlanca, 2.4f, 1.5f, PanelLuzBlanca);
+        LuzDeMural(murales, punto, normal, 2.2f);
+        LuzDeMural(murales, puntoBlanca, normalBlanca, 2.4f);
     }
 
     /// <summary>
@@ -199,14 +204,13 @@ public static partial class ConstructorCrater
         FiguraEn(l.En(k.pinturaLuna), Figura.LunaLlena, 0f, 0.32f, 0.28f);
         var h = l.En(k.pinturaHueso);
         Linea(h, new Vector2(-0.85f, -0.58f), new Vector2(0.85f, -0.58f), 0.03f);
-        // la capilla: muros a los lados de la puerta, techo a dos aguas y el campanario con su cruz
+        // Estación secular: alero inclinado y sensor asimétrico, sin cruz.
         Rect(h, -0.32f, -0.58f, -0.08f, -0.2f);
         Rect(h, 0.08f, -0.58f, 0.32f, -0.2f);
         Rect(h, -0.08f, -0.32f, 0.08f, -0.2f);
-        Tri(h, new Vector2(-0.38f, -0.2f), new Vector2(0.38f, -0.2f), new Vector2(0f, 0.0f));
-        Rect(h, 0.36f, -0.58f, 0.5f, -0.1f);
-        Rect(h, 0.415f, -0.1f, 0.445f, 0.04f);
-        Rect(h, 0.38f, -0.03f, 0.48f, -0.005f);
+        Linea(h, new Vector2(-0.38f, -0.18f), new Vector2(0.38f, -0.14f), 0.04f);
+        Rect(h, -0.24f, -0.18f, -0.22f, 0.02f);
+        Anillo(h, new Vector2(-0.23f, 0.035f), 0.035f, 0.055f);
     }
 
     static void LoreCrater(Kit k, Lienzo l)

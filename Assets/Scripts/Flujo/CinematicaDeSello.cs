@@ -11,10 +11,10 @@ using UnityEngine;
 /// CÓMO FUNCIONA
 /// Cada frame anota qué sellos se encendieron. Un sello encendido espera a que el
 /// jugador esté dentro de la rotonda (a menos de 'radio' del 'centro'): desde ahí se
-/// ven los hilos. Entonces apaga el control del jugador y la pausa y, sin mover la
+/// ven los hilos. Entonces suspende el control del jugador y, sin mover la
 /// cámara de sus ojos, la gira hacia el hilo de ese sello (HiloDeTallados en modo
-/// manual) y lo enciende. Con todos los sellos gira hacia el eclipse, lo enciende y
-/// enciende el eclipse del obelisco del centro, después el de la puerta, y abre la puerta (que
+/// manual) y lo enciende. Con todos los sellos enciende el obelisco sin girar hacia él,
+/// orienta al eclipse de la puerta y la abre (que
 /// espera esta orden: 'abrirSoloPorOrden'). Si se encienden los
 /// dos antes de volver, se muestran uno después del otro. Al terminar, la mirada no
 /// vuelve atrás: el jugador sigue mirando hacia donde terminó la cinemática.
@@ -24,9 +24,6 @@ public class CinematicaDeSello : MonoBehaviour
     public static bool Reproduciendo { get; private set; }
 
     [SerializeField] JugadorFPS jugador;
-    [SerializeField] InterfazCrater interfaz;
-    [SerializeField] PausaCrater pausa;
-    [SerializeField] LinternaController linterna;
 
     [Header("Un hilo por sello (mismo orden)")]
     [SerializeField] ReceptorDeLuz[] sellos;
@@ -41,7 +38,7 @@ public class CinematicaDeSello : MonoBehaviour
     [SerializeField] HiloDeTallados eclipse;
     [SerializeField] Compuerta puerta;
     [SerializeField] float esperaPuerta = 3.5f;
-    [Tooltip("El obelisco del centro: con los dos sellos, la mirada pasa primero por su eclipse.")]
+    [Tooltip("El obelisco del centro se enciende sin un giro adicional de cámara.")]
     [SerializeField] ObeliscoDelEclipse obelisco;
 
     // los campos estáticos sobreviven entre partidas en el editor: se limpian al dar Play
@@ -51,12 +48,14 @@ public class CinematicaDeSello : MonoBehaviour
     readonly Queue<int> pendientes = new Queue<int>();
     bool saltar;   // Espacio, Enter o A: termina la cinemática de golpe, con todo en su estado final
     bool[] anotado;
+    bool controlTomado;
+    bool jugadorHabilitado;
 
     void Start() => anotado = new bool[sellos != null ? sellos.Length : 0];
 
     void Update()
     {
-        if (Reproduciendo && EntradaCrater.Saltar) saltar = true;
+        if (Reproduciendo && !PausaCrater.EnPausa && EntradaCrater.Saltar) saltar = true;
         for (int i = 0; i < anotado.Length; i++)
         {
             if (anotado[i] || sellos[i] == null || !sellos[i].Activo) continue;
@@ -75,6 +74,7 @@ public class CinematicaDeSello : MonoBehaviour
 
     bool TodosLosSellos()
     {
+        if (sellos == null || sellos.Length == 0) return false;
         foreach (var s in sellos) if (s == null || !s.Activo) return false;
         return true;
     }
@@ -85,8 +85,8 @@ public class CinematicaDeSello : MonoBehaviour
         saltar = false;
         // frena en seco: si no, al devolverle el control seguía con la velocidad que traía
         // al entrar a la rotonda y la vista se corría un poco de costado
-        if (jugador != null) { jugador.ReiniciarMovimiento(); jugador.enabled = false; }
-        if (pausa != null) pausa.enabled = false;
+        if (jugador != null) { jugadorHabilitado = jugador.enabled; controlTomado = true; jugador.ReiniciarMovimiento(); jugador.enabled = false; }
+
 
         // la cámara no se mueve de los ojos del jugador: sólo gira, como en el eclipse
         var camara = jugador != null ? jugador.camara : Camera.main.transform;
@@ -104,13 +104,7 @@ public class CinematicaDeSello : MonoBehaviour
         // (si los dos esperaban juntos, el eclipse va después del segundo hilo)
         if (TodosLosSellos() && pendientes.Count == 0)
         {
-            // primero el obelisco del centro: su sol y su luna ya brillan; se enciende su eclipse
-            if (obelisco != null)
-            {
-                yield return Girar(camara, Mirar(camara, obelisco.Centro), segundosPorTramo);
-                obelisco.Encender();
-                yield return Esperar(1.6f);
-            }
+            obelisco?.Encender();
             if (eclipse != null)
             {
                 yield return Girar(camara, Mirar(camara, Centro(eclipse)), segundosPorTramo);
@@ -127,10 +121,34 @@ public class CinematicaDeSello : MonoBehaviour
         {
             jugador.ReiniciarMovimiento();
             jugador.MirarHacia(camara.position + camara.forward * 10f);
-            jugador.enabled = true;
+            jugador.enabled = jugadorHabilitado;
+            controlTomado = false;
         }
-        if (pausa != null) pausa.enabled = true;
+
         Reproduciendo = false;
+    }
+
+    void OnDisable()
+    {
+        StopAllCoroutines();
+        if (controlTomado && jugador != null)
+        {
+            jugador.MirarHacia(jugador.camara.position + jugador.camara.forward * 10f);
+            jugador.ReiniciarMovimiento();
+            jugador.enabled = jugadorHabilitado;
+            controlTomado = false;
+        }
+        Reproduciendo = false;
+        // Una secuencia interrumpida no puede dejar la puerta pendiente para siempre.
+        if (anotado == null) return;
+        for (int i = 0; i < anotado.Length; i++)
+            if (anotado[i] && i < hilos.Length && hilos[i] != null) hilos[i].Completar();
+        if (TodosLosSellos())
+        {
+            obelisco?.Encender();
+            eclipse?.Completar();
+            puerta?.Abrir();
+        }
     }
 
     static Quaternion Mirar(Transform camara, Vector3 punto) => Quaternion.LookRotation(punto - camara.position);
@@ -139,7 +157,7 @@ public class CinematicaDeSello : MonoBehaviour
     {
         if (hilo.tallados == null || hilo.tallados.Length == 0) return hilo.transform.position;
         Vector3 c = Vector3.zero;
-        foreach (var t in hilo.tallados) if (t != null) c += t.transform.position;
+        foreach (var t in hilo.tallados) if (t != null) c += t.bounds.center;
         return c / hilo.tallados.Length;
     }
 

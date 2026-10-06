@@ -41,7 +41,7 @@ public static partial class ConstructorCrater
         public GameObject jugador;
         public Compuerta compuertaUmbral;
         public ZonaJugador zonaCresta, zonaFinal;
-        public Transform spawnCapilla, spawnInicio;
+        public Transform spawnCapilla, spawnInicio, spawnValle;
         public Light luna, sol;
 
         // prólogo
@@ -53,8 +53,7 @@ public static partial class ConstructorCrater
         public Transform tapaCrater, puertaValle;
         public Renderer[] contornoValle;
         public Renderer destelloValle;
-        public ZonaJugador zonaUmbralCapilla, zonaPuertaCrater, zonaMirador;
-        public Transform spawnValle;
+        public ZonaJugador zonaPuertaCrater, zonaMirador;
 
         // final
         public Compuerta cierreCresta, puertaSellos, atajoOeste, atajoEste;
@@ -90,11 +89,56 @@ public static partial class ConstructorCrater
         ConstruirCresta(kit, Grupo(nivel, "05_Cresta"), refs);
         ConstruirCapilla(kit, Grupo(nivel, "06_Capilla"), refs);
         Vestir(kit, arte);
+        DetallesDelRecorrido(kit, nivel);
         ConstruirSistemas(kit, refs);
         DespejarTallados(kit);
+        AmpliarSubsuelo(nivel, arte);
         FacetarEscena(kit);
+        ConstruirExploracion(kit, nivel, refs);
+        ConfigurarSombrasYSuperficies(kit, refs);
 
         EditorSceneManager.SaveScene(escena, RutaEscena);
+    }
+
+    static void ConfigurarSombrasYSuperficies(Kit k, Referencias refs)
+    {
+        var presupuesto = refs.jugador.GetComponentInChildren<Camera>().gameObject.AddComponent<PresupuestoSombras>();
+        var luces = new List<Light>();
+        var imprescindibles = new List<Light>();
+        foreach (var luz in Object.FindObjectsByType<Light>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (luz.type == LightType.Directional || luz.GetComponentInParent<LinternaController>() != null
+                || luz.shadows == LightShadows.None) continue;
+            if (luz.name == "Luz_Galeria_E" || luz.name == "Luz_E2" || luz.name == "Luz_Trinchera_E" || luz.name == "Luz_Sello_Este" || luz.name == "Luz_Vela_Entrada")
+            {
+                imprescindibles.Add(luz);
+                luz.shadowCustomResolution = luz.name == "Luz_Vela_Entrada" ? 128 : 256;
+                continue;
+            }
+            luces.Add(luz);
+            luz.shadowCustomResolution = 256;
+        }
+        presupuesto.luces = luces.ToArray();
+        presupuesto.imprescindibles = imprescindibles.ToArray();
+        presupuesto.Actualizar(refs.spawnValle.position);
+        foreach (var c in Object.FindObjectsByType<Collider>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            var r = c.GetComponent<Renderer>();
+            if (c.isTrigger || r == null) continue;
+            var tipo = SuperficieDePasos.Tipo.Piedra;
+            foreach (var m in r.sharedMaterials)
+            {
+                if (m == null) continue;
+                string n = m.name.ToLowerInvariant();
+                if (n.Contains("tierra") || n.Contains("huella")) { tipo = SuperficieDePasos.Tipo.Tierra; break; }
+                if (n.Contains("madera")) tipo = SuperficieDePasos.Tipo.Madera;
+                if (n.Contains("metal") || n.Contains("puentevidrio")) tipo = SuperficieDePasos.Tipo.Metal;
+            }
+            var superficie = c.GetComponent<SuperficieDePasos>();
+            if (superficie == null) superficie = c.gameObject.AddComponent<SuperficieDePasos>();
+            superficie.tipo = tipo;
+            if (tipo == SuperficieDePasos.Tipo.Tierra && c.GetComponent<SuperficieTierra>() == null) c.gameObject.AddComponent<SuperficieTierra>();
+        }
     }
 
     static void ConfigurarAmbiente()
@@ -202,20 +246,14 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_Corredor_Izq", -2.3f, -0.3f, 68.5f, -2, 6, 75, k.basalto);
         Caja(g, "Muro_Corredor_Der", 2, -0.3f, 68.5f, 2.3f, 6, 75, k.basalto);
         Caja(g, "Techo_Corredor", -2.3f, 6, 68.5f, 2.3f, 6.3f, 75, k.techo);
-        // (el "perderse un poco" quedó al principio, en las lomas del valle.) Al fondo del
-        // corredor, en el umbral de la Cresta, una luz pálida llama desde la antesala
-        Luz(g, "Luz_Llamado_Cresta", new Vector3(0f, 2.2f, 76.2f), new Color(0.85f, 0.9f, 1f), 35f, 7f, false);
-        var umbralCresta = Bloque(g, "Umbral_Cresta_Luz", new Vector3(0f, 0.01f, 74.85f), new Vector3(3.8f, 0.02f, 0.3f), k.luzEclipse);
-        Object.DestroyImmediate(umbralCresta.GetComponent<Collider>());
         Caja(g, "Cierre_Hondonada_Izq", -6.3f, -0.3f, 68.5f, -2, 6, 68.8f, k.basalto);
         Caja(g, "Cierre_Hondonada_Der", 2, -0.3f, 68.5f, 6.3f, 6, 68.8f, k.basalto);
 
         Caja(g, "Piso_Cresta", -12, -0.3f, 75, 12, 0, 99, k.piso);
         Caja(g, "Muro_Cresta_Izq", -12.3f, -0.3f, 75, -12, 8, 99, k.basalto);
         Caja(g, "Muro_Cresta_Der", 12, -0.3f, 75, 12.3f, 8, 99, k.basaltoMedio);
-        // (el reflejo del foco lo hace ParedEspejo: si la piedra fuera pulida, la luz de la sala
-        // dejaba un punto azul brillante en el fondo)
-        Caja(g, "Muro_Cresta_Fondo", -12.3f, -0.3f, 99, 12.3f, 8, 99.3f, k.basalto);
+        // el fondo es una pared pulida: devuelve el reflejo del propio foco
+        Caja(g, "Muro_Cresta_Fondo", -12.3f, -0.3f, 99, 12.3f, 8, 99.3f, k.basaltoMedio);
         Caja(g, "Muro_Cresta_Frente_Izq", -12.3f, -0.3f, 74.7f, -2, 8, 75, k.basalto);
         Caja(g, "Muro_Cresta_Frente_Der", 2, -0.3f, 74.7f, 12.3f, 8, 75, k.basalto);
         Caja(g, "Dintel_Corredor", -2, 6, 74.7f, 2, 8, 75, k.basalto);
@@ -236,6 +274,8 @@ public static partial class ConstructorCrater
         refs.zonaCresta = zona.AddComponent<ZonaJugador>();
 
         Luz(g, "Luz_Cresta", new Vector3(0f, 6.8f, 81f), LuzFria, 90f, 20f, false);
+        Luz(g, "Luz_Umbral_Cresta", new Vector3(0f, 3.4f, 71f), new Color(0.82f, 0.88f, 1f), 35f, 8f, true);
+        Adorno(g, "Linea_Umbral_Cresta", new Vector3(0f, 0.035f, 69f), new Vector3(3.6f, 0.025f, 0.08f), k.puertaEclipse);
 
         ConstruirParedEspejo(k, g);
     }
@@ -247,21 +287,29 @@ public static partial class ConstructorCrater
     static void ConstruirParedEspejo(Kit k, Transform g)
     {
         // todas las paredes de la Cresta devuelven el reflejo (el fondo, los costados y la entrada)
-        void Pared(string nombre, Vector3 centro, Vector3 haciaAdentro)
+        void Pared(string nombre, Vector3 centro, Vector3 haciaAdentro, Vector2? tamanio = null)
         {
             var espejo = new GameObject(nombre);
             espejo.transform.SetParent(g, false);
-            espejo.transform.SetPositionAndRotation(centro, Quaternion.LookRotation(haciaAdentro));
+            espejo.transform.SetPositionAndRotation(centro, Quaternion.LookRotation(haciaAdentro, Mathf.Abs(haciaAdentro.y) > 0.9f ? Vector3.forward : Vector3.up));
             var paredEspejo = espejo.AddComponent<ParedEspejo>();
+            if (tamanio.HasValue)
+            {
+                var so = new SerializedObject(paredEspejo);
+                so.FindProperty("tamanio").vector2Value = tamanio.Value;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
             var reflejo = Plano(espejo.transform, "Reflejo", k.resplandorTallado);
             var rebote = Luz(espejo.transform, "LuzRebote", centro - haciaAdentro * 0.6f, Color.white, 0f, 12f, false);
             Asignar(paredEspejo, "reflejo", reflejo);
             Asignar(paredEspejo, "luzRebote", rebote);
         }
-        Pared("ParedEspejo", new Vector3(0f, 3.85f, 99f), Vector3.forward);
-        Pared("ParedEspejo_Oeste", new Vector3(-12f, 3.85f, 87f), Vector3.left);
-        Pared("ParedEspejo_Este", new Vector3(12f, 3.85f, 87f), Vector3.right);
-        Pared("ParedEspejo_Entrada", new Vector3(0f, 3.85f, 75f), Vector3.back);
+        Pared("ParedEspejo", new Vector3(0f, 4f, 99f), Vector3.forward);
+        Pared("ParedEspejo_Oeste", new Vector3(-12f, 4f, 87f), Vector3.left);
+        Pared("ParedEspejo_Este", new Vector3(12f, 4f, 87f), Vector3.right);
+        Pared("ParedEspejo_Entrada", new Vector3(0f, 4f, 75f), Vector3.back);
+        Pared("ParedEspejo_Piso", new Vector3(0, 0.02f, 87), Vector3.down, new Vector2(24, 24));
+        Pared("ParedEspejo_Techo", new Vector3(0, 7.98f, 87), Vector3.up, new Vector2(24, 24));
     }
 
     /// <summary>
@@ -322,8 +370,6 @@ public static partial class ConstructorCrater
     static void ConstruirCapilla(Kit k, Transform g, Referencias refs)
     {
         // el valle va arriba del nivel, con el cráter del valle justo sobre el pozo de la Explanada
-        // girado 180° alrededor del cráter: la capilla queda al norte del pozo y el camino del
-        // prólogo llega desde el sur, de frente a la boca del cráter (que está en el borde sur)
         g.rotation = Quaternion.Euler(0f, 180f, 0f);
         g.position = new Vector3(CentroPozo.x, AlturaValle, CentroPozo.z) - g.rotation * CraterEnLaCapilla;
 
@@ -332,38 +378,29 @@ public static partial class ConstructorCrater
 
         // el guiño: adentro, sobre la puerta, la espiral tallada de las anclas. Sólo aparece
         // en el epílogo, frente a donde despierta el jugador: el cráter dejó una marca
-        refs.guino = Motivo(k, g, "Guino_Tallado", g.TransformPoint(new Vector3(0f, 3.3f, 6.8f)), 180f + g.eulerAngles.y, 0.45f, k.ambar);
+        refs.guino = Motivo(k, g, "Guino_Tallado", g.TransformPoint(new Vector3(0f, 3.3f, 6.8f)), 0f, 0.45f, k.ambar);
 
         refs.spawnCapilla = new GameObject("SpawnCapilla").transform;
         refs.spawnCapilla.SetParent(g, false);
         refs.spawnCapilla.localPosition = new Vector3(0f, 0.05f, -4.5f);
 
-        // el jugador empieza lejos, del otro lado del valle, mirando la capilla: es la meta. El
-        // sol está arriba de ella. Caminando hacia ella, la luna tapa el sol; en el mirador
-        // (el paso entre los dos cerros) llega la totalidad y la tierra se abre adelante, entre
-        // él y la capilla. Sin cinemática: la cámara es siempre suya (PrologoCapilla).
-        // En el epílogo despierta adentro de la capilla (SpawnCapilla)
-        var spawnValle = new GameObject("SpawnValle").transform;
-        spawnValle.SetParent(g, false);
-        // en la loma del inicio, lejos (a casi 100 m del mirador): desde ahí se ve la capilla
-        spawnValle.localPosition = new Vector3(0f, AlturaRelieve(0f, 150f) - 0.05f, 150f);
-        spawnValle.localRotation = Quaternion.LookRotation(Vector3.back);   // hacia la capilla
-        refs.jugador.transform.SetPositionAndRotation(spawnValle.position, spawnValle.rotation);
-        refs.spawnValle = spawnValle;
-        refs.zonaMirador = Zona(g, "Zona_Mirador", g.TransformPoint(new Vector3(0f, 1.5f, 52f)), new Vector3(60f, 3f, 1.2f));
-        // el umbral del atrio: en el epílogo, salir por el arco cierra la demo
-        refs.zonaUmbralCapilla = Zona(g, "Zona_Umbral_Capilla", g.TransformPoint(new Vector3(0f, 1.5f, 15.9f)), new Vector3(9f, 3f, 0.8f));
+        // La capilla se reserva para el epílogo; el inicio está en la loma exterior.
+        refs.spawnValle = Grupo(g, "SpawnValle");
+        refs.spawnValle.localPosition = new Vector3(0f, AlturaRelieve(0f, 150f) + 0.05f, 150f);
+        refs.spawnValle.localRotation = Quaternion.Euler(0f, 180f, 0f);
+        refs.jugador.transform.SetPositionAndRotation(refs.spawnValle.position, refs.spawnValle.rotation);
+        // La apertura del prólogo la activa el mirador; los créditos requieren llegar a la huella.
+        refs.zonaMirador = Zona(g, "Zona_Mirador", g.TransformPoint(new Vector3(0f, 1.5f, 55.5f)), new Vector3(12f, 4f, 2f));
 
         ConstruirCraterDelValle(k, g, refs);
 
         // epílogo: quedarse en el lugar donde estaba el cráter dispara los créditos
-        refs.zonaFinal = Zona(g, "Zona_LugarDelCrater", g.TransformPoint(CraterEnLaCapilla + Vector3.up * 1.5f), new Vector3(16f, 3f, 16f));
-        refs.zonaFinal.segundosDePermanencia = 5f;
+        refs.zonaFinal = Zona(g, "Zona_LugarDelCrater", g.TransformPoint(CraterEnLaCapilla + Vector3.up * 1.5f), new Vector3(20f, 6f, 20f));
+        refs.zonaFinal.segundosDePermanencia = 0f;
 
         var solGO = new GameObject("Sol_Epilogo");
         solGO.transform.SetParent(g, false);
-        // de mañana, arriba de la capilla vista desde el camino: delante del jugador
-        solGO.transform.rotation = g.rotation * Quaternion.Euler(20f, 0f, 0f);
+        solGO.transform.rotation = g.rotation * Quaternion.Euler(14f, 0f, 0f);
         refs.sol = solGO.AddComponent<Light>();
         refs.sol.type = LightType.Directional;
         // mañana en el prólogo; en el epílogo CieloEclipse lo baja al atardecer
@@ -378,7 +415,7 @@ public static partial class ConstructorCrater
     /// <summary>
     /// El cráter que el eclipse revela en el valle, frente a la capilla: la boca del
     /// pozo de la Explanada. Arranca escondido: el borde bajo tierra y una tapa de
-    /// tierra sobre el agujero. La puerta está en el borde, del lado de la capilla.
+    /// tierra sobre el agujero. La boca está en el borde sur, de frente al camino del mirador.
     /// </summary>
     static void ConstruirCraterDelValle(Kit k, Transform g, Referencias refs)
     {
@@ -394,29 +431,17 @@ public static partial class ConstructorCrater
         for (int i = 0; i < piezas; i++)
         {
             float ang = i * 360f / piezas;
-            // hueco al sur, de donde llega el camino: ahí está la boca de la escalera
+            // hueco hacia la capilla (sur): ahí está la puerta
             if (Mathf.Abs(Mathf.DeltaAngle(ang, 270f)) < 12f) continue;
             var dir = new Vector3(Mathf.Cos(ang * Mathf.Deg2Rad), 0f, Mathf.Sin(ang * Mathf.Deg2Rad));
-            float alto = Azar(2.2f, 3.6f);
-            var roca = Bloque(crater, $"Borde_{i:00}", centro + dir * Azar(radio - 0.2f, radio + 0.4f) + Vector3.up * (alto / 2f - 0.5f),
-                new Vector3(Azar(2.6f, 3.4f), alto, Azar(1.8f, 2.6f)), i % 3 == 0 ? k.basaltoMedio : k.basalto, false);
-            roca.transform.rotation = Quaternion.LookRotation(-dir) * Quaternion.Euler(Azar(-8f, 8f), Azar(-12f, 12f), Azar(-6f, 6f));
+            float alto = Azar(0.25f, 0.4f);
+            var roca = Bloque(crater, $"Borde_{i:00}", centro + dir * Azar(radio - 0.2f, radio + 0.4f) + Vector3.up * (alto / 2f - 0.1f),
+                new Vector3(Azar(2.6f, 3.4f), alto, Azar(0.6f, 0.9f)), i % 3 == 0 ? k.basaltoMedio : k.basalto, false);
+            roca.transform.rotation = Quaternion.LookRotation(-dir);
             bordes.Add(roca.transform);
         }
         bordes.AddRange(refs.paredesEscalera);
         refs.bordesCrater = bordes.ToArray();
-
-        // de frente a la boca (el camino llega desde el sur): dos pares de mojones con una
-        // luz chica marcan la entrada, que se ve en la totalidad
-        var camino = Grupo(g, "Camino_Del_Borde");
-        foreach (float z in new[] { -14.6f, -17.4f })
-            foreach (float lado in new[] { -1f, 1f })
-            {
-                var pie = centro + new Vector3(lado * 1.9f, 0f, z);
-                Bloque(camino, "Mojon", pie + Vector3.up * 0.35f, new Vector3(0.28f, 0.8f, 0.28f), k.piedraCapilla);
-                var luz = Bloque(camino, "Vela", pie + Vector3.up * 0.86f, new Vector3(0.16f, 0.2f, 0.16f), k.vela);
-                Object.DestroyImmediate(luz.GetComponent<Collider>());
-            }
 
         // la tapa: tierra sobre el agujero, se abre desde el centro. Está fuera del grupo
         // del cráter porque en el epílogo vuelve a cerrarse (y se puede pisar)
@@ -430,27 +455,22 @@ public static partial class ConstructorCrater
         tapa.GetComponent<Renderer>().sharedMaterial = k.tierra;
         refs.tapaCrater = tapa.transform;
 
-        // la entrada no es una puerta: es una abertura en el piso. En el borde sur, la escalera
-        // se hunde en la tierra entre dos cordones bajos de basalto; el contorno que destella
-        // está acostado en el suelo, alrededor de la boca. Ver ConstruirPozo y ConstruirEscalera
+        // la boca del cráter: cordones bajos y contorno horizontal en el borde sur.
+        // Del otro lado empieza la escalera que baja al fondo (ConstruirPozo)
         Vector3 umbral = centro + new Vector3(0f, 0f, -RadioPozo);
         var puerta = Grupo(crater, "Boca_Crater");
         puerta.position = umbral;
         refs.puertaValle = puerta;
-        Bloque(puerta, "Umbral_Boca", umbral + new Vector3(0f, 0.04f, -0.55f), new Vector3(4.6f, 0.25f, 0.5f), k.basaltoMedio, false);
-        foreach (float lado in new[] { -1f, 1f })
-            Bloque(puerta, lado < 0f ? "Cordon_Izq" : "Cordon_Der", umbral + new Vector3(lado * 2.1f, 0.12f, 1.2f),
-                new Vector3(0.45f, 0.48f, 3.8f), k.basaltoMedio, false);
-        refs.contornoValle = new[]
-        {
-            Adorno(puerta, "Contorno_Izq", umbral + new Vector3(-1.9f, 0.38f, 1.2f), new Vector3(0.07f, 0.04f, 3.4f), k.puertaEclipse),
-            Adorno(puerta, "Contorno_Der", umbral + new Vector3(1.9f, 0.38f, 1.2f), new Vector3(0.07f, 0.04f, 3.4f), k.puertaEclipse),
-            Adorno(puerta, "Contorno_Umbral", umbral + new Vector3(0f, 0.18f, -0.29f), new Vector3(3.7f, 0.04f, 0.07f), k.puertaEclipse),
-        };
-        // el destello sale de la boca, como luz que sube del pozo
-        var destello = Plano(puerta, "Destello", k.destello);
-        destello.transform.position = umbral + new Vector3(0f, 0.9f, 1.6f);
-        refs.destelloValle = destello;
+        Bloque(puerta, "Cordon_Izq", umbral + new Vector3(-1.8f, 0.08f, 0.4f), new Vector3(0.4f, 0.35f, 2f), k.basaltoMedio, false);
+        Bloque(puerta, "Cordon_Der", umbral + new Vector3(1.8f, 0.08f, 0.4f), new Vector3(0.4f, 0.35f, 2f), k.basaltoMedio, false);
+        Bloque(puerta, "Umbral", umbral + new Vector3(0f, -0.11f, -0.5f), new Vector3(3.2f, 0.05f, 0.45f), k.piso, false);
+        foreach (float x in new[] { -2.4f, 2.4f })
+            foreach (float z in new[] { -2.5f, -5.5f })
+            {
+                Bloque(puerta, "Mojon_Entrada", umbral + new Vector3(x, 0.18f, z), new Vector3(0.6f, 0.6f, 0.6f), k.basalto, false);
+                Adorno(puerta, "Vela_Entrada", umbral + new Vector3(x, 0.56f, z), new Vector3(0.09f, 0.2f, 0.09f), k.vela);
+                Luz(puerta, "Luz_Vela_Entrada", umbral + new Vector3(x, 0.75f, z), LuzCalida, 6f, 4f, true);
+            }
 
         // epílogo: el pasto aplastado donde estuvo
         var huella = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -557,8 +577,8 @@ public static partial class ConstructorCrater
         ConfigurarAudio(viento, k.audio.vientoOculo, 0f, true, false);
         viento.playOnAwake = true;
         var adaptacion = volumenGO.AddComponent<AdaptacionOscuridad>();
-        adaptacion.tiempoDeAdaptacion = 10f;
-        adaptacion.demoraInicial = 3f;
+        adaptacion.tiempoDeAdaptacion = 11f;
+        adaptacion.demoraInicial = 0.4f;
         adaptacion.exposicionAdaptada = 3.2f;
         adaptacion.ambienteDeAdaptacion = viento;
 
@@ -571,18 +591,12 @@ public static partial class ConstructorCrater
         var prologo = sistemas.AddComponent<PrologoCapilla>();
 
         var ambiente = sistemas.AddComponent<AudioSource>();
-        ConfigurarAudio(ambiente, k.audio.ambienteCrater, 0.55f, true, false);
-        ambiente.playOnAwake = true;
+        // Se conserva el clip protegido, pero se retira el bucle global que sonaba como oleaje.
+        ConfigurarAudio(ambiente, k.audio.ambienteCrater, 0f, true, false);
         var exterior = sistemas.AddComponent<AudioSource>();
         ConfigurarAudio(exterior, k.audio.exteriorCapilla, 0.9f, true, false);
         var pajaros = sistemas.AddComponent<AudioSource>();
         ConfigurarAudio(pajaros, k.audio.pajaros, 0.85f, true, false);
-        var campana = sistemas.AddComponent<AudioSource>();
-        ConfigurarAudio(campana, k.audio.campana, 0.8f, false, false);
-        var revelado = sistemas.AddComponent<AudioSource>();
-        ConfigurarAudio(revelado, k.audio.compuerta, 1f, false, false);
-        var destelloPuerta = sistemas.AddComponent<AudioSource>();
-        ConfigurarAudio(destelloPuerta, k.audio.destelloPuerta, 0.8f, false, false);
         var musica = sistemas.AddComponent<AudioSource>();
         ConfigurarAudio(musica, k.audio.musicaCreditos, 0f, true, false);
         var grave = sistemas.AddComponent<AudioSource>();
@@ -618,41 +632,41 @@ public static partial class ConstructorCrater
         Asignar(eclipse, "prologo", prologo);
         Asignar(eclipse, "cielo", refs.cielo);
         Asignar(eclipse, "tonoFinal", tono);
-        Asignar(eclipse, "campana", campana);
         Asignar(eclipse, "musicaCreditos", musica);
 
         Asignar(prologo, "jugador", refs.jugador.GetComponent<JugadorFPS>());
         Asignar(prologo, "cielo", refs.cielo);
-        Asignar(prologo, "inicioCamino", refs.spawnValle);
-        Asignar(prologo, "mirador", refs.zonaMirador.transform);
         Asignar(prologo, "eclipse", eclipse);
         Asignar(prologo, "flujo", flujo);
         Asignar(prologo, "interfaz", interfaz);
         Asignar(prologo, "spawnCrater", refs.spawnInicio);
+        Asignar(prologo, "spawnValle", refs.spawnValle);
+        Asignar(prologo, "mirador", refs.zonaMirador.transform);
         Asignar(prologo, "crater", refs.craterValle);
         AsignarLista(prologo, "bordes", refs.bordesCrater);
         Asignar(prologo, "tapa", refs.tapaCrater);
         Asignar(prologo, "puerta", refs.puertaValle);
-        AsignarLista(prologo, "contornoPuerta", refs.contornoValle);
-        Asignar(prologo, "destello", refs.destelloValle);
         Asignar(prologo, "huella", refs.huella);
         Asignar(prologo, "zonaEpilogo", refs.zonaFinal.gameObject);
         Asignar(prologo, "guino", refs.guino);
         Asignar(prologo, "pajaros", pajaros);
         Asignar(prologo, "graveEclipse", grave);
-        Asignar(prologo, "campana", campana);
-        Asignar(prologo, "sonidoRevelado", revelado);
-        Asignar(prologo, "sonidoDestello", destelloPuerta);
+        var apertura=CrearFuenteHija(sistemas.transform,"Apertura_Tierra",k.audio.compuerta,.8f);
+        apertura.transform.position=refs.puertaValle.position;
+        apertura.minDistance=14;apertura.maxDistance=45;apertura.priority=32;
+        apertura.pitch=.8f; // El clip existente de 3,2 s acompaña los 4 s de apertura.
+        Asignar(prologo,"sonidoRevelado",apertura);
 
         UnityEventTools.AddPersistentListener(refs.compuertaUmbral.alAbrirse, new UnityAction(flujo.NotificarUmbralAbierto));
         UnityEventTools.AddPersistentListener(refs.puertaSellos.alAbrirse, new UnityAction(flujo.EntrarCruce));
 
-        // al encender cada sello, la cámara va a la rotonda a ver cómo se prende su hilo
+        // Al regresar con un sello, la cámara muestra el encendido del hilo de luces.
         var cinematica = sistemas.AddComponent<CinematicaDeSello>();
         Asignar(cinematica, "jugador", refs.jugador.GetComponent<JugadorFPS>());
-        Asignar(cinematica, "interfaz", interfaz);
-        Asignar(cinematica, "pausa", pausa);
-        Asignar(cinematica, "linterna", linterna);
+        var marcoCinematica = new SerializedObject(cinematica);
+        marcoCinematica.FindProperty("centro").vector3Value = EspacioCrater.Punto(CentroRotonda);
+        marcoCinematica.FindProperty("radio").floatValue = 13.5f * EspacioCrater.Escala;
+        marcoCinematica.ApplyModifiedPropertiesWithoutUndo();
         AsignarLista(cinematica, "sellos", new Object[] { refs.selloOeste, refs.selloEste });
         AsignarLista(cinematica, "hilos", new Object[] { refs.hiloSoles, refs.hiloLunas });
         Asignar(cinematica, "eclipse", refs.hiloEclipse);
@@ -666,9 +680,6 @@ public static partial class ConstructorCrater
         UnityEventTools.AddPersistentListener(refs.zonaFinal.alEntrar, new UnityAction(eclipse.CerrarDemo));
         UnityEventTools.AddPersistentListener(adaptacion.alAdaptarse, new UnityAction(eclipse.AlCompletarAdaptacion));
         UnityEventTools.AddPersistentListener(refs.zonaMirador.alEntrar, new UnityAction(prologo.IniciarCinematica));
-        // en el epílogo, salir del atrio también cierra la demo (en el prólogo CerrarDemo no hace nada)
-        UnityEventTools.AddPersistentListener(refs.zonaUmbralCapilla.alEntrar, new UnityAction(eclipse.CerrarDemo));
-        refs.zonaUmbralCapilla.unaVez = false;
         UnityEventTools.AddPersistentListener(refs.zonaPuertaCrater.alEntrar, new UnityAction(prologo.EntrarAlCrater));
     }
 

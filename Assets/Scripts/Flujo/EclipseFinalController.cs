@@ -43,7 +43,7 @@ public class EclipseFinalController : MonoBehaviour
     [SerializeField] Color ambienteSueloEpilogo = new Color(0.2f, 0.12f, 0.08f);
     [SerializeField] float nieblaEpilogo = 0.006f;
     [SerializeField] AudioSource ambienteCrater;
-    [SerializeField] float volumenCrater = 0.55f;
+    [SerializeField] float volumenCrater = 0f;
     [SerializeField] AudioSource ambienteExterior;
 
     [Header("La luz que entra por el techo")]
@@ -68,7 +68,7 @@ public class EclipseFinalController : MonoBehaviour
 
     [Header("Créditos")]
     [Tooltip("Si el jugador no va al lugar del cráter, los créditos llegan solos.")]
-    [SerializeField] float segundosHastaCreditos = 120f;
+    [SerializeField] float segundosHastaCreditos = 45f;
     [TextArea(1, 3)]
     [SerializeField] string[] creditos =
     {
@@ -89,7 +89,7 @@ public class EclipseFinalController : MonoBehaviour
     void Update()
     {
         if (animando && EntradaCrater.Saltar) saltar = true;
-        if (!EnEpilogo || cerrado) return;
+        if (!EnEpilogo || cerrado || animando || PausaCrater.EnPausa) return;
         tiempoEnEpilogo += Time.deltaTime;
         if (tiempoEnEpilogo >= segundosHastaCreditos) CerrarDemo();
     }
@@ -179,6 +179,8 @@ public class EclipseFinalController : MonoBehaviour
         if (cc != null) cc.enabled = true;
         adaptacion?.Deshabilitar();
         AplicarAmbienteDeDia();
+        EnEpilogo = true;
+        techo?.Cerrar();
         prologo?.PrepararEpilogo();
         AudioListener.pause = false;
         if (pausa != null) pausa.enabled = true;
@@ -219,7 +221,12 @@ public class EclipseFinalController : MonoBehaviour
         if (luzDelCrater != null) { luzDelCrater.enabled = true; luzDelCrater.intensity = intensidadLuzCrater; }
         if (solEpilogo != null) solEpilogo.enabled = false;
         if (ambienteExterior != null) ambienteExterior.Stop();
-        if (ambienteCrater != null) { ambienteCrater.volume = volumenCrater; ambienteCrater.Play(); }
+        if (ambienteCrater != null)
+        {
+            ambienteCrater.volume = volumenCrater;
+            if (volumenCrater > 0f) ambienteCrater.Play();
+            else ambienteCrater.Stop();
+        }
     }
 
     /// <summary>Lo mismo, pero de a poco: el jugador entra caminando al cráter desde el valle.</summary>
@@ -231,7 +238,12 @@ public class EclipseFinalController : MonoBehaviour
         float volExterior = ambienteExterior != null ? ambienteExterior.volume : 0f;
         float intensidadSol = solEpilogo != null ? solEpilogo.intensity : 0f;
         if (luzDelCrater != null) { luzDelCrater.intensity = 0f; luzDelCrater.enabled = true; }
-        if (ambienteCrater != null) { ambienteCrater.volume = 0f; ambienteCrater.Play(); }
+        if (ambienteCrater != null)
+        {
+            ambienteCrater.volume = 0f;
+            if (volumenCrater > 0f) ambienteCrater.Play();
+            else ambienteCrater.Stop();
+        }
 
         for (float t = 0f; t < segundos; t += Time.deltaTime)
         {

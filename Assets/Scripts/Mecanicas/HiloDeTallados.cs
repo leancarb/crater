@@ -81,7 +81,11 @@ public class HiloDeTallados : MonoBehaviour
         yield return new WaitForSeconds(demoraInicial);
         for (int i = 0; i < nivel.Length; i++)
         {
-            if (fuente != null && tonos != null && tonos.Length > 0) fuente.PlayOneShot(tonos[i % tonos.Length], 0.7f);
+            if (fuente != null && tonos != null && tonos.Length > 0)
+            {
+                if (tallados[i] != null) fuente.transform.position = tallados[i].bounds.center;
+                fuente.PlayOneShot(tonos[i % tonos.Length], 0.7f);
+            }
             // destello: sube rápido por encima del encendido y se asienta
             for (float t = 0f; t < 0.5f; t += Time.deltaTime)
             {

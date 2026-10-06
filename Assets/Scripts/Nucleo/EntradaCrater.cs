@@ -84,6 +84,12 @@ public static class EntradaCrater
     public static bool Pausa =>
         Presionada(Key.Escape) || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
 
+    // Acciones de pausa completas sin teclado. No se leen durante el juego.
+    public static bool Seguir => Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame;
+    public static bool Reiniciar => Presionada(Key.R) || (Gamepad.current != null && Gamepad.current.buttonNorth.wasPressedThisFrame);
+    public static bool Salir => Presionada(Key.X) || (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame);
+    public static bool AlternarAyudas => Presionada(Key.H) || (Gamepad.current != null && Gamepad.current.dpad.up.wasPressedThisFrame);
+
     /// <summary>
     /// Navegar un menú: (0, +1) arriba, (0, -1) abajo, (+1, 0) derecha, (-1, 0) izquierda.
     /// WASD, flechas o la cruceta del joystick. Sólo el frame en que se apretó.

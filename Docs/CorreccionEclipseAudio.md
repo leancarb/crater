@@ -1,0 +1,27 @@
+# Corrección de eclipse y audio — 6/10/2026
+
+Petición posterior: recuperar el sol bajo en el exterior, elevarlo sólo dentro del cráter y devolverlo al salir; quitar el sonido continuo de oleaje; hacer audible la apertura desde el mirador.
+
+## Investigación y corrección
+
+- El generador dejaba la dirección solar a 45° también durante la aproximación. Ahora la dirección exterior original se conserva en `CieloEclipse`; arranca a 14°, `MostrarEnSubsuelo` la eleva a 75° sin alterar el progreso del eclipse ni el ambiente interior. La subida opcional por la escalera restaura el horizonte; bajar de nuevo restaura la dirección interior. Se usa histéresis de altura para que un escalón no alterne estados. El epílogo recupera exactamente la dirección inicial y conserva el color cálido y el eclipse ya terminado.
+- El rayo desde una vista de entrada dio contra `Paisaje/Cerro_E_1` sobre la abertura circular. Se desplazó el cerro E de z local -15 a -48, más allá del límite posterior caminable del valle. Conserva sus modelos, materiales y colisiones; terreno, escalera y límites del jugador no se abren. Se mantiene el óculo de 16 m y el mismo sol/luna/corona reales, sin imagen de cielo adicional.
+- Además de la obstrucción, las capturas en el estado real del subsuelo seguían negras: los discos y la corona estaban activos y con color correcto, pero el shader URP Unlit aplica `MixFog`. La densidad interior era 0,02 y el cielo estaba a 150 m. El ensayo anterior sólo comprobaba el rayo, y una configuración de prueba aplicaba niebla exterior antes de la captura. Se conserva la niebla interior y se exceptúan únicamente los tres materiales celestes mediante `Crater/CieloSinNiebla`, un shader URP local que conserva profundidad, transparencia aditiva y propiedades del material, sin paquetes; las pruebas comprueban también que la corona aparezca en los píxeles de la captura.
+- `ambiente_crater.wav` era la única fuente global en reproducción detectada en el subsuelo, con bucle 2D y volumen 0,55. Se retira su reproducción continua. Ni iniciar directo ni el crossfade la vuelven a arrancar; el clip y su huella se conservan. Se mantienen cavidad localizada, viento de adaptación de Cresta, pasos y demás respuestas.
+- La prueba anterior de apertura verificaba `isPlaying`, no su audibilidad. La fuente tenía volumen 0,38 y radio mínimo 2 m, con grave de eclipse aún presente. Ahora usa volumen 0,8, radio mínimo 14 m que cubre el mirador (distancia medida 11,11 m), máximo45 m y prioridad32. Su pitch0,8 adapta el clip protegido de3,2 s a la apertura de4 s. El grave se desvanece durante el primer segundo y se detiene. No vuelve el destello ni el sonido descartado de ese efecto.
+
+## Evidencia
+
+- Baseline: `Logs/eclipse_audio_exterior_antes.json`, `Logs/eclipse_audio_subsuelo_antes.json`. Copia recuperable de las fuentes y escena: `Backups/Antes_correccion_eclipse_audio.zip`.
+- La primera ejecución del nuevo ensayo comprobó salida real de audio durante la revelación: RMS máximo canal0=0,16477; primer bloque0,05323. Editor master mute estaba desactivado. `Logs/eclipse_apertura_salida.txt` guarda la última medición. Son niveles reales de salida, no escucha humana ni acreditación de toda la mezcla.
+- Las pruebas nuevas cubren horizonte inicial, tres vistas de suelo seguro, retorno opcional por la escalera/reentrada/epílogo, ausencia del bucle durante transiciones, conservación de la cavidad y alcance/salida de la apertura. La primera corrida encontró el cerro ocultando la vista y esa obstrucción fue corregida; se conservó el punto fallido en la prueba.
+- Pruebas específicas finales: **3/3**, `Logs/correccion_eclipse_audio_pruebas_final.json`. La captura contiene corona visible desde tres puntos seguros; la niebla de las salas sigue a 0,02. Se comprobaron el retorno opcional y la reentrada, además del epílogo.
+- Recorridos completos SOL→LUNA y LUNA→SOL hasta créditos: **2/2**, `Logs/correccion_eclipse_audio_recorridos.json`. Se ejecutaron después de los cambios de posición, audio y cerro; el ajuste posterior del shader fue validado con las vistas/estados específicos.
+- Observación libre del mirador, contacto final retenido y devolución de control: **1/1**, `Logs/correccion_eclipse_audio_mirador.json`.
+- C# y shader sin errores; referencias/alcance del haz: **0 problemas**. Escena guardada y fuera de Play Mode (`Logs/correccion_eclipse_validacion_final.json`). Repetir el generador conservó 2.618 objetos, 6 piezas, 108 luces y 86 fuentes sin duplicados (`Logs/correccion_eclipse_idempotencia_antes.json`/`despues.json`).
+- **43 WAV y 43 huellas previas sin cambios**, `Logs/correccion_eclipse_audio_preservado.json`. No se genera EXE.
+- Capturas actuales desde la cámara del jugador: `Docs/Previews/Exploracion/19_Eclipse_Horizonte_Inicial.png`, `20_Eclipse_Plaza_0.png`, `20_Eclipse_Plaza_1.png`, `20_Eclipse_Plaza_2.png`. En la vista de la entrada el borde del techo recorta parte de la corona; al entrar a la plaza se ve completa. No se retiró arquitectura para evitar esa oclusión natural.
+
+La comodidad del encuadre y la mezcla perceptiva deben evaluarse jugando con audio; las comprobaciones técnicas y las capturas no las sustituyen.
+
+Revisión posterior: `LegibilidadYEpilogo.md` prevalece sobre el regreso con huella/guiño y sol en su posición inicial. El epílogo cierra todas las aberturas sin rastro, cambia el sol a atardecer en otra dirección y mantiene créditos. También se revisó la legibilidad de los detalles opcionales.

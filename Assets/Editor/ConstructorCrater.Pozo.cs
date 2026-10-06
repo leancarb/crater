@@ -9,7 +9,7 @@ using UnityEngine;
 ///   valle (piso de tierra)         y = 9   (la capilla y el cráter del valle)
 ///   fondo del pozo = Explanada     y = 0   (a la altura del resto del nivel)
 ///
-/// Desde la boca (una abertura en el piso, en el borde sur del pozo), una escalera recta baja hasta el
+/// Desde la abertura en el suelo, en el borde sur del pozo, una escalera recta baja hasta el
 /// fondo. Del lado norte, una masa de roca tapa el resto del nivel y deja la boca
 /// de un pasillo plano que sigue al Umbral.
 ///
@@ -118,7 +118,18 @@ public static partial class ConstructorCrater
         rampa.AddComponent<BoxCollider>().size = new Vector3(MitadEscalera * 2f, 0.4f, hipotenusa + 0.4f);
         Estatico(rampa);
 
-        // las paredes: tramos que bajan en escalones, 3,2 m por encima de los escalones,
+        // Sellar los laterales hasta el terreno exterior. No queda una cavidad
+        // accesible entre la escalera y la masa de roca del pozo.
+        foreach (float lado in new[] { -1f, 1f })
+        {
+            float xa = lado < 0 ? -12.6f : MitadEscalera + 0.45f;
+            float xb = lado < 0 ? -MitadEscalera - 0.45f : 12.6f;
+            Caja(pozo, lado < 0 ? "Cierre_Tierra_Escalera_Izq" : "Cierre_Tierra_Escalera_Der",
+                xa, arriba - 0.4f, CentroPozo.z - RadioPozo - 0.5f,
+                xb, arriba - 0.04f, -23.3f, k.tierra);
+        }
+
+        // Las paredes llegan hasta el terreno exterior y guardan un borde continuo,
         // con lunas a la izquierda y soles a la derecha. Cada tramo es un grupo (pared y
         // tallado) que sube con el borde del cráter en el prólogo
         const int tramos = 8;
@@ -127,25 +138,23 @@ public static partial class ConstructorCrater
             float z0 = InicioEscalera + i * largo / tramos, z1 = z0 + largo / tramos;
             float lineaArriba = arriba - (z0 - InicioEscalera) / largo * caida;
             float lineaMedio = arriba - ((z0 + z1) / 2f - InicioEscalera) / largo * caida;
-            // arriba no asoman: la escalera es una abertura en el piso, con un cordón bajo
-            float tope = Mathf.Min(lineaArriba + 3.2f, arriba + 0.4f);
+            float tope = arriba + 0.45f;
             Transform Tramo(float lado)
             {
-                float x0 = lado < 0f ? -MitadEscalera - 0.4f : MitadEscalera, x1 = x0 + 0.4f;
+                float x0 = lado < 0f ? -MitadEscalera - 0.6f : MitadEscalera, x1 = x0 + 0.6f;
                 var tramo = new GameObject($"Pared_Escalera_{(lado < 0f ? "Izq" : "Der")}_{i}").transform;
                 tramo.SetParent(escalera, false);
                 tramo.position = new Vector3((x0 + x1) / 2f, 0f, (z0 + z1) / 2f);
                 Bloque(tramo, "Muro", new Vector3((x0 + x1) / 2f, (abajo - 0.3f + tope) / 2f, (z0 + z1) / 2f),
-                    new Vector3(0.4f, tope - (abajo - 0.3f), z1 - z0 + 0.02f), lado < 0f ? k.basalto : k.basaltoMedio, false);
+                    new Vector3(0.6f, tope - (abajo - 0.3f), z1 - z0 + 0.02f), lado < 0f ? k.basalto : k.basaltoMedio, false);
                 refs.paredesEscalera.Add(tramo);
                 return tramo;
             }
             var izq = Tramo(-1f);
             var der = Tramo(1f);
             float zMedio = (z0 + z1) / 2f;
-            float yTallado = Mathf.Min(lineaMedio + 1.7f, tope - 0.75f);
-            TallarEscalera(k, izq, der, new Vector3(-MitadEscalera + 0.12f, yTallado, zMedio),
-                new Vector3(MitadEscalera - 0.12f, yTallado, zMedio), i);
+            TallarEscalera(k, izq, der, new Vector3(-MitadEscalera + 0.02f, lineaMedio + 1.7f, zMedio),
+                new Vector3(MitadEscalera - 0.02f, lineaMedio + 1.7f, zMedio), i);
         }
     }
 

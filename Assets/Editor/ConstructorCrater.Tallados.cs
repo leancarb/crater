@@ -208,7 +208,8 @@ public static partial class ConstructorCrater
             hilo.tallados = tallados;
             hilo.color = color;
             hilo.fuente = go.AddComponent<AudioSource>();
-            ConfigurarAudio(hilo.fuente, null, 0.7f, false, false);
+            ConfigurarAudio(hilo.fuente, null, 0.7f, false, true);
+            hilo.fuente.minDistance = 1.5f;
             hilo.tonos = k.audio.tonosAncla;
             hilo.manual = true;   // los enciende la cinemática del sello
             return hilo;
@@ -253,8 +254,8 @@ public static partial class ConstructorCrater
         Figura[] soles = { Figura.SolSobreLuna0, Figura.SolSobreLuna1, Figura.SolSobreLuna2, Figura.SolSobreLuna3 };
         int n = i / 2;
         if (i % 2 == 0 || n >= lunas.Length) return;
-        Glifo(paredIzq, $"Luna_Escalera_{n}", lunas[n], centroIzq, Vector3.right, 1.2f, k.pinturaLuna);
-        Glifo(paredDer, $"Sol_Escalera_{n}", soles[n], centroDer, Vector3.left, 1.2f, k.pinturaSol);
+        Glifo(paredIzq, $"Luna_Escalera_{n}", lunas[n], centroIzq, Vector3.right, 1.2f, k.pinturaLuna, separar: false);
+        Glifo(paredDer, $"Sol_Escalera_{n}", soles[n], centroDer, Vector3.left, 1.2f, k.pinturaSol, separar: false);
     }
 }
 
@@ -377,7 +378,8 @@ public static partial class ConstructorCrater
         Pebetero(k, arte, "Pebetero_O1_A", new Vector3(-34.6f, 0f, -5.6f), sello);
         Pebetero(k, arte, "Pebetero_O1_B", new Vector3(-21.4f, 0f, -5.6f), sello);
         Pebetero(k, arte, "Pebetero_O2", new Vector3(-35f, 0f, 16f), sello);
-        Pebetero(k, arte, "Pebetero_O3", new Vector3(-13.4f, 0f, 10.4f), sello);
+        // El rincón este contiene el hueco de recuperación; el pebetero queda al oeste.
+        Pebetero(k, arte, "Pebetero_O3", new Vector3(-18.6f, 0f, 10.4f), sello);
     }
 
     /// <summary>
@@ -409,7 +411,7 @@ public static partial class ConstructorCrater
             testigo.renderers = tallados.ToArray();
             if (!sol) testigo.colorEncendido = ColorLuna;
             testigo.emisionApagado = 0.02f;
-            testigo.luz = Luz(raiz, "Luz", new Vector3(lado * 10f, 4.2f, 33.5f), sol ? LuzCalida : LuzFria, 0f, 10f, false);
+            testigo.luz = Luz(raiz, "Luz", new Vector3(lado * 10f, 4.2f, 33.5f), sol ? LuzCalida : LuzFria, 0f, 10f, true);
             testigo.intensidadLuz = 35f;
         }
     }
@@ -447,6 +449,7 @@ public static partial class ConstructorCrater
     /// </summary>
     static void DespejarTallados(Kit k)
     {
+        Physics.SyncTransforms();
         var deTallado = new HashSet<Material> { k.ambar, k.motivoLatente, k.tallaLuna, k.tallaEclipse, k.pinturaSol, k.pinturaLuna, k.pinturaHueso, k.tallaCresta };
         var escena = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
         var tallados = new List<Renderer>();
@@ -486,7 +489,7 @@ public static partial class ConstructorCrater
                 }
             }
             foreach (var c in paredes)
-                if (c != null && c.bounds.Contains(b.center) && !t.transform.IsChildOf(c.transform))
+                if (c != null && Vector3.Distance(c.ClosestPoint(b.center), b.center) < 0.001f && !t.transform.IsChildOf(c.transform))
                     Debug.LogWarning($"[CRÁTER] El tallado {t.name} quedó adentro de {c.name}.", t);
         }
         if (sacados > 0) Debug.Log($"[CRÁTER] Se sacaron {sacados} módulos de arquitectura que tapaban tallados.");

@@ -6,7 +6,7 @@ using UnityEngine.Rendering.Universal;
 /// <summary>
 /// La mecánica del final. Con la linterna apagada, la exposición sube
 /// lentamente y aparece lo que la propia linterna tapaba (los tallados
-/// latentes de la Cresta). Encenderla resetea la adaptación de golpe.
+/// latentes de la Cresta). Encenderla devuelve gradualmente la exposición habitual.
 ///
 /// Poner en: el Global Volume. El Volume Profile necesita un Color Adjustments.
 /// Arranca deshabilitada: la habilita el EclipseFinalController al entrar a la Cresta.
@@ -30,12 +30,12 @@ public class AdaptacionOscuridad : MonoBehaviour
     [Tooltip("Segundos que tarda en perderse al encender. Rápido, como en la vida real.")]
     public float tiempoDeReseteo = 1.2f;
     [Tooltip("Demora antes de que empiece a adaptarse.")]
-    public float demoraInicial = 3f;
+    public float demoraInicial = 0.4f;
 
     [Header("Refuerzo diegético")]
     [Tooltip("Viento del óculo: sube de volumen mientras el jugador se adapta.")]
     public AudioSource ambienteDeAdaptacion;
-    public float volumenMaximo = 0.6f;
+    public float volumenMaximo = 0.24f;
 
     [Header("Final")]
     [Tooltip("Progreso de adaptación (0 a 1) a partir del cual se considera resuelto.")]
@@ -91,10 +91,11 @@ public class AdaptacionOscuridad : MonoBehaviour
 
         // exposición en EV: +1 duplica el brillo de la imagen, +3,2 lo multiplica por ~9
         if (ajustes != null)
-            ajustes.postExposure.value = Mathf.Lerp(exposicionNormal, exposicionAdaptada, Curva) + OpcionesCrater.Brillo;
+            ajustes.postExposure.value = Mathf.Lerp(exposicionNormal, exposicionAdaptada, Curva)
+                + 0.25f * Mathf.SmoothStep(0, 1, aOscuras / 0.45f) * (1 - Curva) + OpcionesCrater.Brillo;
 
         if (ambienteDeAdaptacion != null)
-            ambienteDeAdaptacion.volume = Curva * volumenMaximo;
+            ambienteDeAdaptacion.volume = Mathf.Lerp(0.018f * Mathf.Clamp01(aOscuras / 0.45f), volumenMaximo, Curva);
 
         // una sola vez: aunque después vuelva a prender la linterna, la puerta ya quedó abierta
         if (!yaAvisado && progreso >= umbralApertura)

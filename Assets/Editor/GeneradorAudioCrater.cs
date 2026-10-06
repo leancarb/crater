@@ -1,12 +1,14 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 using UnityEditor;
 using UnityEngine;
 
 /// <summary>
 /// Sintetiza todos los sonidos de la demo y los guarda como WAV en Assets/Audio/Generado.
-/// Es determinista: correrlo dos veces da los mismos archivos. Cuando haya sonido
-/// grabado de verdad, alcanza con reemplazar el WAV manteniendo el nombre.
+/// Síntesis determinista. Las huellas SHA-256 protegen los WAV reemplazados por el usuario.
+/// Assets/Audio/Grabado tiene prioridad sobre el sonido generado del mismo nombre.
 ///
 /// CÓMO FUNCIONA
 /// Cada sonido es un arreglo de muestras (float de -1 a 1, 44100 por segundo) que se
@@ -28,8 +30,8 @@ public static class GeneradorAudioCrater
         public AudioClip zumbidoCuerpo, zumbidoHueco;
         public AudioClip ambienteCrater, vientoOculo, exteriorCapilla;
         public AudioClip pajaros, graveEclipse, anilloDiamante;
-        public AudioClip campana, destelloPuerta, musicaCreditos;
-        public AudioClip[] pasos;
+        public AudioClip campana, destelloPuerta, musicaCreditos, resonanciaSuave;
+        public AudioClip[] pasos, pasosTierra, pasosMadera, pasosMetal;
     }
 
     public static Clips GenerarTodo()
@@ -39,10 +41,12 @@ public static class GeneradorAudioCrater
 
         // La, Do#, Mi, La: cada par de anclas suena como un intervalo del mismo acorde
         float[] notas = { 220f, 277.18f, 329.63f, 440f, 554.37f, 659.25f };
-        var clips = new Clips { tonosAncla = new AudioClip[notas.Length], pasos = new AudioClip[4] };
+        CargarHuellas();
+        var clips = new Clips { tonosAncla = new AudioClip[notas.Length], pasos = new AudioClip[4], pasosTierra = new AudioClip[4], pasosMadera = new AudioClip[4], pasosMetal = new AudioClip[4] };
         for (int i = 0; i < notas.Length; i++)
             clips.tonosAncla[i] = Guardar($"ancla_tono_{i + 1}", Campana(notas[i], 3.2f, 0.55f));
 
+        clips.resonanciaSuave = Guardar("resonancia_suave", Dron(4f, new[] { 220f, 330f, 440f }, new[] { 0.55f, 0.1f, 0.04f }, 0.18f, 0, 215));
         clips.puenteAparecer = Guardar("puente_aparecer", Barrido(180f, 720f, 0.9f, 0.45f, 11));
         clips.puenteDisolver = Guardar("puente_disolver", Barrido(640f, 140f, 0.7f, 0.4f, 12));
         clips.siseoReja = Guardar("reja_siseo", Bucle(Ruido(2f, 0.25f, 0.18f, 21), 0.25f));
@@ -67,7 +71,13 @@ public static class GeneradorAudioCrater
         clips.musicaCreditos = Guardar("creditos", Dron(12f, new[] { 110f, 164.75f, 220f, 277.25f, 329.75f },
             new[] { 0.45f, 0.3f, 0.25f, 0.15f, 0.1f }, 0.35f, 0f, 121));
         for (int i = 0; i < clips.pasos.Length; i++)
+            {
             clips.pasos[i] = Guardar($"paso_{i + 1}", Paso(91 + i));
+            clips.pasosTierra[i] = Guardar($"paso_tierra_{i + 1}", Paso(191 + i, true));
+            clips.pasosMadera[i] = Guardar($"paso_madera_{i + 1}", PasoResonante(291 + i, false));
+            clips.pasosMetal[i] = Guardar($"paso_metal_{i + 1}", PasoResonante(391 + i, true));
+        }
+        GuardarHuellas();
 
         return clips;
     }
@@ -204,12 +214,12 @@ public static class GeneradorAudioCrater
             {
                 // las frecuencias elegidas completan ciclos enteros en 'duracion': bucle perfecto
                 float tremolo = 0.85f + 0.15f * Mathf.Sin(2f * Mathf.PI * t * (k + 1) / duracion);
-                v += amplitudes[k] * tremolo * Mathf.Sin(2f * Mathf.PI * frecuencias[k] * t);
+                v += amplitudes[k] * tremolo * Mathf.Sin(2f * Mathf.PI * (Mathf.Round(frecuencias[k] * duracion) / duracion) * t);
             }
             lp += 0.02f * ((float)(azar.NextDouble() * 2 - 1) - lp);
             s[i] = v + lp * ruido * 20f;
         }
-        return Normalizar(s, volumen);
+        return ruido > 0f ? Bucle(Normalizar(s, volumen), 0.15f) : Normalizar(s, volumen);
     }
 
     static float[] Retumbo(float duracion, int semilla)
@@ -256,7 +266,19 @@ public static class GeneradorAudioCrater
         return Normalizar(s, volumen);
     }
 
-    static float[] Paso(int semilla)
+    static float[] PasoResonante(int semilla, bool metal)
+    {
+        var s = Paso(semilla);
+        float f = metal ? 650f + semilla % 40 : 180f + semilla % 25;
+        for (int i = 0; i < s.Length; i++)
+        {
+            float t = i / (float)Muestreo;
+            s[i] = s[i] * 0.5f + Mathf.Sin(2 * Mathf.PI * f * t) * Mathf.Exp(-t / (metal ? 0.045f : 0.018f)) * 0.14f;
+        }
+        return Normalizar(s, 0.28f);
+    }
+
+    static float[] Paso(int semilla, bool tierra = false)
     {
         var azar = new System.Random(semilla);
         var s = new float[(int)(0.16f * Muestreo)];
@@ -268,9 +290,12 @@ public static class GeneradorAudioCrater
             float blanco = (float)(azar.NextDouble() * 2 - 1);
             lp += corte * (blanco - lp);
             float env = Mathf.Clamp01(t / 0.004f) * Mathf.Exp(-t / 0.035f);
-            s[i] = env * (lp * 3f + 0.3f * Mathf.Sin(2f * Mathf.PI * 70f * t));
+            float talon = Mathf.Exp(-t / 0.014f) * Mathf.Sin(2f * Mathf.PI * 90f * t);
+            float grava = blanco * Mathf.Exp(-Mathf.Abs(t - 0.055f) / 0.023f);
+            s[i] = env * lp * (tierra ? 3.5f : 2f) + (tierra ? 0.08f : 0.3f) * grava
+                + (tierra ? 0.08f : 0.24f) * talon;
         }
-        return Normalizar(s, 0.35f);
+        return Normalizar(s, tierra ? 0.28f : 0.35f);
     }
 
     /// <summary>Funde el final con el principio para que el bucle no haga click.</summary>
@@ -298,10 +323,40 @@ public static class GeneradorAudioCrater
 
     // ------------------------------------------------------------------ archivos
 
+    [Serializable] sealed class Huella { public string nombre, hash; }
+    [Serializable] sealed class Catalogo { public List<Huella> archivos = new List<Huella>(); }
+    static Catalogo catalogo;
+    const string RutaHuellas = Carpeta + "/huellas.json";
+
+    static string Hash(string ruta)
+    {
+        using var sha = SHA256.Create();
+        return BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(ruta))).Replace("-", "").ToLowerInvariant();
+    }
+    static void CargarHuellas() => catalogo = File.Exists(RutaHuellas)
+        ? JsonUtility.FromJson<Catalogo>(File.ReadAllText(RutaHuellas)) : new Catalogo();
+    static void GuardarHuellas() => File.WriteAllText(RutaHuellas, JsonUtility.ToJson(catalogo, true));
+
     static AudioClip Guardar(string nombre, float[] muestras)
     {
+        string grabado = $"Assets/Audio/Grabado/{nombre}.wav";
+        if (File.Exists(grabado))
+        {
+            AssetDatabase.ImportAsset(grabado);
+            return AssetDatabase.LoadAssetAtPath<AudioClip>(grabado);
+        }
         string ruta = $"{Carpeta}/{nombre}.wav";
+        var huella = catalogo.archivos.Find(a => a.nombre == nombre);
+        // Una grabación reemplazada a mano jamás se pisa al reconstruir el nivel.
+        if (File.Exists(ruta) && (huella == null || Hash(ruta) != huella.hash))
+        {
+            Debug.Log($"[CRÁTER] Audio personalizado conservado: {ruta}");
+            AssetDatabase.ImportAsset(ruta);
+            return AssetDatabase.LoadAssetAtPath<AudioClip>(ruta);
+        }
         EscribirWav(ruta, muestras);
+        if (huella == null) { huella = new Huella { nombre = nombre }; catalogo.archivos.Add(huella); }
+        huella.hash = Hash(ruta);
         AssetDatabase.ImportAsset(ruta, ImportAssetOptions.ForceUpdate);
 
         var importador = (AudioImporter)AssetImporter.GetAtPath(ruta);

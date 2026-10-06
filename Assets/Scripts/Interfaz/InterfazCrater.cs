@@ -33,6 +33,10 @@ public class InterfazCrater : MonoBehaviour
     static readonly Color ColorTextoSobreBlanco = new Color(0.14f, 0.14f, 0.16f);
 
     // piezas del Canvas, creadas en Construir()
+    Text textoControles;
+    Text textoOpcional;
+    int piezasOpcionales;
+    string ultimoOpcional;
     Text textoPrompt;
     CanvasGroup grupoPrompt;   // CanvasGroup permite fundir el alfa de todo un bloque de UI
     Text textoEstado;
@@ -61,6 +65,16 @@ public class InterfazCrater : MonoBehaviour
     }
 
     void Update() => ActualizarLinterna();
+    public void MostrarInteraccionOpcional(string mensaje)
+    {
+        if(textoOpcional==null || mensaje==ultimoOpcional)return;
+        ultimoOpcional=mensaje;textoOpcional.text=mensaje;textoOpcional.enabled=!string.IsNullOrEmpty(mensaje);
+    }
+    public void ActualizarColeccion(int cantidad,int total)
+    {
+        piezasOpcionales=cantidad;
+        if(panelPausa!=null && panelPausa.activeSelf) MostrarPausa(true);
+    }
 
     // ---------------------------------------------------------------- indicaciones
 
@@ -74,6 +88,7 @@ public class InterfazCrater : MonoBehaviour
     /// <summary>Indicación que se va sola después de 'segundos'.</summary>
     public void MostrarPromptTemporal(string mensaje, float segundos = 4f)
     {
+        if (!OpcionesCrater.AyudasEscritas) return;
         if (rutinaPrompt != null) StopCoroutine(rutinaPrompt);
         rutinaPrompt = StartCoroutine(CambiarPrompt(mensaje, segundos));
     }
@@ -245,6 +260,13 @@ public class InterfazCrater : MonoBehaviour
     public void MostrarPausa(bool visible)
     {
         if (panelPausa != null) panelPausa.SetActive(visible);
+        if (textoControles != null) textoControles.text =
+            "WASD / Stick izq. · Moverse      Mouse / Stick der. · Mirar\n" +
+            "Shift / L3 · Correr      F / RB · Linterna\n" +
+            "1 / X (□) · SOL      2 / Y (△) · LUNA      Q / B (○) · Luz blanca\n\n" +
+            "Piedras talladas · " + piezasOpcionales + "/6\n\n" +
+            "H / Cruceta arriba · Ayudas escritas: " + (OpcionesCrater.AyudasEscritas ? "sí" : "no") + "\n\n" +
+            "Esc / Start / B (○) · Seguir\nR / Y (△) · Reiniciar      X / X (□) · Salir";
     }
 
     static IEnumerator FundirTexto(Text texto, float desde, float hasta, float duracion)
@@ -357,6 +379,8 @@ public class InterfazCrater : MonoBehaviour
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         scaler.matchWidthOrHeight = 0.5f;
         var raiz = canvasGO.transform;
+        textoOpcional=CrearTexto(Crear("Interaccion_Opcional",raiz,new Vector2(.2f,.17f),new Vector2(.8f,.23f)), 22, TextAnchor.MiddleCenter, ColorApagado);
+        textoOpcional.enabled=false;
 
         // indicación inferior
         var promptGO = Crear("Prompt", raiz, new Vector2(0.15f, 0.06f), new Vector2(0.85f, 0.2f));
@@ -418,11 +442,8 @@ public class InterfazCrater : MonoBehaviour
         var fondoPausa = panelPausa.AddComponent<Image>();
         fondoPausa.color = new Color(0f, 0f, 0f, 0.78f);
         // en la pausa sólo están los controles, en un gris apagado: sin menú de opciones
-        CrearTexto(Crear("Controles", panelPausa.transform, new Vector2(0.15f, 0.3f), new Vector2(0.85f, 0.7f)),
-            22, TextAnchor.MiddleCenter, new Color(0.42f, 0.42f, 0.42f)).text =
-            "WASD · Moverse      Mouse · Mirar\n" +
-            "F · Linterna      1 / 2 · Filtros      Q · Luz blanca\n\n" +
-            "Esc · Seguir      R · Reiniciar      X · Salir";
+        textoControles = CrearTexto(Crear("Controles", panelPausa.transform, new Vector2(0.15f, 0.3f), new Vector2(0.85f, 0.7f)),
+            22, TextAnchor.MiddleCenter, new Color(0.42f, 0.42f, 0.42f));
         panelPausa.SetActive(false);
 
         // créditos: la tarjeta de la facultad y la cátedra, con sus logos (negro sobre blanco)

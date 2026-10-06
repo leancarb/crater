@@ -65,6 +65,16 @@ public class AperturaTecho : MonoBehaviour
         if (luzDelCielo != null) luzDelCielo.intensity = intensidadFinal;
     }
 
+    public void Cerrar()
+    {
+        StopAllCoroutines();
+        Abriendo = false;
+        if (hojaIzquierda != null) hojaIzquierda.localPosition = origenIzq;
+        if (hojaDerecha != null) hojaDerecha.localPosition = origenDer;
+        if (luzDelCielo != null) { luzDelCielo.intensity = 0; luzDelCielo.enabled = false; }
+        if (sonido != null) sonido.Stop();
+    }
+
     void Mover(float t)
     {
         float subir = Mathf.SmoothStep(0f, 1f, t / tiempoDespegue) * despegue;

@@ -1,0 +1,176 @@
+{
+    "archivos": [
+        {
+            "nombre": "ambiente_crater",
+            "hash": "552268417b5646b40ce3d40a3808ae2bde36b844b24966b372f6e607e3b37bd1"
+        },
+        {
+            "nombre": "ancla_tono_1",
+            "hash": "69cee3db6787e1889c74f3687f6b97dd0feca108fb6f032184e4793c130616fd"
+        },
+        {
+            "nombre": "ancla_tono_2",
+            "hash": "2a0054fb235067e508dcb22d8bcd8086781279dcca16b920946f51f958dbddcf"
+        },
+        {
+            "nombre": "ancla_tono_3",
+            "hash": "782a7d1baee345c11f3f4569e7e69649ae9f21288adff08d98ef2cf727f87d72"
+        },
+        {
+            "nombre": "ancla_tono_4",
+            "hash": "2bea1135a4e604c14b00ba8654dcd34cbd9b84efa40363390a1cbbd45bceb9fc"
+        },
+        {
+            "nombre": "ancla_tono_5",
+            "hash": "aec0e18149cf7f98c2d4d87e1fefb6a60289f076085f320b5f56aa889a369cf4"
+        },
+        {
+            "nombre": "ancla_tono_6",
+            "hash": "65e12a579935b0a65e6d2074b68b02e5e1e19d39427f74d57ddb34caa7f851bb"
+        },
+        {
+            "nombre": "anillo_diamante",
+            "hash": "d4ba26ba1d93ae19cafc0eee751d0a94b8e66c1a4f0b2b6d3dbad00d81cfcad0"
+        },
+        {
+            "nombre": "capilla_campana",
+            "hash": "f439fb992ce48a6eacd7b2ba18f61783c614dea906246a8161035f767b3faec7"
+        },
+        {
+            "nombre": "capilla_pajaros",
+            "hash": "a36a4bb56bf19f3158b6aa6c6fd930901f683f686075e1dc40ad86a76ca65516"
+        },
+        {
+            "nombre": "compuerta_piedra",
+            "hash": "6f6f139896cf5bddb396458980790cf8f6ae6f23b784f6d505cf50398acef94e"
+        },
+        {
+            "nombre": "creditos",
+            "hash": "0024c09ebc748a17e978362b57aa7fd062797a9199e3d7c1d84ad9b4ccbe1ab6"
+        },
+        {
+            "nombre": "eclipse_grave",
+            "hash": "11c7632f781f71dd0e6a9954398c2fc787039c6921c5f0449ded687c8fe0f000"
+        },
+        {
+            "nombre": "exterior_capilla",
+            "hash": "13de10cde202ddde7cefeba46c6fe5bd9c9d0e55e4e500664ad8b249517bfb8a"
+        },
+        {
+            "nombre": "filtro_cuerpo_equipar",
+            "hash": "9336f2ac9ed2f22d3bb8cd23a05dbc69a646434b287e6f0d0fc1adce96752b49"
+        },
+        {
+            "nombre": "filtro_cuerpo_zumbido",
+            "hash": "7126eaf0b7e35cdb5e04dab01b95a5e8e441377475db6c73deafba130e5e53a6"
+        },
+        {
+            "nombre": "filtro_hueco_equipar",
+            "hash": "85da55914915ab1eb280aef5dcbb858ba6be71ef99f1e603c113b0e6fbf74133"
+        },
+        {
+            "nombre": "filtro_hueco_zumbido",
+            "hash": "66bcb3c926128ff117f66f6f424b4f5f61403b9fa63d70f7795fc869878778d8"
+        },
+        {
+            "nombre": "linterna_apagar",
+            "hash": "99ba2dfaa7161a1f76721e492ea501981c6e6560f0fdf7c17260857b9b4eca35"
+        },
+        {
+            "nombre": "linterna_encender",
+            "hash": "dc54e3f53bacef118bc1038eff59c85e6e7a6e417a14307369f8747c2fec72d2"
+        },
+        {
+            "nombre": "paso_1",
+            "hash": "ea7a8ee92cd5145b531baac228a06505d9b5f39953cbb25f78995f8a5a23f35b"
+        },
+        {
+            "nombre": "paso_2",
+            "hash": "2adf648094e56bfc5342da579b39350b1cbd47e8c04389b10c6d1ba52d88ffd7"
+        },
+        {
+            "nombre": "paso_3",
+            "hash": "9d83610d895d20560d2cf3347f374d94ccf610daa8220858abfc1eb07ca91284"
+        },
+        {
+            "nombre": "paso_4",
+            "hash": "ba9f930e818df297c20f24d228c86c19c817ae048a50715eea01433f60315c18"
+        },
+        {
+            "nombre": "puente_aparecer",
+            "hash": "c6149006431195f5156166674526fc19bf44224eed80318abd846b1e6708367b"
+        },
+        {
+            "nombre": "puente_disolver",
+            "hash": "03a153c9071ec07841a966eeb0987f6c9fc7c5032f77c653453a19042db9500b"
+        },
+        {
+            "nombre": "puerta_destello",
+            "hash": "23d118396d8c173c2bf6802933503dbbd6eaeedae2a1dd31e5f97f48e547c341"
+        },
+        {
+            "nombre": "recoger",
+            "hash": "a0f7044db586723e57f8aa722d5b7f2e2d2dc8740ef8caf459a7032b9aed5e09"
+        },
+        {
+            "nombre": "reja_siseo",
+            "hash": "e7b4eae16892bbdfa695cc53ad3762500e7ff623dac991f1bdb19ce821c534ff"
+        },
+        {
+            "nombre": "viento_oculo",
+            "hash": "ababa73a3d1d82ffe659a0409f1bd03d635c7253f545776052e962defdd5519c"
+        },
+        {
+            "nombre": "paso_tierra_1",
+            "hash": "e2e75fce7046e6e6cbfffa6cbb989720c6462adc14442f11cd172fcc85d4e945"
+        },
+        {
+            "nombre": "paso_tierra_2",
+            "hash": "94acf5f0417ef04bb6b469a15bb3957c99e8da345c3266407c4a676cd60dd0bc"
+        },
+        {
+            "nombre": "paso_tierra_3",
+            "hash": "037c460a87d5ce15ef5a14cbb1e1eb454f92ded5a9dcab2bf8472f8fac4f1f88"
+        },
+        {
+            "nombre": "paso_tierra_4",
+            "hash": "be94a3584bf93f5babeeeee5a0b6e0373a3eb610e216a2f04a67a9dbe5b62f4e"
+        },
+        {
+            "nombre": "paso_madera_1",
+            "hash": "63c08cd856065ee179e9a752bee12ec6971f7e9948406f77b41cc2cfa7eedac2"
+        },
+        {
+            "nombre": "paso_metal_1",
+            "hash": "83584ad04f013cb1e72cbda2ac9e11660b6c1e354712188d67c6918709ce34c1"
+        },
+        {
+            "nombre": "paso_madera_2",
+            "hash": "f48533c9c3f3dc937cd795599ff1f79d7d6a29bb40abe2b2799cec9a9dbeef99"
+        },
+        {
+            "nombre": "paso_metal_2",
+            "hash": "1f46f0a5810bf5acc665860246aae42e427e314ce2d2a4d526397657f3f8cbc5"
+        },
+        {
+            "nombre": "paso_madera_3",
+            "hash": "e3749944b10126f0321c4f20e819ffe48da465893ea7e10a00ecef2d960c8560"
+        },
+        {
+            "nombre": "paso_metal_3",
+            "hash": "a46faa53f3686d65a075e26e6ce2d752c44f58fbc0295c43cff4c2a5e5a521ff"
+        },
+        {
+            "nombre": "paso_madera_4",
+            "hash": "6f62ab2e86f315e00ceb6abfcf9a6204774086618fea8a75d01d28876c4b0593"
+        },
+        {
+            "nombre": "paso_metal_4",
+            "hash": "3adf4bb7e8b3fc1716fac1d1c0f127527a142c035333662b8eacc6cc489c46d5"
+        },
+        {
+            "nombre": "resonancia_suave",
+            "hash": "d91f087dd01fb8e2b9bb8ca28534d1895c7189eb4feee2d17a8bd0077d5e20f1"
+        }
+    ]
+}

@@ -165,9 +165,9 @@ public static partial class ConstructorCrater
         filtro.color = color;
         filtro.descripcion = descripcion;
         filtro.anguloCono = 28f;
-        filtro.alcance = 15f;
-        // bastante menos que la luz blanca (2000, ver CrearPrefabs) pero no tanto: con 230
-        // parecía que la linterna se apagaba al poner un filtro
+        filtro.alcance = 15f * EspacioCrater.Escala;
+        // menos que la luz blanca (2000, ver CrearPrefabs) pero no tanto: con 230 parecía que la
+        // linterna se apagaba al poner un filtro
         filtro.intensidad = 520f;
         filtro.tiempoDeCarga = 0.4f;
         filtro.sonidoAlEquipar = alEquipar;
@@ -253,6 +253,13 @@ public static partial class ConstructorCrater
         kit.corona = Aditivo("CoronaEclipse", Textura("Corona", 256, PixelCorona));
         kit.discoSol = SinLuz("DiscoSol", new Color(6f, 5.4f, 4.4f));
         kit.discoLuna = SinLuz("DiscoLuna", new Color(0.004f, 0.004f, 0.006f));
+        // Sólo el cielo queda fuera de la niebla del subsuelo; salas y efectos la conservan.
+        var shaderCielo = Shader.Find("Crater/CieloSinNiebla");
+        foreach (var materialCielo in new[] { kit.discoSol, kit.discoLuna, kit.corona })
+        {
+            materialCielo.shader = shaderCielo;
+            Validar(materialCielo);
+        }
 
         foreach (var guid in AssetDatabase.FindAssets("t:Material", new[] { "Assets/Materials" }))
             Validar(AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid)));
@@ -511,12 +518,20 @@ public static partial class ConstructorCrater
     /// <summary>Ajustes del pipeline URP: HDR (para el bloom), distancia de sombras, antialiasing y Forward+.</summary>
     static void ConfigurarRender()
     {
+        int calidad=QualitySettings.GetQualityLevel();
+        for(int i=0;i<QualitySettings.names.Length;i++){QualitySettings.SetQualityLevel(i,false);QualitySettings.realtimeReflectionProbes=true;}
+        QualitySettings.SetQualityLevel(calidad,false);
         foreach (var ruta in new[] { "Assets/Settings/PC_RPAsset.asset", "Assets/Settings/Mobile_RPAsset.asset" })
         {
             var asset = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(ruta);
             if (asset == null) continue;
             asset.supportsHDR = true;
-            asset.shadowDistance = 45f;
+            asset.shadowDistance = 220f;
+            asset.shadowCascadeCount = 4;
+            asset.cascade4Split = new Vector3(0.08f, 0.25f, 0.55f);
+            asset.cascadeBorder = 0.2f;
+            asset.mainLightShadowmapResolution = ruta.Contains("PC") ? 4096 : 2048;
+            asset.additionalLightsShadowmapResolution = 2048;
             if (ruta.Contains("PC")) asset.msaaSampleCount = 4;
             EditorUtility.SetDirty(asset);
         }
@@ -537,30 +552,33 @@ public static partial class ConstructorCrater
     /// </summary>
     static VolumeProfile CrearPerfilVolumen()
     {
-        AssetDatabase.DeleteAsset(RutaPerfil);
-        var perfil = ScriptableObject.CreateInstance<VolumeProfile>();
-        AssetDatabase.CreateAsset(perfil, RutaPerfil);
+        var perfil = AssetDatabase.LoadAssetAtPath<VolumeProfile>(RutaPerfil);
+        if (perfil == null)
+        {
+            perfil = ScriptableObject.CreateInstance<VolumeProfile>();
+            AssetDatabase.CreateAsset(perfil, RutaPerfil);
+        }
 
         var tono = Agregar<Tonemapping>(perfil);
         tono.mode.Override(TonemappingMode.ACES);
 
         var bloom = Agregar<Bloom>(perfil);
         bloom.threshold.Override(0.9f);
-        bloom.intensity.Override(0.85f);
+        bloom.intensity.Override(0.45f);
         bloom.scatter.Override(0.7f);
 
         var ajustes = Agregar<ColorAdjustments>(perfil);
         ajustes.postExposure.Override(0f);
-        ajustes.contrast.Override(12f);
+        ajustes.contrast.Override(8f);
         ajustes.saturation.Override(-6f);
 
         var vineta = Agregar<Vignette>(perfil);
-        vineta.intensity.Override(0.34f);
+        vineta.intensity.Override(0.22f);
         vineta.smoothness.Override(0.45f);
 
         var grano = Agregar<FilmGrain>(perfil);
         grano.type.Override(FilmGrainLookup.Thin1);
-        grano.intensity.Override(0.16f);
+        grano.intensity.Override(0.07f);
 
         EditorUtility.SetDirty(perfil);
         AssetDatabase.SaveAssets();
@@ -569,6 +587,7 @@ public static partial class ConstructorCrater
 
     static T Agregar<T>(VolumeProfile perfil) where T : VolumeComponent
     {
+        if (perfil.TryGet<T>(out var existente)) return existente;
         var componente = perfil.Add<T>();
         componente.name = typeof(T).Name;
         AssetDatabase.AddObjectToAsset(componente, perfil);
@@ -601,7 +620,7 @@ public static partial class ConstructorCrater
     }
 
     /// <summary>
-    /// El jugador: CharacterController + JugadorFPS + respawn; cámara hija con post-procesado;
+    /// El jugador: CharacterController + JugadorFPS; cámara hija con post-procesado;
     /// y la linterna (Spot Light + LinternaController) hija de la cámara, para que apunte a donde se mira.
     /// </summary>
     static GameObject CrearJugador(Kit kit)
@@ -616,10 +635,13 @@ public static partial class ConstructorCrater
         cc.skinWidth = 0.04f;
 
         var fuentePasos = raiz.AddComponent<AudioSource>();
-        ConfigurarAudio(fuentePasos, null, 0.45f, false, false);
+        ConfigurarAudio(fuentePasos, null, 0.2f, false, false);
         var fps = raiz.AddComponent<JugadorFPS>();
         fps.fuentePasos = fuentePasos;
         fps.pasos = kit.audio.pasos;
+        fps.pasosTierra = kit.audio.pasosTierra;
+        fps.pasosMadera = kit.audio.pasosMadera;
+        fps.pasosMetal = kit.audio.pasosMetal;
 
         var camaraGO = new GameObject("Camara") { tag = "MainCamera" };
         camaraGO.transform.SetParent(raiz.transform, false);
@@ -653,7 +675,6 @@ public static partial class ConstructorCrater
         linterna.filtros = new System.Collections.Generic.List<FiltroDefinicion> { kit.cuerpo, kit.hueco };
         linterna.requiereRecogerla = true;
         // la luz blanca alumbra bastante más que los filtros: dan ganas de volver a ella
-        // (más del triple que un filtro y más lejos: la diferencia se nota apenas se cambia)
         linterna.intensidadBase = 2000f;
         linterna.alcanceBase = 24f;
         linterna.anguloBase = 36f;
@@ -708,9 +729,14 @@ public static partial class ConstructorCrater
 
         var brillo = CrearLuzHija(raiz.transform, "Brillo", new Vector3(0f, 1f, 0.9f), new Color(1f, 0.5f, 0.15f), 0f, 5f);
         var tono = raiz.AddComponent<AudioSource>();
-        ConfigurarAudio(tono, kit.audio.tonosAncla[0], 0.8f, false, true);
+        ConfigurarAudio(tono, kit.audio.tonosAncla[0], 0.3f, false, true);
 
+        var resonancia = CrearFuenteHija(raiz.transform, "Resonancia_Carga", kit.audio.resonanciaSuave, 0f);
+        resonancia.loop = true;
+        resonancia.minDistance = 1;
+        resonancia.maxDistance = 10;
         var ancla = raiz.AddComponent<Ancla>();
+        ancla.resonancia = resonancia;
         ancla.canalRequerido = FiltroDefinicion.Canal.Cuerpo;
         ancla.retencion = 3f;
         ancla.puntoDeImpacto = nucleo.transform;
@@ -778,11 +804,13 @@ public static partial class ConstructorCrater
         centro.transform.localPosition = new Vector3(0f, 1.8f, 0f);
 
         var siseo = raiz.AddComponent<AudioSource>();
-        ConfigurarAudio(siseo, kit.audio.siseoReja, 0.5f, true, true);
+        ConfigurarAudio(siseo, kit.audio.siseoReja, 0.18f, true, true);
+        siseo.minDistance = 1f;
+        siseo.maxDistance = 9f;
 
         var materia = raiz.AddComponent<MateriaHueca>();
         materia.canalRequerido = FiltroDefinicion.Canal.Hueco;
-        materia.retencion = 3f;
+        materia.retencion = 5f;
         materia.puntoDeImpacto = centro.transform;
         materia.solidos = new Collider[] { solido };
         // sólo las barras se disuelven y brillan con la carga; el marco queda

@@ -51,7 +51,7 @@ public static partial class ConstructorCrater
     // suelo del valle: triángulos grandes, planos (sólo se mueven de costado) y de distinto tono
     static readonly Perfil PerfilSuelo = new Perfil(4f, new Vector3(0.8f, 0f, 0.8f), 8f, 5, 64, sinBase: true);
     // borde del cráter del valle: rocas quebradas
-    static readonly Perfil PerfilCrater = new Perfil(1.2f, new Vector3(0.35f, 0.3f, 0.35f), 2.5f, 6);
+    static readonly Perfil PerfilCrater = new Perfil(1.2f, new Vector3(0.12f, 0.05f, 0.12f), 2.5f, 6);
     // capilla: adobe y cal casi rectos, sólo un poco a mano
     static readonly Perfil PerfilCapilla = new Perfil(1f, new Vector3(0.04f, 0.03f, 0.04f), 2f, 7);
     // losas de los murales: casi lisas, para que la pintura de adelante no quede tapada
@@ -170,6 +170,9 @@ public static partial class ConstructorCrater
         if (nombre.StartsWith("Cerro_")) return PerfilCerro;
         if (nombre == "Terreno" || nombre.StartsWith("Llano")) return PerfilSuelo;
         if (nombre.StartsWith("Losa_")) return PerfilLosa;
+        // Los tallados se apoyan a 2 cm: no deformar su cara soporte hacia ellos.
+        if (t.parent != null && t.parent.name.StartsWith("Pared_Escalera_"))
+            return new Perfil(1.3f, new Vector3(0.008f, 0.02f, 0.03f), 2.6f, 1);
         for (var p = t.parent; p != null; p = p.parent)
         {
             if (p.name == "Crater_Valle") return PerfilCrater;

@@ -38,7 +38,7 @@ public class ParedEspejo : MonoBehaviour
 
     MaterialPropertyBlock bloque;
     static readonly int IdColor = Shader.PropertyToID("_BaseColor");
-    static readonly int IdRecorte = Shader.PropertyToID("_BaseMap_ST");
+    static readonly int IdMapa = Shader.PropertyToID("_BaseMap_ST");
 
     void Awake()
     {
@@ -68,7 +68,9 @@ public class ParedEspejo : MonoBehaviour
         if (largo > linterna.AlcanceActual * 1.5f) { Apagar(); return; }
         // si antes de llegar a esta pared el haz choca con otra cosa (otra pared, el techo,
         // una columna), no hay reflejo acá: si no, aparecía uno detrás de otra pared
-        if (Physics.Raycast(origen, haz, largo - 0.3f, ~0, QueryTriggerInteraction.Ignore)) { Apagar(); return; }
+        // Tiene que haber piedra en este plano: el vano de entrada no refleja en el aire.
+        if (!Physics.Raycast(origen, haz, out var impacto, largo + 0.35f, ~0, QueryTriggerInteraction.Ignore) ||
+            Mathf.Abs(impacto.distance - largo) > 0.35f) { Apagar(); return; }
         Vector3 toque = origen + haz * largo;
         Vector3 local = transform.InverseTransformPoint(toque);
         if (Mathf.Abs(local.x) > tamanio.x * 0.5f || Mathf.Abs(local.y) > tamanio.y * 0.5f)
@@ -89,22 +91,20 @@ public class ParedEspejo : MonoBehaviour
             reflejo.enabled = k > 0.001f;
             // 15 cm delante de la pared: las caras de la piedra facetada sobresalen hasta 9 cm y,
             // más cerca, tapaban el reflejo con manchas negras
-            // el reflejo sigue al haz hasta el borde de la pared: lo que se pasaría del borde se
-            // recorta (el quad se achica y su textura se corre igual), así llega a la esquina sin
-            // meterse en la pared de al lado
-            float lado = Mathf.Max(0.6f, radioHaz * 2f * tamanioReflejo);
-            float x0 = Mathf.Max(local.x - lado * 0.5f, -tamanio.x * 0.5f), x1 = Mathf.Min(local.x + lado * 0.5f, tamanio.x * 0.5f);
-            float y0 = Mathf.Max(local.y - lado * 0.5f, -tamanio.y * 0.5f), y1 = Mathf.Min(local.y + lado * 0.5f, tamanio.y * 0.5f);
-            Vector3 centro = transform.TransformPoint(new Vector3((x0 + x1) * 0.5f, (y0 + y1) * 0.5f, 0f));
-            reflejo.transform.SetPositionAndRotation(centro + normal * 0.15f, Quaternion.LookRotation(-normal));
-            reflejo.transform.localScale = new Vector3(Mathf.Max(0.01f, x1 - x0), Mathf.Max(0.01f, y1 - y0), 1f);
-            var recorte = new Vector4((x1 - x0) / lado, (y1 - y0) / lado,
-                (x0 - (local.x - lado * 0.5f)) / lado, (y0 - (local.y - lado * 0.5f)) / lado);
+            float diametro = Mathf.Max(0.6f, radioHaz * 2f * tamanioReflejo);
+            float izquierda = Mathf.Max(-tamanio.x / 2f, local.x - diametro / 2f);
+            float derecha = Mathf.Min(tamanio.x / 2f, local.x + diametro / 2f);
+            float abajo = Mathf.Max(-tamanio.y / 2f, local.y - diametro / 2f);
+            float arriba = Mathf.Min(tamanio.y / 2f, local.y + diametro / 2f);
+            Vector3 centro = transform.TransformPoint(new Vector3((izquierda + derecha) / 2f, (abajo + arriba) / 2f, 0f));
+            reflejo.transform.SetPositionAndRotation(centro + normal * 0.15f, transform.rotation);
+            reflejo.transform.localScale = new Vector3(derecha - izquierda, arriba - abajo, 1f);
             Color c = color * intensidadReflejo * k;
             c.a = Mathf.Clamp01(k);
             reflejo.GetPropertyBlock(bloque);
             bloque.SetColor(IdColor, c);
-            bloque.SetVector(IdRecorte, recorte);
+            bloque.SetVector(IdMapa, new Vector4((derecha - izquierda) / diametro, (arriba - abajo) / diametro,
+                (izquierda - local.x + diametro / 2f) / diametro, (abajo - local.y + diametro / 2f) / diametro));
             reflejo.SetPropertyBlock(bloque);
         }
 
@@ -125,6 +125,8 @@ public class ParedEspejo : MonoBehaviour
         if (reflejo != null) reflejo.enabled = false;
         if (luzRebote != null) luzRebote.enabled = false;
     }
+
+    void OnDisable() => Apagar();
 
     void OnDrawGizmosSelected()
     {

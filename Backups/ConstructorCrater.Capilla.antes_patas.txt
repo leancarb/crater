@@ -1,0 +1,321 @@
+﻿using UnityEditor;
+using UnityEngine;
+using UnityEngine.Rendering;
+
+/// <summary>
+/// Estación de observación y valle facetado. El grupo técnico 06_Capilla se conserva
+/// para no romper referencias históricas. El edificio es secular: instrumental,
+/// mesas y almacenamiento bajo un techo bajo inclinado; un alero mira al valle.
+///
+/// CÓMO FUNCIONA
+/// Todo se arma con piezas simples: cajas (CajaLocal), cilindros y prismas triangulares
+/// (MallaPrisma, una malla creada por código para hastiales y remates). Las medidas
+/// están en metros, en coordenadas locales de la capilla. El paisaje usa un generador
+/// de números al azar con semilla fija: cada reconstrucción da exactamente el mismo valle.
+/// </summary>
+public static partial class ConstructorCrater
+{
+
+    static void ConstruirEdificioCapilla(Kit k, Transform g)
+    {
+        // Refugio de una estación de observación: techo bajo, instrumental,
+        // mesa de trabajo y depósitos. Sin campanario ni símbolos religiosos.
+        var edificio = Grupo(g, "Estacion_Observacion");
+        CajaLocal(edificio, "Piso_Madera", new Vector3(0, -0.12f, 0), new Vector3(8.4f, 0.24f, 14.4f), k.madera);
+        CajaLocal(edificio, "Muro_Izq", new Vector3(-4, 2.1f, 0), new Vector3(0.4f, 4.2f, 14.4f), k.adobe);
+        CajaLocal(edificio, "Muro_Der", new Vector3(4, 2.1f, 0), new Vector3(0.4f, 4.2f, 14.4f), k.adobe);
+        CajaLocal(edificio, "Muro_Fondo", new Vector3(0, 2.1f, -7), new Vector3(8.4f, 4.2f, 0.4f), k.adobe);
+        foreach (float lado in new[] { -1f, 1f })
+        {
+            CajaLocal(edificio, "Fachada", new Vector3(lado * 2.65f, 2.1f, 7), new Vector3(2.7f, 4.2f, 0.4f), k.cal);
+            CajaLocal(edificio, "Zocalo", new Vector3(lado * 4, 0.3f, 0), new Vector3(0.55f, 0.6f, 14.5f), k.piedraCapilla);
+            CajaLocal(edificio, "Hoja_Abierta", new Vector3(lado * 1.24f, 1.5f, 6.2f), new Vector3(0.08f, 3, 1.5f), k.madera);
+        }
+        CajaLocal(edificio, "Dintel_Entrada", new Vector3(0, 3.65f, 7), new Vector3(2.6f, 1.1f, 0.4f), k.cal);
+        var techo = CajaLocal(edificio, "Cubierta_Inclinada", new Vector3(0, 4.55f, 0), new Vector3(9.4f, 0.35f, 15.2f), k.paja);
+        techo.transform.localRotation = Quaternion.Euler(0, 0, 4);
+        CajaLocal(edificio, "Alero", new Vector3(0, 3.8f, 8.4f), new Vector3(9.1f, 0.2f, 2.8f), k.madera);
+        foreach (float x in new[] { -4.25f, 4.25f })
+            CajaLocal(edificio, "Poste_Alero", new Vector3(x, 1.9f, 9.4f), new Vector3(0.2f, 3.8f, 0.2f), k.madera);
+        // Instrumento asimétrico en la cubierta; conserva una silueta de orientación.
+        CajaLocal(edificio, "Mastil_Meteorologico", new Vector3(-2.2f, 5.4f, -1), new Vector3(0.12f, 1.6f, 0.12f), k.metalGastado);
+        Cilindro(edificio, "Sensor_Viento", new Vector3(-2.2f, 6.22f, -1), new Vector3(0.65f, 0.06f, 0.65f), k.metalGastado);
+        CajaLocal(edificio, "Veleta", new Vector3(-1.8f, 6.05f, -1), new Vector3(0.7f, 0.13f, 0.25f), k.metalGastado);
+        foreach (float lado in new[] { -1f, 1f })
+        {
+            CajaLocal(edificio, "Mesa_Instrumental", new Vector3(lado * 2.5f, 0.95f, -3.7f), new Vector3(2.1f, 0.18f, 3.2f), k.madera);
+            foreach (float z in new[] { -5, -2.4f })
+                CajaLocal(edificio, "Pata_Mesa", new Vector3(lado * 2.5f, 0.45f, z), new Vector3(1.8f, 0.9f, 0.1f), k.madera);
+            CajaLocal(edificio, "Caja_Equipo", new Vector3(lado * 2.8f, 0.4f, 1), new Vector3(1.4f, 0.8f, 1.5f), k.madera);
+        }
+        CajaLocal(edificio, "Panel_Observaciones", new Vector3(0, 2.5f, -6.72f), new Vector3(3.6f, 1.8f, 0.12f), k.techo);
+        foreach (float x in new[] { -1.15f, 0, 1.15f })
+        {
+            var dial = Cilindro(edificio, "Dial_Astronomico", new Vector3(x, 2.5f, -6.6f), new Vector3(0.65f, 0.04f, 0.65f), k.metalGastado);
+            dial.transform.localRotation = Quaternion.Euler(90, 0, 0);
+        }
+        var luz = Luz(edificio, "Luz_Interior", Vector3.zero, new Color(1, 0.8f, 0.6f), 38, 10, true);
+        luz.transform.localPosition = new Vector3(0, 3.6f, -1);
+        var patio = Grupo(g, "Patio_Estacion");
+        CajaLocal(patio, "Piso_Patio", new Vector3(0, -0.12f, 11.1f), new Vector3(9, 0.24f, 8), k.piedraCapilla);
+        foreach (float x in new[] { -4.4f, 4.4f })
+            CajaLocal(patio, "Pirca", new Vector3(x, 0.4f, 11.1f), new Vector3(0.4f, 1, 8), k.piedraCapilla);
+        CajaLocal(patio, "Banco_Trabajo_Exterior", new Vector3(-2.8f, 0.8f, 12), new Vector3(1.8f, 0.15f, 1.2f), k.madera);
+        CajaLocal(patio, "Deposito", new Vector3(2.8f, 0.5f, 12), new Vector3(1.5f, 1, 1.3f), k.madera);
+    }
+
+    static void ConstruirPaisajeCapilla(Kit k, Transform g)
+    {
+        var paisaje = Grupo(g, "Paisaje");
+        // el terreno jugable: una sola malla con el agujero del cráter (es también su collider)
+        var terreno = new GameObject("Terreno");
+        terreno.transform.SetParent(paisaje, false);
+        var malla = MallaSueloConHueco("Terreno_ConHueco", -45f, 45f, -24f, 80f, -0.1f, CraterEnLaCapilla, RadioPozo + 0.3f);
+        terreno.AddComponent<MeshFilter>().sharedMesh = malla;
+        terreno.AddComponent<MeshRenderer>().sharedMaterial = k.tierra;
+        terreno.AddComponent<MeshCollider>().sharedMesh = malla;
+        Estatico(terreno);
+        var lomas = new GameObject("Lomas_Valle");
+        lomas.transform.SetParent(paisaje, false);
+        var relieve = MallaRelieve();
+        lomas.AddComponent<MeshFilter>().sharedMesh = relieve;
+        lomas.AddComponent<MeshRenderer>().sharedMaterial = k.tierra;
+        lomas.AddComponent<MeshCollider>().sharedMesh = relieve;
+        Estatico(lomas);
+
+        // Los cerros dan el borde visible; estos límites impiden salir hacia el llano sin colisión.
+        void Limite(string nombre, Vector3 p, Vector3 size)
+        {
+            var limite = new GameObject(nombre);
+            limite.layer = LayerMask.NameToLayer("Ignore Raycast");
+            limite.transform.SetParent(paisaje, false);
+            limite.transform.localPosition = p;
+            limite.AddComponent<BoxCollider>().size = size;
+        }
+        Limite("Borde_Valle_Oeste", new Vector3(-44.5f, 17.25f, 70f), new Vector3(1f, 35f, 190f));
+        Limite("Borde_Valle_Este", new Vector3(44.5f, 17.25f, 70f), new Vector3(1f, 35f, 190f));
+        Limite("Borde_Valle_Fondo", new Vector3(0, 17.25f, -23.5f), new Vector3(90, 35, 1));
+        Limite("Borde_Valle_Inicio", new Vector3(0f, 17.25f, 164f), new Vector3(90f, 35f, 1f));
+
+        // el piso sigue más allá, sin colisión: un marco alrededor del terreno, metido 5 m
+        // debajo de él para que no queden rendijas. Abajo está el nivel: no hace sombra
+        void Llano(string nombre, float x0, float x1, float z0, float z1)
+        {
+            var llano = CajaLocal(paisaje, nombre, new Vector3((x0 + x1) / 2f, -0.4f, (z0 + z1) / 2f), new Vector3(x1 - x0, 0.4f, z1 - z0), k.tierra);
+            Object.DestroyImmediate(llano.GetComponent<Collider>());
+            llano.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+        }
+        Llano("Llano_Norte", -210f, 210f, 165f, 240f);
+        // Ranura fuera de la zona caminable: prolonga el óculo de la rotonda
+        // hacia la abertura circular, sin cubrir la vista del eclipse interior.
+        Llano("Llano_Sur_Oeste", -210f, -9f, -180f, -24f);
+        Llano("Llano_Sur_Este", 9f, 210f, -180f, -24f);
+        Llano("Llano_Sur_Fondo", -9f, 9f, -180f, -40f);
+        Llano("Llano_Oeste", -210f, -45f, -24f, 165f);
+        Llano("Llano_Este", 45f, 210f, -24f, 165f);
+
+        var azar = new System.Random(23);
+        float Azar(float min, float max) => min + (float)azar.NextDouble() * (max - min);
+
+        // cerros facetados que cierran el valle (con colisión: son el borde jugable)
+        void Cerro(string nombre, Vector3 centro, float ancho, float alto, float fondo, bool colision)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                var pieza = CajaLocal(paisaje, $"{nombre}_{i}",
+                    centro + new Vector3(Azar(-ancho, ancho) * 0.3f, alto / 2f - 1.5f - i * 0.8f, Azar(-fondo, fondo) * 0.3f),
+                    new Vector3(ancho * Azar(0.6f, 1f), alto * Azar(0.55f, 1f), fondo * Azar(0.6f, 1f)),
+                    i == 1 ? k.huella : k.tierra);
+                pieza.transform.localRotation = Quaternion.Euler(Azar(-6f, 6f), Azar(-30f, 30f), Azar(-8f, 8f));
+                if (!colision) Object.DestroyImmediate(pieza.GetComponent<Collider>());
+            }
+        }
+        Cerro("Cerro_A", new Vector3(-16f, 0f, 50f), 22f, 8f, 7f, true);
+        Cerro("Cerro_B", new Vector3(14f, 0f, 53f), 20f, 6f, 7f, true);
+        Cerro("Cerro_C", new Vector3(-31f, 0f, 30f), 7f, 9f, 40f, true);
+        Cerro("Cerro_D", new Vector3(31f, 0f, 28f), 7f, 7f, 40f, true);
+        // Más allá del límite posterior del valle: antes invadía el cielo del óculo.
+        Cerro("Cerro_E", new Vector3(0f, 0f, -48f), 34f, 14f, 6f, true);
+        Cerro("Cerro_Inicio_O", new Vector3(-43f, 0f, 115f), 13f, 18f, 58f, true);
+        Cerro("Cerro_Inicio_E", new Vector3(43f, 0f, 115f), 13f, 16f, 58f, true);
+        Cerro("Cerro_Atras", new Vector3(0f, 0f, 175f), 90f, 24f, 12f, false);
+
+        foreach (var p in new[] { new Vector3(5f, 0f, 145f), new Vector3(-7f, 0f, 128f), new Vector3(8f, 0f, 105f), new Vector3(-5f, 0f, 83f) })
+        {
+            float y = AlturaRelieve(p.x, p.z);
+            for (int i = 0; i < 3; i++)
+                CajaLocal(paisaje, "Apacheta", new Vector3(p.x, y + 0.12f + i * 0.23f, p.z),
+                    new Vector3(0.8f - i * 0.2f, 0.24f, 0.7f - i * 0.17f), k.basaltoMedio);
+        }
+
+        // horizonte: cordones lejanos, sin colisión. Ninguno encima del nivel, que está abajo
+        for (float ang = 0f; ang < 360f; ang += Azar(14f, 22f))
+        {
+            float r = Azar(95f, 150f);
+            var pos = new Vector3(Mathf.Sin(ang * Mathf.Deg2Rad) * r, 0f, 25f + Mathf.Cos(ang * Mathf.Deg2Rad) * r);
+            float ancho = Azar(30f, 55f), alto = Azar(18f, 42f), fondo = Azar(14f, 24f);
+            Vector3 mundo = g.TransformPoint(pos);
+            float alcance = Mathf.Max(ancho, fondo) * 0.6f;
+            bool sobreElNivel = Mathf.Abs(mundo.x) < 41f + alcance && mundo.z > -50f - alcance && mundo.z < 104f + alcance;
+            bool sobreElValle = Mathf.Abs(pos.x) < 45f + alcance && pos.z > 5f - alcance && pos.z < 165f + alcance;
+            // El horizonte no tiene collider: no debe invadir las lomas por las que se camina.
+            if (!sobreElNivel && !sobreElValle) Cerro($"Horizonte_{ang:000}", pos, ancho, alto, fondo, false);
+        }
+
+        // cardones y paja brava, fuera del camino y del cráter
+        bool Libre(Vector3 p) =>
+            Mathf.Abs(p.x) > 5.5f &&                                        // camino y capilla
+            Vector3.Distance(p, CraterEnLaCapilla) > RadioPozo + 3.5f &&     // cráter
+            !(Mathf.Abs(p.x) < 6f && p.z < 17f);                            // atrio
+        int cardones = 0, intentos = 0;
+        while (cardones < 40 && intentos++ < 500)
+        {
+            var p = new Vector3(Azar(-35f, 35f), 0f, Azar(-6f, 160f));
+            if (!Libre(p)) continue;
+            p.y = AlturaRelieve(p.x, p.z);
+            Cardon(k, paisaje, $"Cardon_{cardones++:00}", p, Azar(2.2f, 4.2f), azar);
+        }
+        int matas = 0;
+        intentos = 0;
+        while (matas < 150 && intentos++ < 800)
+        {
+            var p = new Vector3(Azar(-38f, 38f), 0f, Azar(-8f, 162f));
+            if (!Libre(p)) continue;
+            p.y = AlturaRelieve(p.x, p.z);
+            PajaBrava(k, paisaje, $"Paja_{matas++:00}", p, azar);
+        }
+    }
+
+    /// <summary>Lomas caminables: la capilla se pierde al bajar y vuelve a aparecer desde la siguiente cresta.</summary>
+    static float AlturaRelieve(float x, float z)
+    {
+        if (z <= 80f) return -0.1f;
+        float Loma(float cx, float cz, float ancho, float fondo, float alto) =>
+            alto * Mathf.Exp(-Mathf.Pow((x - cx) / ancho, 2f) - Mathf.Pow((z - cz) / fondo, 2f));
+        float entrada = Mathf.SmoothStep(0f, 1f, (z - 80f) / 8f);
+        return -0.1f + entrada * (Loma(0f, 151f, 35f, 12f, 10f) +
+            Loma(-5f, 123f, 31f, 9f, 8f) + Loma(7f, 98f, 28f, 10f, 5f));
+    }
+
+    static Mesh MallaRelieve()
+    {
+        var vertices = new System.Collections.Generic.List<Vector3>();
+        var uvs = new System.Collections.Generic.List<Vector2>();
+        Vector3 P(float x, float z) => new Vector3(x, AlturaRelieve(x, z), z);
+        for (float z = 80f; z < 165f; z += 1f)
+            for (float x = -45f; x < 45f; x += 1.5f)
+            {
+                Vector3 a = P(x, z), b = P(x, z + 1f), c = P(x + 1.5f, z + 1f), d = P(x + 1.5f, z);
+                Triangulo(vertices, uvs, a, b, c, PixelDeFaceta((a + b + c) / 3f));
+                Triangulo(vertices, uvs, a, c, d, PixelDeFaceta((a + c + d) / 3f));
+            }
+        return GuardarMalla(CrearMalla("Relieve_Valle", vertices, uvs));
+    }
+
+    static void Cardon(Kit k, Transform padre, string nombre, Vector3 pie, float alto, System.Random azar)
+    {
+        var raiz = Grupo(padre, nombre);
+        raiz.position = padre.TransformPoint(pie);
+        var tronco = Cilindro(raiz, "Tronco", Vector3.up * (alto / 2f - 0.1f), new Vector3(0.42f, alto / 2f, 0.42f), k.cardon);
+        tronco.AddComponent<CapsuleCollider>();
+        int brazos = azar.Next(0, 3);
+        for (int i = 0; i < brazos; i++)
+        {
+            float lado = i == 0 ? 1f : -1f;
+            float h = alto * (0.35f + (float)azar.NextDouble() * 0.25f);
+            float largoBrazo = alto * (0.3f + (float)azar.NextDouble() * 0.25f);
+            var codo = Cilindro(raiz, "Codo", new Vector3(lado * 0.35f, h, 0f), new Vector3(0.3f, 0.3f, 0.3f), k.cardon);
+            codo.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            Cilindro(raiz, "Brazo", new Vector3(lado * 0.6f, h + largoBrazo / 2f, 0f), new Vector3(0.3f, largoBrazo / 2f, 0.3f), k.cardon);
+        }
+        raiz.localRotation = Quaternion.Euler(0f, (float)azar.NextDouble() * 360f, 0f);
+    }
+
+    static void PajaBrava(Kit k, Transform padre, string nombre, Vector3 pie, System.Random azar)
+    {
+        var raiz = Grupo(padre, nombre);
+        raiz.position = padre.TransformPoint(pie);
+        for (int i = 0; i < 4; i++)
+        {
+            var hoja = CajaLocal(raiz, "Hoja", Vector3.up * 0.25f, new Vector3(0.05f, 0.6f + (float)azar.NextDouble() * 0.3f, 0.3f), k.pajaBrava);
+            hoja.transform.localRotation = Quaternion.Euler((float)azar.NextDouble() * 30f - 15f, i * 45f + (float)azar.NextDouble() * 20f, (float)azar.NextDouble() * 30f - 15f);
+            Object.DestroyImmediate(hoja.GetComponent<Collider>());
+            hoja.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+        }
+    }
+
+    // ---------------------------------------------------------------- piezas
+
+    static GameObject Cilindro(Transform padre, string nombre, Vector3 centroLocal, Vector3 escala, Material m)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        go.name = nombre;
+        Object.DestroyImmediate(go.GetComponent<Collider>());
+        go.transform.SetParent(padre, false);
+        go.transform.position = padre.TransformPoint(centroLocal);
+        go.transform.localScale = escala;
+        go.GetComponent<Renderer>().sharedMaterial = m;
+        Estatico(go);
+        return go;
+    }
+
+    /// <summary>Prisma triangular (hastiales, remates). 'baseLocal' es el centro de la base.</summary>
+    static GameObject Prisma(Transform padre, string nombre, Vector3 baseLocal, Vector3 tamanio, Material m)
+    {
+        var go = new GameObject(nombre);
+        go.transform.SetParent(padre, false);
+        go.transform.position = padre.TransformPoint(baseLocal);
+        go.transform.localScale = tamanio;
+        go.AddComponent<MeshFilter>().sharedMesh = MallaPrisma();
+        go.AddComponent<MeshRenderer>().sharedMaterial = m;
+        Estatico(go);
+        return go;
+    }
+
+    /// <summary>
+    /// Prisma de base 1×1 y alto 1, con la base en y = 0 y centrado en x y z.
+    /// Caras planas (vértices propios por cara) para que se lea facetado. Se guarda
+    /// como asset para que la escena lo referencie.
+    /// </summary>
+    static Mesh MallaPrisma()
+    {
+        const string ruta = "Assets/Models/Generado/Prisma.asset";
+        var malla = AssetDatabase.LoadAssetAtPath<Mesh>(ruta);
+        if (malla != null) return malla;
+        AsegurarCarpeta("Assets/Models");
+        AsegurarCarpeta("Assets/Models/Generado");
+
+        Vector3 a0 = new Vector3(-0.5f, 0f, -0.5f), b0 = new Vector3(0.5f, 0f, -0.5f), c0 = new Vector3(0f, 1f, -0.5f);
+        Vector3 a1 = new Vector3(-0.5f, 0f, 0.5f), b1 = new Vector3(0.5f, 0f, 0.5f), c1 = new Vector3(0f, 1f, 0.5f);
+        var centro = new Vector3(0f, 1f / 3f, 0f);
+        var vertices = new System.Collections.Generic.List<Vector3>();
+        var triangulos = new System.Collections.Generic.List<int>();
+
+        void Cara(params Vector3[] v)
+        {
+            // orientar hacia afuera: Unity dibuja las caras en sentido horario
+            Vector3 normal = Vector3.Cross(v[1] - v[0], v[2] - v[0]);
+            Vector3 medio = Vector3.zero;
+            foreach (var p in v) medio += p;
+            medio /= v.Length;
+            if (Vector3.Dot(normal, medio - centro) < 0f) System.Array.Reverse(v);
+            int i0 = vertices.Count;
+            vertices.AddRange(v);
+            for (int i = 1; i < v.Length - 1; i++) triangulos.AddRange(new[] { i0, i0 + i, i0 + i + 1 });
+        }
+
+        Cara(a0, b0, c0);          // frente
+        Cara(a1, b1, c1);          // atrás
+        Cara(a0, a1, b1, b0);      // base
+        Cara(a0, c0, c1, a1);      // faldón izquierdo
+        Cara(b0, b1, c1, c0);      // faldón derecho
+
+        malla = new Mesh { name = "Prisma" };
+        malla.SetVertices(vertices);
+        malla.SetTriangles(triangulos, 0);
+        malla.RecalculateNormals();
+        malla.RecalculateBounds();
+        AssetDatabase.CreateAsset(malla, ruta);
+        return malla;
+    }
+}
