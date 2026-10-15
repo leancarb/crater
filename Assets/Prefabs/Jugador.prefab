@@ -727,6 +727,7 @@ MonoBehaviour:
   requiereRecogerla: 1
   sonidoEncender: {fileID: 8300000, guid: 35d6dc5d11af85b44bab697a3298e9de, type: 3}
   sonidoApagar: {fileID: 8300000, guid: 8ed99fbb25208e7448d6a8e02ebdf478, type: 3}
+  fundidoZumbido: 0.18
 --- !u!1 &4090534122922023764
 GameObject:
   m_ObjectHideFlags: 0

@@ -125,7 +125,7 @@ public static partial class ConstructorCrater
         refs.puertaSellos = CompuertaLosa(k, g, "Puerta_Sellos", new Vector3(0f, 2f, 27.15f), new Vector3(4f, 4f, 0.3f),
             new Vector3(0f, -4.4f, 0f), 3f, false, selloOeste, selloEste);
         Luz(g, "Luz_Bajo_Puerta_Sellos", new Vector3(0f, 0.25f, 27.55f), new Color(0.85f, 0.92f, 1f), 28f, 5f, true);
-        Adorno(g, "Rendija_Puerta_Sellos", new Vector3(0f, 0.055f, 26.96f), new Vector3(3.8f, 0.05f, 0.02f), k.puertaEclipse);
+        Adorno(g, "Rendija_Puerta_Sellos", new Vector3(0f, 0.055f, 26.96f), new Vector3(3.8f, 0.05f, 0.02f), k.pinturaHueso);
 
         // La abre el obelisco al completar su motivo, sin tomar el control.
         refs.puertaSellos.abrirSoloPorOrden = true;
@@ -567,9 +567,9 @@ public static partial class ConstructorCrater
         Caja(g, "Tabique_E3", 12.3f, -0.3f, 23.5f, 17.5f, 6, 23.8f, k.basaltoMedio);
         // detrás de la placa, lunas y estrellas (antes era un tallado ámbar del kit, que no era del ala)
         var tallado = Grupo(g, "Tallado_Sello_Este").gameObject;
-        Glifo(tallado.transform, "Luna", Figura.LunaCreciente, new Vector3(14.6f, 0.85f, 26.95f), Vector3.back, 1f, k.tallaLuna);
-        Glifo(tallado.transform, "Estrella_A", Figura.Estrella, new Vector3(13.95f, 1.35f, 26.95f), Vector3.back, 0.28f, k.tallaLuna);
-        Glifo(tallado.transform, "Estrella_B", Figura.Estrella, new Vector3(15.25f, 0.4f, 26.95f), Vector3.back, 0.22f, k.tallaLuna);
+        Glifo(tallado.transform, "Luna", Figura.LunaCreciente, new Vector3(14.6f, 0.85f, 26.95f), Vector3.back, 1f, k.pinturaLuna);
+        Glifo(tallado.transform, "Estrella_A", Figura.Estrella, new Vector3(13.95f, 1.35f, 26.95f), Vector3.back, 0.28f, k.pinturaLuna);
+        Glifo(tallado.transform, "Estrella_B", Figura.Estrella, new Vector3(15.25f, 0.4f, 26.95f), Vector3.back, 0.22f, k.pinturaLuna);
         var sello = Reja(k, g, "Sello_Este", new Vector3(14.6f, 0f, 26.55f), 180f, new Vector3(0.5f, 0.5f, 0.5f));
         foreach (var r in sello.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
         var placa = Cilindro(sello.transform, "Placa_Sello", new Vector3(0f, 1.7f, 0f), new Vector3(2.8f, 0.07f, 2.8f), k.rejaBasalto);

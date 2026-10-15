@@ -28,7 +28,7 @@ public class ParedEspejo : MonoBehaviour
     [SerializeField] Light luzRebote;
     [Tooltip("Tamaño del reflejo respecto del círculo del haz sobre la pared.")]
     [SerializeField] float tamanioReflejo = 0.8f;
-    [SerializeField] float intensidadReflejo = 7f;
+    [SerializeField] float intensidadReflejo = 4f;
     [SerializeField] float intensidadRebote = 28f;
     [Tooltip("Más alto = el reflejo sólo es fuerte si se apunta muy de frente.")]
     [SerializeField] float concentracion = 1.2f;
@@ -37,6 +37,8 @@ public class ParedEspejo : MonoBehaviour
     public float Encandilamiento { get; private set; }
 
     MaterialPropertyBlock bloque;
+    const float DuracionAparicion = 0.25f;
+    float aparicion;
     static readonly int IdColor = Shader.PropertyToID("_BaseColor");
     static readonly int IdMapa = Shader.PropertyToID("_BaseMap_ST");
 
@@ -82,13 +84,16 @@ public class ParedEspejo : MonoBehaviour
         float cercania = Mathf.Clamp01(1f - largo / (linterna.AlcanceActual * 1.5f));
         float k = Mathf.Pow(hacia, concentracion) * Mathf.Lerp(0.35f, 1f, cercania);
         Encandilamiento = k;
+        // El encandilamiento conserva su respuesta; sólo la luz visible entra gradualmente.
+        aparicion = Mathf.MoveTowards(aparicion, 1f, Time.deltaTime / DuracionAparicion);
+        float brillo = k * Mathf.SmoothStep(0f, 1f, aparicion);
         Color color = linterna.ColorActual;
         // el círculo del haz sobre la pared: crece con la distancia y se estira al apuntar de costado
         float radioHaz = largo * Mathf.Tan(linterna.AnguloActual * 0.5f * Mathf.Deg2Rad);
 
         if (reflejo != null)
         {
-            reflejo.enabled = k > 0.001f;
+            reflejo.enabled = brillo > 0.001f;
             // 15 cm delante de la pared: las caras de la piedra facetada sobresalen hasta 9 cm y,
             // más cerca, tapaban el reflejo con manchas negras
             float diametro = Mathf.Max(0.6f, radioHaz * 2f * tamanioReflejo);
@@ -99,8 +104,8 @@ public class ParedEspejo : MonoBehaviour
             Vector3 centro = transform.TransformPoint(new Vector3((izquierda + derecha) / 2f, (abajo + arriba) / 2f, 0f));
             reflejo.transform.SetPositionAndRotation(centro + normal * 0.15f, transform.rotation);
             reflejo.transform.localScale = new Vector3(derecha - izquierda, arriba - abajo, 1f);
-            Color c = color * intensidadReflejo * k;
-            c.a = Mathf.Clamp01(k);
+            Color c = color * intensidadReflejo * brillo;
+            c.a = Mathf.Clamp01(brillo);
             reflejo.GetPropertyBlock(bloque);
             bloque.SetColor(IdColor, c);
             bloque.SetVector(IdMapa, new Vector4((derecha - izquierda) / diametro, (arriba - abajo) / diametro,
@@ -112,15 +117,16 @@ public class ParedEspejo : MonoBehaviour
         Vector3 rebota = Vector3.Reflect(haz, normal);
         if (luzRebote != null)
         {
-            luzRebote.enabled = k > 0.001f;
+            luzRebote.enabled = brillo > 0.001f;
             luzRebote.transform.position = toque + rebota * 1.2f;
             luzRebote.color = color;
-            luzRebote.intensity = intensidadRebote * k;
+            luzRebote.intensity = intensidadRebote * brillo;
         }
     }
 
     void Apagar()
     {
+        aparicion = 0f;
         Encandilamiento = 0f;
         if (reflejo != null) reflejo.enabled = false;
         if (luzRebote != null) luzRebote.enabled = false;

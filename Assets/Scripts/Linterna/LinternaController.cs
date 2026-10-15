@@ -53,6 +53,7 @@ public class LinternaController : MonoBehaviour
     [Header("Sonido")]
     public AudioClip sonidoEncender;
     public AudioClip sonidoApagar;
+    [Min(.01f)] public float fundidoZumbido = .18f;
 
     // --- estado (lo leen la interfaz, la adaptación, la puerta, los tests) ---
     public bool Encendida { get; private set; }
@@ -77,6 +78,8 @@ public class LinternaController : MonoBehaviour
     bool yaRecogida;
     float finDelCambio;
     AudioSource audioSource;
+    AudioSource zumbidoA, zumbidoB, zumbidoObjetivo;
+    float volumenZumbido;
     // buffer fijo para OverlapSphereNonAlloc: no crea basura en memoria cada frame
     readonly Collider[] buffer = new Collider[32];
     // un receptor puede tener varios colliders: se procesa una sola vez por frame
@@ -90,6 +93,10 @@ public class LinternaController : MonoBehaviour
         filtrosDesbloqueados.RemoveAll(filtro => filtro == null);
         if (spot == null) spot = GetComponentInChildren<Light>();
         audioSource = GetComponent<AudioSource>();
+        volumenZumbido = audioSource != null ? audioSource.volume : .5f;
+        zumbidoA = CrearZumbido("Zumbido_A");
+        zumbidoB = CrearZumbido("Zumbido_B");
+        if (audioSource != null) { audioSource.loop = false; audioSource.clip = null; }
         AplicarFiltro(null);
         Encendida = false;
         if (spot != null) spot.enabled = false;
@@ -131,6 +138,8 @@ public class LinternaController : MonoBehaviour
 
         if (Encendida && !CambiandoFiltro)
             IluminarReceptores(Time.deltaTime);
+        FundirZumbido(zumbidoA);
+        FundirZumbido(zumbidoB);
     }
 
     void LeerEntrada()
@@ -168,7 +177,6 @@ public class LinternaController : MonoBehaviour
         if (audioSource == null) audioSource = GetComponent<AudioSource>();
         if (audioSource == null) return;
         if (f != null && f.sonidoAlEquipar != null) audioSource.PlayOneShot(f.sonidoAlEquipar);
-        audioSource.clip = f != null ? f.zumbido : null;
         ActualizarZumbido();
     }
 
@@ -213,15 +221,57 @@ public class LinternaController : MonoBehaviour
         AlCambiarEncendido?.Invoke(valor);
     }
 
-    /// <summary>El zumbido del filtro suena en bucle sólo con la linterna encendida.</summary>
+    AudioSource CrearZumbido(string nombre)
+    {
+        var hijo = new GameObject(nombre);
+        hijo.transform.SetParent(transform, false);
+        var fuente = hijo.AddComponent<AudioSource>();
+        fuente.playOnAwake = false;
+        fuente.loop = true;
+        fuente.volume = 0f;
+        if (audioSource != null)
+        {
+            fuente.outputAudioMixerGroup = audioSource.outputAudioMixerGroup;
+            fuente.spatialBlend = audioSource.spatialBlend;
+            fuente.dopplerLevel = 0f;
+        }
+        return fuente;
+    }
+
+    void FundirZumbido(AudioSource fuente)
+    {
+        if (fuente == null || PausaCrater.EnPausa) return;
+        float objetivo = fuente == zumbidoObjetivo ? volumenZumbido : 0f;
+        fuente.volume = Mathf.MoveTowards(fuente.volume, objetivo,
+            volumenZumbido * Time.deltaTime / Mathf.Max(.01f, fundidoZumbido));
+        if (objetivo == 0f && fuente.volume == 0f && fuente.isPlaying) fuente.Stop();
+    }
+
+    /// <summary>Dos bucles cruzan su volumen; clicks y equipar siguen en la fuente original.</summary>
     void ActualizarZumbido()
     {
-        audioSource.loop = true;
-        if (Encendida && audioSource.clip != null)
+        var clip = Encendida && FiltroActual != null ? FiltroActual.zumbido : null;
+        if (clip == null) { zumbidoObjetivo = null; return; }
+        if (zumbidoA == null || zumbidoB == null) return;
+        if (zumbidoA.clip == clip && zumbidoA.isPlaying) zumbidoObjetivo = zumbidoA;
+        else if (zumbidoB.clip == clip && zumbidoB.isPlaying) zumbidoObjetivo = zumbidoB;
+        else
         {
-            if (!audioSource.isPlaying) audioSource.Play();
+            zumbidoObjetivo = zumbidoA.volume <= zumbidoB.volume ? zumbidoA : zumbidoB;
+            zumbidoObjetivo.Stop();
+            zumbidoObjetivo.clip = clip;
+            zumbidoObjetivo.volume = 0f;
+            zumbidoObjetivo.Play();
         }
-        else if (audioSource.isPlaying) audioSource.Stop();
+    }
+
+    void OnEnable() { if (zumbidoA != null) ActualizarZumbido(); }
+
+    void OnDisable()
+    {
+        zumbidoObjetivo = null;
+        if (zumbidoA != null) { zumbidoA.Stop(); zumbidoA.volume = 0f; }
+        if (zumbidoB != null) { zumbidoB.Stop(); zumbidoB.volume = 0f; }
     }
 
     /// <summary>Llamar cuando el jugador encuentra la linterna misma (El Umbral).</summary>

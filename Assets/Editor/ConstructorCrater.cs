@@ -565,7 +565,7 @@ public static partial class ConstructorCrater
         tono.mode.Override(TonemappingMode.ACES);
 
         var bloom = Agregar<Bloom>(perfil);
-        bloom.threshold.Override(0.9f);
+        bloom.threshold.Override(1.0f);
         bloom.intensity.Override(0.45f);
         bloom.scatter.Override(0.7f);
 
@@ -1001,6 +1001,10 @@ public static partial class ConstructorCrater
         fuente.minDistance = 2f;
         fuente.maxDistance = 28f;
         fuente.dopplerLevel = 0f;
+        // Más cuerpo sin reemplazar WAV; nunca procesar una grabación personalizada.
+        if (clip != null && clip.name == "compuerta_piedra" && fuente.name != "Apertura_Tierra" &&
+            GeneradorAudioCrater.EsSintetizado(clip) && fuente.GetComponent<GravesCompuerta>() == null)
+            fuente.gameObject.AddComponent<GravesCompuerta>();
     }
 
     static void PonerCapa(GameObject go, int capa)

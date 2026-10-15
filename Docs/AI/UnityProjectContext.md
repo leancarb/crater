@@ -1,9 +1,10 @@
 # CRÁTER — contexto de esta copia
 
-Actualizado el 2026-10-08. Proyecto independiente, sin directorio `.git`.
+Actualizado el 2026-10-15. Repositorio `leancarb/crater`, rama `codex/materiales-murales`, base `b4a18bc`.
 
 - Unity 6000.3.23f1, URP 17.3.0, Input System 1.20.0. Juego local en primera persona, sin salto.
 - La única escena de build es `Assets/Scenes/CraterVerticalSlice.unity`.
+- Playtest vigente: `Docs/Playtest20261015.md` prevalece sobre las decisiones anteriores de atajo inicial, emisión decorativa y mezcla. Regenerar conserva todos los WAV existentes; no modificar `Assets/Audio/Grabado`.
 - `ConstructorCrater` es una clase parcial de Editor. Genera escena, prefabs, materiales, audio y referencias serializadas; modificar sus fuentes y reconstruir, sin editar YAML a mano.
 - Runtime en `Assets/Scripts`, assembly `Crater`. Componentes MonoBehaviour, referencias explícitas, UnityEvents y coroutines. Nombres y documentación en español.
 - Coordenadas del nivel en mundo; las alas se construyen antes de trasladarse (-3,0,11)/(3,0,11). El valle usa coordenadas locales y queda encima de la Explanada.

@@ -597,6 +597,12 @@ public class RecorridoCraterTests
     public IEnumerator ElAtajoOcultoSoloAcortaLaAproximacion()
     {
         var atajo=Object.FindFirstObjectByType<AtajoOcultoInicio>();
+        Assert.That(atajo.habilitado,Is.False,"el playtest no debe habilitar el atajo");
+        cc.enabled=false;jugador.transform.position=atajo.transform.position-Vector3.up;cc.enabled=true;
+        Physics.SyncTransforms();yield return new WaitForSeconds(.1f);
+        Assert.That(atajo.Usado,Is.False,"el flag debe impedir el teletransporte");
+        cc.enabled=false;jugador.transform.position=Buscar<Transform>("SpawnValle").position;cc.enabled=true;
+        atajo.habilitado=true; // la función original se sigue verificando de forma optativa
         Assert.That(atajo.Usado,Is.False);Assert.That(atajo.GetComponentsInChildren<Renderer>(),Is.Empty);
         Assert.That(Vector2.Distance(new Vector2(jugador.transform.position.x,jugador.transform.position.z),
             new Vector2(atajo.transform.position.x,atajo.transform.position.z)),Is.InRange(2.5f,4f));
@@ -620,6 +626,7 @@ public class RecorridoCraterTests
         Assert.That(prologo.EnElCrater,Is.True);Assert.That(flujo.EtapaActual,Is.EqualTo(FlujoJuegoCrater.Etapa.BuscarLinterna));
         yield return SceneManager.LoadSceneAsync("CraterVerticalSlice");yield return null;
         Assert.That(Object.FindFirstObjectByType<AtajoOcultoInicio>().Usado,Is.False,"reiniciar debe restaurar el atajo");
+        Assert.That(Object.FindFirstObjectByType<AtajoOcultoInicio>().habilitado,Is.False);
     }
 
     [UnityTest]
@@ -984,6 +991,72 @@ public class RecorridoCraterTests
         yield return Esperar(1.5f);
         Assert.That(adaptacion.Progreso, Is.Zero);
         Assert.That(adaptacion.ambienteDeAdaptacion.volume, Is.Zero);
+    }
+
+    [UnityTest]
+    public IEnumerator ElReflejoApareceGradualmenteRespetaPausaYReiniciaAlApagar()
+    {
+        float pasoAnterior = Time.captureDeltaTime;
+        try
+        {
+            Time.timeScale = 1f;
+            Time.captureDeltaTime = 1f / 60f;
+            prologo.enabled = false;
+            cc.enabled = false;
+            jugador.transform.position = S(new Vector3(4, .05f, 87));
+            cc.enabled = true;
+            fps.enabled = false;
+            var plano = Buscar<ParedEspejo>("ParedEspejo_Piso");
+            var reflejo = plano.transform.Find("Reflejo").GetComponent<Renderer>();
+            var rebote = plano.transform.Find("LuzRebote").GetComponent<Light>();
+            var bloque = new MaterialPropertyBlock();
+            float Brillo() { reflejo.GetPropertyBlock(bloque); return bloque.GetColor("_BaseColor").maxColorComponent; }
+            linterna.Recoger();
+            linterna.Encender(false);
+            yield return null;
+            fps.MirarHacia(plano.transform.position + Vector3.right * 4);
+            linterna.Encender(true);
+            yield return null;
+            yield return null;
+            float inicio = Brillo();
+            Capturar("Reflejo_Fundido_Inicio");
+            for (int i = 0; i < 5; i++) yield return null;
+            float medio = Brillo();
+            Capturar("Reflejo_Fundido_Medio");
+            Assert.That(medio, Is.GreaterThan(inicio), "El reflejo debe ganar brillo gradualmente.");
+            Time.timeScale = 0f;
+            // Unity actualiza deltaTime al iniciar el siguiente frame.
+            yield return null;
+            yield return null;
+            float detenido = Brillo();
+            for (int i = 0; i < 3; i++) yield return null;
+            Assert.That(Brillo(), Is.EqualTo(detenido).Within(.0001f), "El fundido debe respetar la pausa.");
+            Time.timeScale = 1f;
+            for (int i = 0; i < 20; i++) yield return null;
+            float completo = Brillo();
+            Assert.That(completo, Is.GreaterThan(medio));
+            Assert.That(inicio, Is.LessThan(completo * .2f), "No debe aparecer con el brillo final de golpe.");
+            Assert.That(rebote.enabled, Is.True);
+            Capturar("Reflejo_Fundido_Completo");
+            linterna.Encender(false);
+            yield return null;
+            yield return null;
+            Assert.That(reflejo.enabled, Is.False);
+            Assert.That(rebote.enabled, Is.False);
+            Assert.That(plano.Encandilamiento, Is.Zero);
+            linterna.Encender(true);
+            yield return null;
+            yield return null;
+            Assert.That(Brillo(), Is.LessThan(completo * .2f), "Volver a encender debe reiniciar el fundido.");
+            plano.enabled = false;
+            Assert.That(reflejo.enabled, Is.False);
+            Assert.That(rebote.enabled, Is.False);
+        }
+        finally
+        {
+            Time.captureDeltaTime = pasoAnterior;
+            Time.timeScale = 1f;
+        }
     }
 
     [UnityTest]

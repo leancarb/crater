@@ -60,6 +60,8 @@ public static class ValidarProyectoCrater
         var perfil = AssetDatabase.LoadAssetAtPath<VolumeProfile>(ConstructorCrater.RutaPerfil);
         Comprobar(perfil != null && perfil.Has<ColorAdjustments>(),
             "El perfil de post-procesado no tiene Color Adjustments (lo necesita la adaptación a la oscuridad).", problemas);
+        Comprobar(perfil != null && perfil.TryGet<Bloom>(out var bloom) && bloom.threshold.value == 1f,
+            "Bloom Threshold debe ser 1,0.", problemas);
 
         var jugador = AssetDatabase.LoadAssetAtPath<GameObject>(ConstructorCrater.CarpetaPrefabs + "Jugador.prefab");
         Comprobar(jugador != null && jugador.CompareTag("Player") && jugador.GetComponentInChildren<LinternaController>(true) != null,
@@ -86,6 +88,7 @@ public static class ValidarProyectoCrater
             var objetos = escena.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Transform>(true)).Select(t => t.gameObject).ToArray();
             T[] Todos<T>() where T : Component => objetos.Select(go => go.GetComponent<T>()).Where(c => c != null).ToArray();
             ValidarMurales(objetos, problemas);
+            ValidarPlaytest(objetos, problemas);
 
             foreach (GameObject go in objetos)
                 Comprobar(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go) == 0,
@@ -236,6 +239,40 @@ public static class ValidarProyectoCrater
         {
             if (!yaCargada) EditorSceneManager.CloseScene(escena, true);
         }
+    }
+
+    static void ValidarPlaytest(GameObject[] objetos, List<string> problemas)
+    {
+        var atajo = objetos.Select(o => o.GetComponent<AtajoOcultoInicio>()).FirstOrDefault(c => c != null);
+        Comprobar(atajo != null && !atajo.habilitado, "El atajo oculto debe estar desactivado en playtest.", problemas);
+        var mirador = objetos.FirstOrDefault(o => o.name == "Zona_Mirador");
+        Comprobar(mirador != null && Mathf.Abs(mirador.GetComponent<BoxCollider>().size.x * mirador.transform.lossyScale.x - 88f) < .001f,
+            "Zona_Mirador debe medir 88 m.", problemas);
+        var apoyo = objetos.FirstOrDefault(o => o.name == "Apoyo_Isla_Cruce");
+        Comprobar(apoyo != null && Mathf.Abs(apoyo.transform.lossyScale.y - .30f) < .001f, "El apoyo del Cruce debe medir 0,30 m.", problemas);
+        var espejos = objetos.Select(o => o.GetComponent<ParedEspejo>()).Where(c => c != null).ToArray();
+        Comprobar(espejos.Length == 6 && espejos.All(p => new SerializedObject(p).FindProperty("intensidadReflejo").floatValue == 4f),
+            "Los seis reflejos deben tener intensidad 4.", problemas);
+        var encuadre = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/Pintura_Encuadre.mat");
+        Comprobar(encuadre != null && encuadre.IsKeywordEnabled("_EMISSION") && encuadre.GetColor("_EmissionColor").maxColorComponent == 0f,
+            "Pintura_Encuadre requiere _EMISSION y emisión negra en reposo.", problemas);
+        foreach (var go in objetos.Where(o => o.name == "Tallado_Sello_Este" || o.name == "Rendija_Puerta_Sellos" ||
+            o.name == "Linea_Umbral_Cresta" || o.name == "Vela_Entrada" || (o.name == "Tallado" && o.transform.parent?.name == "Compuerta_Umbral")))
+            Comprobar(go.GetComponentsInChildren<Renderer>(true).All(r => r.sharedMaterials.All(m => m != null && !m.IsKeywordEnabled("_EMISSION"))),
+                go.name + " debe ser mate.", problemas);
+        var tono = objetos.SelectMany(o => o.GetComponents<AudioSource>()).Where(a => a.clip != null && a.clip.name == "anillo_diamante").ToArray();
+        Comprobar(tono.Length == 1 && Mathf.Approximately(tono[0].volume, .4f), "El anillo de diamante debe sonar a volumen 0,4.", problemas);
+        var puerta = objetos.FirstOrDefault(o => o.name == "Puerta_Sellos")?.GetComponent<Compuerta>();
+        Comprobar(puerta != null && puerta.sonido != null && (!GeneradorAudioCrater.EsSintetizado(puerta.sonido.clip) ||
+            puerta.sonido.GetComponent<GravesCompuerta>() != null), "Falta el cuerpo grave de la compuerta sintetizada del Cruce.", problemas);
+        var lampara = objetos.FirstOrDefault(o => o.name == "Lampara_Ancla_Umbral");
+        var luzLampara = lampara != null ? lampara.transform.Find("Luz")?.GetComponent<Renderer>() : null;
+        Comprobar(luzLampara != null && luzLampara.sharedMaterial != null && luzLampara.sharedMaterial.IsKeywordEnabled("_EMISSION"),
+            "La lámpara funcional del ancla del Umbral debe conservar emisión.", problemas);
+        var obelisco = objetos.Select(o => o.GetComponent<ObeliscoDelEclipse>()).FirstOrDefault(c => c != null);
+        Comprobar(obelisco != null && obelisco.eclipse != null && obelisco.eclipse.sharedMaterial.IsKeywordEnabled("_EMISSION") &&
+            obelisco.fundidoResonancia >= .5f && obelisco.fundidoResonancia <= 1f,
+            "El obelisco debe conservar emisión y un fundido de resonancia entre 0,5 y 1 s.", problemas);
     }
 
     static void ValidarMurales(GameObject[] objetos, List<string> problemas)

@@ -6,6 +6,8 @@ using UnityEngine.Events;
 [RequireComponent(typeof(BoxCollider))]
 public class AtajoOcultoInicio : MonoBehaviour
 {
+    [Tooltip("Desactivado para el playtest; habilitar sólo para pruebas del recorrido.")]
+    public bool habilitado;
     public JugadorFPS jugador;
     public Transform destino;
     public FlujoJuegoCrater flujo;
@@ -17,7 +19,7 @@ public class AtajoOcultoInicio : MonoBehaviour
 
     void Intentar(Collider other)
     {
-        if (Usado || PausaCrater.EnPausa || !other.CompareTag("Player") ||
+        if (!habilitado || Usado || PausaCrater.EnPausa || !other.CompareTag("Player") ||
             jugador == null || destino == null || flujo == null ||
             flujo.EtapaActual != FlujoJuegoCrater.Etapa.Prologo) return;
         var controlador = jugador.GetComponent<CharacterController>();

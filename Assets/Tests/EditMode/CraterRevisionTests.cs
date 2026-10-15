@@ -9,6 +9,50 @@ using UnityEngine;
 public class CraterRevisionTests
 {
     [Test]
+    public void ElProyectoDePlaytestSuperaElValidador()
+    {
+        var validador = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("ValidarProyectoCrater")).First(t => t != null);
+        Assert.That((int)validador.GetMethod("Validar").Invoke(null, new object[] { false }), Is.Zero);
+    }
+
+    [Test]
+    public void ElRefuerzoDeCompuertaFavoreceLosGravesSinRecortarLaSenal()
+    {
+        var go = new GameObject("PruebaGraves");
+        try
+        {
+            var filtro = go.AddComponent<GravesCompuerta>();
+            double Energia(float frecuencia)
+            {
+                filtro.Reiniciar(44100);
+                var muestras = new float[44100];
+                for (int i = 0; i < muestras.Length; i++) muestras[i] = .1f * Mathf.Sin(2f * Mathf.PI * frecuencia * i / 44100f);
+                filtro.Procesar(muestras, 1);
+                Assert.That(muestras.Max(v => Mathf.Abs(v)), Is.LessThan(.2f));
+                return muestras.Skip(4410).Average(v => (double)v * v);
+            }
+            Assert.That(Energia(50f), Is.GreaterThan(Energia(2000f) * 1.8));
+        }
+        finally { UnityEngine.Object.DestroyImmediate(go); }
+    }
+
+    [Test]
+    public void RegenerarAudioConservaTodosLosWavExistentes()
+    {
+        string Hash(string ruta)
+        {
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            return Convert.ToBase64String(sha.ComputeHash(File.ReadAllBytes(ruta)));
+        }
+        var archivos = Directory.GetFiles("Assets/Audio", "*", SearchOption.AllDirectories)
+            .Where(p => p.EndsWith(".wav", StringComparison.OrdinalIgnoreCase) || p.Replace('\\','/').StartsWith("Assets/Audio/Grabado/"))
+            .ToDictionary(p => p, Hash);
+        var generador = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("GeneradorAudioCrater")).First(t => t != null);
+        generador.GetMethod("GenerarTodo").Invoke(null, null);
+        foreach (var par in archivos) Assert.That(Hash(par.Key), Is.EqualTo(par.Value), par.Key);
+    }
+
+    [Test]
     public void LosMaterialesGeneradosRespetanLaEspecificacion()
     {
         var azul = new Color(78f / 255f, 140f / 255f, 1f);
@@ -22,7 +66,7 @@ public class CraterRevisionTests
         Assert.That(Vector4.Distance(tallado.GetColor("_BaseColor"), profundo), Is.LessThan(.0001f));
         Assert.That(Vector4.Distance(tallado.GetColor("_EmissionColor"), azul * 1.5f), Is.LessThan(.0001f));
         var encuadre = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/Pintura_Encuadre.mat");
-        Assert.That(encuadre.IsKeywordEnabled("_EMISSION"), Is.False);
+        Assert.That(encuadre.IsKeywordEnabled("_EMISSION"), Is.True);
         Assert.That(encuadre.GetColor("_EmissionColor").maxColorComponent, Is.Zero);
     }
 

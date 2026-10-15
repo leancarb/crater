@@ -13,6 +13,7 @@ public class ObeliscoDelEclipse : MonoBehaviour
     public TestigoDeSello sol, luna;
     public Compuerta puerta;
     public AudioSource resonanciaSol, resonanciaLuna;
+    [Range(.5f, 1f)] public float fundidoResonancia = .75f;
     public TestigoDeSello[] columnasSol, columnasLuna;
     public AudioSource[] notasSol, notasLuna;
     public Light luzColumnasSol, luzColumnasLuna;
@@ -39,6 +40,7 @@ public class ObeliscoDelEclipse : MonoBehaviour
     TestigoDeSello[] columnasActuales;
     AudioSource[] notasActuales;
     AudioSource resonanciaActual;
+    float volumenSol = -1f, volumenLuna = -1f;
     int siguienteColumna;
     float esperaColumna;
     public float Avance => brillo;
@@ -58,6 +60,8 @@ public class ObeliscoDelEclipse : MonoBehaviour
     void Update()
     {
         if (PausaCrater.EnPausa) return;
+        FundirResonancia(resonanciaSol, ref volumenSol);
+        FundirResonancia(resonanciaLuna, ref volumenLuna);
         if (EnLaRotonda())
         {
             // Registrar ambos pendientes antes de que el jugador pueda salir otra vez.
@@ -137,8 +141,28 @@ public class ObeliscoDelEclipse : MonoBehaviour
         else
         {
             caraActual.Encender();
-            if (resonanciaActual != null) resonanciaActual.Play();
+            if (resonanciaActual != null)
+            {
+                float volumen = resonanciaActual == resonanciaSol ? volumenSol : volumenLuna;
+                if (volumen >= 0f) resonanciaActual.volume = volumen;
+                resonanciaActual.Play();
+            }
         }
+    }
+
+    void FundirResonancia(AudioSource fuente, ref float volumen)
+    {
+        if (fuente == null) return;
+        if (volumen < 0f) volumen = fuente.volume;
+        if (!fuente.isPlaying || fuente.clip == null) return;
+        float restante = (fuente.clip.length - fuente.time) / Mathf.Max(.01f, Mathf.Abs(fuente.pitch));
+        fuente.volume = volumen * Mathf.Clamp01(restante / Mathf.Max(.01f, fundidoResonancia));
+    }
+
+    void OnDisable()
+    {
+        if (resonanciaSol != null) { resonanciaSol.Stop(); if (volumenSol >= 0f) resonanciaSol.volume = volumenSol; }
+        if (resonanciaLuna != null) { resonanciaLuna.Stop(); if (volumenLuna >= 0f) resonanciaLuna.volume = volumenLuna; }
     }
 
     static void IluminarColumnas(Light luz, TestigoDeSello[] columnas)

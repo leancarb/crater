@@ -51,8 +51,8 @@ public static partial class ConstructorCrater
         // Desde el sector sur se puede detener y observar el eclipse, fuera del eje de paso.
         Tronco(rotonda, "Cuenco_Rotonda", new Vector3(-2.15f, 0.4f, 0.5f), MallaCuencoUsado(), k.cal);
         var cruce = nivel.Find("04_Cruce");
-        Bloque(cruce, "Apoyo_Isla_Cruce", new Vector3(1.35f, 0.18f, 52.2f), new Vector3(0.55f, 0.36f, 0.65f), k.piedra);
-        Tronco(cruce, "Cuenco_Isla", new Vector3(1.35f, 0.36f, 52.2f), MallaCuencoUsado(), k.cal);
+        Bloque(cruce, "Apoyo_Isla_Cruce", new Vector3(1.35f, 0.15f, 52.2f), new Vector3(0.55f, 0.30f, 0.65f), k.piedra);
+        Tronco(cruce, "Cuenco_Isla", new Vector3(1.35f, 0.30f, 52.2f), MallaCuencoUsado(), k.cal);
     }
 
     static Mesh MallaCuencoUsado()

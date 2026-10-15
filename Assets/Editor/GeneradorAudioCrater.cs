@@ -236,7 +236,8 @@ public static class GeneradorAudioCrater
             lp2 += 0.01f * (lp - lp2);
             float env = Mathf.Clamp01(u / 0.05f) * Mathf.Pow(1f - u, 0.6f);
             float crujido = azar.NextDouble() < 0.0006 ? (float)(azar.NextDouble() * 2 - 1) : 0f;
-            s[i] = env * (lp2 * 30f + 0.25f * Mathf.Sin(2f * Mathf.PI * 38f * t) + crujido);
+            s[i] = env * (lp2 * 18f + .8f * Mathf.Sin(2f * Mathf.PI * 38f * t) +
+                .25f * Mathf.Sin(2f * Mathf.PI * 57f * t) + .15f * Mathf.Sin(2f * Mathf.PI * 76f * t) + crujido);
         }
         return Normalizar(s, 0.6f);
     }
@@ -337,21 +338,29 @@ public static class GeneradorAudioCrater
         ? JsonUtility.FromJson<Catalogo>(File.ReadAllText(RutaHuellas)) : new Catalogo();
     static void GuardarHuellas() => File.WriteAllText(RutaHuellas, JsonUtility.ToJson(catalogo, true));
 
+    public static bool EsSintetizado(AudioClip clip)
+    {
+        if (clip == null) return false;
+        string ruta = AssetDatabase.GetAssetPath(clip);
+        if (!ruta.StartsWith(Carpeta + "/", StringComparison.Ordinal)) return false;
+        if (catalogo == null) CargarHuellas();
+        var huella = catalogo.archivos.Find(a => a.nombre == Path.GetFileNameWithoutExtension(ruta));
+        return huella != null && File.Exists(ruta) && Hash(ruta) == huella.hash;
+    }
+
     static AudioClip Guardar(string nombre, float[] muestras)
     {
         string grabado = $"Assets/Audio/Grabado/{nombre}.wav";
         if (File.Exists(grabado))
         {
-            AssetDatabase.ImportAsset(grabado);
             return AssetDatabase.LoadAssetAtPath<AudioClip>(grabado);
         }
         string ruta = $"{Carpeta}/{nombre}.wav";
         var huella = catalogo.archivos.Find(a => a.nombre == nombre);
-        // Una grabación reemplazada a mano jamás se pisa al reconstruir el nivel.
-        if (File.Exists(ruta) && (huella == null || Hash(ruta) != huella.hash))
+        // Reconstruir el nivel nunca reescribe un WAV existente, sintetizado o grabado.
+        if (File.Exists(ruta))
         {
-            Debug.Log($"[CRÁTER] Audio personalizado conservado: {ruta}");
-            AssetDatabase.ImportAsset(ruta);
+            if (AssetDatabase.LoadAssetAtPath<AudioClip>(ruta) == null) AssetDatabase.ImportAsset(ruta);
             return AssetDatabase.LoadAssetAtPath<AudioClip>(ruta);
         }
         EscribirWav(ruta, muestras);

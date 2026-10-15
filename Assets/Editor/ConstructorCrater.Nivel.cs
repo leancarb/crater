@@ -222,7 +222,7 @@ public static partial class ConstructorCrater
         motivo.transform.localPosition = new Vector3(-0.35f * 1.4f, 0.4f, -0.21f);
         motivo.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
         motivo.transform.localScale = Vector3.one * 1.4f;
-        Pintar(motivo, _ => k.tallaEclipse);   // blanco, como la luz y el ancla que la abren
+        Pintar(motivo, _ => k.pinturaHueso);   // decorativo mate; el obelisco conserva TalladoEclipse
         var compuerta = compuertaGO.AddComponent<Compuerta>();
         compuerta.receptores.Add(ancla);
         compuerta.desplazamiento = new Vector3(0f, -4.4f, 0f);
@@ -276,7 +276,7 @@ public static partial class ConstructorCrater
 
         Luz(g, "Luz_Cresta", new Vector3(0f, 6.8f, 81f), LuzFria, 90f, 20f, false);
         Luz(g, "Luz_Umbral_Cresta", new Vector3(0f, 3.4f, 71f), new Color(0.82f, 0.88f, 1f), 35f, 8f, true);
-        Adorno(g, "Linea_Umbral_Cresta", new Vector3(0f, 0.035f, 69f), new Vector3(3.6f, 0.025f, 0.08f), k.puertaEclipse);
+        Adorno(g, "Linea_Umbral_Cresta", new Vector3(0f, 0.035f, 69f), new Vector3(3.6f, 0.025f, 0.08f), k.pinturaHueso);
 
         ConstruirParedEspejo(k, g);
     }
@@ -391,7 +391,7 @@ public static partial class ConstructorCrater
         refs.spawnValle.localRotation = Quaternion.Euler(0f, 180f, 0f);
         refs.jugador.transform.SetPositionAndRotation(refs.spawnValle.position, refs.spawnValle.rotation);
         // La apertura del prólogo la activa el mirador; los créditos requieren llegar a la huella.
-        refs.zonaMirador = Zona(g, "Zona_Mirador", g.TransformPoint(new Vector3(0f, 1.5f, 55.5f)), new Vector3(12f, 4f, 2f));
+        refs.zonaMirador = Zona(g, "Zona_Mirador", g.TransformPoint(new Vector3(0f, 1.5f, 55.5f)), new Vector3(88f, 4f, 2f));
 
         // Secreto para quien conoce su posición: tres metros a la izquierda y
         // uno hacia atrás desde el inicio. Sin arte, sonido, cartel ni aviso de uso.
@@ -400,6 +400,7 @@ public static partial class ConstructorCrater
         var volumen = atajo.gameObject.AddComponent<BoxCollider>();
         volumen.isTrigger = true; volumen.size = new Vector3(1.4f, 3f, 1.4f);
         refs.atajoInicio = atajo.gameObject.AddComponent<AtajoOcultoInicio>();
+        refs.atajoInicio.habilitado = false;
         var llegada = Grupo(g, "Llegada_Atajo_Mirador");
         llegada.localPosition = new Vector3(0, .05f, 55.5f);
         refs.atajoInicio.destino = llegada;
@@ -480,7 +481,7 @@ public static partial class ConstructorCrater
             foreach (float z in new[] { -2.5f, -5.5f })
             {
                 Bloque(puerta, "Mojon_Entrada", umbral + new Vector3(x, 0.18f, z), new Vector3(0.6f, 0.6f, 0.6f), k.basalto, false);
-                Adorno(puerta, "Vela_Entrada", umbral + new Vector3(x, 0.56f, z), new Vector3(0.09f, 0.2f, 0.09f), k.vela);
+                Adorno(puerta, "Vela_Entrada", umbral + new Vector3(x, 0.56f, z), new Vector3(0.09f, 0.2f, 0.09f), k.pinturaHueso);
                 Luz(puerta, "Luz_Vela_Entrada", umbral + new Vector3(x, 0.75f, z), LuzCalida, 6f, 4f, true);
             }
 
@@ -618,7 +619,7 @@ public static partial class ConstructorCrater
         var grave = sistemas.AddComponent<AudioSource>();
         ConfigurarAudio(grave, k.audio.graveEclipse, 0f, true, false);
         var tono = sistemas.AddComponent<AudioSource>();
-        ConfigurarAudio(tono, k.audio.anilloDiamante, 0.8f, false, false);
+        ConfigurarAudio(tono, k.audio.anilloDiamante, 0.4f, false, false);
         tono.ignoreListenerPause = true;
 
         Asignar(interfaz, "linterna", linterna);
