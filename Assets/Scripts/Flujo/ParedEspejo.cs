@@ -89,7 +89,7 @@ public class ParedEspejo : MonoBehaviour
         float brillo = k * Mathf.SmoothStep(0f, 1f, aparicion);
         Color color = linterna.ColorActual;
         // el círculo del haz sobre la pared: crece con la distancia y se estira al apuntar de costado
-        float radioHaz = largo * Mathf.Tan(linterna.AnguloActual * 0.5f * Mathf.Deg2Rad);
+        float radioHaz = largo * Mathf.Tan(linterna.AnguloVisualActual * 0.5f * Mathf.Deg2Rad);
 
         if (reflejo != null)
         {

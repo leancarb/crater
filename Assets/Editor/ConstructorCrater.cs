@@ -178,7 +178,7 @@ public static partial class ConstructorCrater
         filtro.alcance = 15f * EspacioCrater.Escala;
         // menos que la luz blanca (2000, ver CrearPrefabs) pero no tanto: con 230 parecía que la
         // linterna se apagaba al poner un filtro
-        filtro.intensidad = 520f;
+        filtro.intensidad = 360f;
         filtro.tiempoDeCarga = 0.4f;
         filtro.sonidoAlEquipar = alEquipar;
         filtro.zumbido = zumbido;
@@ -576,21 +576,21 @@ public static partial class ConstructorCrater
 
         var bloom = Agregar<Bloom>(perfil);
         bloom.threshold.Override(1.0f);
-        bloom.intensity.Override(0.45f);
+        bloom.intensity.Override(0.22f);
         bloom.scatter.Override(0.7f);
 
         var ajustes = Agregar<ColorAdjustments>(perfil);
-        ajustes.postExposure.Override(0f);
-        ajustes.contrast.Override(8f);
+        ajustes.postExposure.Override(.65f);
+        ajustes.contrast.Override(3f);
         ajustes.saturation.Override(-6f);
 
         var vineta = Agregar<Vignette>(perfil);
-        vineta.intensity.Override(0.22f);
+        vineta.intensity.Override(0.16f);
         vineta.smoothness.Override(0.45f);
 
         var grano = Agregar<FilmGrain>(perfil);
         grano.type.Override(FilmGrainLookup.Thin1);
-        grano.intensity.Override(0.07f);
+        grano.intensity.Override(0.035f);
 
         EditorUtility.SetDirty(perfil);
         AssetDatabase.SaveAssets();
@@ -690,13 +690,14 @@ public static partial class ConstructorCrater
         linterna.filtros = new System.Collections.Generic.List<FiltroDefinicion> { kit.cuerpo, kit.hueco };
         linterna.requiereRecogerla = true;
         // la luz blanca alumbra bastante más que los filtros: dan ganas de volver a ella
-        linterna.intensidadBase = 2000f;
+        linterna.intensidadBase = 1100f;
         linterna.alcanceBase = 24f;
-        linterna.anguloBase = 36f;
+        linterna.anguloBase = 54f;
         linterna.sonidoEncender = kit.audio.linternaEncender;
         linterna.sonidoApagar = kit.audio.linternaApagar;
         spot.range = linterna.alcanceBase;
-        spot.spotAngle = linterna.anguloBase;
+        spot.spotAngle = linterna.AnguloVisualActual;
+        spot.innerSpotAngle = spot.spotAngle * linterna.proporcionNucleo;
         spot.color = linterna.colorBase;
         spot.intensity = linterna.intensidadBase;
 

@@ -51,6 +51,9 @@ public class RitmoCraterTests
         {
             yield return Equipar(filtro);
             Assert.That(linterna.TiempoFiltroRestante, Is.EqualTo(2f).Within(.1f));
+            Assert.That(linterna.AnguloActual, Is.EqualTo(28f), "El área que activa anclas sigue acotada.");
+            Assert.That(linterna.spot.spotAngle, Is.EqualTo(44f));
+            Assert.That(linterna.spot.innerSpotAngle, Is.LessThan(6f));
             yield return new WaitForSeconds(1.25f);
             Assert.That(linterna.FiltroActual, Is.SameAs(filtro));
             var pausa = Object.FindFirstObjectByType<PausaCrater>();

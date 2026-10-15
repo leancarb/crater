@@ -190,10 +190,53 @@ public static partial class ConstructorCrater
         return caras;
     }
 
+    // Intersección de las caras reales con una altura: excluye el pedestal más ancho.
+    static List<(Vector3 normal, Vector3 centro)> CarasDelObelisco(Renderer piedra, float y)
+    {
+        var m = piedra.GetComponent<MeshFilter>().sharedMesh;
+        var v = m.vertices;
+        var indices = m.triangles;
+        var normales = new List<Vector3>();
+        var cortes = new List<List<Vector3>>();
+        for (int i = 0; i < indices.Length; i += 3)
+        {
+            var a = piedra.transform.TransformPoint(v[indices[i]]);
+            var b = piedra.transform.TransformPoint(v[indices[i + 1]]);
+            var c = piedra.transform.TransformPoint(v[indices[i + 2]]);
+            if (y < Mathf.Min(a.y, Mathf.Min(b.y, c.y)) || y > Mathf.Max(a.y, Mathf.Max(b.y, c.y))) continue;
+            var n = Vector3.Cross(b - a, c - a).normalized;
+            if (Mathf.Abs(n.y) > .05f) continue;
+            if (Vector3.Dot(n, (a + b + c) / 3f - piedra.bounds.center) < 0f) n = -n;
+            int cara = normales.FindIndex(otra => Vector3.Dot(n, otra) > .999f);
+            if (cara < 0) { cara = normales.Count; normales.Add(n); cortes.Add(new List<Vector3>()); }
+            void Cortar(Vector3 desde, Vector3 hasta)
+            {
+                if (Mathf.Abs(desde.y - hasta.y) < .0001f) return;
+                float t = (y - desde.y) / (hasta.y - desde.y);
+                if (t >= 0f && t <= 1f) cortes[cara].Add(Vector3.Lerp(desde, hasta, t));
+            }
+            Cortar(a, b); Cortar(b, c); Cortar(c, a);
+        }
+        var caras = new List<(Vector3 normal, Vector3 centro)>();
+        for (int i = 0; i < normales.Count; i++)
+        {
+            if (cortes[i].Count < 2) continue;
+            var n = normales[i];
+            var lateral = Vector3.Cross(Vector3.up, n).normalized;
+            float min = float.PositiveInfinity, max = float.NegativeInfinity;
+            foreach (var punto in cortes[i]) { float d = Vector3.Dot(punto, lateral); min = Mathf.Min(min, d); max = Mathf.Max(max, d); }
+            var centro = n * Vector3.Dot(n, cortes[i][0]) + lateral * ((min + max) * .5f);
+            centro.y = y;
+            caras.Add((n, centro));
+        }
+        if (caras.Count != 4) throw new System.InvalidOperationException("El obelisco debe tener cuatro caras verticales a la altura del símbolo.");
+        return caras;
+    }
+
     /// <summary>
     /// El centro de la rotonda deja de ser decorado:
-    ///  - Mapa del progreso: las columnas del lado oeste llevan un sol en sus caras y las del
-    ///    este una luna; se encienden con el sello de su ala. De un vistazo se ve qué falta.
+    ///  - Mapa del progreso: las columnas del lado oeste se iluminan desde la base en ámbar
+    ///    y las del este en azul, cuando el jugador regresa con el sello de su ala.
     ///  - El obelisco, el reloj del eclipse: en su cara oeste un sol y en la este una luna, que se
     ///    encienden tras sus columnas al regresar. Con los dos se enciende el eclipse
     ///    y se abre la puerta, manteniendo la mirada libre.
@@ -208,7 +251,7 @@ public static partial class ConstructorCrater
         // el obelisco: se gira en su lugar para que sus caras miren a los cuatro puntos cardinales
         var obeliscoR = System.Array.Find(mapa.GetComponentsInChildren<Renderer>(true), r => r.name == "Anillo_Obelisco");
         if (obeliscoR == null) throw new System.InvalidOperationException("SM_Mapa01_Recorrido.fbx no tiene Anillo_Obelisco");
-        var caraUno = CarasVerticales(obeliscoR, 0f)[0].normal;
+        var caraUno = CarasDelObelisco(obeliscoR, 2.15f)[0].normal;
         float giro = Mathf.Atan2(caraUno.z, caraUno.x) * Mathf.Rad2Deg;   // de esa cara a +x
         giro = Mathf.Repeat(giro + 45f, 90f) - 45f;                        // el giro más chico
         obeliscoR.transform.RotateAround(obeliscoR.bounds.center, Vector3.up, giro);
@@ -236,40 +279,50 @@ public static partial class ConstructorCrater
             {
                 var r = columnas[c];
                 var marca = Grupo(lado, "Marca_" + r.name);
-                marca.position = new Vector3(r.bounds.center.x, 2.3f, r.bounds.center.z);
+                marca.position = new Vector3(r.bounds.center.x, .18f, r.bounds.center.z);
                 var testigo = marca.gameObject.AddComponent<TestigoDeSello>();
                 testigo.sello = oeste ? selloOeste : selloEste;
                 testigo.manual = true;
                 testigo.transicion = .5f;
                 testigo.emisionApagado = .02f;
                 if (!oeste) testigo.colorEncendido = ColorLuna;
-                var caras = new List<Renderer>();
-                int i = 0;
-                foreach (var (normal, cara) in CarasVerticales(r, 2.3f))
-                    caras.Add(Glifo(r.transform, $"{r.name}_{i++}", oeste ? Figura.Sol : Figura.LunaCreciente,
-                        cara + normal * .02f, normal, .3f, oeste ? k.ambar : k.tallaLuna, separar: false));
-                testigo.renderers = caras.ToArray();
+                // Una luminaria empotrada al pie; el pilar entero recibe la señal, sin soles pequeños.
                 Vector3 haciaCentro = obeliscoR.bounds.center - marca.position;
                 haciaCentro.y = 0f;
-                testigo.luz = Luz(marca, "Luz_Columna", marca.position + haciaCentro.normalized * .9f + Vector3.up * .3f,
-                    oeste ? LuzCalida : LuzFria, 0f, 3.5f, false);
-                testigo.intensidadLuz = 8f;
+                var normal = haciaCentro.normalized;
+                var apoyo = r.bounds.center + normal * (Mathf.Max(r.bounds.extents.x, r.bounds.extents.z) + .22f);
+                apoyo.y = .18f;
+                var zocalo = Bloque(marca, "Luminaria_Base", apoyo, new Vector3(.45f, .08f, .18f), k.metal);
+                zocalo.transform.rotation = Quaternion.LookRotation(normal);
+                var difusor = Bloque(marca, "Difusor_Base", apoyo + Vector3.up * .045f,
+                    new Vector3(.32f, .015f, .1f), oeste ? k.ambar : k.tallaLuna);
+                difusor.transform.rotation = zocalo.transform.rotation;
+                Object.DestroyImmediate(zocalo.GetComponent<Collider>());
+                Object.DestroyImmediate(difusor.GetComponent<Collider>());
+                testigo.renderers = new[] { difusor.GetComponent<Renderer>() };
+                testigo.emisionApagado = 0f;
+                testigo.luz = Luz(marca, "Luz_Base_Columna", apoyo + Vector3.up * .08f,
+                    oeste ? LuzCalida : LuzFria, 0f, 6f, false);
+                testigo.luz.type = LightType.Spot;
+                testigo.luz.spotAngle = 65f;
+                testigo.luz.innerSpotAngle = 13f;
+                var destino = new Vector3(r.bounds.center.x, r.bounds.max.y - .2f, r.bounds.center.z);
+                testigo.luz.transform.rotation = Quaternion.LookRotation(destino - testigo.luz.transform.position);
+                testigo.intensidadLuz = 20f;
                 var nota = CrearFuenteHija(marca, "Nota_Columna", k.audio.tonosAncla[c % k.audio.tonosAncla.Length], .3f);
                 nota.minDistance = 5f; nota.maxDistance = 22f;
                 nota.pitch = oeste ? 1f : .9f;
                 testigos.Add(testigo); notas.Add(nota);
             }
-            var luz = Luz(lado, "Luz", centro + new Vector3(oeste ? -3.5f : 3.5f, 3f, 0f),
-                oeste ? LuzCalida : LuzFria, 0f, 7f, false);
-            if (oeste) { obelisco.columnasSol = testigos.ToArray(); obelisco.notasSol = notas.ToArray(); obelisco.luzColumnasSol = luz; }
-            else { obelisco.columnasLuna = testigos.ToArray(); obelisco.notasLuna = notas.ToArray(); obelisco.luzColumnasLuna = luz; }
+            if (oeste) { obelisco.columnasSol = testigos.ToArray(); obelisco.notasSol = notas.ToArray(); }
+            else { obelisco.columnasLuna = testigos.ToArray(); obelisco.notasLuna = notas.ToArray(); }
         }
 
         // Cada arco termina en su cara del obelisco; con ambos se completa el eclipse.
         (Vector3 normal, Vector3 centro) Cara(Vector3 hacia, float y)
         {
-            var mejor = CarasVerticales(obeliscoR, y)[0];
-            foreach (var c in CarasVerticales(obeliscoR, y)) if (Vector3.Dot(c.normal, hacia) > Vector3.Dot(mejor.normal, hacia)) mejor = c;
+            var mejor = CarasDelObelisco(obeliscoR, y)[0];
+            foreach (var c in CarasDelObelisco(obeliscoR, y)) if (Vector3.Dot(c.normal, hacia) > Vector3.Dot(mejor.normal, hacia)) mejor = c;
             return mejor;
         }
         void CaraDelSello(string nombre, Vector3 hacia, Figura figura, Material m, ReceptorDeLuz sello, bool luna)
@@ -280,7 +333,7 @@ public static partial class ConstructorCrater
             testigo.sello = sello;
             testigo.manual = true;
             testigo.transicion = 2f;
-            testigo.renderers = new[] { Glifo(cara, "Tallado", figura, punto, normal, 0.95f, m) };
+            testigo.renderers = new[] { Glifo(cara, "Tallado", figura, punto + normal * .003f, normal, 0.95f, m, separar: false) };
             if (luna) testigo.colorEncendido = ColorLuna;
             testigo.emisionApagado = 0.03f;
             testigo.luz = Luz(cara, "Brillo", punto + normal * 0.9f, luna ? ColorLuna : new Color(1f, 0.55f, 0.2f), 0f, 5f, false);

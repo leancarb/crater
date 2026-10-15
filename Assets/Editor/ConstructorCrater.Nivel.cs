@@ -95,6 +95,7 @@ public static partial class ConstructorCrater
         AmpliarSubsuelo(nivel, arte);
         FacetarEscena(kit);
         ConstruirExploracion(kit, nivel, refs);
+        AjustarAtmosfera();
         ConfigurarSombrasYSuperficies(kit, refs);
         PrepararOclusion(escena);
 
@@ -142,15 +143,14 @@ public static partial class ConstructorCrater
         }
     }
 
-    static void ConfigurarAmbiente()
+    public static void ConfigurarAmbiente()
     {
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = AmbientMode.Trilight;
-        // la luz de relleno del interior: un poco más alta que la mínima, para que siempre
-        // se lean las paredes y el piso aun lejos de las lámparas
-        RenderSettings.ambientSkyColor = new Color(0.23f, 0.24f, 0.3f);
-        RenderSettings.ambientEquatorColor = new Color(0.14f, 0.135f, 0.15f);
-        RenderSettings.ambientGroundColor = new Color(0.06f, 0.05f, 0.045f);
+        // Gradiente HDR sobre el basalto oscuro: conserva el relieve sin puntos de relleno.
+        RenderSettings.ambientSkyColor = new Color(1.3f, 1.35f, 1.45f);
+        RenderSettings.ambientEquatorColor = new Color(1.05f, 1.05f, 1.1f);
+        RenderSettings.ambientGroundColor = new Color(.6f, .58f, .58f);
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         RenderSettings.fogDensity = 0.02f;
@@ -594,6 +594,8 @@ public static partial class ConstructorCrater
         ConfigurarAudio(viento, k.audio.vientoOculo, 0f, true, false);
         viento.playOnAwake = true;
         var adaptacion = volumenGO.AddComponent<AdaptacionOscuridad>();
+        adaptacion.observador = refs.jugador.GetComponentInChildren<Camera>().transform;
+        adaptacion.exposicionNormal = .65f;
         adaptacion.tiempoDeAdaptacion = 11f;
         adaptacion.demoraInicial = 0.4f;
         adaptacion.exposicionAdaptada = 3.2f;
@@ -723,6 +725,7 @@ public static partial class ConstructorCrater
         var arriba = Bloque(base_, "Escalon_Arriba", t.position + Vector3.up * 0.18f, new Vector3(2.1f, 0.12f, 1.5f), k.piedra);
         abajo.transform.rotation = t.rotation;
         arriba.transform.rotation = t.rotation;
+        if (ancla.name != "Ancla_Umbral") LamparaSobreAncla(k, t.parent, ancla, "Lampara_" + ancla.name);
     }
 
     /// <summary>
@@ -740,9 +743,15 @@ public static partial class ConstructorCrater
         foreach (var r in ancla.GetComponentsInChildren<Renderer>(true))
             if (!acentos.Contains(r)) { r.sharedMaterial = k.piedra; PrefabUtility.RecordPrefabInstancePropertyModifications(r); }
 
-        // la lámpara: una cadena del techo y una piedra blanca que brilla, sobre el ancla
+        LamparaSobreAncla(k, g, ancla, "Lampara_Ancla_Umbral");
+    }
+
+    static void LamparaSobreAncla(Kit k, Transform g, Ancla ancla, string nombre)
+    {
+        var blanco = new Color(.85f, .92f, 1f);
+        // Lámpara visible solamente sobre las anclas que abren puertas.
         var arriba = ancla.transform.position + Vector3.up * 3.55f + Vector3.right * 0.3f;
-        var lampara = Grupo(g, "Lampara_Ancla_Umbral");
+        var lampara = Grupo(g, nombre);
         Bloque(lampara, "Cadena", arriba + Vector3.up * 0.24f, new Vector3(0.03f, 0.42f, 0.03f), k.metal);
         var piedra = Bloque(lampara, "Luz", arriba, Vector3.one * 0.22f, k.luzEclipse);
         piedra.transform.rotation = Quaternion.Euler(45f, 0f, 45f);

@@ -41,9 +41,12 @@ public class LinternaController : MonoBehaviour
 
     [Header("Luz blanca (sin filtro)")]
     public Color colorBase = new Color(1f, 0.95f, 0.86f);
-    public float anguloBase = 36f;
+    public float anguloBase = 54f;
+    [Tooltip("Apertura visual de SOL/LUNA; su cono de activación permanece en FiltroDefinicion.")]
+    public float anguloVisualFiltro = 44f;
+    [Range(.01f, 1f)] public float proporcionNucleo = .12f;
     public float alcanceBase = 24f;
-    public float intensidadBase = 2000f;
+    public float intensidadBase = 1100f;
 
     [Header("Ajustes")]
     public float demoraDeCambio = 0.6f;
@@ -69,6 +72,7 @@ public class LinternaController : MonoBehaviour
     public Color ColorActual => FiltroActual != null ? FiltroActual.color : colorBase;
     public float AlcanceActual => FiltroActual != null ? FiltroActual.alcance : alcanceBase;
     public float AnguloActual => FiltroActual != null ? FiltroActual.anguloCono : anguloBase;
+    public float AnguloVisualActual => FiltroActual != null ? Mathf.Max(AnguloActual, anguloVisualFiltro) : anguloBase;
     float IntensidadActual => FiltroActual != null ? FiltroActual.intensidad : intensidadBase;
 
     // eventos de C#: otros scripts se suscriben con += (ver FlujoJuegoCrater.Vincular)
@@ -202,8 +206,8 @@ public class LinternaController : MonoBehaviour
         FiltroActual = f;
         if (spot == null) return;
         spot.color = ColorActual;
-        spot.spotAngle = AnguloActual;
-        spot.innerSpotAngle = AnguloActual * 0.55f;
+        spot.spotAngle = AnguloVisualActual;
+        spot.innerSpotAngle = AnguloVisualActual * proporcionNucleo;
         spot.range = AlcanceActual;
     }
 

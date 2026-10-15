@@ -9,6 +9,44 @@ using UnityEngine;
 public class CraterRevisionTests
 {
     [Test]
+    public void SolYLunaSeApoyanEnterosEnLaMallaDelObelisco()
+    {
+        // Antes del static batching: en PlayMode MeshFilter referencia la malla combinada del nivel.
+        const string ruta = "Assets/Scenes/CraterVerticalSlice.unity";
+        var escena = UnityEngine.SceneManagement.SceneManager.GetSceneByPath(ruta);
+        bool cargada = escena.IsValid() && escena.isLoaded;
+        if (!cargada) escena = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(ruta, UnityEditor.SceneManagement.OpenSceneMode.Additive);
+        GameObject superficie = null;
+        try
+        {
+            var o = escena.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<ObeliscoDelEclipse>(true)).Single();
+            var piedra = o.transform.parent.GetComponent<MeshFilter>();
+            superficie = new GameObject("SuperficieRealDePrueba");
+            superficie.transform.SetParent(piedra.transform, false);
+            var colision = superficie.AddComponent<MeshCollider>();
+            colision.sharedMesh = piedra.sharedMesh;
+            Physics.SyncTransforms();
+            foreach (var cara in new[] { o.sol, o.luna })
+            {
+                var r = cara.renderers[0];
+                var n = -r.transform.forward;
+                foreach (var local in r.GetComponent<MeshFilter>().sharedMesh.vertices.Distinct())
+                {
+                    var punto = r.transform.TransformPoint(local);
+                    Assert.That(colision.Raycast(new Ray(punto + n * .1f, -n), out var hit, .2f), Is.True,
+                        $"{cara.name}: el vértice {punto} debe apoyarse en la cara real.");
+                    Assert.That(Vector3.Distance(hit.point, punto), Is.LessThan(.012f));
+                }
+            }
+        }
+        finally
+        {
+            if (superficie != null) UnityEngine.Object.DestroyImmediate(superficie);
+            if (!cargada) UnityEditor.SceneManagement.EditorSceneManager.CloseScene(escena, true);
+        }
+    }
+
+    [Test]
     public void ElProyectoDePlaytestSuperaElValidador()
     {
         var validador = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("ValidarProyectoCrater")).First(t => t != null);
@@ -98,11 +136,8 @@ public class CraterRevisionTests
                 Assert.That(cara.GetComponent<Collider>(), Is.Null);
                 Assert.That(Vector3.Dot(losa.forward, i <= 4 ? Vector3.left : Vector3.right), Is.GreaterThan(.999f));
             }
-            Assert.That(objetos.Single(o => o.name == "Luz_Pasaje").GetComponent<Light>().intensity, Is.EqualTo(14f));
-            // AmpliarSubsuelo compensa la distancia multiplicando intensidad por escala².
-            float compensacion = EspacioCrater.Escala * EspacioCrater.Escala;
-            Assert.That(objetos.Single(o => o.name == "Luz_Murales_Oeste").GetComponent<Light>().intensity, Is.EqualTo(10f * compensacion));
-            Assert.That(objetos.Single(o => o.name == "Luz_Murales_Este").GetComponent<Light>().intensity, Is.EqualTo(12f * compensacion));
+            Assert.That(objetos.Where(o => o.name == "Luz_Pasaje" || o.name.StartsWith("Luz_Murales_")),
+                Is.Empty, "Los murales se leen con el ambiente y la linterna, sin puntos de luz flotantes.");
         }
         finally { if (!cargada) UnityEditor.SceneManagement.EditorSceneManager.CloseScene(escena, true); }
     }

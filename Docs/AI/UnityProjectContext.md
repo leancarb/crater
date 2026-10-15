@@ -4,6 +4,7 @@ Actualizado el 2026-10-15. Repositorio `leancarb/crater`, rama `main`, copia act
 
 - Unity 6000.3.23f1, URP 17.3.0, Input System 1.20.0. Juego local en primera persona, sin salto.
 - La única escena de build es `Assets/Scenes/CraterVerticalSlice.unity`.
+- Atmósfera vigente: `Docs/Atmosfera20261015.md` prevalece sobre las reglas antiguas de iluminación: ambiente HDR y +0,65 EV interior, rellenos flotantes retirados, linterna suave, lámparas superiores solo en anclas de puertas, pilares iluminados desde sus bases y símbolos del obelisco al ras.
 - Ritmo vigente: `Docs/Ritmo20261015.md`: base 4 m/s; R2 / RT corre a 5,6 m/s, sin aceleración con Shift o L3; SOL/LUNA duran 2 segundos efectivos y las parejas de anclas exigen apuntar por separado. Menú: H / ↑ para ayudas.
 - Playtest vigente: `Docs/Playtest20261015.md` prevalece sobre las decisiones anteriores de atajo inicial, emisión decorativa y mezcla. Regenerar conserva todos los WAV existentes; no modificar `Assets/Audio/Grabado`.
 - `ConstructorCrater` es una clase parcial de Editor. Genera escena, prefabs, materiales, audio y referencias serializadas; modificar sus fuentes y reconstruir, sin editar YAML a mano.

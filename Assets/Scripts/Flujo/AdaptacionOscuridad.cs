@@ -21,7 +21,12 @@ using UnityEngine.Rendering.Universal;
 public class AdaptacionOscuridad : MonoBehaviour
 {
     [Header("Rangos de exposición (EV)")]
-    public float exposicionNormal = 0f;
+    [Tooltip("Exposición de base del subsuelo; el exterior conserva 0 EV.")]
+    public float exposicionNormal = .65f;
+    public Transform observador;
+    // La escalera une el subsuelo (ojos bajo y=3) con el valle (ojos sobre y=7).
+    public float ExposicionBase => exposicionNormal * (observador == null ? 1f :
+        Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(7f, 3f, observador.position.y)));
     public float exposicionAdaptada = 3.2f;
 
     [Header("Tiempos")]
@@ -55,6 +60,7 @@ public class AdaptacionOscuridad : MonoBehaviour
 
     void Start()
     {
+        if (observador == null && Camera.main != null) observador = Camera.main.transform;
         // 'profile' (no 'sharedProfile') crea una copia: el asset no se modifica al jugar
         // TryGet busca el efecto Color Adjustments dentro del perfil de post-procesado
         var volume = GetComponent<Volume>();
@@ -68,7 +74,7 @@ public class AdaptacionOscuridad : MonoBehaviour
         // el brillo de las opciones se suma siempre, también fuera de la Cresta
         if (!Habilitada)
         {
-            if (ajustes != null) ajustes.postExposure.value = exposicionNormal + OpcionesCrater.Brillo;
+            if (ajustes != null) ajustes.postExposure.value = ExposicionBase + OpcionesCrater.Brillo;
             return;
         }
 
@@ -91,7 +97,7 @@ public class AdaptacionOscuridad : MonoBehaviour
 
         // exposición en EV: +1 duplica el brillo de la imagen, +3,2 lo multiplica por ~9
         if (ajustes != null)
-            ajustes.postExposure.value = Mathf.Lerp(exposicionNormal, exposicionAdaptada, Curva)
+            ajustes.postExposure.value = Mathf.Lerp(ExposicionBase, exposicionAdaptada, Curva)
                 + 0.25f * Mathf.SmoothStep(0, 1, aOscuras / 0.45f) * (1 - Curva) + OpcionesCrater.Brillo;
 
         if (ambienteDeAdaptacion != null)
@@ -123,7 +129,7 @@ public class AdaptacionOscuridad : MonoBehaviour
     {
         progreso = 0f;
         aOscuras = 0f;
-        if (ajustes != null) ajustes.postExposure.value = exposicionNormal;
+        if (ajustes != null) ajustes.postExposure.value = ExposicionBase;
         if (ambienteDeAdaptacion != null) ambienteDeAdaptacion.volume = 0f;
     }
 }

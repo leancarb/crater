@@ -73,6 +73,9 @@ public static class ValidarProyectoCrater
         Comprobar(linternaPrefab != null && linternaPrefab.duracionFiltro == 2f,
             "Los filtros deben durar 2 segundos efectivos.", problemas);
 
+        Comprobar(linternaPrefab != null && linternaPrefab.anguloBase == 54f && linternaPrefab.anguloVisualFiltro == 44f &&
+            linternaPrefab.proporcionNucleo <= .2f && cuerpo != null && hueco != null && cuerpo.anguloCono == 28f && hueco.anguloCono == 28f,
+            "La linterna debe suavizar su haz sin ensanchar la activación de los filtros.", problemas);
         if (System.IO.File.Exists(ConstructorCrater.RutaEscena))
             ValidarEscena(cuerpo, hueco, problemas);
 
@@ -192,7 +195,7 @@ public static class ValidarProyectoCrater
                         cara != null && c.sello == cara.sello && c.luz != null && c.renderers != null && c.renderers.Length > 0 && c.renderers.All(r => r != null)) &&
                         notas != null && notas.Length == columnas.Length && notas.All(n => n != null && n.clip != null &&
                         !n.loop && !n.playOnAwake && n.spatialBlend == 1f) &&
-                        (luna ? obelisco.luzColumnasLuna : obelisco.luzColumnasSol) != null,
+                        columnas.All(c => c.luz.type == LightType.Spot && c.luz.transform.position.y < 1f),
                         "Cada sello debe encender tres columnas distintas con una nota localizada por columna.", problemas);
                 }
                 Comprobar(obelisco.columnasSol != null && obelisco.columnasLuna != null &&
@@ -281,6 +284,11 @@ public static class ValidarProyectoCrater
         var puerta = objetos.FirstOrDefault(o => o.name == "Puerta_Sellos")?.GetComponent<Compuerta>();
         Comprobar(puerta != null && puerta.sonido != null && (!GeneradorAudioCrater.EsSintetizado(puerta.sonido.clip) ||
             puerta.sonido.GetComponent<GravesCompuerta>() != null), "Falta el cuerpo grave de la compuerta sintetizada del Cruce.", problemas);
+        Comprobar(!objetos.SelectMany(o => o.GetComponents<Light>()).Any(l => ConstructorCrater.EsRellenoSinFuente(l.name)),
+            "No deben regenerarse luces de relleno flotantes sin fuente visible.", problemas);
+        foreach (var nombre in new[] { "Lampara_Ancla_Umbral", "Lampara_Ancla_O_Puerta", "Lampara_Sello_Oeste" })
+            Comprobar(objetos.Count(o => o.name == nombre) == 1,
+                "Falta o está duplicada la lámpara de puerta: " + nombre, problemas);
         var lampara = objetos.FirstOrDefault(o => o.name == "Lampara_Ancla_Umbral");
         var luzLampara = lampara != null ? lampara.transform.Find("Luz")?.GetComponent<Renderer>() : null;
         Comprobar(luzLampara != null && luzLampara.sharedMaterial != null && luzLampara.sharedMaterial.IsKeywordEnabled("_EMISSION"),
