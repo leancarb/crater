@@ -87,6 +87,8 @@ public static partial class ConstructorCrater
         if (reporte.summary.result != BuildResult.Succeeded)
             throw new BuildFailedException("Falló el build de CRÁTER: " + reporte.summary.result);
         Debug.Log($"[CRÁTER] Build listo: {opciones.locationPathName} ({reporte.summary.totalSize / (1024 * 1024)} MB).");
+        string zip = EmpaquetarDemo(destino, ruta);
+        Debug.Log($"[CRÁTER] ZIP listo para compartir: {zip}");
     }
 
     /// <summary>Unity.exe -batchmode -quit -executeMethod ConstructorCrater.ReconstruirDesdeLineaDeComandos</summary>

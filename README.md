@@ -57,8 +57,10 @@ desde código**. No se editan a mano: se cambia el código y se reconstruye.
 - **Crater › Validar proyecto** — chequea que cada puzzle esté conectado y al alcance del haz.
 - **Crater › Renderizar cambios del valle** — guarda las vistas de las lomas, mirador, plaza, gruta y umbral de la Cresta en `Docs/Previews`.
 - **Crater › Renderizar vistas previas** — guarda capturas en `Assets/Art/Previews/Unity`.
-- **Crater › Construir demo Windows** — valida y compila en `Builds/Windows`.
-- **Crater › Construir demo macOS** — valida y compila en `Builds/macOS/CRATER.app`. Requiere el módulo Mac Build Support de esta versión de Unity, instalable desde Unity Hub.
+- **Crater › Construir demo Windows** — valida, compila en `Builds/Windows` y genera `Builds/CRATER_Windows.zip` listo para compartir.
+- **Crater › Construir demo macOS** — valida, compila en `Builds/macOS/CRATER.app` y genera `Builds/CRATER_macOS.zip` listo para compartir. Requiere el módulo Mac Build Support de esta versión de Unity, instalable desde Unity Hub.
+
+Compartir el ZIP correspondiente. La otra persona debe descomprimirlo completo y abrir `CRATER.exe` o `CRATER.app`; no necesita Unity. Los ZIP excluyen las carpetas de depuración `DoNotShip` y los símbolos PDB. En macOS incluyen la aplicación completa y los permisos de ejecución.
 
 Dónde tocar:
 
