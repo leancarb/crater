@@ -58,6 +58,7 @@ desde código**. No se editan a mano: se cambia el código y se reconstruye.
 - **Crater › Renderizar cambios del valle** — guarda las vistas de las lomas, mirador, plaza, gruta y umbral de la Cresta en `Docs/Previews`.
 - **Crater › Renderizar vistas previas** — guarda capturas en `Assets/Art/Previews/Unity`.
 - **Crater › Construir demo Windows** — valida y compila en `Builds/Windows`.
+- **Crater › Construir demo macOS** — valida y compila en `Builds/macOS/CRATER.app`. Requiere el módulo Mac Build Support de esta versión de Unity, instalable desde Unity Hub.
 
 Dónde tocar:
 

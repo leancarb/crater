@@ -61,17 +61,25 @@ public static partial class ConstructorCrater
     }
 
     [MenuItem("Crater/Construir demo Windows", priority = 20)]
-    public static void ConstruirWindows()
+    public static void ConstruirWindows() =>
+        ConstruirDemo(BuildTarget.StandaloneWindows64, "Builds/Windows/CRATER.exe");
+
+    [MenuItem("Crater/Construir demo macOS", priority = 21)]
+    public static void ConstruirMacOS() =>
+        ConstruirDemo(BuildTarget.StandaloneOSX, "Builds/macOS/CRATER.app");
+
+    static void ConstruirDemo(BuildTarget destino, string ruta)
     {
+        if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone, destino))
+            throw new BuildFailedException($"Falta el módulo de compilación para {destino}. Instalalo para esta versión de Unity desde Unity Hub.");
         ValidarProyectoCrater.ValidarDesdeLineaDeComandos();
 
-        const string carpeta = "Builds/Windows";
-        Directory.CreateDirectory(carpeta);
+        Directory.CreateDirectory(Path.GetDirectoryName(ruta));
         var opciones = new BuildPlayerOptions
         {
             scenes = new[] { RutaEscena },
-            locationPathName = carpeta + "/CRATER.exe",
-            target = BuildTarget.StandaloneWindows64,
+            locationPathName = ruta,
+            target = destino,
             options = BuildOptions.None
         };
 
