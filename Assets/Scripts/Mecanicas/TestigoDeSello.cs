@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// Un tallado junto a la puerta de los sellos que se enciende cuando su sello
@@ -23,13 +23,21 @@ public class TestigoDeSello : MonoBehaviour
     public Light luz;
     public float intensidadLuz = 30f;
 
+    [Tooltip("El obelisco espera el regreso a la rotonda y llama a Encender.") ]
+    public bool manual;
+    bool activado;
+    public bool Encendido => manual ? activado : sello != null && sello.Activo;
+    public float Nivel => nivel;
+    public void Encender() => activado = true;
+
     static readonly int IdEmision = Shader.PropertyToID("_EmissionColor");
     MaterialPropertyBlock bloque;
     float nivel;
 
     void Update()
     {
-        float objetivo = sello != null && sello.Activo ? 1f : 0f;
+        float objetivo = Encendido ? 1f : 0f;
+        if (nivel == objetivo) return; // Start ya dibujó el reposo; sólo cambiar durante la transición.
         nivel = Mathf.MoveTowards(nivel, objetivo, Time.deltaTime / Mathf.Max(0.01f, transicion));
         Aplicar();
     }
@@ -51,6 +59,7 @@ public class TestigoDeSello : MonoBehaviour
             if (r == null) continue;
             r.GetPropertyBlock(bloque);
             bloque.SetColor(IdEmision, c);
+            if (manual) bloque.SetColor("_BaseColor", colorEncendido * Mathf.Lerp(.08f, .7f, nivel));
             r.SetPropertyBlock(bloque);
         }
     }

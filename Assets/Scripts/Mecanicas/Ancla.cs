@@ -32,6 +32,7 @@ public class Ancla : ReceptorDeLuz
     float ultimaActivacion = -10f;
     readonly System.Collections.Generic.Dictionary<Transform, Vector3> escalas = new System.Collections.Generic.Dictionary<Transform, Vector3>();
     float vibracion;
+    float nivelAplicado = float.NaN;
 
     static readonly int IdBase = Shader.PropertyToID("_BaseColor");
     static readonly int IdEmision = Shader.PropertyToID("_EmissionColor");
@@ -68,9 +69,11 @@ public class Ancla : ReceptorDeLuz
             nivel = Mathf.Max(nivel, 0.08f + 0.04f * Mathf.Sin(Time.time * 4f));
         Nivel = Mathf.MoveTowards(Nivel, nivel, delta * (nivel > Nivel ? 8f : 3f));
         nivel = Nivel;
+        float vibracionAnterior = vibracion;
         vibracion = Mathf.MoveTowards(vibracion, Recibiendo ? Carga : 0, delta * 4);
-        foreach (var e in escalas)
-            if (e.Key != null) e.Key.localScale = e.Value * (1 + Mathf.Sin(Time.time * 24) * vibracion * 0.003f);
+        if (vibracion > 0 || vibracionAnterior > 0)
+            foreach (var e in escalas)
+                if (e.Key != null) e.Key.localScale = e.Value * (1 + Mathf.Sin(Time.time * 24) * vibracion * 0.003f);
         if (resonancia != null)
         {
             float volumen = Recibiendo ? 0.045f * Mathf.Sqrt(Carga) : 0;
@@ -79,6 +82,9 @@ public class Ancla : ReceptorDeLuz
             if (resonancia.volume <= 0.001f && resonancia.isPlaying) resonancia.Stop();
         }
 
+        // La simulación y el sonido siguen avanzando; el material quieto conserva su estado.
+        if (nivel == nivelAplicado) return;
+        nivelAplicado = nivel;
         // ??= crea el bloque la primera vez (AlActualizar puede llamarse antes que Awake de otros)
         bloque ??= new MaterialPropertyBlock();
         Color c = Color.Lerp(colorApagada, colorEncendida, nivel);

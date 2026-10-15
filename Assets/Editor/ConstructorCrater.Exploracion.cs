@@ -194,7 +194,7 @@ public static partial class ConstructorCrater
         Vector3 centro=EspacioCrater.Punto(new Vector3(3,1.95f,2.5f));
         var motivo=Grupo(g,"Motivo_Por_Perspectiva");motivo.position=centro;
         Quaternion giro=Quaternion.LookRotation(centro-ojo);float distancia=Vector3.Distance(centro,ojo);
-        var pinturaEncuadre=Emisivo(Opaco("Pintura_Encuadre",new Color(.58f,.55f,.48f),.08f),Color.white*.01f);Validar(pinturaEncuadre);
+        var pinturaEncuadre=Opaco("Pintura_Encuadre",new Color(.58f,.55f,.48f),.08f);Validar(pinturaEncuadre);
         var fragmentos=new Renderer[6];
         for(int i=0;i<6;i++)
         {

@@ -35,8 +35,9 @@ public class ConjuntoTallado : MonoBehaviour
     {
         for(int i=0;i<6;i++)
         {
+            float anterior=brillo[i];
             brillo[i]=Mathf.MoveTowards(brillo[i],presentes[i]?(Transformado?0.6f:(Reproduciendo?Mathf.Lerp(.08f,.6f,Avance):.08f)):0,Time.deltaTime*0.45f);
-            if(fragmentos[i]==null)continue;
+            if(fragmentos[i]==null || brillo[i]==anterior)continue;
             fragmentos[i].GetPropertyBlock(bloque);bloque.SetColor(Emision,new Color(0.6f,0.74f,1)*brillo[i]);fragmentos[i].SetPropertyBlock(bloque);
         }
         if(coleccion==null || !coleccion.Completa || Transformado || Reproduciendo || !coleccion.PuedeInteractuar)return;

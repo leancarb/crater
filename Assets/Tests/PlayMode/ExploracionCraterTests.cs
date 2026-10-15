@@ -10,6 +10,44 @@ using UnityEngine.TestTools;
 public class ExploracionCraterTests
 {
     [UnityTest]
+    public IEnumerator MuralesPNGSeConservanEnJuegoSinEmision()
+    {
+        yield return Preparar();
+        var c = Object.FindFirstObjectByType<ColeccionPiedras>();
+        c.prologo.SendMessage("EntrarSinTransicion");
+        var objetos = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+        for (int i = 1; i <= 8; i++)
+        {
+            var losa = objetos.Single(t => t.name == "Lore_" + i);
+            var cara = losa.Find("PinturaMural");
+            Assert.That(cara, Is.Not.Null);
+            var material = cara.GetComponent<Renderer>().sharedMaterial;
+            Assert.That(material.GetTexture("_BaseMap").name, Is.EqualTo($"mural_explanada_{(i <= 4 ? "izq" : "der")}_{(i - 1) % 4 + 1:00}"));
+            Assert.That(material.IsKeywordEnabled("_EMISSION"), Is.False);
+            // En Play Unity combina los buffers estáticos; validar el área visible del renderer.
+            Assert.That(cara.GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
+            var dimensiones = cara.GetComponent<Renderer>().bounds.size;
+            Assert.That(Mathf.Max(dimensiones.x, dimensiones.z) / dimensiones.y, Is.EqualTo(1.5f).Within(.001f));
+        }
+        var mural = objetos.Single(t => t.name == "Lore_2");
+        Situar(c, new Vector3(0, .05f, mural.position.z - 1.8f), mural.position);
+        yield return new WaitForSeconds(.4f);
+        Capturar(c.camara, "Materiales_Pasaje");
+        var umbral = objetos.Single(t => t.name == "Control_Mover");
+        Situar(c, umbral.position - umbral.forward * 4f - Vector3.up * 1.7f, umbral.position);
+        yield return new WaitForSeconds(.4f);
+        Capturar(c.camara, "Materiales_Umbral");
+        var reja = Object.FindObjectsByType<MateriaHueca>(FindObjectsSortMode.None).Single(r => r.name == "Reja_E_Ensenar_A");
+        var renderer = reja.GetComponentsInChildren<Renderer>().First(x => x.sharedMaterial != null && x.sharedMaterial.name == "RejaBasalto");
+        var vistaReja = reja.transform.position - reja.transform.forward * 4f;
+        vistaReja.y = .05f;
+        Situar(c, vistaReja, renderer.bounds.center);
+        yield return new WaitForSeconds(.4f);
+        Capturar(c.camara, "Materiales_Reja");
+        Assert.That(Time.timeScale, Is.EqualTo(1f), "Capturas sin pausa");
+    }
+
+    [UnityTest]
     public IEnumerator UnaPiezaRespondeAUnaAccionExistenteYNoSeDuplica()
     {
         yield return SceneManager.LoadSceneAsync("CraterVerticalSlice");yield return null;

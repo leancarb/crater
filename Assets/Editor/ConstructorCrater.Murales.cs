@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -44,14 +45,12 @@ public static partial class ConstructorCrater
         // --- el pasaje: el lore, de sur a norte (de izquierda a derecha mirando la pared)
         var lore = Grupo(murales, "Lore_Pasaje");
         float[] zs = { -32.5f, -30f, -27.5f, -25f };
-        System.Action<Kit, Lienzo>[] escenas = { LoreSolYLuna, LoreEclipse, LoreCrater, LoreLuz };
         for (int i = 0; i < zs.Length; i++)
-            Losa(k, lore, $"Lore_{i + 1}", new Vector3(-1.75f, 2.1f, zs[i]), Vector3.right, 2f, 1.4f, escenas[i]);
+            LosaConPNG(k, lore, $"Lore_{i + 1}", new Vector3(-1.75f, 2.1f, zs[i]), Vector3.right, $"mural_explanada_izq_{i + 1:00}");
         // y en la pared de enfrente, cómo sigue: las anclas, los sellos, la puerta y la vuelta
-        System.Action<Kit, Lienzo>[] sigue = { LoreAnclas, LoreSellos, LorePuerta, LoreVuelta };
         for (int i = 0; i < zs.Length; i++)
-            Losa(k, lore, $"Lore_{i + 5}", new Vector3(1.75f, 2.1f, zs[i]), Vector3.left, 2f, 1.4f, sigue[i]);
-        Luz(lore, "Luz_Pasaje", new Vector3(0f, 3.4f, -28.75f), LuzCalida, 34f, 7f, false);
+            LosaConPNG(k, lore, $"Lore_{i + 5}", new Vector3(1.75f, 2.1f, zs[i]), Vector3.left, $"mural_explanada_der_{i + 1:00}");
+        Luz(lore, "Luz_Pasaje", new Vector3(0f, 3.4f, -28.75f), LuzCalida, 14f, 7f, false);
 
         // --- frisos del Cruce: cerros, entre los módulos de las paredes
         var cruce = Grupo(murales, "Frisos_Cruce");
@@ -84,8 +83,53 @@ public static partial class ConstructorCrater
                 lado < 0f ? Vector3.right : Vector3.left, 12f, 0.6f,
                 (kk, l) => FrisoEscalonado(l.En(lado < 0f ? kk.pinturaSol : kk.pinturaLuna), 12f, 0.6f));
         // luz para leerlos (sin brillo propio: lo que brilla, se usa)
-        Luz(controles, "Luz_Murales_Oeste", new Vector3(-3.6f, 3.2f, -19.5f), LuzCalida, 22f, 6f, false);
-        Luz(controles, "Luz_Murales_Este", new Vector3(3.6f, 3.2f, -14f), LuzCalida, 26f, 8f, false);
+        Luz(controles, "Luz_Murales_Oeste", new Vector3(-3.6f, 3.2f, -19.5f), LuzCalida, 10f, 6f, false);
+        Luz(controles, "Luz_Murales_Este", new Vector3(3.6f, 3.2f, -14f), LuzCalida, 12f, 8f, false);
+    }
+
+    // Un material por PNG: las ocho caras comparten la configuración PinturaMural.
+    // Se conservan LoreSolYLuna...LoreVuelta para poder recuperar el arte procedural.
+    static void LosaConPNG(Kit k, Transform padre, string nombre, Vector3 enLaPared, Vector3 afuera, string imagen)
+    {
+        string ruta = $"Assets/Art/Murals/{imagen}.png";
+        AssetDatabase.ImportAsset(ruta);
+        var importador = AssetImporter.GetAtPath(ruta) as TextureImporter;
+        if (importador == null) throw new System.IO.FileNotFoundException("Falta el mural: " + ruta);
+        importador.textureType = TextureImporterType.Default;
+        importador.sRGBTexture = true;
+        importador.mipmapEnabled = true;
+        importador.npotScale = TextureImporterNPOTScale.None; // conservar 1728×1152 y su proporción
+        importador.wrapMode = TextureWrapMode.Clamp;
+        importador.filterMode = FilterMode.Bilinear;
+        importador.maxTextureSize = 2048;
+        importador.textureCompression = TextureImporterCompression.CompressedHQ;
+        importador.SaveAndReimport();
+
+        var material = Opaco("PinturaMural_" + imagen, Color.white, 0.05f);
+        material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(ruta));
+        material.SetTextureScale("_BaseMap", Vector2.one);
+        material.SetTextureOffset("_BaseMap", Vector2.zero);
+        Validar(material);
+        EditorUtility.SetDirty(material);
+
+        var losa = Grupo(padre, nombre);
+        losa.SetPositionAndRotation(enLaPared + afuera * 0.15f, Quaternion.LookRotation(-afuera));
+        Bloque(losa, "Losa_Piedra", losa.TransformPoint(new Vector3(0f, 0f, 0.08f)), new Vector3(2.1f, 1.4f, 0.2f), k.piedra);
+        // Quad orientado hacia -Z local, como las capas procedurales; UV completos 3:2.
+        var malla = new Mesh { name = "Mural_" + nombre + "_PNG" };
+        malla.vertices = new[] { new Vector3(-1.05f, -.7f, 0f), new Vector3(-1.05f, .7f, 0f), new Vector3(1.05f, .7f, 0f), new Vector3(1.05f, -.7f, 0f) };
+        malla.uv = new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right };
+        malla.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+        malla.RecalculateNormals();
+        malla.RecalculateBounds();
+        var cara = new GameObject("PinturaMural");
+        cara.transform.SetParent(losa, false);
+        cara.transform.localPosition = new Vector3(0f, 0f, -0.03f);
+        cara.AddComponent<MeshFilter>().sharedMesh = GuardarMalla(malla);
+        var renderer = cara.AddComponent<MeshRenderer>();
+        renderer.sharedMaterial = material;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+        Estatico(cara);
     }
 
     /// <summary>
@@ -119,7 +163,7 @@ public static partial class ConstructorCrater
     static void LuzDeMural(Transform padre, Vector3 enLaPared, Vector3 afuera, float ancho)
     {
         Luz(padre, "Luz_Mural", enLaPared + afuera * 1.6f + Vector3.up * 1.1f, new Color(1f, 0.93f, 0.84f),
-            6f * ancho, 3.5f + ancho * 0.6f, false);
+            2f * ancho, 3.5f + ancho * 0.6f, false);
     }
 
     /// <summary>Una losa de piedra clara sobre la pared, con un marco y el dibujo pintado delante.</summary>

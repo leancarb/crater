@@ -1,6 +1,6 @@
-﻿# CRÁTER — contexto de esta copia
+# CRÁTER — contexto de esta copia
 
-Actualizado el 2026-10-06. Proyecto independiente, sin directorio `.git`.
+Actualizado el 2026-10-08. Proyecto independiente, sin directorio `.git`.
 
 - Unity 6000.3.23f1, URP 17.3.0, Input System 1.20.0. Juego local en primera persona, sin salto.
 - La única escena de build es `Assets/Scenes/CraterVerticalSlice.unity`.
@@ -26,3 +26,11 @@ Ampliación vigente: `Docs/ExploracionYConjunto.md`. Fuentes en ConstructorCrate
 Corrección posterior: `Docs/CorreccionEclipseAudio.md`. CieloEclipse conserva dirección exterior14°, interior75° y restaura el horizonte al volver por escalera/epílogo. Sólo DiscoSol/DiscoLuna/Corona usan `Crater/CieloSinNiebla`; no reducir la niebla interior para verlos. Cerro_E pasó de z local-15 a-48, fuera del límite caminable. La prueba nueva verifica píxeles de corona además del rayo. Audio global ambiente_crater no se reproduce; apertura a volumen0,8/min14m/pitch0,8 y grave se desvanece. La escucha perceptiva sigue pendiente, pero se mide la salida real durante la apertura.
 
 Revisión posterior: `Docs/LegibilidadYEpilogo.md` prevalece sobre el regreso con huella/guiño y sol en su posición inicial. El epílogo cierra todas las aberturas sin rastro, cambia el sol a atardecer en otra dirección y mantiene créditos. También se revisó la legibilidad de los detalles opcionales.
+
+Decisión vigente (8/10/2026): `Docs/SellosEnObelisco.md` reemplaza las cinemáticas de regreso y las filas luminosas de pared por las caras SOL/LUNA del obelisco. Encendido al volver, mirada y movimiento libres, pausa normal; con ambas caras se completa el eclipse y se abre el Cruce. Las cinemáticas del prólogo y del final siguen funcionando.
+
+Ajuste vigente (8/10/2026): al regresar con un sello, sus tres columnas se encienden una por una, con notas ascendentes localizadas (intervalo 0,75 s), y después su cara del obelisco. Las dos progresiones se escuchan por separado, respetan pausa y dejan movimiento/mirada libres; se mantienen las luces encendidas. Ver `Docs/SellosEnObelisco.md`.
+
+Decisión posterior (8/10/2026): las seis columnas forman un hexágono simétrico de radio 6,5 m, tres SOL y tres LUNA, con el eje de paso libre. Se agrega un atajo invisible de un solo uso por escena, fuera del camino inicial (3 m a la izquierda y 1 m atrás), hacia el mirador; conserva el eclipse y la bajada normal. Sólo está habilitado en el prólogo. Reglas y validación en `Docs/SellosEnObelisco.md`.
+
+Optimización técnica (8/10/2026): `Docs/OptimizacionRendimiento.md`. El generador recalcula oclusión estática con puertas/rejas/puentes/techo móvil excluidos como oclusores. Rejas y plantas agrupan mallas conservando geometría y facetado; se evitan escrituras visuales repetidas en reposo y se actualizan etiquetas de filtros por eventos. Se mantienen la iluminación, el arte y las mecánicas; las mediciones son del Editor y no representan FPS de build. No se generó un EXE.

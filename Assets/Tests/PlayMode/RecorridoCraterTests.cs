@@ -304,7 +304,7 @@ public class RecorridoCraterTests
         yield return Caminar(S(new Vector3(-9.5f, 0f, 35.75f)));
         yield return Caminar(S(new Vector3(-9.5f, 0f, 24f)));
         yield return Caminar(S(new Vector3(-6f, 0f, 19f)));
-        yield return EsperarCinematica();
+        yield return EsperarSenales();
 
         Capturar("04_Rotonda_Un_Sello");
 
@@ -364,7 +364,7 @@ public class RecorridoCraterTests
         yield return Caminar(S(new Vector3(9.5f, 0f, 35.75f)));
         yield return Caminar(S(new Vector3(9.5f, 0f, 24f)));
         yield return Caminar(S(new Vector3(6f, 0f, 19f)));
-        yield return EsperarCinematica();
+        yield return EsperarSenales();
 
         Capturar("06_Rotonda_Dos_Sellos");
 
@@ -540,12 +540,13 @@ public class RecorridoCraterTests
         fps.MirarHacia(p + Vector3.up * 1.6f + dir.normalized * 10f);
     }
 
-    /// <summary>Espera a que termine la cinemática de un sello (la cámara vuelve al jugador).</summary>
-    static IEnumerator EsperarCinematica()
+    /// <summary>Da tiempo al encendido ambiental sin suspender al jugador.</summary>
+    static IEnumerator EsperarSenales()
     {
-        for (float t = 0f; t < 1f && !CinematicaDeSello.Reproduciendo; t += Time.deltaTime) yield return null;
-        for (float t = 0f; t < 40f && CinematicaDeSello.Reproduciendo; t += Time.deltaTime) yield return null;
-        Assert.That(CinematicaDeSello.Reproduciendo, Is.False, "la cinemática del sello no terminó");
+        var obelisco = Object.FindFirstObjectByType<ObeliscoDelEclipse>();
+        yield return Esperar(Mathf.Max(obelisco.DuracionSol, obelisco.DuracionLuna) + 1.7f);
+        Assert.That(CinematicaDeSello.Reproduciendo, Is.False, "el regreso tomó el control de la cámara");
+        Assert.That(Object.FindFirstObjectByType<JugadorFPS>().enabled, Is.True);
     }
 
     static IEnumerator Esperar(float segundos)
@@ -554,26 +555,172 @@ public class RecorridoCraterTests
     }
 
     [UnityTest]
-    public IEnumerator LaCinematicaMuestraLucesYPuedeInterrumpirseSinBloquear()
+    public IEnumerator LaRotondaMuestraSolPrimeroSinTomarLaMirada() { yield return ComprobarSenalesLibres(false); }
+
+    [UnityTest]
+    public IEnumerator LasColumnasSonSimetricasYElPasoQuedaLibre()
     {
-        prologo.enabled = false;
-        cc.enabled = false;
-        jugador.transform.position = S(new Vector3(-6f, 0.05f, 19f));
-        cc.enabled = true;
-        fps.MirarHacia(S(new Vector3(-12f, 2f, 18f)));
-        Quaternion mirada = fps.camara.rotation;
-        Buscar<Ancla>("Sello_Oeste").RecibirLuz(linterna.filtros[0], 1f);
-        Buscar<MateriaHueca>("Sello_Este").RecibirLuz(linterna.filtros[1], 1f);
-        yield return null;
-        Assert.That(CinematicaDeSello.Reproduciendo, Is.True);
-        Assert.That(fps.enabled, Is.False);
-        yield return Esperar(0.8f);
-        Assert.That(Quaternion.Angle(mirada, fps.camara.rotation), Is.GreaterThan(2f));
-        Assert.That(Object.FindFirstObjectByType<PausaCrater>().enabled, Is.True);
-        Object.FindFirstObjectByType<CinematicaDeSello>().enabled = false;
-        Assert.That(CinematicaDeSello.Reproduciendo, Is.False);
-        Assert.That(fps.enabled, Is.True);
-        Assert.That(Buscar<Compuerta>("Puerta_Sellos").Abierta, Is.True);
+        prologo.SendMessage("EntrarSinTransicion");prologo.enabled=false;
+        var o=Object.FindFirstObjectByType<ObeliscoDelEclipse>();
+        var columnas=Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None)
+            .Where(r=>r.name.StartsWith("Anillo_Columna_")&&r.GetComponent<Collider>()!=null).ToArray();
+        Assert.That(columnas.Length,Is.EqualTo(6));
+        foreach(var c in columnas)
+        {
+            Vector3 p=c.bounds.center;p.y=0;
+            Vector3 centro=o.centro;centro.y=0;
+            Assert.That(Vector3.Distance(p,centro),Is.EqualTo(6.5f).Within(.03f));
+            Assert.That(columnas.Any(r=>Vector2.Distance(new Vector2(r.bounds.center.x,r.bounds.center.z),new Vector2(-p.x,p.z))<.03f),Is.True);
+            Assert.That(Mathf.Abs(p.x),Is.GreaterThan(3f),"una columna invade el eje entrada/Cruce");
+        }
+        foreach(float radio in new[]{3.5f,8.8f})
+        {
+            Vector3 centro=o.centro;centro.y=radio<4f?-1.15f:.05f;
+            cc.enabled=false;jugador.transform.position=centro+Vector3.back*radio;fps.ReiniciarMovimiento();cc.enabled=true;
+            for(int i=1;i<=12;i++)
+            {
+                float a=(-90f+i*30f)*Mathf.Deg2Rad;
+                yield return Caminar(centro+new Vector3(Mathf.Cos(a),0,Mathf.Sin(a))*radio);
+            }
+            Assert.That(jugador.transform.position.y,Is.InRange(centro.y-.3f,centro.y+.2f));
+        }
+        cc.enabled=false;jugador.transform.position=S(new Vector3(0,.05f,1));fps.ReiniciarMovimiento();cc.enabled=true;
+        fps.MirarHacia(o.centro+Vector3.up*2f);Capturar("Rotonda_Simetrica_Reposo");
+        o.sol.sello.RecibirLuz(linterna.filtros[0],1);o.sol.sello.Avanzar(1);
+        o.luna.sello.RecibirLuz(linterna.filtros[1],1);o.luna.sello.Avanzar(1);
+        yield return Esperar(o.DuracionSol+o.DuracionLuna+1.7f);
+        Capturar("Rotonda_Simetrica_Encendida");
+        Assert.That(o.puerta.Abierta,Is.True);
+    }
+
+    [UnityTest]
+    public IEnumerator ElAtajoOcultoSoloAcortaLaAproximacion()
+    {
+        var atajo=Object.FindFirstObjectByType<AtajoOcultoInicio>();
+        Assert.That(atajo.Usado,Is.False);Assert.That(atajo.GetComponentsInChildren<Renderer>(),Is.Empty);
+        Assert.That(Vector2.Distance(new Vector2(jugador.transform.position.x,jugador.transform.position.z),
+            new Vector2(atajo.transform.position.x,atajo.transform.position.z)),Is.InRange(2.5f,4f));
+        var mirada=fps.camara.rotation;
+        for(float t=0;!atajo.Usado&&t<10f;t+=Time.deltaTime)
+        {
+            Vector3 d=atajo.transform.position-jugador.transform.position;d.y=0;
+            cc.Move(d.normalized*Velocidad*Time.deltaTime);yield return null;
+        }
+        Assert.That(atajo.Usado,Is.True,"el volumen invisible no se alcanza caminando");
+        Assert.That(Vector3.Distance(jugador.transform.position,atajo.destino.position),Is.LessThan(.5f));
+        Assert.That(Quaternion.Angle(mirada,fps.camara.rotation),Is.LessThan(.1f),"el atajo giró la cámara");
+        Assert.That(flujo.EtapaActual,Is.EqualTo(FlujoJuegoCrater.Etapa.Prologo));
+        Assert.That(prologo.Reproduciendo,Is.True);
+        Capturar("Atajo_Llegada_Mirador");
+        fps.MirarHacia(fps.camara.position+Object.FindFirstObjectByType<CieloEclipse>().DireccionSol*100);
+        for(float t=0;prologo.Reproduciendo&&t<20f;t+=Time.deltaTime)yield return null;
+        Assert.That(prologo.Reproduciendo,Is.False);Assert.That(fps.movimientoBloqueado,Is.False);
+        yield return Caminar(Buscar<Transform>("Boca_Crater").position+Vector3.forward*1.2f);
+        yield return Caminar(new Vector3(0,0,-33.8f));
+        Assert.That(prologo.EnElCrater,Is.True);Assert.That(flujo.EtapaActual,Is.EqualTo(FlujoJuegoCrater.Etapa.BuscarLinterna));
+        yield return SceneManager.LoadSceneAsync("CraterVerticalSlice");yield return null;
+        Assert.That(Object.FindFirstObjectByType<AtajoOcultoInicio>().Usado,Is.False,"reiniciar debe restaurar el atajo");
+    }
+
+    [UnityTest]
+    public IEnumerator LaRotondaMuestraLunaPrimeroSinTomarLaMirada() { yield return ComprobarSenalesLibres(true); }
+
+    IEnumerator ComprobarSenalesLibres(bool lunaPrimero)
+    {
+        prologo.SendMessage("EntrarSinTransicion");prologo.enabled = false;
+        var obelisco=Object.FindFirstObjectByType<ObeliscoDelEclipse>();
+        var primero=lunaPrimero?obelisco.luna:obelisco.sol;var segundo=lunaPrimero?obelisco.sol:obelisco.luna;
+        var columnas=lunaPrimero?obelisco.columnasLuna:obelisco.columnasSol;
+        var notas=lunaPrimero?obelisco.notasLuna:obelisco.notasSol;
+        var otrasColumnas=lunaPrimero?obelisco.columnasSol:obelisco.columnasLuna;
+        Assert.That(columnas.Length,Is.EqualTo(3));
+        Assert.That(columnas.Concat(otrasColumnas).Distinct().Count(),Is.EqualTo(6));
+        void Situar(Vector3 piso)
+        {
+            cc.enabled=false;jugador.transform.position=piso;fps.ReiniciarMovimiento();cc.enabled=true;
+            fps.MirarHacia(piso+Vector3.up*1.6f+Vector3.back*10);Physics.SyncTransforms();
+        }
+        void Activar(TestigoDeSello t,FiltroDefinicion f){t.sello.RecibirLuz(f,1);t.sello.Avanzar(1);}
+        void FotoCara(string nombre)
+        {
+            var direccion=fps.camara.forward;fps.MirarHacia(primero.renderers[0].bounds.center);Capturar(nombre);
+            fps.MirarHacia(fps.camara.position+direccion*10);
+        }
+        void FotoColumnas(string estado)
+        {
+            var direccion=fps.camara.forward;
+            fps.MirarHacia(columnas[1].transform.position);Capturar((lunaPrimero?"LUNA_":"SOL_")+estado);
+            fps.MirarHacia(fps.camara.position+direccion*10);
+        }
+        Situar(O(-23,1)+Vector3.up*.05f);
+        Activar(primero,linterna.filtros[lunaPrimero?1:0]);yield return Esperar(.4f);
+        Assert.That(primero.Encendido,Is.False,"la señal debe esperar el regreso, sin esperar una mirada obligatoria");
+        Situar(S(new Vector3(lunaPrimero?11:-11,.05f,18)));var mirada=fps.camara.rotation;
+        FotoCara(lunaPrimero?"29_Obelisco_LUNA_Antes":"28_Obelisco_SOL_Antes");
+        FotoColumnas("Columnas_0");
+        yield return Esperar(.4f);FotoColumnas("Columnas_1");
+        Assert.That(columnas.Count(c=>c.Encendido),Is.EqualTo(1));
+        Assert.That(columnas[0].Nivel,Is.InRange(.01f,.99f));
+        Assert.That(notas[0].isPlaying,Is.True,"la primera columna debe sonar al encenderse");
+        Assert.That(notas[1].isPlaying,Is.False);Assert.That(obelisco.NotasDeColumnasEmitidas,Is.EqualTo(1));
+        Assert.That(primero.Encendido,Is.False,"el obelisco debe esperar a las columnas");
+        Assert.That(otrasColumnas.All(c=>!c.Encendido),Is.True);
+        Assert.That(CinematicaDeSello.Reproduciendo,Is.False);Assert.That(fps.enabled,Is.True);
+        var pausa=Object.FindFirstObjectByType<PausaCrater>();pausa.Pausar();float nivel=columnas[0].Nivel;
+        yield return new WaitForSecondsRealtime(.2f);
+        Assert.That(columnas[0].Nivel,Is.EqualTo(nivel).Within(.001f));
+        Assert.That(obelisco.NotasDeColumnasEmitidas,Is.EqualTo(1));pausa.Reanudar();
+        for(float t=0;!columnas[1].Encendido && t<2f;t+=Time.deltaTime)yield return null;
+        FotoColumnas("Columnas_2");
+        Assert.That(columnas.Count(c=>c.Encendido),Is.EqualTo(2));
+        Assert.That(columnas[0].Nivel,Is.EqualTo(1).Within(.001f));
+        Assert.That(notas[1].isPlaying,Is.True);Assert.That(notas[2].isPlaying,Is.False);
+        for(float t=0;!columnas[2].Encendido && t<2f;t+=Time.deltaTime)yield return null;
+        FotoColumnas("Columnas_3");
+        Assert.That(columnas.All(c=>c.Encendido),Is.True);Assert.That(notas[2].isPlaying,Is.True);
+        Assert.That(primero.Encendido,Is.False);Assert.That(obelisco.NotasDeColumnasEmitidas,Is.EqualTo(3));
+        for(float t=0;!primero.Encendido && t<2f;t+=Time.deltaTime)yield return null;
+        yield return Esperar(.2f);FotoCara(lunaPrimero?"31_Obelisco_LUNA_Encendiendo":"30_Obelisco_SOL_Encendiendo");
+        Assert.That(primero.Encendido,Is.True);Assert.That(primero.Nivel,Is.InRange(.01f,.5f));
+        yield return Esperar(2.1f);Assert.That(primero.Nivel,Is.EqualTo(1).Within(.001f));
+        Assert.That(segundo.Nivel,Is.EqualTo(0));Assert.That(obelisco.Encendido,Is.False);Assert.That(obelisco.puerta.Abierta,Is.False);
+        Assert.That(Quaternion.Angle(mirada,fps.camara.rotation),Is.LessThan(.1f),"la señal giró la mirada");
+        fps.MirarHacia(primero.renderers[0].bounds.center);Capturar(lunaPrimero?"25_Obelisco_LUNA_Primero":"24_Obelisco_SOL_Primero");
+        Situar(O(-23,1)+Vector3.up*.05f);Activar(segundo,linterna.filtros[lunaPrimero?0:1]);yield return Esperar(.4f);
+        Assert.That(segundo.Encendido,Is.False);
+        Situar(S(new Vector3(lunaPrimero?-11:11,.05f,18)));mirada=fps.camara.rotation;yield return Esperar((lunaPrimero?obelisco.DuracionSol:obelisco.DuracionLuna)+1.7f);
+        Assert.That(obelisco.Encendido,Is.True);Assert.That(obelisco.puerta.Abierta,Is.True);
+        Assert.That(Quaternion.Angle(mirada,fps.camara.rotation),Is.LessThan(.1f));Assert.That(fps.enabled,Is.True);
+        yield return Esperar(3.1f);Assert.That(obelisco.puerta.Progreso,Is.EqualTo(1).Within(.001f));
+        Situar(S(new Vector3(lunaPrimero?-8:8,.05f,22)));fps.MirarHacia(obelisco.eclipseRegreso.bounds.center);
+        Capturar(lunaPrimero?"27_Obelisco_Completo_LUNA_SOL":"26_Obelisco_Completo_SOL_LUNA");
+        yield return Esperar(1);Assert.That(obelisco.NotasDeColumnasEmitidas,Is.EqualTo(6));Assert.That(obelisco.SenalesEmitidas,Is.EqualTo(2),"repite resonancias al quedarse en la plaza");
+        Assert.That(Object.FindFirstObjectByType<CinematicaDeSello>(),Is.Null);
+        Assert.That(Object.FindObjectsByType<HiloDeTallados>(FindObjectsSortMode.None),Is.Empty);
+    }
+
+    [UnityTest]
+    public IEnumerator LaRotondaMuestraAmbosPendientesYAbrirNoExigeQuedarse()
+    {
+        prologo.SendMessage("EntrarSinTransicion");prologo.enabled=false;
+        var o=Object.FindFirstObjectByType<ObeliscoDelEclipse>();
+        void Situar(Vector3 p){cc.enabled=false;jugador.transform.position=p;fps.ReiniciarMovimiento();cc.enabled=true;}
+        Situar(O(-23,1)+Vector3.up*.05f);
+        o.sol.sello.RecibirLuz(linterna.filtros[0],1);o.sol.sello.Avanzar(1);
+        o.luna.sello.RecibirLuz(linterna.filtros[1],1);o.luna.sello.Avanzar(1);
+        yield return Esperar(.4f);Assert.That(o.SenalesEmitidas,Is.EqualTo(0));
+        Situar(S(new Vector3(0,.05f,18)));yield return Esperar(.3f);
+        Assert.That(o.SenalesEmitidas,Is.EqualTo(1));yield return Esperar(.5f);
+        Assert.That(o.SenalesEmitidas,Is.EqualTo(1),"no superponer las secuencias");
+        Assert.That(o.columnasLuna.All(c=>!c.Encendido),Is.True);
+        Situar(O(-23,1)+Vector3.up*.05f);
+        yield return Esperar(o.DuracionSol+o.DuracionLuna+1.7f);Assert.That(o.puerta.Abierta,Is.True);
+        Assert.That(o.SenalesEmitidas,Is.EqualTo(2));Assert.That(o.NotasDeColumnasEmitidas,Is.EqualTo(6));
+        Assert.That(o.columnasSol.Concat(o.columnasLuna).All(c=>c.Nivel>=.99f),Is.True);
+        var bloque=new MaterialPropertyBlock();o.eclipseRegreso.GetPropertyBlock(bloque);
+        Assert.That(bloque.GetColor("_EmissionColor").maxColorComponent,Is.GreaterThan(2));
+        Assert.That(fps.enabled,Is.True);Assert.That(CinematicaDeSello.Reproduciendo,Is.False);
+        yield return Esperar(1);Assert.That(o.SenalesEmitidas,Is.EqualTo(2));
     }
 
     [UnityTest]
@@ -676,7 +823,7 @@ public class RecorridoCraterTests
     }
 
     [UnityTest]
-    public IEnumerator TecladoMouseYPausaPermitenSaltarLosSellosYRecuperarControl()
+    public IEnumerator TecladoMouseMandoYPausaConservanControlDuranteLosSellos()
     {
         prologo.enabled = false;
         var teclado = UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
@@ -706,12 +853,12 @@ public class RecorridoCraterTests
             var sello = Buscar<Ancla>("Sello_Oeste");
             sello.RecibirLuz(linterna.filtros[0], 1); sello.Avanzar(1);
             yield return Esperar(0.2f);
-            Assert.That(CinematicaDeSello.Reproduciendo, Is.True);
+            Assert.That(CinematicaDeSello.Reproduciendo, Is.False);
             Key(UnityEngine.InputSystem.Key.Escape); yield return null; yield return null;
             Assert.That(PausaCrater.EnPausa, Is.True);
             Soltar(); yield return null;
             Key(UnityEngine.InputSystem.Key.Space); yield return null; yield return null;
-            Assert.That(CinematicaDeSello.Reproduciendo, Is.True, "saltar en pausa no debe perder el control");
+            Assert.That(CinematicaDeSello.Reproduciendo, Is.False, "la señal no debe tomar control ni requerir salto");
             Soltar(); yield return null;
             Key(UnityEngine.InputSystem.Key.Escape); yield return null; yield return null;
             Soltar(); yield return null;
@@ -720,12 +867,18 @@ public class RecorridoCraterTests
             yield return null; yield return Esperar(0.3f);
             Assert.That(CinematicaDeSello.Reproduciendo, Is.False);
             Assert.That(fps.enabled, Is.True);
+            var miradaMando = fps.camara.rotation;
+            UnityEngine.InputSystem.InputSystem.QueueStateEvent(mando, new UnityEngine.InputSystem.LowLevel.GamepadState { rightStick = new Vector2(.6f,0) });
+            yield return Esperar(.2f);
+            Assert.That(Quaternion.Angle(miradaMando,fps.camara.rotation),Is.GreaterThan(.1f),"el mando debe poder mirar durante las columnas");
             UnityEngine.InputSystem.InputSystem.QueueStateEvent(mando, new UnityEngine.InputSystem.LowLevel.GamepadState());
             yield return null;
             var luna = Buscar<MateriaHueca>("Sello_Este");
             luna.RecibirLuz(linterna.filtros[1], 1); luna.Avanzar(1);
             yield return Esperar(0.2f);
-            Key(UnityEngine.InputSystem.Key.Space); yield return null; yield return Esperar(0.3f);
+            Key(UnityEngine.InputSystem.Key.Space); yield return null;
+            var obelisco = Object.FindFirstObjectByType<ObeliscoDelEclipse>();
+            yield return Esperar(obelisco.DuracionSol+obelisco.DuracionLuna+1.7f);
             Soltar(); yield return null;
             Assert.That(CinematicaDeSello.Reproduciendo, Is.False);
             Assert.That(fps.enabled, Is.True);

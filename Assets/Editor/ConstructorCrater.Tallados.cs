@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -9,9 +9,8 @@ using UnityEngine.Rendering;
 ///  - En la escalera del pozo: a la izquierda, en azul, la luna pasa por delante del
 ///    sol; a la derecha, en naranja, el sol por delante de la luna. Bajando, el eclipse
 ///    avanza hasta la totalidad mientras se entra al cráter.
-///  - En la rotonda: un hilo de soles desde el ala oeste y uno de lunas desde el ala
-///    este hasta la puerta de los sellos. Cada hilo se enciende de a uno al encender su
-///    sello (HiloDeTallados); sobre la puerta, el eclipse se enciende con los dos.
+///  - En la rotonda: las caras SOL/LUNA del obelisco registran sus sellos y juntas
+///    completan el eclipse central, sin dirigir la mirada del jugador.
 ///
 /// CÓMO FUNCIONA
 /// Cada figura es una malla hecha acá con pocos triángulos (discos de 12 lados, una luna
@@ -190,62 +189,6 @@ public static partial class ConstructorCrater
 
     // ================================================================== dónde van
 
-    /// <summary>Los hilos de la rotonda: soles desde el oeste, lunas desde el este, el eclipse en la puerta.</summary>
-    static void ConstruirHilosDeLosSellos(Kit k, Transform g, Referencias refs, ReceptorDeLuz selloOeste, ReceptorDeLuz selloEste)
-    {
-        var hilos = Grupo(g, "Hilos_De_Los_Sellos");
-        var afuera = Vector3.back;   // la pared norte mira al sur
-        const float z = 26.95f, y = 2.4f;
-
-        HiloDeTallados Hilo(string nombre, ReceptorDeLuz[] sellos, Compuerta esperar, Color color, Renderer[] tallados)
-        {
-            var go = new GameObject(nombre);
-            go.transform.SetParent(hilos, false);
-            go.transform.position = tallados[tallados.Length - 1].transform.position;
-            var hilo = go.AddComponent<HiloDeTallados>();
-            hilo.sellos = sellos;
-            hilo.esperarA = esperar;
-            hilo.tallados = tallados;
-            hilo.color = color;
-            hilo.fuente = go.AddComponent<AudioSource>();
-            ConfigurarAudio(hilo.fuente, null, 0.7f, false, true);
-            hilo.fuente.minDistance = 1.5f;
-            hilo.tonos = k.audio.tonosAncla;
-            hilo.manual = true;   // los enciende la cinemática del sello
-            return hilo;
-        }
-
-        // sobre la pared curva, de la boca de cada pasillo de vuelta hacia la puerta
-        Renderer EnElAnillo(string nombre, Figura f, float grados, Material m)
-        {
-            var dir = new Vector3(Mathf.Cos(grados * Mathf.Deg2Rad), 0f, Mathf.Sin(grados * Mathf.Deg2Rad));
-            return Glifo(hilos, nombre, f, CentroRotonda + dir * (RadioRotonda - 0.05f) + Vector3.up * y, -dir, 0.9f, m);
-        }
-        var soles = new[]
-        {
-            EnElAnillo("Sol_1", Figura.Sol, 119.5f, k.ambar),
-            EnElAnillo("Sol_2", Figura.SolMordido, 114.5f, k.ambar),
-            EnElAnillo("Sol_3", Figura.SolMordido, 109.5f, k.ambar),
-            EnElAnillo("Sol_4", Figura.SolFino, 104.5f, k.ambar),
-        };
-        refs.hiloSoles = Hilo("Hilo_Soles", new[] { selloOeste }, refs.atajoOeste, new Color(1f, 0.42f, 0.1f), soles);
-
-        var lunas = new[]
-        {
-            EnElAnillo("Luna_1", Figura.LunaLlena, 60.5f, k.tallaLuna),
-            EnElAnillo("Luna_2", Figura.LunaGibosa, 65.5f, k.tallaLuna),
-            EnElAnillo("Luna_3", Figura.LunaCuarto, 70.5f, k.tallaLuna),
-            EnElAnillo("Luna_4", Figura.LunaCreciente, 75.5f, k.tallaLuna),
-        };
-        refs.hiloLunas = Hilo("Hilo_Lunas", new[] { selloEste }, refs.atajoEste, ColorLuna, lunas);
-
-        var eclipse = Glifo(hilos, "Eclipse", Figura.Eclipse, new Vector3(0f, 5.5f, z), afuera, 1.8f, k.tallaEclipse);
-        var hiloEclipse = Hilo("Hilo_Eclipse", new[] { selloOeste, selloEste }, null, new Color(0.85f, 0.9f, 1f), new[] { eclipse });
-        hiloEclipse.demoraInicial = 0.4f;
-        hiloEclipse.emisionEncendido = 4f;
-        refs.hiloEclipse = hiloEclipse;
-    }
-
     /// <summary>Lunas a la izquierda y soles a la derecha de la escalera (hijos de cada tramo de pared).</summary>
     static void TallarEscalera(Kit k, Transform paredIzq, Transform paredDer, Vector3 centroIzq, Vector3 centroDer, int i)
     {
@@ -386,8 +329,8 @@ public static partial class ConstructorCrater
     /// Los pasillos de vuelta de los atajos. Al abrirse el atajo, lo primero que se ve es la
     /// pared del fondo: ahí, un sol (o una luna) grande y, por el pasillo hacia la rotonda,
     /// otros dos. Se encienden con el sello del ala, con su luz: el camino de vuelta queda
-    /// alumbrado y se lee como "lo hiciste, por acá". (Los hilos de la rotonda quedan en la
-    /// rotonda: son los que muestra la cinemática y los que llegan a la puerta.)
+    /// alumbrado y se lee como "lo hiciste, por acá". La respuesta central de la rotonda
+    /// pertenece al obelisco, con control libre.
     /// </summary>
     static void ArteDeLosPasillosDeVuelta(Kit k, Transform g, ReceptorDeLuz selloOeste, ReceptorDeLuz selloEste)
     {

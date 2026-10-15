@@ -46,6 +46,7 @@ public class MateriaHueca : ReceptorDeLuz
     bool sombrasApagadas;
     float tiempoSiseo;
     float volumenSiseo;
+    float alfaAplicado = float.NaN, brilloAplicado = float.NaN;
 
     void Awake() => Inicializar();
 
@@ -65,6 +66,7 @@ public class MateriaHueca : ReceptorDeLuz
             coloresBase[i] = m != null && m.HasProperty(IdBase) ? m.GetColor(IdBase) : Color.white;
         }
         bloque = new MaterialPropertyBlock();
+        alfaAplicado = brilloAplicado = float.NaN;
     }
 
     protected override void AlActualizar(float delta)
@@ -93,7 +95,10 @@ public class MateriaHueca : ReceptorDeLuz
         bool luna = linterna != null && linterna.FiltroActual != null &&
             linterna.FiltroActual.canal == FiltroDefinicion.Canal.Hueco;
         float alfa = Mathf.Lerp(luna ? opacidadConLuna : 1f, opacidadMinima, Disolucion);
-        for (int i = 0; i < renderers.Length; i++)
+        float brilloSello = Mathf.Lerp(0.6f, 3f, Mathf.Max(Mathf.Max(Carga, Disolucion), pulsoTapada)) * alfa;
+        bool cambioVisual = alfa != alfaAplicado || brilloSello != brilloAplicado;
+        alfaAplicado = alfa; brilloAplicado = brilloSello;
+        for (int i = 0; cambioVisual && i < renderers.Length; i++)
         {
             var r = renderers[i];
             if (r == null) continue;
@@ -103,7 +108,7 @@ public class MateriaHueca : ReceptorDeLuz
             bloque.SetColor(IdBase, c);
             // el sello azul muestra el progreso: brilla con la carga antes de disolverse
             if (System.Array.IndexOf(sellos, r) >= 0)
-                bloque.SetColor(IdEmision, colorSello * Mathf.Lerp(0.6f, 3f, Mathf.Max(Mathf.Max(Carga, Disolucion), pulsoTapada)) * alfa);
+                bloque.SetColor(IdEmision, colorSello * brilloSello);
             r.SetPropertyBlock(bloque);
         }
 

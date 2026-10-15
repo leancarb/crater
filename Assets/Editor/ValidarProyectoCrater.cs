@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -85,6 +85,7 @@ public static class ValidarProyectoCrater
         {
             var objetos = escena.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Transform>(true)).Select(t => t.gameObject).ToArray();
             T[] Todos<T>() where T : Component => objetos.Select(go => go.GetComponent<T>()).Where(c => c != null).ToArray();
+            ValidarMurales(objetos, problemas);
 
             foreach (GameObject go in objetos)
                 Comprobar(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go) == 0,
@@ -162,6 +163,51 @@ public static class ValidarProyectoCrater
             Comprobar(sellos != null && sellos.receptores.Count == 2 && sellos.receptores.All(r => r != null && r.permanente),
                 "La puerta de los sellos tiene que abrirse con los dos sellos, y los sellos tienen que ser permanentes.", problemas);
 
+            var obeliscos=Todos<ObeliscoDelEclipse>();var obelisco=obeliscos.FirstOrDefault();
+            Comprobar(obeliscos.Length==1 && obelisco.jugador!=null && obelisco.puerta==sellos &&
+                obelisco.sol!=null && obelisco.luna!=null && obelisco.sol.manual && obelisco.luna.manual &&
+                obelisco.sol.sello!=null && obelisco.luna.sello!=null && obelisco.sol.sello!=obelisco.luna.sello &&
+                obelisco.eclipse!=null && obelisco.eclipseRegreso!=null && obelisco.luz!=null && obelisco.resonanciaSol!=null && obelisco.resonanciaLuna!=null,
+                "El obelisco debe comunicar ambos sellos y abrir el Cruce con referencias completas.",problemas);
+            if (obelisco != null)
+            {
+                foreach (bool luna in new[] { false, true })
+                {
+                    var columnas = luna ? obelisco.columnasLuna : obelisco.columnasSol;
+                    var notas = luna ? obelisco.notasLuna : obelisco.notasSol;
+                    var cara = luna ? obelisco.luna : obelisco.sol;
+                    Comprobar(columnas != null && columnas.Length == 3 && columnas.All(c => c != null && c.manual &&
+                        cara != null && c.sello == cara.sello && c.luz != null && c.renderers != null && c.renderers.Length > 0 && c.renderers.All(r => r != null)) &&
+                        notas != null && notas.Length == columnas.Length && notas.All(n => n != null && n.clip != null &&
+                        !n.loop && !n.playOnAwake && n.spatialBlend == 1f) &&
+                        (luna ? obelisco.luzColumnasLuna : obelisco.luzColumnasSol) != null,
+                        "Cada sello debe encender tres columnas distintas con una nota localizada por columna.", problemas);
+                }
+                Comprobar(obelisco.columnasSol != null && obelisco.columnasLuna != null &&
+                    obelisco.columnasSol.Concat(obelisco.columnasLuna).Distinct().Count() == 6,
+                    "Las secuencias SOL/LUNA no deben compartir ni duplicar columnas.", problemas);
+            }
+            Comprobar(Todos<CinematicaDeSello>().Length==0 && Todos<HiloDeTallados>().Length==0,
+                "La escena vigente no debe tomar la cámara ni encender los hilos antiguos al regresar.",problemas);
+            if (obelisco != null)
+            {
+                var columnas = Todos<Renderer>().Where(r => r.name.StartsWith("Anillo_Columna_") && r.GetComponent<Collider>() != null).ToArray();
+                Vector3 centro = obelisco.centro;
+                Comprobar(columnas.Length == 6 && columnas.All(r => {
+                    Vector3 p = r.bounds.center; p.y = centro.y;
+                    Vector3 espejo = new Vector3(-p.x, p.y, p.z);
+                    return Mathf.Abs(Vector3.Distance(p, centro) - 6.5f) < .03f && columnas.Any(c => {
+                        Vector3 q = c.bounds.center; q.y = centro.y;
+                        return Vector3.Distance(q, espejo) < .03f;
+                    });
+                }), "Las seis columnas deben ser simétricas respecto al eje de la rotonda y estar a 6,5 m del centro.", problemas);
+            }
+            var atajosInicio = Todos<AtajoOcultoInicio>();
+            Comprobar(atajosInicio.Length == 1 && atajosInicio[0].jugador != null && atajosInicio[0].destino != null &&
+                atajosInicio[0].flujo != null && TieneOyentes(atajosInicio[0].alLlegar) &&
+                atajosInicio[0].GetComponent<Collider>().isTrigger && atajosInicio[0].GetComponentsInChildren<Renderer>().Length == 0,
+                "El atajo inicial debe ser invisible, tener destino seguro y conservar el evento del mirador.", problemas);
+
             // Cresta, mirador, pozo, lugar del cráter y escaleras de recuperación
             var zonas = Todos<ZonaJugador>();
             Comprobar(zonas.Length == 8 && zonas.All(z => TieneOyentes(z.alEntrar) && z.GetComponent<Collider>().isTrigger),
@@ -189,6 +235,38 @@ public static class ValidarProyectoCrater
         finally
         {
             if (!yaCargada) EditorSceneManager.CloseScene(escena, true);
+        }
+    }
+
+    static void ValidarMurales(GameObject[] objetos, List<string> problemas)
+    {
+        for (int i = 1; i <= 8; i++)
+        {
+            string nombre = "Lore_" + i;
+            var losas = objetos.Where(o => o.name == nombre).ToArray();
+            Comprobar(losas.Length == 1, $"Debe existir una única losa {nombre}.", problemas);
+            if (losas.Length != 1) continue;
+            var losa = losas[0].transform;
+            var cara = losa.Find("PinturaMural");
+            var malla = cara != null ? cara.GetComponent<MeshFilter>()?.sharedMesh : null;
+            var material = cara != null ? cara.GetComponent<Renderer>()?.sharedMaterial : null;
+            string imagen = $"mural_explanada_{(i <= 4 ? "izq" : "der")}_{(i - 1) % 4 + 1:00}";
+            string ruta = $"Assets/Art/Murals/{imagen}.png";
+            Comprobar(losa.childCount == 2 && losa.Find("Losa_Piedra") != null && malla != null && malla.vertexCount == 4,
+                $"{nombre}: conservar piedra y un único quad pintado.", problemas);
+            Comprobar(malla != null && Mathf.Abs(malla.bounds.size.x / malla.bounds.size.y - 1.5f) < .001f,
+                $"{nombre}: la cara debe conservar la proporción 3:2.", problemas);
+            Comprobar(material != null && material.shader.name == "Universal Render Pipeline/Lit" &&
+                AssetDatabase.GetAssetPath(material.GetTexture("_BaseMap")) == ruta &&
+                material.GetColor("_BaseColor") == Color.white && material.GetFloat("_Smoothness") == .05f &&
+                material.GetFloat("_Metallic") == 0f && !material.IsKeywordEnabled("_EMISSION") &&
+                material.GetColor("_EmissionColor").maxColorComponent == 0f,
+                $"{nombre}: PNG incorrecto o PinturaMural no es mate/sin emisión.", problemas);
+            var importador = AssetImporter.GetAtPath(ruta) as TextureImporter;
+            Comprobar(importador != null && importador.sRGBTexture && importador.mipmapEnabled && importador.npotScale == TextureImporterNPOTScale.None &&
+                importador.wrapMode == TextureWrapMode.Clamp && importador.filterMode == FilterMode.Bilinear &&
+                importador.maxTextureSize == 2048 && importador.textureCompression == TextureImporterCompression.CompressedHQ,
+                $"{nombre}: import settings fuera de la especificación.", problemas);
         }
     }
 

@@ -1,4 +1,4 @@
-# CRÁTER — vertical slice
+﻿# CRÁTER — vertical slice
 
 Exploración en primera persona dentro de un cráter. Desde una estación de observación, un
 eclipse revela un cráter en el valle que sólo existe mientras dura la totalidad.
@@ -39,11 +39,16 @@ Unity 6000.3 · URP (Forward+) · Input System.
 
 El GDD es un documento vivo. El estado vigente está en **[Docs/EstadoActualCrater.md](Docs/EstadoActualCrater.md)** y la revisión contemplativa del 6/10/2026 en **[Docs/RevisionContemplativa.md](Docs/RevisionContemplativa.md)**. Los documentos de rediseños anteriores y sus capturas son históricos; varias de sus propuestas se revirtieron.
 
-Se conservan los modelos y la paleta restaurados, las alas anteriores y el Cruce nuevo. La primera ancla SOL y la gruta O1 establecen una respuesta suave al haz y un lugar de descanso con tres tallados resonantes opcionales. LUNA conserva dos entradas a ciegas: el desvío cuenta una pequeña historia de reparación; la ruta principal desciende y asciende por rampas protegidas. La rotonda tiene una apertura física desde la que se observa el eclipse exterior. Al regresar de las alas, las cinemáticas muestran sus hilos de luz y la apertura de la puerta; mantienen pausa, salto y devolución segura del control.
+Se conservan los modelos y la paleta restaurados, las alas anteriores y el Cruce nuevo. La primera ancla SOL y la gruta O1 establecen una respuesta suave al haz y un lugar de descanso con tres tallados resonantes opcionales. LUNA conserva dos entradas a ciegas: el desvío cuenta una pequeña historia de reparación; la ruta principal desciende y asciende por rampas protegidas. La rotonda tiene una apertura física desde la que se observa el eclipse exterior. Al regresar de las alas, las caras SOL/LUNA del obelisco se encienden gradualmente; con ambas se completa el eclipse y se abre el Cruce. La cámara y el movimiento permanecen libres y la pausa congela las señales.
 
 El edificio exterior es una estación de observación secular. Los nombres de algunos archivos, grupos y referencias serializadas mantienen `Capilla` por compatibilidad.
 
 ## Cómo se trabaja
+
+Optimización medida del 8/10/2026: [Docs/OptimizacionRendimiento.md](Docs/OptimizacionRendimiento.md).
+La reconstrucción también recalcula oclusión estática; rejas y plantas agrupan
+sus mallas conservando el facetado. En Play, **Crater › Medir rendimiento de la
+vista actual (Play)** guarda tiempos y contadores del Editor en `Logs`.
 
 La escena, los prefabs, los materiales, el audio y el post-procesado **se generan
 desde código**. No se editan a mano: se cambia el código y se reconstruye.
@@ -62,7 +67,7 @@ Dónde tocar:
 - `Assets/Editor/ConstructorCrater.Facetado.cs` — la estética low-poly: caras planas, superficies irregulares y un tono por cara. El tamaño de las caras y el relieve de cada zona están arriba de todo, en los `Perfil`.
 - `Assets/Editor/ConstructorCrater.Pozo.cs` — el cráter como pozo en el valle (la entrada sin cortes).
 - `Assets/Editor/ConstructorCrater.Alas.cs` — la Rotonda, las dos alas y el Cruce: el corazón del recorrido.
-- `Assets/Editor/ConstructorCrater.Tallados.cs` — los tallados de sol y luna, los hilos de los sellos y el arte de las alas.
+- `Assets/Editor/ConstructorCrater.Tallados.cs` — los tallados de sol y luna y el arte de las alas.
 - `Assets/Editor/ConstructorCrater.Murales.cs` — los murales sin texto: el lore del pasaje y los controles del Umbral.
 - `Assets/Editor/ConstructorCrater.Exploracion.cs` — óculo circular, seis piezas opcionales, conjunto, cuenco reflectante y detalles de exploración.
 - `Assets/Editor/ConstructorCrater.Detalles.cs` — gruta O1, tallados resonantes, desvío lunar y objetos de uso cotidiano.
@@ -104,3 +109,9 @@ La especificación vigente está en `Docs/EstadoActualCrater.md`: alas anteriore
 La ampliación actual está en `Docs/ExploracionYConjunto.md`: seis piedras opcionales, progreso en pausa y acontecimiento ambiental en la rotonda. Espacio/Enter o A (×) recoge y permite reescuchar. Reiniciar la escena borra la colección; las recuperaciones la conservan. No se añade guardado entre partidas ni dependencia externa.
 
 Revisión posterior: `Docs/LegibilidadYEpilogo.md` prevalece sobre el regreso con huella/guiño y sol en su posición inicial. El epílogo cierra todas las aberturas sin rastro, cambia el sol a atardecer en otra dirección y mantiene créditos. También se revisó la legibilidad de los detalles opcionales.
+
+Decisión vigente (8/10/2026): `Docs/SellosEnObelisco.md` reemplaza las cinemáticas de regreso y las filas luminosas de pared por las caras SOL/LUNA del obelisco. Encendido al volver, mirada y movimiento libres, pausa normal; con ambas caras se completa el eclipse y se abre el Cruce. Las cinemáticas del prólogo y del final siguen funcionando.
+
+Ajuste vigente (8/10/2026): al regresar con un sello, sus tres columnas se encienden una por una, con notas ascendentes localizadas (intervalo 0,75 s), y después su cara del obelisco. Las dos progresiones se escuchan por separado, respetan pausa y dejan movimiento/mirada libres; se mantienen las luces encendidas. Ver `Docs/SellosEnObelisco.md`.
+
+Decisión posterior (8/10/2026): las seis columnas forman un hexágono simétrico de radio 6,5 m, tres SOL y tres LUNA, con el eje de paso libre. Se agrega un atajo invisible de un solo uso por escena, fuera del camino inicial (3 m a la izquierda y 1 m atrás), hacia el mirador; conserva el eclipse y la bajada normal. Sólo está habilitado en el prólogo. Reglas y validación en `Docs/SellosEnObelisco.md`.

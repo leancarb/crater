@@ -58,7 +58,7 @@ public class LegibilidadEpilogoTests
         for(int i=0;i<120&&!agua.Lista;i++)yield return null;Assert.That(agua.Lista,Is.True);Captura("21_Cuenco_Origen_Visible");
         var motivo=Object.FindFirstObjectByType<MotivoPorPerspectiva>();
         Situar(new Vector3(motivo.puntoDeVista.x,.05f,motivo.puntoDeVista.z),motivo.transform.position);yield return new WaitForSeconds(.7f);
-        Assert.That(motivo.Alineado,Is.True);Assert.That(motivo.fragmentos.Length,Is.EqualTo(6));Assert.That(motivo.fragmentos.All(r=>r.sharedMaterial.IsKeywordEnabled("_EMISSION")),Is.True);Captura("22_Motivo_Completo_Entrada");
+        Assert.That(motivo.Alineado,Is.True);Assert.That(motivo.fragmentos.Length,Is.EqualTo(6));Assert.That(motivo.fragmentos.All(r=>!r.sharedMaterial.IsKeywordEnabled("_EMISSION")),Is.True);Captura("22_Motivo_Completo_Entrada");
         var veta=Object.FindFirstObjectByType<VetaAngular>();var l=veta.linterna;l.Recoger();l.Encender(true);
         Situar(new Vector3(veta.transform.position.x+2,.05f,veta.transform.position.z),veta.transform.position);yield return new WaitForSeconds(1);
         float frontal=veta.Respuesta;Assert.That(frontal,Is.GreaterThan(.4));Captura("23_Veta_Respuesta_Frontal");

@@ -7,6 +7,7 @@ public class VetaAngular : MonoBehaviour
     public Vector3 normal=Vector3.right;
     public float Respuesta {get;private set;}
     MaterialPropertyBlock bloque;
+    float respuestaAplicada=float.NaN;
     static readonly int Base=Shader.PropertyToID("_BaseColor");
     static readonly int Suavidad=Shader.PropertyToID("_Smoothness");
     void Awake(){bloque=new MaterialPropertyBlock();}
@@ -21,6 +22,8 @@ public class VetaAngular : MonoBehaviour
                 valor=Mathf.Lerp(.5f,2.2f,1-Mathf.Abs(Vector3.Dot(normal.normalized,-d.normalized)));
         }
         Respuesta=Mathf.MoveTowards(Respuesta,valor,Time.deltaTime*3f);
+        if(Respuesta==respuestaAplicada)return;
+        respuestaAplicada=Respuesta;
         foreach(var r in vetas){r.GetPropertyBlock(bloque);bloque.SetColor(Base,new Color(.08f,.1f,.13f)+new Color(.7f,.75f,.82f)*Respuesta);bloque.SetFloat(Suavidad,.3f+Respuesta);r.SetPropertyBlock(bloque);}
     }
 }

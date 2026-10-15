@@ -57,6 +57,22 @@ public class InterfazCrater : MonoBehaviour
     // último texto puesto: reasignar el mismo texto cada frame reconstruye la malla sin necesidad
     string ultimoEstado;
     string ultimosFiltros;
+    bool filtrosSucios = true;
+
+    void OnEnable()
+    {
+        filtrosSucios = true;
+        if (linterna == null) return;
+        linterna.AlDesbloquearFiltro += EnsuciarFiltros;
+        linterna.AlEquiparFiltro += EnsuciarFiltros;
+    }
+    void OnDisable()
+    {
+        if (linterna == null) return;
+        linterna.AlDesbloquearFiltro -= EnsuciarFiltros;
+        linterna.AlEquiparFiltro -= EnsuciarFiltros;
+    }
+    void EnsuciarFiltros(FiltroDefinicion filtro) => filtrosSucios = true;
 
     void Awake()
     {
@@ -327,11 +343,12 @@ public class InterfazCrater : MonoBehaviour
         }
         textoEstado.color = color;
 
-        string filtros = DescribirFiltros();
-        if (ultimosFiltros != filtros)
+        if (filtrosSucios)
         {
-            textoFiltros.text = filtros;
+            string filtros = DescribirFiltros();
+            if (ultimosFiltros != filtros) textoFiltros.text = filtros;
             ultimosFiltros = filtros;
+            filtrosSucios = false;
         }
 
         // la mira se agranda y toma el color del haz cuando apunta a un receptor

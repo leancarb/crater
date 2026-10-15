@@ -49,6 +49,7 @@ public class PuenteLuz : MonoBehaviour
 
     MaterialPropertyBlock bloque;
     Color[] coloresBase;
+    float visibilidadAplicada = float.NaN;
 
     void Awake() => Inicializar();
 
@@ -64,6 +65,7 @@ public class PuenteLuz : MonoBehaviour
             coloresBase[i] = m != null && m.HasProperty(IdBase) ? m.GetColor(IdBase) : Color.white;
         }
         bloque = new MaterialPropertyBlock();
+        visibilidadAplicada = float.NaN;
 
         // arranca invisible y sin collider: si no, se podría pisar un puente que no se ve
         Solido = false;
@@ -113,6 +115,8 @@ public class PuenteLuz : MonoBehaviour
 
     void AplicarVisibilidad(float v)
     {
+        if (v == visibilidadAplicada) return;
+        visibilidadAplicada = v;
         for (int i = 0; i < mallas.Length; i++)
         {
             var r = mallas[i];

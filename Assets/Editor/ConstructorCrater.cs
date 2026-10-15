@@ -218,9 +218,11 @@ public static partial class ConstructorCrater
 
         kit.puenteVidrio = Emisivo(Transparente(Opaco("PuenteVidrio", new Color(1f, 0.5f, 0.15f, 0.45f), 0.6f)), new Color(1f, 0.42f, 0.08f));
         kit.puenteBorde = Emisivo(Transparente(Opaco("PuenteBorde", new Color(1f, 0.62f, 0.25f, 0.95f), 0.4f)), new Color(1f, 0.42f, 0.08f));
-        kit.rejaBasalto = Emisivo(Transparente(Opaco("RejaBasalto", new Color(ColorLuna.r, ColorLuna.g, ColorLuna.b, 0.55f), 0.6f)), ColorLuna * 0.6f);
+        var azulLuna = new Color(78f / 255f, 140f / 255f, 1f); // #4E8CFF sRGB
+        var azulProfundo = new Color(42f / 255f, 79f / 255f, 168f / 255f); // #2A4FA8 sRGB
+        kit.rejaBasalto = Emisivo(Transparente(Opaco("RejaBasalto", new Color(azulLuna.r, azulLuna.g, azulLuna.b, 0.55f), 0.6f)), azulProfundo * 1.5f);
         kit.rejaSello = Emisivo(Transparente(Opaco("RejaSello", new Color(0.35f, 0.5f, 1f, 0.35f), 0.5f)), new Color(0.35f, 0.5f, 1f) * 0.9f);
-        kit.tallaLuna = Emisivo(Opaco("TalladoLuna", ColorLuna * 0.6f, 0.3f), ColorLuna * 1.8f);
+        kit.tallaLuna = Emisivo(Opaco("TalladoLuna", azulProfundo, 0.3f), azulLuna * 1.5f);
         kit.tallaEclipse = Emisivo(Opaco("TalladoEclipse", new Color(0.85f, 0.9f, 1f), 0.3f), new Color(0.8f, 0.88f, 1f) * 2f);
         // lo decorativo no brilla: sólo brilla lo que se usa (anclas, sellos, hilos, faros)
         // (un poco más claras que la piedra oscura de las losas, para que se lean)
@@ -814,7 +816,8 @@ public static partial class ConstructorCrater
         materia.puntoDeImpacto = centro.transform;
         materia.solidos = new Collider[] { solido };
         // sólo las barras se disuelven y brillan con la carga; el marco queda
-        materia.renderers = visual.GetComponentsInChildren<Renderer>(true).Where(EsBarra).ToArray();
+        materia.renderers = new[] { UnirMallasDeMaterial(visual.transform,
+            visual.GetComponentsInChildren<Renderer>(true).Where(EsBarra).ToArray(), "Reja_Barras_Unificadas") };
         materia.sellos = materia.renderers;
         materia.siseo = siseo;
 

@@ -233,6 +233,9 @@ public static partial class ConstructorCrater
             Cilindro(raiz, "Brazo", new Vector3(lado * 0.6f, h + largoBrazo / 2f, 0f), new Vector3(0.3f, largoBrazo / 2f, 0.3f), k.cardon);
         }
         raiz.localRotation = Quaternion.Euler(0f, (float)azar.NextDouble() * 360f, 0f);
+        Facetar(k, raiz.gameObject); // conservar las caras y sus UV antes de agrupar.
+        var malla = UnirMallasDeMaterial(raiz, raiz.GetComponentsInChildren<Renderer>(), nombre + "_Malla");
+        Estatico(malla.gameObject); // el collider del tronco conserva su objeto y posición.
     }
 
     static void PajaBrava(Kit k, Transform padre, string nombre, Vector3 pie, System.Random azar)
@@ -246,6 +249,9 @@ public static partial class ConstructorCrater
             Object.DestroyImmediate(hoja.GetComponent<Collider>());
             hoja.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
         }
+        Facetar(k, raiz.gameObject);
+        var malla = UnirMallasDeMaterial(raiz, raiz.GetComponentsInChildren<Renderer>(), nombre + "_Malla");
+        Estatico(malla.gameObject);
     }
 
     // ---------------------------------------------------------------- piezas

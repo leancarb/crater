@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Events;
 using UnityEditor.SceneManagement;
@@ -54,11 +54,11 @@ public static partial class ConstructorCrater
         public Renderer[] contornoValle;
         public Renderer destelloValle;
         public ZonaJugador zonaPuertaCrater, zonaMirador;
+        public AtajoOcultoInicio atajoInicio;
 
         // final
         public Compuerta cierreCresta, puertaSellos, atajoOeste, atajoEste;
         public ObeliscoDelEclipse obelisco;
-        public HiloDeTallados hiloSoles, hiloLunas, hiloEclipse;
         public ReceptorDeLuz selloOeste, selloEste;
         public AperturaTecho techoCresta;
     }
@@ -96,6 +96,7 @@ public static partial class ConstructorCrater
         FacetarEscena(kit);
         ConstruirExploracion(kit, nivel, refs);
         ConfigurarSombrasYSuperficies(kit, refs);
+        PrepararOclusion(escena);
 
         EditorSceneManager.SaveScene(escena, RutaEscena);
     }
@@ -392,6 +393,17 @@ public static partial class ConstructorCrater
         // La apertura del prólogo la activa el mirador; los créditos requieren llegar a la huella.
         refs.zonaMirador = Zona(g, "Zona_Mirador", g.TransformPoint(new Vector3(0f, 1.5f, 55.5f)), new Vector3(12f, 4f, 2f));
 
+        // Secreto para quien conoce su posición: tres metros a la izquierda y
+        // uno hacia atrás desde el inicio. Sin arte, sonido, cartel ni aviso de uso.
+        var atajo = Grupo(g, "Atajo_Oculto_Inicio");
+        atajo.localPosition = new Vector3(3f, AlturaRelieve(3f, 151f) + 1.2f, 151f);
+        var volumen = atajo.gameObject.AddComponent<BoxCollider>();
+        volumen.isTrigger = true; volumen.size = new Vector3(1.4f, 3f, 1.4f);
+        refs.atajoInicio = atajo.gameObject.AddComponent<AtajoOcultoInicio>();
+        var llegada = Grupo(g, "Llegada_Atajo_Mirador");
+        llegada.localPosition = new Vector3(0, .05f, 55.5f);
+        refs.atajoInicio.destino = llegada;
+
         ConstruirCraterDelValle(k, g, refs);
 
         // epílogo: quedarse en el lugar donde estaba el cráter dispara los créditos
@@ -507,6 +519,10 @@ public static partial class ConstructorCrater
         Asignar(cielo, "discoSol", Disco("DiscoSol", k.discoSol));
         Asignar(cielo, "discoLuna", Disco("DiscoLuna", k.discoLuna));
         Asignar(cielo, "corona", Plano(cieloGO.transform, "Corona", k.corona));
+        // Estos discos siguen a la cámara y quedan fuera del volumen horneado.
+        // El depth test conserva la ocultación real por paredes y por el techo.
+        foreach (var renderer in cieloGO.GetComponentsInChildren<Renderer>())
+            renderer.allowOcclusionWhenDynamic = false;
         refs.cielo = cielo;
     }
 
@@ -660,18 +676,11 @@ public static partial class ConstructorCrater
         UnityEventTools.AddPersistentListener(refs.compuertaUmbral.alAbrirse, new UnityAction(flujo.NotificarUmbralAbierto));
         UnityEventTools.AddPersistentListener(refs.puertaSellos.alAbrirse, new UnityAction(flujo.EntrarCruce));
 
-        // Al regresar con un sello, la cámara muestra el encendido del hilo de luces.
-        var cinematica = sistemas.AddComponent<CinematicaDeSello>();
-        Asignar(cinematica, "jugador", refs.jugador.GetComponent<JugadorFPS>());
-        var marcoCinematica = new SerializedObject(cinematica);
-        marcoCinematica.FindProperty("centro").vector3Value = EspacioCrater.Punto(CentroRotonda);
-        marcoCinematica.FindProperty("radio").floatValue = 13.5f * EspacioCrater.Escala;
-        marcoCinematica.ApplyModifiedPropertiesWithoutUndo();
-        AsignarLista(cinematica, "sellos", new Object[] { refs.selloOeste, refs.selloEste });
-        AsignarLista(cinematica, "hilos", new Object[] { refs.hiloSoles, refs.hiloLunas });
-        Asignar(cinematica, "eclipse", refs.hiloEclipse);
-        Asignar(cinematica, "puerta", refs.puertaSellos);
-        Asignar(cinematica, "obelisco", refs.obelisco);
+        // Señal central al regresar: la cámara y la locomoción permanecen libres.
+        refs.obelisco.jugador = refs.jugador.GetComponent<JugadorFPS>();
+        refs.obelisco.centro = EspacioCrater.Punto(CentroRotonda);
+        refs.obelisco.radio = 13.5f * EspacioCrater.Escala;
+        refs.obelisco.puerta = refs.puertaSellos;
         UnityEventTools.AddPersistentListener(refs.atajoOeste.alAbrirse, new UnityAction(flujo.NotificarSello));
         UnityEventTools.AddPersistentListener(refs.atajoEste.alAbrirse, new UnityAction(flujo.NotificarSello));
         UnityEventTools.AddPersistentListener(refs.zonaCresta.alEntrar, new UnityAction(flujo.EntrarCresta));
@@ -680,6 +689,9 @@ public static partial class ConstructorCrater
         UnityEventTools.AddPersistentListener(refs.zonaFinal.alEntrar, new UnityAction(eclipse.CerrarDemo));
         UnityEventTools.AddPersistentListener(adaptacion.alAdaptarse, new UnityAction(eclipse.AlCompletarAdaptacion));
         UnityEventTools.AddPersistentListener(refs.zonaMirador.alEntrar, new UnityAction(prologo.IniciarCinematica));
+        refs.atajoInicio.jugador = refs.jugador.GetComponent<JugadorFPS>();
+        refs.atajoInicio.flujo = flujo;
+        UnityEventTools.AddPersistentListener(refs.atajoInicio.alLlegar, new UnityAction(prologo.IniciarCinematica));
         UnityEventTools.AddPersistentListener(refs.zonaPuertaCrater.alEntrar, new UnityAction(prologo.EntrarAlCrater));
     }
 

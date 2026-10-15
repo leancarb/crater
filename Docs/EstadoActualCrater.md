@@ -1,4 +1,4 @@
-﻿# CRÁTER — estado vigente
+# CRÁTER — estado vigente
 
 6 de octubre de 2026. Este documento y `ExploracionYConjunto.md` prevalecen sobre documentos y capturas de diseños posteriormente revertidos. La escena se genera desde código; el Editor contiene la revisión actual. No se produjo un EXE en esta iteración.
 
@@ -10,7 +10,7 @@ La ampliación horizontal del subsuelo sigue siendo del 25% por eje, con alturas
 
 ## Comunicación y pausas
 
-Las caras SOL/LUNA del obelisco y las columnas corresponden a los destinos de las alas. Dos marcas discretas junto a la puerta muestran qué sellos requiere y se encienden con ellos. Cada regreso conserva la cinemática del hilo de luces; con ambos sellos se abre la puerta. Se quitó el giro adicional hacia el obelisco. Pausa, salto y devolución segura del control se conservan.
+Las caras SOL/LUNA del obelisco y las columnas corresponden a los destinos de las alas. Dos marcas discretas junto a la puerta muestran qué sellos requiere. Al regresar se enciende la cara del obelisco correspondiente, con una resonancia breve. No hay filas de luces en la pared ni cinemática de regreso: la cámara y el movimiento permanecen libres. Con ambas caras se completa el eclipse central y se abre el Cruce. La pausa congela el encendido; no hay secuencia obligatoria que saltar.
 
 En SOL, las anclas colgantes bajan 40 cm para entrar en el encuadre del cambio de dirección, junto al mural existente. El tabique sigue ocultando el sello hasta rodearlo; un rebote tenue aparece del lado oculto. No se añade iluminación sobre esas anclas.
 
@@ -48,7 +48,7 @@ Se conserva la revisión anterior y se añaden seis piedras talladas, independie
 
 Distribución: mirador lateral exterior, veta de SOL, desvío sur de LUNA, asiento de O1, cavidad lateral de la rotonda y antesala del Cruce. Se puede volver al exterior por la escalera abierta; el conjunto se completa antes del cierre de la Cresta. El final funciona sin piezas.
 
-El conjunto está al noroeste de la plaza, fuera del mapa central. Al completar espera cercanía y mirada, enciende gradualmente sus tallados y su proyección estilizada, y reproduce seis resonancias sin girar ni bloquear al jugador. Respeta pausa y cinemáticas de sellos. Después queda iluminado y permite reescucha con la misma acción.
+El conjunto está al noroeste de la plaza, fuera del mapa central. Al completar espera cercanía y mirada, enciende gradualmente sus tallados y su proyección estilizada, y reproduce seis resonancias sin girar ni bloquear al jugador. Respeta pausa y conserva el control del jugador. Después queda iluminado y permite reescucha con la misma acción.
 
 Un cuenco refleja una fuente física mediante una sonda local de 64 px, capturada al acercarse y tras cambios de sellos; no cada fotograma. Un halo fragmentado se reúne por perspectiva, una cavidad modifica suavemente el viento, una veta responde al ángulo del haz, O1 incorpora reparación y piedras ordenadas, un detalle aparece con el primer sello, polvo limitado a 20 partículas acompaña la abertura y un mirador lateral ofrece vista y regreso seguro.
 
@@ -65,3 +65,11 @@ El usuario informa interferencia generalizada. Se reinicializó el motor de sali
 Corrección posterior: el Banco_Trabajo_Exterior tenía sólo el tablero a 0,8 m y flotaba en el patio. ConstructorCrater.Capilla.cs genera ahora cuatro patas, encastradas entre patio y tablero. Sin cambios de mecánicas o audio. El Cuenco_Isla del Cruce es ambiental sin interacción; el agua reflectante pertenece sólo al Cuenco_Rotonda. La colección completa se aprecia regresando al panel lateral de la rotonda y mirándolo antes de entrar a la Cresta; después se puede volver a escuchar con Espacio.
 
 Decisión posterior del usuario: conservar el cuenco y su agua, retirar la columna rectangular con el sol y su foco asociado (Apoyo_Origen_Reflejo, Origen_Reflejo y Luz_Origen_Reflejo). El agua refleja el entorno existente. Las capturas anteriores con esa columna son históricas.
+
+Decisión vigente (8/10/2026): `Docs/SellosEnObelisco.md` reemplaza las cinemáticas de regreso y las filas luminosas de pared por las caras SOL/LUNA del obelisco. Encendido al volver, mirada y movimiento libres, pausa normal; con ambas caras se completa el eclipse y se abre el Cruce. Las cinemáticas del prólogo y del final siguen funcionando.
+
+Ajuste vigente (8/10/2026): al regresar con un sello, sus tres columnas se encienden una por una, con notas ascendentes localizadas (intervalo 0,75 s), y después su cara del obelisco. Las dos progresiones se escuchan por separado, respetan pausa y dejan movimiento/mirada libres; se mantienen las luces encendidas. Ver `Docs/SellosEnObelisco.md`.
+
+Decisión posterior (8/10/2026): las seis columnas forman un hexágono simétrico de radio 6,5 m, tres SOL y tres LUNA, con el eje de paso libre. Se agrega un atajo invisible de un solo uso por escena, fuera del camino inicial (3 m a la izquierda y 1 m atrás), hacia el mirador; conserva el eclipse y la bajada normal. Sólo está habilitado en el prólogo. Reglas y validación en `Docs/SellosEnObelisco.md`.
+
+Optimización técnica (8/10/2026): `Docs/OptimizacionRendimiento.md`. El generador recalcula oclusión estática con puertas/rejas/puentes/techo móvil excluidos como oclusores. Rejas y plantas agrupan mallas conservando geometría y facetado; se evitan escrituras visuales repetidas en reposo y se actualizan etiquetas de filtros por eventos. Se mantienen la iluminación, el arte y las mecánicas; las mediciones son del Editor y no representan FPS de build. No se generó un EXE.
