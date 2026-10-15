@@ -276,7 +276,7 @@ public static partial class ConstructorCrater
 
         Luz(g, "Luz_Cresta", new Vector3(0f, 6.8f, 81f), LuzFria, 90f, 20f, false);
         Luz(g, "Luz_Umbral_Cresta", new Vector3(0f, 3.4f, 71f), new Color(0.82f, 0.88f, 1f), 35f, 8f, true);
-        Adorno(g, "Linea_Umbral_Cresta", new Vector3(0f, 0.035f, 69f), new Vector3(3.6f, 0.025f, 0.08f), k.pinturaHueso);
+        Adorno(g, "Linea_Umbral_Cresta", new Vector3(0f, 0.035f, 69f), new Vector3(3.6f, 0.025f, 0.08f), k.puertaEclipse);
 
         ConstruirParedEspejo(k, g);
     }

@@ -125,7 +125,7 @@ public static partial class ConstructorCrater
         refs.puertaSellos = CompuertaLosa(k, g, "Puerta_Sellos", new Vector3(0f, 2f, 27.15f), new Vector3(4f, 4f, 0.3f),
             new Vector3(0f, -4.4f, 0f), 3f, false, selloOeste, selloEste);
         Luz(g, "Luz_Bajo_Puerta_Sellos", new Vector3(0f, 0.25f, 27.55f), new Color(0.85f, 0.92f, 1f), 28f, 5f, true);
-        Adorno(g, "Rendija_Puerta_Sellos", new Vector3(0f, 0.055f, 26.96f), new Vector3(3.8f, 0.05f, 0.02f), k.pinturaHueso);
+        Adorno(g, "Rendija_Puerta_Sellos", new Vector3(0f, 0.055f, 26.96f), new Vector3(3.8f, 0.05f, 0.02f), k.puertaEclipse);
 
         // La abre el obelisco al completar su motivo, sin tomar el control.
         refs.puertaSellos.abrirSoloPorOrden = true;

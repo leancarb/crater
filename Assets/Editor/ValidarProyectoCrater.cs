@@ -256,8 +256,15 @@ public static class ValidarProyectoCrater
         var encuadre = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/Pintura_Encuadre.mat");
         Comprobar(encuadre != null && encuadre.IsKeywordEnabled("_EMISSION") && encuadre.GetColor("_EmissionColor").maxColorComponent == 0f,
             "Pintura_Encuadre requiere _EMISSION y emisión negra en reposo.", problemas);
-        foreach (var go in objetos.Where(o => o.name == "Tallado_Sello_Este" || o.name == "Rendija_Puerta_Sellos" ||
-            o.name == "Linea_Umbral_Cresta" || o.name == "Vela_Entrada" || (o.name == "Tallado" && o.transform.parent?.name == "Compuerta_Umbral")))
+        foreach (string nombre in new[] { "Rendija_Puerta_Sellos", "Linea_Umbral_Cresta" })
+        {
+            var guia = objetos.FirstOrDefault(o => o.name == nombre)?.GetComponent<Renderer>();
+            Comprobar(guia != null && guia.sharedMaterial != null && guia.sharedMaterial.IsKeywordEnabled("_EMISSION") &&
+                guia.sharedMaterial.GetColor("_EmissionColor").maxColorComponent > 0f,
+                nombre + " debe conservar emisión porque guía al jugador.", problemas);
+        }
+        foreach (var go in objetos.Where(o => o.name == "Tallado_Sello_Este" ||
+            o.name == "Vela_Entrada" || (o.name == "Tallado" && o.transform.parent?.name == "Compuerta_Umbral")))
             Comprobar(go.GetComponentsInChildren<Renderer>(true).All(r => r.sharedMaterials.All(m => m != null && !m.IsKeywordEnabled("_EMISSION"))),
                 go.name + " debe ser mate.", problemas);
         var tono = objetos.SelectMany(o => o.GetComponents<AudioSource>()).Where(a => a.clip != null && a.clip.name == "anillo_diamante").ToArray();
