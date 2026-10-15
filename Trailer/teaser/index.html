@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- ARTIFACT:START -->
+<title>Crater Teaser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Italiana&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --ink: #050407;
+    --bone: #edeae2;
+    --bone-dim: rgba(237, 234, 226, 0.55);
+    --amber: #e8a14a;
+    --oculo: #c9714a;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --serif: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--ink); color: var(--bone); overflow: hidden; }
+  body { font-family: var(--mono); }
+  #stage { position: fixed; inset: 0; }
+  #trailer { width: 100%; height: 100%; display: block; background: var(--ink); cursor: pointer; }
+
+  .overlay {
+    position: absolute; inset: 0; display: grid; place-items: end center;
+    padding-inline: 16px; padding-block: 0 max(9vh, 48px);
+    background: radial-gradient(ellipse at 50% 45%, rgba(5, 4, 7, 0) 30%, rgba(5, 4, 7, 0.55) 100%);
+  }
+  .play {
+    display: inline-flex; align-items: center; gap: 14px;
+    font: 500 13px/1 var(--mono); letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--bone); background: rgba(5, 4, 7, 0.4);
+    border: 1px solid rgba(232, 161, 74, 0.55); border-radius: 999px;
+    padding: 14px 26px 14px 20px; cursor: pointer;
+    transition: border-color .25s, background .25s, color .25s;
+  }
+  .play::before {
+    content: ""; width: 0; height: 0;
+    border-left: 10px solid var(--amber); border-top: 6px solid transparent; border-bottom: 6px solid transparent;
+  }
+  .play:hover { border-color: var(--amber); background: rgba(232, 161, 74, 0.12); }
+  .play:focus-visible, .ctl:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+  .note { margin-top: 12px; font: 400 11px/1.4 var(--mono); letter-spacing: 0.2em; color: var(--bone-dim); text-transform: uppercase; text-align: center; }
+  .stack { display: grid; justify-items: center; }
+
+  #bar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding-inline: 16px; padding-block: 10px calc(12px + env(safe-area-inset-bottom, 0px));
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    background: linear-gradient(to top, rgba(5, 4, 7, 0.85), rgba(5, 4, 7, 0));
+    opacity: 1; transition: opacity .5s;
+  }
+  body.is-playing:not(.ui-awake) #bar { opacity: 0; }
+  .track { flex: 1 1 160px; height: 2px; background: rgba(237, 234, 226, 0.15); overflow: hidden; }
+  #fill { height: 100%; background: var(--amber); transform-origin: left; transform: scaleX(0); }
+  .ctl {
+    font: 400 11px/1 var(--mono); letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--bone-dim); background: none; border: 0; padding: 6px 2px; cursor: pointer;
+  }
+  .ctl:hover { color: var(--bone); }
+  .keys { font: 400 10px/1 var(--mono); letter-spacing: 0.14em; color: rgba(237, 234, 226, 0.3); }
+  @media (max-width: 560px) { .keys { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .play, #bar { transition: none; } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="trailer" aria-label="Teaser animado de CRATER"></canvas>
+
+  <div class="overlay" id="start">
+    <div class="stack">
+      <button class="play" id="btn-play" type="button">Ver tráiler</button>
+      <p class="note" id="dur">con sonido</p>
+    </div>
+  </div>
+
+  <div class="overlay" id="end" hidden>
+    <div class="stack">
+      <button class="play" id="btn-replay" type="button">Ver de nuevo</button>
+    </div>
+  </div>
+
+  <div id="bar" hidden>
+    <button class="ctl" id="btn-pause" type="button">Pausa</button>
+    <div class="track"><div id="fill"></div></div>
+    <button class="ctl" id="btn-restart" type="button">Reiniciar</button>
+    <button class="ctl" id="btn-mute" type="button">Silenciar</button>
+    <span class="keys">ESPACIO · R · M</span>
+  </div>
+</div>
+<!-- ARTIFACT:SCRIPT -->
+<script src="teaser.js"></script>
+<!-- ARTIFACT:END -->
+</body>
+</html>
