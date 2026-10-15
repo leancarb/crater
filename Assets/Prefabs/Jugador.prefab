@@ -724,6 +724,7 @@ MonoBehaviour:
   alcanceBase: 24
   intensidadBase: 2000
   demoraDeCambio: 0.6
+  duracionFiltro: 2
   requiereRecogerla: 1
   sonidoEncender: {fileID: 8300000, guid: 35d6dc5d11af85b44bab697a3298e9de, type: 3}
   sonidoApagar: {fileID: 8300000, guid: 8ed99fbb25208e7448d6a8e02ebdf478, type: 3}
@@ -987,8 +988,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de9659a677e995c4b84235a19d8c5a54, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Crater::JugadorFPS
-  velocidad: 2.6
-  multiplicadorCorrer: 2.2
+  velocidad: 4
+  multiplicadorCorrer: 1.4
   gravedad: -18
   suavizado: 8
   movimientoBloqueado: 0

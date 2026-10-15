@@ -1,4 +1,4 @@
-﻿# CRÁTER — vertical slice
+# CRÁTER — vertical slice
 
 Exploración en primera persona dentro de un cráter. Desde una estación de observación, un
 eclipse revela un cráter en el valle que sólo existe mientras dura la totalidad.
@@ -14,14 +14,16 @@ Unity 6000.3 · URP (Forward+) · Input System.
 | Acción | Teclado y mouse | Joystick |
 |---|---|---|
 | Moverse / mirar | WASD · mouse | stick izq. · stick der. |
-| Correr (mantener) | Shift | apretar el stick izq. |
+| Movimiento | 4 m/s, sin sprint | 4 m/s; R2 / RT para correr a 5,6 m/s |
 | Linterna | F | RB |
 | Filtro SOL / LUNA | 1 / 2 | X / Y |
 | Luz blanca | Q | B |
 | Pausa / seguir | Esc | Start / Options; B / círculo sigue |
 | Reiniciar / salir (en pausa) | R / X | Y / triángulo; X / cuadrado |
-| Ayudas escritas (en pausa) | H | Cruceta arriba |
+| Ayudas escritas (en pausa) | H | ↑ |
 | Saltar animaciones | Espacio | A / cruz |
+
+SOL y LUNA duran **2 segundos efectivos** después de la transición; luego vuelven automáticamente a luz blanca. Se pueden activar de nuevo y la pausa conserva el tiempo restante. Las parejas de anclas requieren apuntar a cada una.
 
 ## Recorrido
 

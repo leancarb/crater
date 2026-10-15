@@ -1,8 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Controlador de primera persona. Sin salto. Con Shift se corre (para recorrer y
-/// probar más rápido); sin Shift el ritmo es contenido.
+/// Controlador de primera persona. Caminata ágil sin salto. Carrera opcional sólo con R2 / RT del joystick.
 ///
 /// Poner en: un GameObject con CharacterController, con la Camera como hijo.
 ///
@@ -19,9 +18,9 @@ using UnityEngine;
 public class JugadorFPS : MonoBehaviour
 {
     [Header("Movimiento")]
-    public float velocidad = 2.6f;
-    [Tooltip("Multiplica la velocidad mientras se mantiene Shift.")]
-    public float multiplicadorCorrer = 2.2f;
+    public float velocidad = 4f;
+    [Tooltip("Multiplicador de carrera sólo para R2 / RT del joystick.")]
+    public float multiplicadorCorrer = 1.4f;
     public float gravedad = -18f;
     [Tooltip("Suavizado del arranque y la frenada. Más alto = más ágil.")]
     public float suavizado = 8f;

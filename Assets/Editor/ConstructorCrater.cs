@@ -649,6 +649,8 @@ public static partial class ConstructorCrater
         var fuentePasos = raiz.AddComponent<AudioSource>();
         ConfigurarAudio(fuentePasos, null, 0.2f, false, false);
         var fps = raiz.AddComponent<JugadorFPS>();
+        fps.velocidad = 4f;
+        fps.multiplicadorCorrer = 1.4f;
         fps.fuentePasos = fuentePasos;
         fps.pasos = kit.audio.pasos;
         fps.pasosTierra = kit.audio.pasosTierra;
@@ -681,6 +683,7 @@ public static partial class ConstructorCrater
         var fuenteLinterna = linternaGO.AddComponent<AudioSource>();
         ConfigurarAudio(fuenteLinterna, null, 0.5f, true, false);
         var linterna = linternaGO.AddComponent<LinternaController>();
+        linterna.duracionFiltro = 2f;
         linterna.spot = spot;
         linterna.capaReceptores = LayerMask.GetMask(CapaAncla, CapaReceptor);
         linterna.capaObstaculos = LayerMask.GetMask("Default");

@@ -19,7 +19,7 @@ using UnityEngine.TestTools;
 /// </summary>
 public class RecorridoCraterTests
 {
-    const float Velocidad = 2.6f;
+    float Velocidad => fps.velocidad;
 
     GameObject jugador;
     CharacterController cc;
@@ -490,6 +490,13 @@ public class RecorridoCraterTests
     /// <summary>Mantiene la mirada (y la linterna) sobre un receptor durante 'segundos'.</summary>
     IEnumerator Iluminar(ReceptorDeLuz receptor, float segundos)
     {
+        var filtro = receptor.canalRequerido == FiltroDefinicion.Canal.Ninguno ? null
+            : linterna.filtros.First(f => f.canal == receptor.canalRequerido);
+        if (filtro != linterna.FiltroActual || (filtro != null && linterna.TiempoFiltroRestante < segundos + .1f))
+        {
+            if (filtro == linterna.FiltroActual) linterna.VolverALuzBlanca();
+            yield return Equipar(filtro);
+        }
         for (float t = 0f; t < segundos; t += Time.deltaTime)
         {
             fps.MirarHacia(receptor.PuntoDeImpacto);
@@ -762,7 +769,7 @@ public class RecorridoCraterTests
     }
 
     [UnityTest]
-    public IEnumerator LosPasosCambianConElSueloYLaCarrera()
+    public IEnumerator LosPasosCambianConElSueloYL3NoActivaCarrera()
     {
         prologo.enabled = false;
         var mando = UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Gamepad>();
@@ -794,8 +801,8 @@ public class RecorridoCraterTests
                 UnityEngine.InputSystem.InputSystem.QueueStateEvent(mando,
                     new UnityEngine.InputSystem.LowLevel.GamepadState { leftStick = Vector2.up }.WithButton(UnityEngine.InputSystem.LowLevel.GamepadButton.LeftStick));
                 yield return Esperar(1.2f);
-                Assert.That(fps.CadenciaPasos, Is.GreaterThan(cadenciaCaminar * 1.3f));
-                Assert.That(fps.UltimoPasoCorriendo, Is.True);
+                Assert.That(fps.CadenciaPasos, Is.EqualTo(cadenciaCaminar).Within(.05f), "L3 no debe cambiar la cadencia");
+                Assert.That(fps.UltimoPasoCorriendo, Is.False);
                 indice++;
             }
         }

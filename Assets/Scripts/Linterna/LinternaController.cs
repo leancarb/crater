@@ -8,7 +8,7 @@ using UnityEngine;
 /// Reglas:
 ///  - F enciende y apaga.
 ///  - 1 / 2 equipan CUERPO y HUECO. Sólo uno a la vez. Cambiar tarda 'demoraDeCambio'.
-///  - Q vuelve a la luz blanca.
+///  - Cada filtro dura 2 segundos efectivos; después vuelve a luz blanca. Q permite volver antes.
 ///  - Cada frame busca los receptores dentro del cono y les avisa que están iluminados.
 ///
 /// CÓMO FUNCIONA
@@ -47,6 +47,8 @@ public class LinternaController : MonoBehaviour
 
     [Header("Ajustes")]
     public float demoraDeCambio = 0.6f;
+    [Tooltip("Segundos efectivos del filtro después del cambio; al terminar vuelve a luz blanca.")]
+    [Min(.1f)] public float duracionFiltro = 2f;
     [Tooltip("Si está tildado, la linterna no responde hasta llamar a Recoger().")]
     public bool requiereRecogerla = true;
 
@@ -77,6 +79,9 @@ public class LinternaController : MonoBehaviour
 
     bool yaRecogida;
     float finDelCambio;
+    float finDelFiltro;
+    public float TiempoFiltroRestante => FiltroActual != null
+        ? Mathf.Max(0f, finDelFiltro - Mathf.Max(Time.time, finDelCambio)) : 0f;
     AudioSource audioSource;
     AudioSource zumbidoA, zumbidoB, zumbidoObjetivo;
     float volumenZumbido;
@@ -118,6 +123,8 @@ public class LinternaController : MonoBehaviour
 
         if (CambiandoFiltro && Time.time >= finDelCambio)
             CambiandoFiltro = false;
+        if (FiltroActual != null && Time.time >= finDelFiltro)
+            VolverALuzBlanca();
 
         // durante el cambio de filtro la luz baja casi a cero: el cambio se ve y se siente
         if (spot != null)
@@ -171,6 +178,7 @@ public class LinternaController : MonoBehaviour
         if (CambiandoFiltro || f == FiltroActual) return;
         CambiandoFiltro = true;
         finDelCambio = Time.time + demoraDeCambio;
+        finDelFiltro = f != null ? finDelCambio + duracionFiltro : 0f;
         AplicarFiltro(f);
         AlEquiparFiltro?.Invoke(f);
 

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -409,7 +409,7 @@ public static partial class ConstructorCrater
         MuralesDelFiltro(k, g, -1f);
         Luz(g, "Luz_Pasillo_O", new Vector3(-16f, 3.8f, 1f), LuzCalida, 50f, 8f, false);
 
-        // ---- O1 · enseñar: un abismo y dos anclas juntas del otro lado (entran juntas en el cono)
+        // ---- O1 · enseñar: dos anclas separadas exigen dirigir el haz a cada una.
         PisoConHueco(k, g, "Piso_O1_Este", new Rect(-26f, -7f, 6f, 16f), new Rect(-25.7f, 5.5f, 4.9f, 2f));
         RedDeSeguridad(k, g, "O1", new Vector3(-26f, 0f, 1f), Vector3.left, 16f, 2.5f, 5.5f);
         Caja(g, "Piso_O1_Oeste", -36, -0.3f, -7, -28.5f, 0, 9, k.piso);
@@ -424,8 +424,8 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_O1_Norte_Bajo", -35, -9, 9, -31, -0.3f, 9.3f, k.basalto);
         Caja(g, "Dintel_O1_Norte", -35, 4, 9, -31, 6, 9.3f, k.basalto);
         Caja(g, "Techo_O1", -36.3f, 6, -7.3f, -19.7f, 6.3f, 9.3f, k.techo);
-        var e1 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_A", new Vector3(-32f, 0f, -0.15f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3.2f, 0);
-        var e2 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_B", new Vector3(-32f, 0f, 2.15f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3.2f, 2);
+        var e1 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_A", new Vector3(-32f, 0f, -4f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3.2f, 0);
+        var e2 = CrearAnclaEnEscena(k, g, "Ancla_O_Ensenar_B", new Vector3(-32f, 0f, 6f), Quaternion.Euler(0f, 90f, 0f), FiltroDefinicion.Canal.Cuerpo, 3.2f, 2);
         Puente(k, g, "Puente_O_Ensenar", new Vector3(-26f, 0f, 1f), new Vector3(-28.5f, 0f, 1f), 3.6f, e1, e2);
         Luz(g, "Luz_O1", new Vector3(-28f, 5.3f, 1f), LuzCalida, 120f, 15f, true);
         Motivo(k, g, "Mural_O1", new Vector3(-35.93f, 0.6f, -4f), 90f, 0.8f, k.pinturaSol);
@@ -455,8 +455,8 @@ public static partial class ConstructorCrater
         Caja(g, "Muro_O3_Oeste_Norte", -20, -0.3f, 21.3f, -19.7f, 6, 27.3f, k.basalto);
         Caja(g, "Muro_O3_Norte", -20, -0.3f, 27, -12.3f, 6, 27.3f, k.basalto);
         Caja(g, "Techo_O3", -20, 6, 9.3f, -12.3f, 6.3f, 27.3f, k.techo);
-        var t1 = CrearAnclaEnEscena(k, g, "Ancla_O_Torcer_A", new Vector3(-16.6f, 5.6f, 19.3f), Quaternion.Euler(180f, 0f, 0f), FiltroDefinicion.Canal.Cuerpo, 4.4f, 2);
-        var t2 = CrearAnclaEnEscena(k, g, "Ancla_O_Torcer_B", new Vector3(-15.4f, 5.6f, 19.3f), Quaternion.Euler(180f, 0f, 0f), FiltroDefinicion.Canal.Cuerpo, 4.4f, 4);
+        var t1 = CrearAnclaEnEscena(k, g, "Ancla_O_Torcer_A", new Vector3(-18.8f, 5.6f, 19.3f), Quaternion.Euler(180f, 0f, 0f), FiltroDefinicion.Canal.Cuerpo, 4.4f, 2);
+        var t2 = CrearAnclaEnEscena(k, g, "Ancla_O_Torcer_B", new Vector3(-13.2f, 5.6f, 19.3f), Quaternion.Euler(180f, 0f, 0f), FiltroDefinicion.Canal.Cuerpo, 4.4f, 4);
         Puente(k, g, "Puente_O_Torcer", new Vector3(-16f, 0f, 15f), new Vector3(-16f, 0f, 17.5f), 3.4f, t1, t2);
         Luz(g, "Luz_O3", new Vector3(-16f, 5.3f, 12f), LuzCalida, 90f, 12f, true);
 
@@ -618,13 +618,13 @@ public static partial class ConstructorCrater
 
         // Isla segura: primer tramo SOL, pausa sobre piedra, LUNA revela las
         // anclas del segundo tramo. No se exige apuntar durante una caída.
-        var c = AnclaSolarNueva(k, g, "Ancla_N_Borde_A", new Vector3(-1.2f, 0, 46), 180, 4.8f, 1);
-        var d = AnclaSolarNueva(k, g, "Ancla_N_Borde_B", new Vector3(1.2f, 0, 46), 180, 4.8f, 3);
+        var c = AnclaSolarNueva(k, g, "Ancla_N_Borde_A", new Vector3(-3.5f, 0, 46), 180, 4.8f, 1);
+        var d = AnclaSolarNueva(k, g, "Ancla_N_Borde_B", new Vector3(3.5f, 0, 46), 180, 4.8f, 3);
         Puente(k, g, "Puente_N_Borde", new Vector3(0, 0, 48), new Vector3(0, 0, 51), 3.2f, c, d);
         Caja(g, "Isla_Segura_Cruce", -1.8f, -3.3f, 51, 1.8f, 0, 53, k.piedra);
         Caja(g, "Piso_N_Salida", -6, -0.3f, 56, 6, 0, 68.5f, k.piso);
-        var e = AnclaSolarNueva(k, g, "Ancla_N_Salida_A", new Vector3(-1, 0, 59), 180, 5.6f, 2);
-        var f = AnclaSolarNueva(k, g, "Ancla_N_Salida_B", new Vector3(1, 0, 59), 180, 5.6f, 4);
+        var e = AnclaSolarNueva(k, g, "Ancla_N_Salida_A", new Vector3(-3, 0, 60.5f), 180, 5.6f, 2);
+        var f = AnclaSolarNueva(k, g, "Ancla_N_Salida_B", new Vector3(3, 0, 60.5f), 180, 5.6f, 4);
         Puente(k, g, "Puente_N_Salida", new Vector3(0, 0, 53), new Vector3(0, 0, 56), 3.2f, e, f);
         TabiqueConPaso(k, g, "Piel_N_Salida", true, 57, -6, 6, -2, 2);
         var salida = Reja(k, g, "Reja_N_Salida", new Vector3(0, 0, 57), 0, new Vector3(4f / 6f, 1, 1));

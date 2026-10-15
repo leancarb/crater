@@ -278,10 +278,10 @@ public class InterfazCrater : MonoBehaviour
         if (panelPausa != null) panelPausa.SetActive(visible);
         if (textoControles != null) textoControles.text =
             "WASD / Stick izq. · Moverse      Mouse / Stick der. · Mirar\n" +
-            "Shift / L3 · Correr      F / RB · Linterna\n" +
+            "R2 / RT · Correr      F / RB · Linterna      Filtros · 2 segundos\n" +
             "1 / X (□) · SOL      2 / Y (△) · LUNA      Q / B (○) · Luz blanca\n\n" +
             "Piedras talladas · " + piezasOpcionales + "/6\n\n" +
-            "H / Cruceta arriba · Ayudas escritas: " + (OpcionesCrater.AyudasEscritas ? "sí" : "no") + "\n\n" +
+            "H / ↑ · Ayudas escritas: " + (OpcionesCrater.AyudasEscritas ? "sí" : "no") + "\n\n" +
             "Esc / Start / B (○) · Seguir\nR / Y (△) · Reiniciar      X / X (□) · Salir";
     }
 

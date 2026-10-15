@@ -67,6 +67,12 @@ public static class ValidarProyectoCrater
         Comprobar(jugador != null && jugador.CompareTag("Player") && jugador.GetComponentInChildren<LinternaController>(true) != null,
             "El prefab Jugador falta, no tiene tag Player o no tiene linterna.", problemas);
 
+        Comprobar(jugador != null && jugador.TryGetComponent<JugadorFPS>(out var movimiento) && movimiento.velocidad == 4f && movimiento.multiplicadorCorrer == 1.4f,
+            "La velocidad base debe ser 4 m/s y R2 / RT debe multiplicarla por 1,4.", problemas);
+        var linternaPrefab = jugador != null ? jugador.GetComponentInChildren<LinternaController>(true) : null;
+        Comprobar(linternaPrefab != null && linternaPrefab.duracionFiltro == 2f,
+            "Los filtros deben durar 2 segundos efectivos.", problemas);
+
         if (System.IO.File.Exists(ConstructorCrater.RutaEscena))
             ValidarEscena(cuerpo, hueco, problemas);
 
@@ -132,6 +138,9 @@ public static class ValidarProyectoCrater
                 Comprobar(puente.anclas.Count > 0 && puente.anclas.All(a => a != null),
                     $"{puente.name} no tiene anclas asignadas.", problemas);
                 Comprobar(puente.colliders != null && puente.colliders.Length > 0, $"{puente.name} no tiene collider.", problemas);
+                if (puente.anclas.Count == 2 && puente.anclas.All(a => a != null))
+                    Comprobar(Vector3.Distance(puente.anclas[0].PuntoDeImpacto, puente.anclas[1].PuntoDeImpacto) >= 6f,
+                        puente.name + " necesita anclas separadas para exigir apuntar a cada una.", problemas);
                 float alcance = cuerpo != null ? cuerpo.alcance : 14f;
                 foreach (var ancla in puente.anclas.Where(a => a != null))
                 {

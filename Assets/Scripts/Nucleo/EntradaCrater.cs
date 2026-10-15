@@ -52,10 +52,8 @@ public static class EntradaCrater
         return v;
     }
 
-    /// <summary>Correr mientras se mantiene apretado (Shift o el stick izquierdo apretado).</summary>
-    public static bool Correr =>
-        (Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed))
-        || (Gamepad.current != null && Gamepad.current.leftStickButton.isPressed);
+    /// <summary>Correr sólo con R2 / RT en joystick; Shift y L3 no aceleran.</summary>
+    public static bool Correr => Gamepad.current != null && Gamepad.current.rightTrigger.ReadValue() > .5f;
 
     /// <summary>Prender o apagar la linterna (F o RB).</summary>
     public static bool Linterna =>

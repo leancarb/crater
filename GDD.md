@@ -18,7 +18,7 @@
 
 1. **La luz es el verbo.** Toda interacción pasa por el haz: iluminar es actuar.
 2. **Ver es un acto, no un dato.** Cada filtro es una forma de mirar la materia; el final obliga a mirar *sin* herramienta.
-3. **Ritmo contenido.** Sin salto. La caminata marca el ritmo; Shift permite correr de forma auxiliar. La tensión viene de entender, no de reaccionar.
+3. **Ritmo contenido.** Sin salto. La velocidad base es 4 m/s, sin sprint en teclado; R2 / RT permite correr en joystick a 5,6 m/s. La tensión viene de entender, no de reaccionar.
 4. **Interfaz mínima.** El estado de la linterna arriba a la derecha y la mira con la barra de carga. Las indicaciones breves son una ayuda opcional (H en pausa), desactivada por defecto. El resto lo dicen el color, el sonido y el mundo. La estación de observación no tiene indicaciones.
 
 ---
@@ -61,7 +61,7 @@ La herramienta que nos permite ver también define lo que vemos. La linterna ens
 | Acción | Teclado y mouse | Joystick |
 |---|---|---|
 | Moverse / mirar | WASD · mouse | stick izq. · stick der. |
-| Correr (mantener) | Shift | apretar el stick izq. |
+| Movimiento | 4 m/s, sin sprint | 4 m/s; R2 / RT para correr a 5,6 m/s |
 | Linterna | F | RB |
 | Filtro sol / luna | 1 / 2 | X / Y |
 | Luz blanca | Q | B |
@@ -76,6 +76,8 @@ La herramienta que nos permite ver también define lo que vemos. La linterna ens
 - Ilumina todos los receptores dentro del cono con línea de vista; cargarlos lleva 0,4 s.
 
 ### 3.3 Filtros
+
+Cada activación de SOL o LUNA dura **2 segundos efectivos** tras el cambio de filtro de 0,6 s y vuelve automáticamente a luz blanca. La pausa detiene este tiempo. Apagar la linterna no lo reinicia; una vez de vuelta en blanco se puede volver a activar. Las parejas de anclas están separadas para requerir dos direcciones de mirada, con tiempo de carga de 0,4 s cada una y retención suficiente para cruzar a velocidad base.
 
 | # | Filtro | Color | Receptor | Qué hace |
 |---|---|---|---|---|
@@ -115,7 +117,7 @@ Las alas anteriores vuelven a seguir **Enseñar → Probar → Torcer**. En LUNA
 | **01 Explanada** | El fondo del pozo, bajo la totalidad. Se llega por la escalera de la puerta, entre dos paredes altas talladas: a la izquierda, en azul, la luna pasa por delante del sol; a la derecha, en naranja, el sol por delante de la luna. Bajando, los dos eclipses avanzan hasta la totalidad. Un pasillo sigue al Umbral; en sus dos paredes, losas pintadas cuentan el lore sin palabras. A la izquierda: el sol y la luna separados, el eclipse sobre la estación de observación, el cráter que se abre, alguien con la luz que los revela. A la derecha, cómo sigue: las anclas que tienden un puente, la puerta con el sol y la luna a los lados, el eclipse que la abre, la vuelta a la estación de observación al atardecer. |
 | **02 Umbral** | Los controles se enseñan sin texto y en el momento en que se usan: cada losa muestra la tecla dibujada como tecla y el ícono de lo que hace. Al entrar, mover (WASD + mouse); junto a la linterna, prenderla (F). Sostener la luz blanca sobre un ancla abre la compuerta. Los filtros se enseñan en la primera sala de cada ala, junto al filtro y al problema: sol (1, el puente aparece) o luna (2, la reja se abre), y una losa cercana muestra Q para volver a la luz blanca. |
 | **03 Rotonda** | Sala circular de 37,5 m, con plaza hundida circular de 1,2 m, escalinata anular continua y vista elevada al entrar; con óculo y, debajo, el conjunto original del kit Blender, con seis columnas y su obelisco nuevamente centrado en la plaza. Las alas se entran por la mitad de cada costado, lejos de la entrada (en el playtest, con la sala cuadrada, estaban demasiado cerca); los atajos vuelven por dos pasillos que entran por el noroeste y el noreste; al norte, la puerta de los sellos. Al volver con un sello se encienden sus tres columnas una por una, con una nota ascendente en cada piedra, y después la cara SOL o LUNA del obelisco, con resonancia localizada y control libre. Con ambas caras se completa el eclipse central y se abre la puerta del Cruce. Sobre cada atajo, un faro (tallado con luz) se prende cuando su sello se enciende. |
-| **03a Ala oeste** | Filtro sol. Arte del sol: frisos de soles y halos en las paredes, las fases del sol comido en la sala de la puerta y pebeteros de piedra con un sol encima que se prenden con el sello. Enseñar: un abismo y dos anclas juntas. Probar: una puerta permanente con una ancla en el rincón del fondo. Las puertas tienen una ancla y los puentes dos, con duración limitada. Torcer: las anclas cuelgan del techo sobre el otro lado de un pozo. Sello detrás de un tabique. |
+| **03a Ala oeste** | Filtro sol. Arte del sol: frisos de soles y halos en las paredes, las fases del sol comido en la sala de la puerta y pebeteros de piedra con un sol encima que se prenden con el sello. Enseñar: un abismo y dos anclas separadas que requieren apuntar a cada una. Probar: una puerta permanente con una ancla en el rincón del fondo. Las puertas tienen una ancla y los puentes dos, con duración limitada. Torcer: las anclas cuelgan del techo sobre el otro lado de un pozo. Sello detrás de un tabique. |
 | **03b Ala este** | Filtro luna. Arte de la luna: las fases de la luna, un cielo de estrellas, una luna llena grande y menhires con una luna y una estrella talladas que se encienden con el sello. Enseñar: un muro de rejas. Probar: la sala no tiene salida; el camino es una trampilla en el piso que da a una galería de abajo, con otra reja. Torcer: una rampa con pretiles que termina en una reja vertical permanente. Sello: una placa de materia hueca que queda disuelta. |
 | **04 Cruce** | LUNA revela un ancla en un nicho y SOL forma un puente descentrado. Después, un puente lleva a una isla de piedra: allí se puede detener y dejar apagar el primer tramo. LUNA revela las anclas de salida, SOL forma el segundo tramo y LUNA abre el paso final. Una antesala tranquila lleva a la Cresta. |
 | **05 Cresta** | Se cierra a la espalda. Apagar la linterna: tallados latentes y la pared espejo. El techo se abre y entra la luz blanca. |
