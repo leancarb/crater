@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
@@ -22,7 +22,7 @@ public static class EntradaCrater
     /// <summary>Equivalencia con el eje "Mouse X" del Input Manager viejo.</summary>
     const float EscalaMouse = 0.1f;
     // el stick da un valor de -1 a 1 (no un desplazamiento): se multiplica por el tiempo
-    const float EscalaJoystick = 32f;
+    const float EscalaJoystick = 40f;
 
     /// <summary>Dirección de caminata: x = costado, y = adelante. Largo máximo 1.</summary>
     public static Vector2 Movimiento()
@@ -54,7 +54,7 @@ public static class EntradaCrater
 
     /// <summary>Correr con Shift o R2 / RT; L3 no acelera.</summary>
     public static bool Correr => (Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed))
-        || (Gamepad.current != null && Gamepad.current.rightTrigger.ReadValue() > .5f);
+        || (Gamepad.current != null && Gamepad.current.rightTrigger.ReadValue() >= .35f);
 
     /// <summary>Prender o apagar la linterna (F o RB).</summary>
     public static bool Linterna =>
