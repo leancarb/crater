@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -45,6 +45,10 @@ public class InterfazCrater : MonoBehaviour
     CanvasGroup grupoPrompt;   // CanvasGroup permite fundir el alfa de todo un bloque de UI
     Text textoEstado;
     Text textoFiltros;
+    Image fondoTiempoFiltro;
+    Image barraTiempoFiltro;
+    Text textoRetornoBlanco;
+    float finAvisoBlanco;
     Image mira;
     Image fondoCarga;
     Image barraCarga;
@@ -72,14 +76,30 @@ public class InterfazCrater : MonoBehaviour
         if (linterna == null) return;
         linterna.AlDesbloquearFiltro += EnsuciarFiltros;
         linterna.AlEquiparFiltro += EnsuciarFiltros;
+        linterna.AlAgotarseFiltro += AvisarRetornoBlanco;
     }
     void OnDisable()
     {
         if (linterna == null) return;
         linterna.AlDesbloquearFiltro -= EnsuciarFiltros;
         linterna.AlEquiparFiltro -= EnsuciarFiltros;
+        linterna.AlAgotarseFiltro -= AvisarRetornoBlanco;
     }
     void EnsuciarFiltros(FiltroDefinicion filtro) => filtrosSucios = true;
+    void AvisarRetornoBlanco() => finAvisoBlanco = Time.time + 1.8f;
+
+    void ActualizarTiempoFiltro()
+    {
+        bool activo = linterna != null && linterna.Disponible && linterna.FiltroActual != null;
+        fondoTiempoFiltro.gameObject.SetActive(activo);
+        if (activo)
+        {
+            barraTiempoFiltro.fillAmount = Mathf.Clamp01(linterna.TiempoFiltroRestante / linterna.duracionFiltro);
+            barraTiempoFiltro.color = Color.Lerp(linterna.ColorActual, Color.white, .65f);
+        }
+        bool aviso = linterna != null && linterna.Disponible && linterna.FiltroActual == null && Time.time < finAvisoBlanco;
+        textoRetornoBlanco.transform.parent.gameObject.SetActive(aviso);
+    }
 
     void Awake()
     {
@@ -93,6 +113,7 @@ public class InterfazCrater : MonoBehaviour
         bool mando=EntradaCrater.UsandoMando;
         if(mando!=ultimoMando){ultimoMando=mando;filtrosSucios=true;}
         ActualizarLinterna();
+        ActualizarTiempoFiltro();
     }
     public void MostrarInteraccionOpcional(string mensaje)
     {
@@ -429,7 +450,7 @@ public class InterfazCrater : MonoBehaviour
             textoEstado.text = estado;
             ultimoEstado = estado;
         }
-        textoEstado.color = color;
+        textoEstado.color = Color.Lerp(color, Color.white, .65f);
 
         if (filtrosSucios)
         {
@@ -500,6 +521,26 @@ public class InterfazCrater : MonoBehaviour
             26, TextAnchor.UpperRight, Color.white);
         textoFiltros = CrearTexto(Crear("Filtros", raiz, new Vector2(0.5f, 0.855f), new Vector2(0.97f, 0.9f)),
             20, TextAnchor.UpperRight, Color.white);
+
+        // Indicador periférico: el reloj se deriva del filtro real y también se detiene al pausar.
+        var tiempoGO = Crear("TiempoFiltro", raiz, new Vector2(.875f,.905f), new Vector2(.97f,.912f));
+        fondoTiempoFiltro = tiempoGO.AddComponent<UnityEngine.UI.Image>();
+        fondoTiempoFiltro.color = new Color(.02f,.025f,.03f,.95f);
+        fondoTiempoFiltro.raycastTarget = false;
+        barraTiempoFiltro = Crear("Restante", tiempoGO.transform, Vector2.zero, Vector2.one).AddComponent<UnityEngine.UI.Image>();
+        barraTiempoFiltro.sprite = CrearBlanco();
+        barraTiempoFiltro.type = UnityEngine.UI.Image.Type.Filled;
+        barraTiempoFiltro.fillMethod = UnityEngine.UI.Image.FillMethod.Horizontal;
+        barraTiempoFiltro.fillOrigin = 0;
+        barraTiempoFiltro.raycastTarget = false;
+        tiempoGO.SetActive(false);
+        var avisoGO = Crear("RetornoBlanco", raiz, new Vector2(.73f,.813f), new Vector2(.975f,.85f));
+        var fondoAviso = avisoGO.AddComponent<UnityEngine.UI.Image>();
+        fondoAviso.color = new Color(.02f,.025f,.03f,.95f); fondoAviso.raycastTarget = false;
+        textoRetornoBlanco = CrearTexto(Crear("Mensaje", avisoGO.transform, Vector2.zero, Vector2.one),
+            20, TextAnchor.MiddleCenter, Color.white);
+        textoRetornoBlanco.text = "Filtro agotado · LUZ BLANCA";
+        avisoGO.SetActive(false);
 
         // mira y carga
         var miraGO = Crear("Mira", raiz, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));

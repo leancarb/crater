@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -74,6 +74,7 @@ public class LinternaController : MonoBehaviour
     // eventos de C#: otros scripts se suscriben con += (ver FlujoJuegoCrater.Vincular)
     public event Action<bool> AlCambiarEncendido;
     public event Action AlRecogerLinterna;
+    public event Action AlAgotarseFiltro;
     public event Action<FiltroDefinicion> AlDesbloquearFiltro;
     public event Action<FiltroDefinicion> AlEquiparFiltro;
 
@@ -124,7 +125,10 @@ public class LinternaController : MonoBehaviour
         if (CambiandoFiltro && Time.time >= finDelCambio)
             CambiandoFiltro = false;
         if (FiltroActual != null && Time.time >= finDelFiltro)
+        {
             VolverALuzBlanca();
+            AlAgotarseFiltro?.Invoke();
+        }
 
         // durante el cambio de filtro la luz baja casi a cero: el cambio se ve y se siente
         if (spot != null)
