@@ -314,7 +314,7 @@ public class InterfazCrater : MonoBehaviour
         if (textoControles != null) textoControles.text =
             "WASD / Stick izq. · Moverse      Mouse / Stick der. · Mirar\n" +
             "Espacio / A (×) · Recoger      Shift / R2 / RT · Correr\n" +
-            "F / RB (R1) · Linterna      Filtros · 3 segundos\n" +
+            "F / RB (R1) · Farol      Filtros · 3 segundos\n" +
             "1 / X (□) · SOL      2 / Y (△) · LUNA      Blanca automática a los 3 s\n\n" +
             "Piedras talladas · " + piezasOpcionales + "/6\n\n" +
             "H / ↑ · Ayudas escritas: " + (OpcionesCrater.AyudasEscritas ? "sí" : "no") + "\n\n" +
