@@ -51,7 +51,33 @@ public class PuenteLuz : MonoBehaviour
     Color[] coloresBase;
     float visibilidadAplicada = float.NaN;
 
-    void Awake() => Inicializar();
+    AudioSource cuentaAtras;
+    AudioClip pulsoCuenta;
+    float hastaPulso;
+    public bool AvisandoFin { get; private set; }
+
+    void Awake()
+    {
+        Inicializar();
+        // Un clic breve sintetizado en memoria: no genera ni reemplaza WAV.
+        if(!Application.isPlaying) return;
+        const int frecuencia=22050;
+        var muestras=new float[1102];
+        for(int i=0;i<muestras.Length;i++)
+        {
+            float t=(float)i/frecuencia;
+            muestras[i]=Mathf.Sin(2*Mathf.PI*880*t)*Mathf.Exp(-110*t)*Mathf.Clamp01(t/.002f)*.6f;
+        }
+        pulsoCuenta=AudioClip.Create("Pulso_Temporal",muestras.Length,1,frecuencia,false);pulsoCuenta.SetData(muestras,0);
+        var go=new GameObject("Aviso_Tiempo_Puente");go.transform.SetParent(transform,false);
+        cuentaAtras=go.AddComponent<AudioSource>();cuentaAtras.playOnAwake=false;cuentaAtras.spatialBlend=1;
+        cuentaAtras.volume=.22f;cuentaAtras.minDistance=3;cuentaAtras.maxDistance=20;
+        cuentaAtras.rolloffMode=AudioRolloffMode.Linear;
+        if(sonidoAparecer!=null)cuentaAtras.outputAudioMixerGroup=sonidoAparecer.outputAudioMixerGroup;
+    }
+
+    void OnDestroy(){if(pulsoCuenta!=null)Destroy(pulsoCuenta);}
+    void OnDisable(){if(cuentaAtras!=null)cuentaAtras.Stop();AvisandoFin=false;hastaPulso=0;}
 
     void Inicializar()
     {
@@ -88,6 +114,18 @@ public class PuenteLuz : MonoBehaviour
             if (a == null || !a.Activo) { deberiaExistir = false; break; }
             aviso = Mathf.Min(aviso, a.RetencionRestante);
         }
+
+        AvisandoFin=deberiaExistir && aviso<.35f;
+        if(AvisandoFin && delta>0f && !PausaCrater.EnPausa)
+        {
+            hastaPulso-=delta;
+            if(hastaPulso<=0)
+            {
+                if(cuentaAtras!=null && pulsoCuenta!=null)cuentaAtras.PlayOneShot(pulsoCuenta);
+                hastaPulso=Mathf.Lerp(.18f,.55f,aviso/.35f);
+            }
+        }
+        else if(!AvisandoFin)hastaPulso=0;
 
         // aparece más rápido de lo que se disuelve
         float velocidad = deberiaExistir

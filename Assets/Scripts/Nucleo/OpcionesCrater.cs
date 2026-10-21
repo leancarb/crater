@@ -22,7 +22,11 @@ public static class OpcionesCrater
     public static bool InvertirY { get; private set; }
     public static float CampoDeVision { get; private set; } = 70f;
     // en EV: +1 duplica el brillo de la imagen
-    public static float Brillo { get; private set; }
+    public const float BrilloPredeterminado = .75f;
+    public const float BrilloMinimo = -1f;
+    public const float BrilloMaximo = 2.5f;
+    public const string ClaveBrillo = "crater.brillo.v2";
+    public static float Brillo { get; private set; } = BrilloPredeterminado;
     public static float Volumen { get; private set; } = 1f;
 
     public static bool AyudasEscritas { get; private set; }
@@ -49,7 +53,10 @@ public static class OpcionesCrater
         Sensibilidad = PlayerPrefs.GetFloat("crater.sensibilidad", 1f);
         InvertirY = PlayerPrefs.GetInt("crater.invertirY", 0) == 1;
         CampoDeVision = PlayerPrefs.GetFloat("crater.fov", 70f);
-        Brillo = PlayerPrefs.GetFloat("crater.brillo", 0f);
+        // Nueva calibración para aula. Conserva ajustes explícitos anteriores distintos de cero.
+        float anterior = PlayerPrefs.GetFloat("crater.brillo", 0f);
+        float inicial = Mathf.Approximately(anterior, 0f) ? BrilloPredeterminado : anterior;
+        Brillo = Mathf.Clamp(PlayerPrefs.GetFloat(ClaveBrillo, inicial), BrilloMinimo, BrilloMaximo);
         Volumen = PlayerPrefs.GetFloat("crater.volumen", 1f);
         AyudasEscritas = PlayerPrefs.GetInt("crater.ayudas", 0) == 1;
         cargadas = true;
@@ -64,17 +71,27 @@ public static class OpcionesCrater
             case Fila.Sensibilidad: Sensibilidad = Paso(Sensibilidad, direccion, 0.1f, 0.25f, 3f); break;
             case Fila.InvertirY: InvertirY = !InvertirY; break;
             case Fila.CampoDeVision: CampoDeVision = Paso(CampoDeVision, direccion, 5f, 55f, 100f); break;
-            case Fila.Brillo: Brillo = Paso(Brillo, direccion, 0.25f, -1f, 2f); break;
+            case Fila.Brillo: Brillo = Paso(Brillo, direccion, 0.1f, BrilloMinimo, BrilloMaximo); break;
             case Fila.Volumen: Volumen = Paso(Volumen, direccion, 0.1f, 0f, 1f); break;
         }
         PlayerPrefs.SetFloat("crater.sensibilidad", Sensibilidad);
         PlayerPrefs.SetInt("crater.invertirY", InvertirY ? 1 : 0);
         PlayerPrefs.SetFloat("crater.fov", CampoDeVision);
-        PlayerPrefs.SetFloat("crater.brillo", Brillo);
+        PlayerPrefs.SetFloat(ClaveBrillo, Brillo);
         PlayerPrefs.SetFloat("crater.volumen", Volumen);
         PlayerPrefs.Save();
         Aplicar();
     }
+
+    /// <summary>Cambio continuo del slider; se persiste al cerrar la pausa.</summary>
+    public static void EstablecerBrillo(float valor)
+    {
+        if (!cargadas) Cargar();
+        Brillo = Mathf.Clamp(Mathf.Round(valor * 20f) / 20f, BrilloMinimo, BrilloMaximo);
+        PlayerPrefs.SetFloat(ClaveBrillo, Brillo);
+    }
+
+    public static void Guardar() => PlayerPrefs.Save();
 
     // redondea al paso para que no se acumulen errores (0,30000001...)
     static float Paso(float valor, int direccion, float paso, float min, float max) =>

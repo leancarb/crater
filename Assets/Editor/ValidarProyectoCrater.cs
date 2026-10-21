@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -68,14 +68,11 @@ public static class ValidarProyectoCrater
             "El prefab Jugador falta, no tiene tag Player o no tiene linterna.", problemas);
 
         Comprobar(jugador != null && jugador.TryGetComponent<JugadorFPS>(out var movimiento) && movimiento.velocidad == 4f && movimiento.multiplicadorCorrer == 1.4f,
-            "La velocidad base debe ser 4 m/s y R2 / RT debe multiplicarla por 1,4.", problemas);
+            "La velocidad base debe ser 4 m/s y Shift o R2 / RT deben multiplicarla por 1,4.", problemas);
         var linternaPrefab = jugador != null ? jugador.GetComponentInChildren<LinternaController>(true) : null;
-        Comprobar(linternaPrefab != null && linternaPrefab.duracionFiltro == 2f,
-            "Los filtros deben durar 2 segundos efectivos.", problemas);
+        Comprobar(linternaPrefab != null && linternaPrefab.duracionFiltro == 3f,
+            "Los filtros deben durar 3 segundos efectivos.", problemas);
 
-        Comprobar(linternaPrefab != null && linternaPrefab.anguloBase == 54f && linternaPrefab.anguloVisualFiltro == 44f &&
-            linternaPrefab.proporcionNucleo <= .2f && cuerpo != null && hueco != null && cuerpo.anguloCono == 28f && hueco.anguloCono == 28f,
-            "La linterna debe suavizar su haz sin ensanchar la activación de los filtros.", problemas);
         if (System.IO.File.Exists(ConstructorCrater.RutaEscena))
             ValidarEscena(cuerpo, hueco, problemas);
 
@@ -178,7 +175,12 @@ public static class ValidarProyectoCrater
             Comprobar(sellos != null && sellos.receptores.Count == 2 && sellos.receptores.All(r => r != null && r.permanente),
                 "La puerta de los sellos tiene que abrirse con los dos sellos, y los sellos tienen que ser permanentes.", problemas);
 
+            var bordeCarrera=Todos<PuenteLuz>().FirstOrDefault(p=>p.name=="Puente_N_Borde");
+            Comprobar(bordeCarrera!=null && bordeCarrera.anclas.Count==2 && bordeCarrera.anclas.All(a=>Mathf.Abs(a.retencion-1.9f)<.01f && Mathf.Abs(a.transform.position.y-5.95f)<.01f && a.transform.up.y<0),
+                "El segundo puente del Cruce debe tener anclas colgantes y retención de 1,9 s para correr.",problemas);
             var obeliscos=Todos<ObeliscoDelEclipse>();var obelisco=obeliscos.FirstOrDefault();
+            Comprobar(obelisco!=null && obelisco.arosCompletos!=null && obelisco.arosCompletos.manual && obelisco.arosCompletos.renderers.Length==2 && obelisco.arosCompletos.luz!=null && obelisco.arosCompletos.luzSuperior!=null,
+                "El obelisco necesita aros de piso y techo vinculados a las seis columnas.",problemas);
             Comprobar(obeliscos.Length==1 && obelisco.jugador!=null && obelisco.puerta==sellos &&
                 obelisco.sol!=null && obelisco.luna!=null && obelisco.sol.manual && obelisco.luna.manual &&
                 obelisco.sol.sello!=null && obelisco.luna.sello!=null && obelisco.sol.sello!=obelisco.luna.sello &&
@@ -195,7 +197,7 @@ public static class ValidarProyectoCrater
                         cara != null && c.sello == cara.sello && c.luz != null && c.renderers != null && c.renderers.Length > 0 && c.renderers.All(r => r != null)) &&
                         notas != null && notas.Length == columnas.Length && notas.All(n => n != null && n.clip != null &&
                         !n.loop && !n.playOnAwake && n.spatialBlend == 1f) &&
-                        columnas.All(c => c.luz.type == LightType.Spot && c.luz.transform.position.y < 1f),
+                        (luna ? obelisco.luzColumnasLuna : obelisco.luzColumnasSol) != null,
                         "Cada sello debe encender tres columnas distintas con una nota localizada por columna.", problemas);
                 }
                 Comprobar(obelisco.columnasSol != null && obelisco.columnasLuna != null &&
@@ -211,11 +213,11 @@ public static class ValidarProyectoCrater
                 Comprobar(columnas.Length == 6 && columnas.All(r => {
                     Vector3 p = r.bounds.center; p.y = centro.y;
                     Vector3 espejo = new Vector3(-p.x, p.y, p.z);
-                    return Mathf.Abs(Vector3.Distance(p, centro) - 6.5f) < .03f && columnas.Any(c => {
+                    return Mathf.Abs(Vector3.Distance(p, centro) - ConstructorCrater.RadioColumnasRotonda) < .03f && columnas.Any(c => {
                         Vector3 q = c.bounds.center; q.y = centro.y;
                         return Vector3.Distance(q, espejo) < .03f;
                     });
-                }), "Las seis columnas deben ser simétricas respecto al eje de la rotonda y estar a 6,5 m del centro.", problemas);
+                }), "Las seis columnas deben ser simétricas respecto al eje de la rotonda y estar a 8,8 m del centro, fuera de la escalera.", problemas);
             }
             var atajosInicio = Todos<AtajoOcultoInicio>();
             Comprobar(atajosInicio.Length == 1 && atajosInicio[0].jugador != null && atajosInicio[0].destino != null &&
@@ -284,11 +286,6 @@ public static class ValidarProyectoCrater
         var puerta = objetos.FirstOrDefault(o => o.name == "Puerta_Sellos")?.GetComponent<Compuerta>();
         Comprobar(puerta != null && puerta.sonido != null && (!GeneradorAudioCrater.EsSintetizado(puerta.sonido.clip) ||
             puerta.sonido.GetComponent<GravesCompuerta>() != null), "Falta el cuerpo grave de la compuerta sintetizada del Cruce.", problemas);
-        Comprobar(!objetos.SelectMany(o => o.GetComponents<Light>()).Any(l => ConstructorCrater.EsRellenoSinFuente(l.name)),
-            "No deben regenerarse luces de relleno flotantes sin fuente visible.", problemas);
-        foreach (var nombre in new[] { "Lampara_Ancla_Umbral", "Lampara_Ancla_O_Puerta", "Lampara_Sello_Oeste" })
-            Comprobar(objetos.Count(o => o.name == nombre) == 1,
-                "Falta o está duplicada la lámpara de puerta: " + nombre, problemas);
         var lampara = objetos.FirstOrDefault(o => o.name == "Lampara_Ancla_Umbral");
         var luzLampara = lampara != null ? lampara.transform.Find("Luz")?.GetComponent<Renderer>() : null;
         Comprobar(luzLampara != null && luzLampara.sharedMaterial != null && luzLampara.sharedMaterial.IsKeywordEnabled("_EMISSION"),

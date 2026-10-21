@@ -190,53 +190,10 @@ public static partial class ConstructorCrater
         return caras;
     }
 
-    // Intersección de las caras reales con una altura: excluye el pedestal más ancho.
-    static List<(Vector3 normal, Vector3 centro)> CarasDelObelisco(Renderer piedra, float y)
-    {
-        var m = piedra.GetComponent<MeshFilter>().sharedMesh;
-        var v = m.vertices;
-        var indices = m.triangles;
-        var normales = new List<Vector3>();
-        var cortes = new List<List<Vector3>>();
-        for (int i = 0; i < indices.Length; i += 3)
-        {
-            var a = piedra.transform.TransformPoint(v[indices[i]]);
-            var b = piedra.transform.TransformPoint(v[indices[i + 1]]);
-            var c = piedra.transform.TransformPoint(v[indices[i + 2]]);
-            if (y < Mathf.Min(a.y, Mathf.Min(b.y, c.y)) || y > Mathf.Max(a.y, Mathf.Max(b.y, c.y))) continue;
-            var n = Vector3.Cross(b - a, c - a).normalized;
-            if (Mathf.Abs(n.y) > .05f) continue;
-            if (Vector3.Dot(n, (a + b + c) / 3f - piedra.bounds.center) < 0f) n = -n;
-            int cara = normales.FindIndex(otra => Vector3.Dot(n, otra) > .999f);
-            if (cara < 0) { cara = normales.Count; normales.Add(n); cortes.Add(new List<Vector3>()); }
-            void Cortar(Vector3 desde, Vector3 hasta)
-            {
-                if (Mathf.Abs(desde.y - hasta.y) < .0001f) return;
-                float t = (y - desde.y) / (hasta.y - desde.y);
-                if (t >= 0f && t <= 1f) cortes[cara].Add(Vector3.Lerp(desde, hasta, t));
-            }
-            Cortar(a, b); Cortar(b, c); Cortar(c, a);
-        }
-        var caras = new List<(Vector3 normal, Vector3 centro)>();
-        for (int i = 0; i < normales.Count; i++)
-        {
-            if (cortes[i].Count < 2) continue;
-            var n = normales[i];
-            var lateral = Vector3.Cross(Vector3.up, n).normalized;
-            float min = float.PositiveInfinity, max = float.NegativeInfinity;
-            foreach (var punto in cortes[i]) { float d = Vector3.Dot(punto, lateral); min = Mathf.Min(min, d); max = Mathf.Max(max, d); }
-            var centro = n * Vector3.Dot(n, cortes[i][0]) + lateral * ((min + max) * .5f);
-            centro.y = y;
-            caras.Add((n, centro));
-        }
-        if (caras.Count != 4) throw new System.InvalidOperationException("El obelisco debe tener cuatro caras verticales a la altura del símbolo.");
-        return caras;
-    }
-
     /// <summary>
     /// El centro de la rotonda deja de ser decorado:
-    ///  - Mapa del progreso: las columnas del lado oeste se iluminan desde la base en ámbar
-    ///    y las del este en azul, cuando el jugador regresa con el sello de su ala.
+    ///  - Mapa del progreso: las columnas del lado oeste llevan un sol en sus caras y las del
+    ///    este una luna; se encienden con el sello de su ala. De un vistazo se ve qué falta.
     ///  - El obelisco, el reloj del eclipse: en su cara oeste un sol y en la este una luna, que se
     ///    encienden tras sus columnas al regresar. Con los dos se enciende el eclipse
     ///    y se abre la puerta, manteniendo la mirada libre.
@@ -251,7 +208,7 @@ public static partial class ConstructorCrater
         // el obelisco: se gira en su lugar para que sus caras miren a los cuatro puntos cardinales
         var obeliscoR = System.Array.Find(mapa.GetComponentsInChildren<Renderer>(true), r => r.name == "Anillo_Obelisco");
         if (obeliscoR == null) throw new System.InvalidOperationException("SM_Mapa01_Recorrido.fbx no tiene Anillo_Obelisco");
-        var caraUno = CarasDelObelisco(obeliscoR, 2.15f)[0].normal;
+        var caraUno = CarasVerticales(obeliscoR, 0f)[0].normal;
         float giro = Mathf.Atan2(caraUno.z, caraUno.x) * Mathf.Rad2Deg;   // de esa cara a +x
         giro = Mathf.Repeat(giro + 45f, 90f) - 45f;                        // el giro más chico
         obeliscoR.transform.RotateAround(obeliscoR.bounds.center, Vector3.up, giro);
@@ -279,51 +236,39 @@ public static partial class ConstructorCrater
             {
                 var r = columnas[c];
                 var marca = Grupo(lado, "Marca_" + r.name);
-                marca.position = new Vector3(r.bounds.center.x, .18f, r.bounds.center.z);
+                marca.position = new Vector3(r.bounds.center.x, 2.3f, r.bounds.center.z);
                 var testigo = marca.gameObject.AddComponent<TestigoDeSello>();
                 testigo.sello = oeste ? selloOeste : selloEste;
                 testigo.manual = true;
                 testigo.transicion = .5f;
                 testigo.emisionApagado = .02f;
                 if (!oeste) testigo.colorEncendido = ColorLuna;
-                // Una luminaria empotrada al pie; el pilar entero recibe la señal, sin soles pequeños.
-                Vector3 haciaCentro = obeliscoR.bounds.center - marca.position;
-                haciaCentro.y = 0f;
-                var normal = haciaCentro.normalized;
-                var apoyo = r.bounds.center + normal * (Mathf.Max(r.bounds.extents.x, r.bounds.extents.z) + .22f);
-                apoyo.y = .18f;
-                var zocalo = Bloque(marca, "Luminaria_Base", apoyo, new Vector3(.45f, .08f, .18f), k.metal);
-                zocalo.transform.rotation = Quaternion.LookRotation(normal);
-                var difusor = Bloque(marca, "Difusor_Base", apoyo + Vector3.up * .045f,
-                    new Vector3(.32f, .015f, .1f), oeste ? k.ambar : k.tallaLuna);
-                difusor.transform.rotation = zocalo.transform.rotation;
-                Object.DestroyImmediate(zocalo.GetComponent<Collider>());
-                Object.DestroyImmediate(difusor.GetComponent<Collider>());
-                testigo.renderers = new[] { difusor.GetComponent<Renderer>() };
-                testigo.emisionApagado = 0f;
-                testigo.luz = Luz(marca, "Luz_Base_Columna", apoyo + Vector3.up * .08f,
-                    oeste ? LuzCalida : LuzFria, 0f, 6f, false);
+                testigo.colorEncendido = oeste ? new Color(1f,.42f,.1f) : ColorLuna;
+                testigo.renderers = new[] { AroDelPiso(k, marca, r.bounds.center, oeste) };
+                testigo.luz = Luz(marca, "Luz_Columna", new Vector3(r.bounds.center.x, .09f, r.bounds.center.z) + (new Vector3(centro.x,0,centro.z)-new Vector3(r.bounds.center.x,0,r.bounds.center.z)).normalized*.9f,
+                    oeste ? LuzCalida : LuzFria, 0f, 8f, false);
                 testigo.luz.type = LightType.Spot;
-                testigo.luz.spotAngle = 65f;
-                testigo.luz.innerSpotAngle = 13f;
-                var destino = new Vector3(r.bounds.center.x, r.bounds.max.y - .2f, r.bounds.center.z);
-                testigo.luz.transform.rotation = Quaternion.LookRotation(destino - testigo.luz.transform.position);
-                testigo.intensidadLuz = 20f;
+                testigo.luz.spotAngle = 64f;
+                testigo.luz.innerSpotAngle = 28f;
+                testigo.luz.transform.LookAt(new Vector3(r.bounds.center.x,3.2f,r.bounds.center.z));
+                testigo.intensidadLuz = 65f;
+                LuzDeTechoColumna(k, testigo, r.bounds.center);
                 var nota = CrearFuenteHija(marca, "Nota_Columna", k.audio.tonosAncla[c % k.audio.tonosAncla.Length], .3f);
                 nota.minDistance = 5f; nota.maxDistance = 22f;
                 nota.pitch = oeste ? 1f : .9f;
                 testigos.Add(testigo); notas.Add(nota);
             }
-            if (oeste) { obelisco.columnasSol = testigos.ToArray(); obelisco.notasSol = notas.ToArray(); }
-            else { obelisco.columnasLuna = testigos.ToArray(); obelisco.notasLuna = notas.ToArray(); }
+            var luz = Luz(lado, "Luz", centro + new Vector3(oeste ? -3.5f : 3.5f, 3f, 0f),
+                oeste ? LuzCalida : LuzFria, 0f, 7f, false);
+            if (oeste) { obelisco.columnasSol = testigos.ToArray(); obelisco.notasSol = notas.ToArray(); obelisco.luzColumnasSol = luz; }
+            else { obelisco.columnasLuna = testigos.ToArray(); obelisco.notasLuna = notas.ToArray(); obelisco.luzColumnasLuna = luz; }
         }
 
         // Cada arco termina en su cara del obelisco; con ambos se completa el eclipse.
         (Vector3 normal, Vector3 centro) Cara(Vector3 hacia, float y)
         {
-            var mejor = CarasDelObelisco(obeliscoR, y)[0];
-            foreach (var c in CarasDelObelisco(obeliscoR, y)) if (Vector3.Dot(c.normal, hacia) > Vector3.Dot(mejor.normal, hacia)) mejor = c;
-            return mejor;
+            return (hacia, obeliscoR.transform.position + Vector3.up * (y + 1.08f)
+                + hacia * SemianchoObelisco(y + 1.08f));
         }
         void CaraDelSello(string nombre, Vector3 hacia, Figura figura, Material m, ReceptorDeLuz sello, bool luna)
         {
@@ -333,7 +278,7 @@ public static partial class ConstructorCrater
             testigo.sello = sello;
             testigo.manual = true;
             testigo.transicion = 2f;
-            testigo.renderers = new[] { Glifo(cara, "Tallado", figura, punto + normal * .003f, normal, 0.95f, m, separar: false) };
+            testigo.renderers = new[] { Glifo(cara, "Tallado", figura, punto - normal * .035f, normal, 0.95f, m, false) };
             if (luna) testigo.colorEncendido = ColorLuna;
             testigo.emisionApagado = 0.03f;
             testigo.luz = Luz(cara, "Brillo", punto + normal * 0.9f, luna ? ColorLuna : new Color(1f, 0.55f, 0.2f), 0f, 5f, false);
@@ -347,11 +292,11 @@ public static partial class ConstructorCrater
         }
         CaraDelSello("Obelisco_Sol", Vector3.left, Figura.Sol, k.ambar, selloOeste, false);
         CaraDelSello("Obelisco_Luna", Vector3.right, Figura.LunaCreciente, k.tallaLuna, selloEste, true);
-        var (normalSur, puntoSur) = Cara(Vector3.back, obeliscoR.bounds.max.y - .6f);
-        obelisco.eclipse = Glifo(raiz, "Obelisco_Eclipse", Figura.Eclipse, puntoSur, normalSur, 1f, k.tallaEclipse);
+        var (normalSur, puntoSur) = Cara(Vector3.back, 3.85f);
+        obelisco.eclipse = Glifo(raiz, "Obelisco_Eclipse", Figura.Eclipse, puntoSur - normalSur * .035f, normalSur, .95f, k.tallaEclipse, false);
         // La otra cara permite descubrir el mismo motivo desde las bocas de retorno.
-        var (normalNorte, puntoNorte) = Cara(Vector3.forward, obeliscoR.bounds.max.y - .6f);
-        obelisco.eclipseRegreso = Glifo(raiz, "Obelisco_Eclipse_Regreso", Figura.Eclipse, puntoNorte, normalNorte, 1f, k.tallaEclipse);
+        var (normalNorte, puntoNorte) = Cara(Vector3.forward, 3.85f);
+        obelisco.eclipseRegreso = Glifo(raiz, "Obelisco_Eclipse_Regreso", Figura.Eclipse, puntoNorte - normalNorte * .035f, normalNorte, .95f, k.tallaEclipse, false);
         obelisco.luz = Luz(raiz, "Luz_Eclipse", puntoSur + normalSur * 1.2f, new Color(0.85f, 0.92f, 1f), 0f, 12f, false);
 
         // Luz suave del cielo, sin imagen de eclipse pegada al techo.
@@ -384,16 +329,12 @@ public static partial class ConstructorCrater
         // centrar: el medio del piso en 'centro', su cara de arriba a la altura de 'centro'
         Bounds b = piso.bounds;
         mapa.transform.position += centro - new Vector3(b.center.x, b.max.y, b.center.z);
-        // El obelisco vuelve al centro de la plaza, con su modelo original.
-        // Las columnas conservan el anillo y sus tallados de progreso.
-        if (obelisco != null)
-        {
-            Vector3 medio = obelisco.bounds.center;
-            obelisco.transform.position += new Vector3(centro.x - medio.x, 0, centro.z - medio.z);
-        }
+        // Fuste con cavidades reales y remate piramidal, centrado en la plaza.
+        if (obelisco != null) Object.DestroyImmediate(obelisco.gameObject);
+        EsculpirObelisco(k, mapa.transform, centro);
 
         // Hexágono regular: tres columnas a cada lado, sin piezas en el eje de paso.
-        // El conjunto conserva proporciones al ampliar el subsuelo; radio final 6,5 m.
+        // El conjunto conserva proporciones al ampliar el subsuelo; radio final 8,8 m.
         var nombres = new[] { "04", "03", "02", "05", "06", "01" };
         var angulos = new[] { 120f, 180f, 240f, 60f, 0f, -60f };
         for (int i = 0; i < nombres.Length; i++)
@@ -402,11 +343,17 @@ public static partial class ConstructorCrater
             if (columna == null) throw new System.InvalidOperationException("Falta una columna del anillo");
             float a = angulos[i] * Mathf.Deg2Rad;
             Vector3 dir = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
-            Vector3 posicion = centro + dir * (6.5f / EspacioCrater.Escala);
+            Vector3 posicion = centro + dir * (RadioColumnasRotonda / EspacioCrater.Escala);
             columna.transform.position += new Vector3(posicion.x - columna.bounds.center.x, 0, posicion.z - columna.bounds.center.z);
             Vector3 normal = CarasVerticales(columna, 0)[0].normal;
             float giroCara = Mathf.Repeat(Vector3.SignedAngle(normal, -dir, Vector3.up) + 45f, 90f) - 45f;
             columna.transform.RotateAround(columna.bounds.center, Vector3.up, giroCara);
+            // Desde el piso exterior a la escalera hasta la cara inferior del techo.
+            var escalaColumna = columna.transform.localScale;
+            int ejeAltura = Mathf.Abs(columna.transform.TransformDirection(Vector3.up).y) > .9f ? 1 : 2;
+            escalaColumna[ejeAltura] *= 7f / columna.bounds.size.y;
+            columna.transform.localScale = escalaColumna;
+            columna.transform.position += Vector3.up * -columna.bounds.min.y;
         }
 
         Pintar(mapa, r => r.name.Contains("Obelisco") ? k.piedra : r.name.Contains("Piso") ? k.piso : k.basaltoMedio);
@@ -679,8 +626,8 @@ public static partial class ConstructorCrater
         var e = AnclaSolarNueva(k, g, "Ancla_N_Salida_A", new Vector3(-3, 0, 60.5f), 180, 5.6f, 2);
         var f = AnclaSolarNueva(k, g, "Ancla_N_Salida_B", new Vector3(3, 0, 60.5f), 180, 5.6f, 4);
         Puente(k, g, "Puente_N_Salida", new Vector3(0, 0, 53), new Vector3(0, 0, 56), 3.2f, e, f);
-        TabiqueConPaso(k, g, "Piel_N_Salida", true, 57, -6, 6, -2, 2);
-        var salida = Reja(k, g, "Reja_N_Salida", new Vector3(0, 0, 57), 0, new Vector3(4f / 6f, 1, 1));
+        TabiqueConPaso(k, g, "Piel_N_Salida", true, 57, -6, 6, -4, 4);
+        var salida = Reja(k, g, "Reja_N_Salida", new Vector3(0, 0, 57), 0, new Vector3(8f / 6f, 1, 1));
         salida.retencion = 10; PrefabUtility.RecordPrefabInstancePropertyModifications(salida);
         RedDeSeguridad(k, g, "N2", new Vector3(0, 0, 48), Vector3.forward, 12, 8, -4.3f);
         Oculo(k, g, "Oculo_Isla_Segura", new Vector3(0, 5.97f, 52), 2.4f, 95, 10);
@@ -826,3 +773,4 @@ public static partial class ConstructorCrater
         return compuerta;
     }
 }
+

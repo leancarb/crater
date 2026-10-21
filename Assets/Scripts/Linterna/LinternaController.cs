@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,8 +7,8 @@ using UnityEngine;
 ///
 /// Reglas:
 ///  - F enciende y apaga.
-///  - 1 / 2 equipan CUERPO y HUECO. Sólo uno a la vez. Cambiar tarda 'demoraDeCambio'.
-///  - Cada filtro dura 2 segundos efectivos; después vuelve a luz blanca. Q permite volver antes.
+///  - 1 / 2 equipan SOL y LUNA. Sólo uno a la vez. Cambiar tarda 'demoraDeCambio'.
+///  - Cada filtro dura 3 segundos efectivos; después vuelve a luz blanca. 1 permite volver antes.
 ///  - Cada frame busca los receptores dentro del cono y les avisa que están iluminados.
 ///
 /// CÓMO FUNCIONA
@@ -41,17 +41,14 @@ public class LinternaController : MonoBehaviour
 
     [Header("Luz blanca (sin filtro)")]
     public Color colorBase = new Color(1f, 0.95f, 0.86f);
-    public float anguloBase = 54f;
-    [Tooltip("Apertura visual de SOL/LUNA; su cono de activación permanece en FiltroDefinicion.")]
-    public float anguloVisualFiltro = 44f;
-    [Range(.01f, 1f)] public float proporcionNucleo = .12f;
+    public float anguloBase = 52f;
     public float alcanceBase = 24f;
-    public float intensidadBase = 1100f;
+    public float intensidadBase = 650f;
 
     [Header("Ajustes")]
     public float demoraDeCambio = 0.6f;
     [Tooltip("Segundos efectivos del filtro después del cambio; al terminar vuelve a luz blanca.")]
-    [Min(.1f)] public float duracionFiltro = 2f;
+    [Min(.1f)] public float duracionFiltro = 3f;
     [Tooltip("Si está tildado, la linterna no responde hasta llamar a Recoger().")]
     public bool requiereRecogerla = true;
 
@@ -72,7 +69,6 @@ public class LinternaController : MonoBehaviour
     public Color ColorActual => FiltroActual != null ? FiltroActual.color : colorBase;
     public float AlcanceActual => FiltroActual != null ? FiltroActual.alcance : alcanceBase;
     public float AnguloActual => FiltroActual != null ? FiltroActual.anguloCono : anguloBase;
-    public float AnguloVisualActual => FiltroActual != null ? Mathf.Max(AnguloActual, anguloVisualFiltro) : anguloBase;
     float IntensidadActual => FiltroActual != null ? FiltroActual.intensidad : intensidadBase;
 
     // eventos de C#: otros scripts se suscriben con += (ver FlujoJuegoCrater.Vincular)
@@ -167,7 +163,7 @@ public class LinternaController : MonoBehaviour
             EquiparFiltro(null);
     }
 
-    /// <summary>Tecla 1 o 2: equipa ese filtro si ya lo encontró; si ya estaba puesto, vuelve a luz blanca.</summary>
+    /// <summary>Tecla 2 o 3: equipa ese filtro si ya lo encontró; si ya estaba puesto, vuelve a luz blanca.</summary>
     void IntentarEquipar(int indice)
     {
         if (indice < 0 || indice >= filtros.Count) return;
@@ -206,8 +202,8 @@ public class LinternaController : MonoBehaviour
         FiltroActual = f;
         if (spot == null) return;
         spot.color = ColorActual;
-        spot.spotAngle = AnguloVisualActual;
-        spot.innerSpotAngle = AnguloVisualActual * proporcionNucleo;
+        spot.spotAngle = AnguloActual;
+        spot.innerSpotAngle = AnguloActual * (f == null ? .12f : .55f);
         spot.range = AlcanceActual;
     }
 

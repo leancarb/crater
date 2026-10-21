@@ -4,10 +4,12 @@ using UnityEngine;
 
 public static partial class ConstructorCrater
 {
+    const float RadioAberturaRotonda = 3.8f;
+
     static void ConstruirTechoCircular(Kit k, Transform padre)
     {
         var vertices = new List<Vector3>(); var uv = new List<Vector2>();
-        const int lados = 64; const float radio = 6.4f;
+        const int lados = 96; const float radio = RadioAberturaRotonda;
         Vector3 P(int i, float r) { float a = i * Mathf.PI * 2 / lados; return CentroRotonda + new Vector3(Mathf.Cos(a)*r, 7, Mathf.Sin(a)*r); }
         Vector3 Exterior(int i) { float a=i*Mathf.PI*2/lados; float r=15.6f/Mathf.Max(Mathf.Abs(Mathf.Cos(a)),Mathf.Abs(Mathf.Sin(a)));return P(i,r); }
         for (int i=0;i<lados;i++)

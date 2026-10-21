@@ -16,7 +16,16 @@ public class ColeccionPiedras : MonoBehaviour
     public AudioSource recogida;
     public Light luzRecogida;
     int mascaraObstaculos=1;
-    void Start(){ if(jugador!=null)mascaraObstaculos=jugador.GetComponentInChildren<LinternaController>().capaObstaculos; }
+    Recogible[] recogibles;
+    LinternaController linterna;
+    bool esperandoPrimerEncendido;
+    void Start()
+    {
+        if(jugador!=null) linterna=jugador.GetComponentInChildren<LinternaController>();
+        if(linterna!=null) mascaraObstaculos=linterna.capaObstaculos;
+        recogibles=UnityEngine.Object.FindObjectsByType<Recogible>(FindObjectsInactive.Include,FindObjectsSortMode.None);
+    }
+    public Recogible ObjetoRecogible { get; private set; }
     int indicesRegistrados;
     readonly HashSet<string> encontrados = new HashSet<string>();
     public event Action AlCambiar;
@@ -58,22 +67,37 @@ public class ColeccionPiedras : MonoBehaviour
     {
         if(luzRecogida!=null)luzRecogida.intensity=Mathf.MoveTowards(luzRecogida.intensity,0,Time.deltaTime*3);
         Objetivo = null;
+        ObjetoRecogible = null;
         if (!PuedeInteractuar) { interfaz?.MostrarInteraccionOpcional(""); return; }
+        if(linterna!=null && linterna.Encendida) esperandoPrimerEncendido=false;
+        foreach(var objeto in recogibles)
+            if(objeto!=null && objeto.gameObject.activeInHierarchy && !objeto.Recogido &&
+                (objeto.filtro==null || (linterna!=null && linterna.Disponible)) && EnVista(objeto.PuntoInteraccion,2.5f))
+            { ObjetoRecogible=objeto;break; }
+        if(ObjetoRecogible!=null)
+        {
+            interfaz?.MostrarInteraccionOpcional(EntradaCrater.BotonInteractuar+" · Recoger "+ObjetoRecogible.NombreInteraccion);
+            if(EntradaCrater.Interactuar && ObjetoRecogible.Recoger(linterna))
+            {
+                esperandoPrimerEncendido=ObjetoRecogible.filtro==null;
+                interfaz?.MostrarInteraccionOpcional(esperandoPrimerEncendido ? EntradaCrater.BotonLinterna+" · Encender farol" : "");
+            }
+            return;
+        }
         foreach (var p in piezas)
             if (p != null && p.gameObject.activeInHierarchy && !p.Recogida && EnVista(p.transform,2.5f)) { Objetivo=p;break; }
-        var g=Gamepad.current; var k=Keyboard.current; var m=Mouse.current;
-        bool mando=g!=null && g.lastUpdateTime > Math.Max(k!=null?k.lastUpdateTime:0,m!=null?m.lastUpdateTime:0);
         if (Objetivo != null)
         {
-            interfaz?.MostrarInteraccionOpcional(mando?"A (×) · Recoger piedra tallada":"Espacio · Recoger piedra tallada");
-            if (EntradaCrater.Saltar) Objetivo.Recoger();
+            interfaz?.MostrarInteraccionOpcional(EntradaCrater.BotonInteractuar+" · Recoger piedra tallada");
+            if (EntradaCrater.Interactuar) Objetivo.Recoger();
         }
         else if (conjunto != null && conjunto.Transformado && !conjunto.Reproduciendo && EnVista(conjunto.transform,3f))
         {
-            interfaz?.MostrarInteraccionOpcional(mando?"A (×) · Escuchar el conjunto":"Espacio · Escuchar el conjunto");
-            if (EntradaCrater.Saltar) conjunto.Reproducir();
+            interfaz?.MostrarInteraccionOpcional(EntradaCrater.BotonInteractuar+" · Escuchar el conjunto");
+            if (EntradaCrater.Interactuar) conjunto.Reproducir();
         }
-        else interfaz?.MostrarInteraccionOpcional("");
+        else interfaz?.MostrarInteraccionOpcional(esperandoPrimerEncendido ? EntradaCrater.BotonLinterna+" · Encender farol" : "");
     }
     void OnDisable() { interfaz?.MostrarInteraccionOpcional(""); }
 }
+

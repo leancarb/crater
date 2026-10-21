@@ -11,8 +11,8 @@ using UnityEngine.Rendering;
 ///    el cráter que se abre (pozo, escalera, puerta); alguien con la luz que los revela.
 ///  - Cada control, en el momento en que se usa: con la tecla dibujada como tecla y el
 ///    ícono de lo que hace. Al entrar al Umbral, mover (WASD + mouse); junto a la linterna,
-///    prenderla (F). En el pasillo de cada ala, junto a su filtro: filtro sol (1: el puente
-///    aparece) o filtro luna (2: la reja se abre), y enfrente Q (volver a la luz blanca).
+///    prenderla (F). En el pasillo de cada ala, junto a su filtro: filtro sol (2: el puente
+///    aparece) o filtro luna (3: la reja se abre), Los filtros vuelven solos a luz normal.
 ///
 /// Todo es pintura mate sobre piedra clara: no brilla, porque lo que brilla se usa.
 ///
@@ -72,7 +72,7 @@ public static partial class ConstructorCrater
         // --- el Umbral: cada control al lado de lo que enseña. Al entrar, moverse; junto a
         // la linterna, prenderla. Los filtros se enseñan donde se juntan (MuralesDelFiltro).
         var controles = Grupo(murales, "Controles_Umbral");
-        Losa(k, controles, "Control_Mover", new Vector3(-6f, 1.9f, -19.5f), Vector3.right, 3f, 1.9f, Escalado(1.22f, PanelMover));
+        // El cartel de movimiento se presenta en el punto inicial del exterior.
         Losa(k, controles, "Control_Linterna", new Vector3(6f, 1.9f, -10.5f), Vector3.left, 2.8f, 1.75f, Escalado(1.15f, PanelLinterna));
         // enfrente de los controles, lo que se hace en el Umbral: la luz blanca sobre el ancla baja la losa
         Losa(k, controles, "Mural_Ancla_Puerta", new Vector3(6f, 1.9f, -17.5f), Vector3.left, 3f, 1.9f, PanelAnclaYPuerta);
@@ -134,7 +134,7 @@ public static partial class ConstructorCrater
 
     /// <summary>
     /// En el pasillo de cada ala, donde se junta el filtro: de un lado su tecla y lo que hace;
-    /// del otro, Q para volver a la luz blanca (la que más alumbra). Coordenadas del ala sin correr.
+    /// Coordenadas del ala sin correr; sin panel de retorno a luz blanca.
     /// </summary>
     static void MuralesDelFiltro(Kit k, Transform g, float lado)
     {
@@ -148,12 +148,7 @@ public static partial class ConstructorCrater
             lado < 0f ? (System.Action<Kit, Lienzo>)PanelFiltroSol : PanelFiltroLuna);
         var baseEstela = Bloque(murales, "Pie_Estela_Filtro", new Vector3(x, 0.45f, -4.2f), new Vector3(0.6f, 0.9f, 1.3f), k.piedra);
         baseEstela.transform.rotation = Quaternion.LookRotation(normal);
-        // La luz blanca se enseña más adelante: nunca detrás de la primera estela.
-        var puntoBlanca = new Vector3(lado * 24.2f, 1.9f, -6.88f);
-        var normalBlanca = Vector3.forward;
-        Losa(k, murales, "Control_LuzBlanca", puntoBlanca, normalBlanca, 2.4f, 1.5f, PanelLuzBlanca);
         LuzDeMural(murales, punto, normal, 2.2f);
-        LuzDeMural(murales, puntoBlanca, normalBlanca, 2.4f);
     }
 
     /// <summary>
@@ -182,7 +177,18 @@ public static partial class ConstructorCrater
         var lienzo = new Lienzo();
         dibujo(k, lienzo);
         float mx = ancho / 2f - 0.06f, my = alto / 2f - 0.06f;
-        Marco(lienzo.En(k.pinturaHueso), -mx, -my, mx, my, 0.025f);
+        if(EsMuralDeInstruccion(nombre))
+        {
+            Marco(lienzo.En(k.pinturaHueso), -mx, -my, mx, my, 0.025f);
+            // Dobles esquinas: instrucciones reconocibles sin confundirlas con relatos.
+            foreach(float lado in new[]{-1f,1f})
+            {
+                Linea(lienzo.En(k.pinturaHueso),new Vector2(lado*(mx-.12f),my-.11f),new Vector2(lado*(mx-.4f),my-.11f),.025f);
+                Linea(lienzo.En(k.pinturaHueso),new Vector2(lado*(mx-.12f),my-.11f),new Vector2(lado*(mx-.12f),my-.3f),.025f);
+            }
+        }
+        else
+            FrisoEscalonadoEn(lienzo.En(k.pinturaHueso),-mx,-my+.07f,Mathf.Min(ancho-.2f,2f));
 
         for (int c = 0; c < lienzo.capas.Count; c++)
         {
@@ -644,7 +650,8 @@ public static partial class ConstructorCrater
     static void PanelLinterna(Kit k, Lienzo l)
     {
         var h = l.En(k.pinturaHueso);
-        Tecla(h, -0.85f, 0f, 0.3f, 0.3f, Letra('F'));
+        Anillo(h,new Vector2(-.85f,0),.12f,.16f);
+        Linea(h,new Vector2(-.85f,.02f),new Vector2(-.85f,.22f),.035f);
         var punta = Linterna(h, new Vector2(-0.5f, 0f), 0f, 0.36f);
         Cono(h, punta, 0f, 1.15f, 17f);
     }
@@ -652,7 +659,7 @@ public static partial class ConstructorCrater
     static void PanelLuzBlanca(Kit k, Lienzo l)
     {
         var h = l.En(k.pinturaHueso);
-        Tecla(h, -0.85f, 0f, 0.3f, 0.3f, Letra('Q'));
+        Tecla(h, -0.85f, 0f, 0.3f, 0.3f, Letra('1'));
         var punta = Linterna(h, new Vector2(-0.52f, 0f), 0f, 0.3f);
         Cono(h, punta, 0f, 0.72f, 14f);
         // la luz blanca despierta el ancla: un aro con su brillo alrededor
@@ -671,7 +678,7 @@ public static partial class ConstructorCrater
     {
         var s = l.En(k.pinturaSol);
         var h = l.En(k.pinturaHueso);
-        Tecla(h, -0.88f, 0.22f, 0.3f, 0.3f, Letra('1'));
+        FiguraEn(s,Figura.Sol,-.88f,.22f,.3f);
         FiguraEn(s, Figura.Sol, -0.88f, -0.25f, 0.34f);
         var punta = Linterna(h, new Vector2(-0.55f, 0.32f), -28f, 0.28f);
         Cono(s, punta, -28f, 0.95f, 15f);
@@ -686,7 +693,7 @@ public static partial class ConstructorCrater
     {
         var u = l.En(k.pinturaLuna);
         var h = l.En(k.pinturaHueso);
-        Tecla(h, -0.88f, 0.22f, 0.3f, 0.3f, Letra('2'));
+        FiguraEn(u,Figura.LunaCreciente,-.88f,.22f,.3f);
         FiguraEn(u, Figura.LunaCreciente, -0.88f, -0.25f, 0.34f);
         var punta = Linterna(h, new Vector2(-0.55f, 0f), 0f, 0.28f);
         Cono(u, punta, 0f, 0.9f, 20f);
@@ -953,6 +960,7 @@ public static partial class ConstructorCrater
             case 'Q': return new[] { ".###.", "#...#", "#...#", "#...#", "#.#.#", "#..#.", ".##.#" };
             case '1': return new[] { "..#..", ".##..", "..#..", "..#..", "..#..", "..#..", ".###." };
             case '2': return new[] { ".###.", "#...#", "....#", "...#.", "..#..", ".#...", "#####" };
+            case '3': return new[] { "####.", "....#", "....#", ".###.", "....#", "....#", "####." };
             default: return new string[0];
         }
     }

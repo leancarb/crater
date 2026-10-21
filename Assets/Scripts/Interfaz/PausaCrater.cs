@@ -1,9 +1,9 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Pausa con Esc: congela el tiempo, silencia el audio y libera el cursor.
-/// En pausa sólo se ven los controles, en gris: Esc sigue, R reinicia, X sale.
+/// En pausa se ajusta la luminosidad y se ven los controles: Esc sigue, R reinicia, X sale.
 /// (Las opciones guardadas de antes se siguen aplicando: OpcionesCrater.)
 /// Fuera de pausa, un clic vuelve a capturar el mouse si el sistema lo soltó.
 ///
@@ -18,7 +18,7 @@ public class PausaCrater : MonoBehaviour
 
     [SerializeField] InterfazCrater interfaz;
     [Tooltip("Pausar automáticamente si la ventana pierde el foco.")]
-    public bool pausarAlPerderFoco = true;
+    public bool pausarAlPerderFoco = false;
 
     // los campos estáticos sobreviven entre partidas en el editor: se limpian al dar Play
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -27,6 +27,7 @@ public class PausaCrater : MonoBehaviour
 
     void Start()
     {
+        Application.runInBackground = true;
         CapturarCursor(true);
         OpcionesCrater.Aplicar();   // al reiniciar la escena, el campo de visión vuelve al guardado
     }
@@ -63,7 +64,7 @@ public class PausaCrater : MonoBehaviour
         }
     }
 
-    // al hacer Alt+Tab (o clic fuera de la ventana) el juego se pausa solo
+    // Opción desactivada por defecto: permite capturas al cambiar de ventana.
     void OnApplicationFocus(bool foco)
     {
         if (!foco && pausarAlPerderFoco && !Application.isBatchMode && isActiveAndEnabled && !EnPausa)
@@ -81,6 +82,7 @@ public class PausaCrater : MonoBehaviour
 
     public void Reanudar()
     {
+        OpcionesCrater.Guardar();
         EnPausa = false;
         Time.timeScale = 1f;
         AudioListener.pause = false;
@@ -91,6 +93,7 @@ public class PausaCrater : MonoBehaviour
     /// <summary>Vuelve a cargar la escena desde cero (todo vuelve a su estado inicial).</summary>
     public static void ReiniciarEscena()
     {
+        OpcionesCrater.Guardar();
         EnPausa = false;
         Time.timeScale = 1f;
         AudioListener.pause = false;
@@ -100,6 +103,7 @@ public class PausaCrater : MonoBehaviour
     /// <summary>En el editor detiene el Play; en el juego compilado cierra la aplicación.</summary>
     public static void Salir()
     {
+        OpcionesCrater.Guardar();
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else

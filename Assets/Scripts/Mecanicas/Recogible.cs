@@ -1,16 +1,14 @@
 using UnityEngine;
 
 /// <summary>
-/// Objeto que el jugador junta al pasar: la linterna misma (si 'filtro' está
+/// Objeto que el jugador junta al mirar de cerca y confirmar: la linterna misma (si 'filtro' está
 /// vacío) o uno de sus filtros. Flota, gira y brilla con el color del filtro.
 ///
 /// Poner en: un objeto con un Collider marcado como Is Trigger.
 ///
 /// CÓMO FUNCIONA
-/// Cuando el jugador (tag "Player") entra al trigger, Unity llama a OnTriggerEnter.
-/// Ahí se le avisa a la linterna: Recoger() si es la linterna, Desbloquear() si es
-/// un filtro. La linterna dispara sus eventos y el FlujoJuegoCrater muestra la
-/// indicación que corresponde. Después el objeto se esconde y apaga su collider.
+/// ColeccionPiedras comprueba mirada, alcance y acción de recoger. Este componente
+/// incorpora la linterna o desbloquea el filtro, confirma con sonido y oculta el objeto.
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public class Recogible : MonoBehaviour
@@ -77,11 +75,10 @@ public class Recogible : MonoBehaviour
         if (brillo != null) brillo.intensity = intensidadBase * (0.8f + 0.2f * Mathf.Sin(t * 2.3f));
     }
 
-    void OnTriggerEnter(Collider other)
-    {
-        if (!Recogido && other.CompareTag("Player"))
-            Recoger(LinternaController.Instancia);
-    }
+    // La interacción la arbitra ColeccionPiedras, igual que las piedras talladas.
+    // Pasar por el trigger ya no recoge el objeto sin que el jugador lo advierta.
+    public Transform PuntoInteraccion => visual != null ? visual : transform;
+    public string NombreInteraccion => filtro == null ? "farol" : "filtro " + filtro.nombreVisible;
 
     /// <summary>Devuelve true si lo recogió (false si ya estaba recogido o no hay linterna).</summary>
     public bool Recoger(LinternaController linterna)
@@ -99,3 +96,4 @@ public class Recogible : MonoBehaviour
         return true;
     }
 }
+

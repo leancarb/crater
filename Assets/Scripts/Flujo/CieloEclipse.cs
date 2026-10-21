@@ -18,7 +18,7 @@ using UnityEngine;
 /// La totalidad no es noche cerrada: es un crepúsculo profundo, con el cielo azul
 /// oscuro y el horizonte encendido alrededor. El paisaje se sigue viendo.
 ///
-/// El prólogo es de mañana (sol blanco, cielo azul limpio) y el epílogo, al atardecer:
+/// El prólogo es de mañana (sol blanco, cielo pálido y polvoriento) y el epílogo, al atardecer:
 /// PonerDespues() mueve el sol a otro sector del horizonte y pasa la luz, el
 /// ambiente y la niebla a los tonos cálidos del 'Atardecer'. Así se nota que pasó el día.
 /// </summary>
@@ -29,6 +29,7 @@ public class CieloEclipse : MonoBehaviour
     [SerializeField] Transform discoSol;
     [SerializeField] Transform discoLuna;
     [SerializeField] Renderer corona;
+    [SerializeField] Renderer fondoBrumoso;
 
     [Header("Tamaño aparente")]
     [Tooltip("Tiene que quedar dentro del plano lejano de la cámara.")]
@@ -68,9 +69,9 @@ public class CieloEclipse : MonoBehaviour
     [SerializeField] Color solTotalidad = new Color(0.6f, 0.62f, 0.85f);
     [SerializeField] float intensidadTotalidad = 0.5f;
     [SerializeField] Color cieloTotalidad = new Color(0.07f, 0.09f, 0.18f);
-    [SerializeField] Color ambienteCieloTotalidad = new Color(0.26f, 0.29f, 0.4f);
-    [SerializeField] Color ambienteHorizonteTotalidad = new Color(0.34f, 0.24f, 0.2f);
-    [SerializeField] Color ambienteSueloTotalidad = new Color(0.13f, 0.12f, 0.12f);
+    [SerializeField] Color ambienteCieloTotalidad = new Color(0.60f, 0.65f, 0.78f);
+    [SerializeField] Color ambienteHorizonteTotalidad = new Color(0.45f, 0.42f, 0.42f);
+    [SerializeField] Color ambienteSueloTotalidad = new Color(0.22f, 0.20f, 0.18f);
 
     [Header("Niebla")]
     [Tooltip("Más baja que la del epílogo: si no, la niebla se come los discos.")]
@@ -86,6 +87,7 @@ public class CieloEclipse : MonoBehaviour
     bool atardecer;
     Renderer rendererLuna, rendererSol;
     MaterialPropertyBlock bloque;
+    static readonly int IdFondo = Shader.PropertyToID("_ImitarFondo");
     static readonly int IdColor = Shader.PropertyToID("_BaseColor");
 
     public float Progreso
@@ -131,6 +133,7 @@ public class CieloEclipse : MonoBehaviour
     {
         PrepararReferencias();
         visible = valor;
+        if (fondoBrumoso != null) fondoBrumoso.gameObject.SetActive(valor);
         if (valor) UsarDireccionExterior();
         if (discoSol != null) discoSol.gameObject.SetActive(valor);
         if (discoLuna != null) discoLuna.gameObject.SetActive(valor);
@@ -144,6 +147,7 @@ public class CieloEclipse : MonoBehaviour
     {
         PrepararReferencias();
         visible = true;
+        if (fondoBrumoso != null) fondoBrumoso.gameObject.SetActive(false);
         GuardarDireccionExterior();
         if (sol != null) sol.transform.rotation = Quaternion.Euler(alturaSolSubsuelo, giroExterior.eulerAngles.y, 0f);
         if (discoSol != null) discoSol.gameObject.SetActive(true);
@@ -154,6 +158,7 @@ public class CieloEclipse : MonoBehaviour
         {
             rendererLuna.GetPropertyBlock(bloque);
             bloque.SetColor(IdColor, Camera.main != null ? Camera.main.backgroundColor : Color.black);
+            bloque.SetFloat(IdFondo, 0f);
             rendererLuna.SetPropertyBlock(bloque);
         }
     }
@@ -186,6 +191,8 @@ public class CieloEclipse : MonoBehaviour
         if (cam == null) return;
 
         Vector3 origen = cam.transform.position;
+        if (fondoBrumoso != null && fondoBrumoso.gameObject.activeSelf)
+            fondoBrumoso.transform.position = origen;
         Vector3 d = DireccionSol;
         // tamaño aparente: a distancia D, un objeto de radio D·tan(θ/2) se ve con un ángulo θ.
         // Así el sol se ve igual de grande sin importar a qué distancia se lo ponga
@@ -254,11 +261,18 @@ public class CieloEclipse : MonoBehaviour
         RenderSettings.fogDensity = atardecer ? nieblaAtardecer : densidadNiebla;
         var cam = Camera.main;
         if (cam != null) cam.backgroundColor = cielo;
+        if (fondoBrumoso != null)
+        {
+            fondoBrumoso.GetPropertyBlock(bloque);
+            bloque.SetColor(IdColor, cielo);
+            fondoBrumoso.SetPropertyBlock(bloque);
+        }
 
         if (rendererLuna != null)
         {
             rendererLuna.GetPropertyBlock(bloque);
             bloque.SetColor(IdColor, cielo);
+            bloque.SetFloat(IdFondo, fondoBrumoso != null && fondoBrumoso.gameObject.activeSelf ? 1f : 0f);
             rendererLuna.SetPropertyBlock(bloque);
         }
 

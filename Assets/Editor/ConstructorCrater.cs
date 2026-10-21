@@ -176,9 +176,9 @@ public static partial class ConstructorCrater
         filtro.descripcion = descripcion;
         filtro.anguloCono = 28f;
         filtro.alcance = 15f * EspacioCrater.Escala;
-        // menos que la luz blanca (2000, ver CrearPrefabs) pero no tanto: con 230 parecía que la
+        // Menos que la luz blanca (650, ver CrearPrefabs): con 230 parecía que la
         // linterna se apagaba al poner un filtro
-        filtro.intensidad = 360f;
+        filtro.intensidad = 520f;
         filtro.tiempoDeCarga = 0.4f;
         filtro.sonidoAlEquipar = alEquipar;
         filtro.zumbido = zumbido;
@@ -576,21 +576,21 @@ public static partial class ConstructorCrater
 
         var bloom = Agregar<Bloom>(perfil);
         bloom.threshold.Override(1.0f);
-        bloom.intensity.Override(0.22f);
+        bloom.intensity.Override(0.45f);
         bloom.scatter.Override(0.7f);
 
         var ajustes = Agregar<ColorAdjustments>(perfil);
-        ajustes.postExposure.Override(.65f);
-        ajustes.contrast.Override(3f);
+        ajustes.postExposure.Override(0f);
+        ajustes.contrast.Override(8f);
         ajustes.saturation.Override(-6f);
 
         var vineta = Agregar<Vignette>(perfil);
-        vineta.intensity.Override(0.16f);
+        vineta.intensity.Override(0.22f);
         vineta.smoothness.Override(0.45f);
 
         var grano = Agregar<FilmGrain>(perfil);
         grano.type.Override(FilmGrainLookup.Thin1);
-        grano.intensity.Override(0.035f);
+        grano.intensity.Override(0.07f);
 
         EditorUtility.SetDirty(perfil);
         AssetDatabase.SaveAssets();
@@ -683,32 +683,31 @@ public static partial class ConstructorCrater
         var fuenteLinterna = linternaGO.AddComponent<AudioSource>();
         ConfigurarAudio(fuenteLinterna, null, 0.5f, true, false);
         var linterna = linternaGO.AddComponent<LinternaController>();
-        linterna.duracionFiltro = 2f;
+        linterna.duracionFiltro = 3f;
         linterna.spot = spot;
         linterna.capaReceptores = LayerMask.GetMask(CapaAncla, CapaReceptor);
         linterna.capaObstaculos = LayerMask.GetMask("Default");
         linterna.filtros = new System.Collections.Generic.List<FiltroDefinicion> { kit.cuerpo, kit.hueco };
         linterna.requiereRecogerla = true;
         // la luz blanca alumbra bastante más que los filtros: dan ganas de volver a ella
-        linterna.intensidadBase = 1100f;
+        linterna.intensidadBase = 650f;
         linterna.alcanceBase = 24f;
-        linterna.anguloBase = 54f;
+        linterna.anguloBase = 52f;
         linterna.sonidoEncender = kit.audio.linternaEncender;
         linterna.sonidoApagar = kit.audio.linternaApagar;
         spot.range = linterna.alcanceBase;
-        spot.spotAngle = linterna.AnguloVisualActual;
-        spot.innerSpotAngle = spot.spotAngle * linterna.proporcionNucleo;
+        spot.spotAngle = linterna.anguloBase;
         spot.color = linterna.colorBase;
         spot.intensity = linterna.intensidadBase;
 
         var enMano = new GameObject("LinternaEnMano");
         enMano.transform.SetParent(camaraGO.transform, false);
         var visual = enMano.AddComponent<LinternaVisual>();
-        var modelo = Instanciar(kit.modeloLinterna, enMano.transform, "Modelo");
-        modelo.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
-        modelo.transform.localScale = Vector3.one * 0.085f;
+        var modelo = CrearModeloFarol(enMano.transform);
+        visual.posicionReposo = new Vector3(0.26f, -0.35f, 0.66f);
+        modelo.transform.localScale = Vector3.one * .74f;
         modelo.transform.localPosition = visual.posicionReposo;
-        PintarLinterna(kit, modelo);
+        modelo.transform.localRotation = Quaternion.Euler(0f, -18f, -8f);
         foreach (var r in modelo.GetComponentsInChildren<Renderer>(true)) r.shadowCastingMode = ShadowCastingMode.Off;
         visual.linterna = linterna;
         visual.modelo = modelo.transform;
@@ -892,11 +891,9 @@ public static partial class ConstructorCrater
 
         var visual = new GameObject("Visual");
         visual.transform.SetParent(raiz.transform, false);
-        var modelo = Instanciar(kit.modeloLinterna, visual.transform, "Modelo");
-        modelo.transform.localScale = Vector3.one * 0.13f;
-        modelo.transform.localPosition = new Vector3(0f, -0.02f, 0f);
+        var modelo = CrearModeloFarol(visual.transform);
+        modelo.transform.localPosition = new Vector3(0f, 0.24f, 0f);
         modelo.transform.localRotation = Quaternion.Euler(0f, 25f, 0f);
-        PintarLinterna(kit, modelo);
 
         var recogible = raiz.AddComponent<Recogible>();
         recogible.visual = visual.transform;

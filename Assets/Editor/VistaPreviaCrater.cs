@@ -3,7 +3,6 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 /// <summary>
@@ -94,7 +93,11 @@ public static class VistaPreviaCrater
             Captura("04_Mirador_Totalidad", Ojo(55.5f), new Vector3(0f, 8f, -43f));
             Captura("04b_Bajada_Tallados", new Vector3(0f, 6.3f, -40f), new Vector3(1.58f, 6.3f, -40.5f));
             cielo.Mostrar(false);
-            ConstructorCrater.ConfigurarAmbiente();
+            RenderSettings.ambientSkyColor = new Color(0.23f, 0.24f, 0.3f);
+            RenderSettings.ambientEquatorColor = new Color(0.14f, 0.135f, 0.15f);
+            RenderSettings.ambientGroundColor = new Color(0.06f, 0.05f, 0.045f);
+            RenderSettings.fogColor = new Color(0.02f, 0.025f, 0.04f);
+            RenderSettings.fogDensity = 0.02f;
             Captura("05_Cresta_Desde_Antesala", EspacioCrater.Punto(new Vector3(0f, 1.62f, 61f)), EspacioCrater.Punto(new Vector3(0f, 1.4f, 71f)));
             Transform red = GameObject.Find("Red_O1").transform;
             Captura("06_Gruta_Recuperacion", red.TransformPoint(new Vector3(0f, -1.38f, 1f)), red.TransformPoint(new Vector3(3f, -1.6f, -4f)));
@@ -130,12 +133,10 @@ public static class VistaPreviaCrater
         var linterna = new GameObject("LinternaTemporal").AddComponent<Light>();
         linterna.transform.SetParent(camaraGO.transform, false);
         linterna.type = LightType.Spot;
-        var configuracion = AssetDatabase.LoadAssetAtPath<GameObject>(ConstructorCrater.CarpetaPrefabs + "Jugador.prefab")
-            .GetComponentInChildren<LinternaController>(true);
-        linterna.range = configuracion.alcanceBase;
-        linterna.spotAngle = configuracion.anguloBase;
-        linterna.innerSpotAngle = linterna.spotAngle * configuracion.proporcionNucleo;
-        linterna.intensity = configuracion.intensidadBase;
+        linterna.range = 24f;
+        linterna.spotAngle = 36f;
+        linterna.innerSpotAngle = 16f;
+        linterna.intensity = 2000f;
         linterna.color = new Color(1f, 0.95f, 0.86f);
         linterna.shadows = LightShadows.Soft;
 
@@ -157,14 +158,6 @@ public static class VistaPreviaCrater
 
     static void Guardar(Camera camara, string ruta)
     {
-        var adaptacion = Object.FindFirstObjectByType<AdaptacionOscuridad>(FindObjectsInactive.Include);
-        if (adaptacion != null && adaptacion.GetComponent<Volume>().profile.TryGet<ColorAdjustments>(out var ajustes))
-        {
-            var anterior = adaptacion.observador;
-            adaptacion.observador = camara.transform;
-            ajustes.postExposure.value = adaptacion.ExposicionBase;
-            adaptacion.observador = anterior;
-        }
         const int ancho = 1280, alto = 720;
         var rt = new RenderTexture(ancho, alto, 24, RenderTextureFormat.ARGB32);
         var tex = new Texture2D(ancho, alto, TextureFormat.RGB24, false);

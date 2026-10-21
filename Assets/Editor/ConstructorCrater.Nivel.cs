@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Events;
 using UnityEditor.SceneManagement;
@@ -48,6 +48,7 @@ public static partial class ConstructorCrater
         public CieloEclipse cielo;
         public GameObject craterValle, huella, guino;
         public Transform[] bordesCrater;
+        public Light[] lucesApertura;
         // los tramos de pared de la escalera: suben con el borde del cráter (si no, asomarían antes del eclipse)
         public List<Transform> paredesEscalera = new List<Transform>();
         public Transform tapaCrater, puertaValle;
@@ -94,9 +95,10 @@ public static partial class ConstructorCrater
         DespejarTallados(kit);
         AmpliarSubsuelo(nivel, arte);
         FacetarEscena(kit);
+        AplicarCorreccionDocente(kit, nivel);
         ConstruirExploracion(kit, nivel, refs);
-        AjustarAtmosfera();
         ConfigurarSombrasYSuperficies(kit, refs);
+        // Variante Silo archivada: se activa sólo desde su menú optativo.
         PrepararOclusion(escena);
 
         EditorSceneManager.SaveScene(escena, RutaEscena);
@@ -143,14 +145,15 @@ public static partial class ConstructorCrater
         }
     }
 
-    public static void ConfigurarAmbiente()
+    static void ConfigurarAmbiente()
     {
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = AmbientMode.Trilight;
-        // Gradiente HDR sobre el basalto oscuro: conserva el relieve sin puntos de relleno.
-        RenderSettings.ambientSkyColor = new Color(1.3f, 1.35f, 1.45f);
-        RenderSettings.ambientEquatorColor = new Color(1.05f, 1.05f, 1.1f);
-        RenderSettings.ambientGroundColor = new Color(.6f, .58f, .58f);
+        // la luz de relleno del interior: un poco más alta que la mínima, para que siempre
+        // se lean las paredes y el piso aun lejos de las lámparas
+        RenderSettings.ambientSkyColor = new Color(1.30f, 1.35f, 1.45f);
+        RenderSettings.ambientEquatorColor = new Color(1.05f, 1.05f, 1.10f);
+        RenderSettings.ambientGroundColor = new Color(0.60f, 0.58f, 0.58f);
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         RenderSettings.fogDensity = 0.02f;
@@ -190,7 +193,7 @@ public static partial class ConstructorCrater
         refs.luna.shadows = LightShadows.Soft;
         RenderSettings.sun = refs.luna;
 
-        Luz(g, "Luz_Plaza", new Vector3(0f, 4.5f, -38f), LuzCalida, 90f, 14f, false);
+        // La escalera se ilumina desde sus tallados; sin foco suelto sobre el pozo.
     }
 
     // ================================================================== 02 Umbral
@@ -390,6 +393,7 @@ public static partial class ConstructorCrater
         refs.spawnValle.localPosition = new Vector3(0f, AlturaRelieve(0f, 150f) + 0.05f, 150f);
         refs.spawnValle.localRotation = Quaternion.Euler(0f, 180f, 0f);
         refs.jugador.transform.SetPositionAndRotation(refs.spawnValle.position, refs.spawnValle.rotation);
+        CartelDeMovimientoInicial(k, g, refs.spawnValle);
         // La apertura del prólogo la activa el mirador; los créditos requieren llegar a la huella.
         refs.zonaMirador = Zona(g, "Zona_Mirador", g.TransformPoint(new Vector3(0f, 1.5f, 55.5f)), new Vector3(88f, 4f, 2f));
 
@@ -413,7 +417,7 @@ public static partial class ConstructorCrater
 
         var solGO = new GameObject("Sol_Epilogo");
         solGO.transform.SetParent(g, false);
-        solGO.transform.rotation = g.rotation * Quaternion.Euler(14f, 0f, 0f);
+        solGO.transform.rotation = g.rotation * Quaternion.Euler(12f, 0f, 0f);
         refs.sol = solGO.AddComponent<Light>();
         refs.sol.type = LightType.Directional;
         // mañana en el prólogo; en el epílogo CieloEclipse lo baja al atardecer
@@ -455,6 +459,7 @@ public static partial class ConstructorCrater
         }
         bordes.AddRange(refs.paredesEscalera);
         refs.bordesCrater = bordes.ToArray();
+        refs.lucesApertura = LucesDelBorde(crater);
 
         // la tapa: tierra sobre el agujero, se abre desde el centro. Está fuera del grupo
         // del cráter porque en el epílogo vuelve a cerrarse (y se puede pisar)
@@ -531,16 +536,9 @@ public static partial class ConstructorCrater
 
     static void Vestir(Kit k, Transform arte)
     {
-        var modulos = Grupo(arte, "ArquitecturaModular");
-        void Par(float z, float mitad, float escala, string sala)
-        {
-            Modulo(k, modulos, $"Modulo_{sala}_Izq_{z:0}", new Vector3(-mitad + 0.45f * escala, 0f, z), 90f, escala, k.piedra);
-            Modulo(k, modulos, $"Modulo_{sala}_Der_{z:0}", new Vector3(mitad - 0.45f * escala, 0f, z), -90f, escala, k.piedra);
-        }
-        // en el Umbral, la mitad sur queda libre para los murales que enseñan los controles
-        Par(-7f, 6f, 0.62f, "Umbral");
+        // Retirados los módulos decorativos de doble aro y sus columnas laterales.
         ConstruirMurales(k, arte);
-        foreach (float z in new[] { 29f, 41f, 56f, 64f }) Par(z, 6f, 0.82f, "Cruce");
+
         // (la Cresta no lleva módulos: sus siluetas oscuras cortaban el reflejo de la linterna)
 
         // (en el fondo del pozo ya no hay murales a los lados del túnel: detrás de las paredes
@@ -594,8 +592,6 @@ public static partial class ConstructorCrater
         ConfigurarAudio(viento, k.audio.vientoOculo, 0f, true, false);
         viento.playOnAwake = true;
         var adaptacion = volumenGO.AddComponent<AdaptacionOscuridad>();
-        adaptacion.observador = refs.jugador.GetComponentInChildren<Camera>().transform;
-        adaptacion.exposicionNormal = .65f;
         adaptacion.tiempoDeAdaptacion = 11f;
         adaptacion.demoraInicial = 0.4f;
         adaptacion.exposicionAdaptada = 3.2f;
@@ -604,6 +600,7 @@ public static partial class ConstructorCrater
         var sistemas = new GameObject("SISTEMAS");
         var interfaz = sistemas.AddComponent<InterfazCrater>();
         var pausa = sistemas.AddComponent<PausaCrater>();
+        pausa.pausarAlPerderFoco = false;
         var flujo = sistemas.AddComponent<FlujoJuegoCrater>();
         var eclipse = sistemas.AddComponent<EclipseFinalController>();
 
@@ -664,6 +661,7 @@ public static partial class ConstructorCrater
         Asignar(prologo, "crater", refs.craterValle);
         AsignarLista(prologo, "bordes", refs.bordesCrater);
         Asignar(prologo, "tapa", refs.tapaCrater);
+        AsignarLista(prologo, "lucesApertura", refs.lucesApertura);
         Asignar(prologo, "puerta", refs.puertaValle);
         Asignar(prologo, "huella", refs.huella);
         Asignar(prologo, "zonaEpilogo", refs.zonaFinal.gameObject);
@@ -725,7 +723,6 @@ public static partial class ConstructorCrater
         var arriba = Bloque(base_, "Escalon_Arriba", t.position + Vector3.up * 0.18f, new Vector3(2.1f, 0.12f, 1.5f), k.piedra);
         abajo.transform.rotation = t.rotation;
         arriba.transform.rotation = t.rotation;
-        if (ancla.name != "Ancla_Umbral") LamparaSobreAncla(k, t.parent, ancla, "Lampara_" + ancla.name);
     }
 
     /// <summary>
@@ -743,15 +740,9 @@ public static partial class ConstructorCrater
         foreach (var r in ancla.GetComponentsInChildren<Renderer>(true))
             if (!acentos.Contains(r)) { r.sharedMaterial = k.piedra; PrefabUtility.RecordPrefabInstancePropertyModifications(r); }
 
-        LamparaSobreAncla(k, g, ancla, "Lampara_Ancla_Umbral");
-    }
-
-    static void LamparaSobreAncla(Kit k, Transform g, Ancla ancla, string nombre)
-    {
-        var blanco = new Color(.85f, .92f, 1f);
-        // Lámpara visible solamente sobre las anclas que abren puertas.
+        // la lámpara: una cadena del techo y una piedra blanca que brilla, sobre el ancla
         var arriba = ancla.transform.position + Vector3.up * 3.55f + Vector3.right * 0.3f;
-        var lampara = Grupo(g, nombre);
+        var lampara = Grupo(g, "Lampara_Ancla_Umbral");
         Bloque(lampara, "Cadena", arriba + Vector3.up * 0.24f, new Vector3(0.03f, 0.42f, 0.03f), k.metal);
         var piedra = Bloque(lampara, "Luz", arriba, Vector3.one * 0.22f, k.luzEclipse);
         piedra.transform.rotation = Quaternion.Euler(45f, 0f, 45f);

@@ -120,5 +120,3 @@ Decisión vigente (8/10/2026): `Docs/SellosEnObelisco.md` reemplaza las cinemát
 Ajuste vigente (8/10/2026): al regresar con un sello, sus tres columnas se encienden una por una, con notas ascendentes localizadas (intervalo 0,75 s), y después su cara del obelisco. Las dos progresiones se escuchan por separado, respetan pausa y dejan movimiento/mirada libres; se mantienen las luces encendidas. Ver `Docs/SellosEnObelisco.md`.
 
 Decisión posterior (8/10/2026): las seis columnas forman un hexágono simétrico de radio 6,5 m, tres SOL y tres LUNA, con el eje de paso libre. Se agrega un atajo invisible de un solo uso por escena, fuera del camino inicial (3 m a la izquierda y 1 m atrás), hacia el mirador; conserva el eclipse y la bajada normal. Sólo está habilitado en el prólogo. Reglas y validación en `Docs/SellosEnObelisco.md`.
-
-Atmósfera vigente: [iluminación interior, linterna y pilares](Docs/Atmosfera20261015.md).

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 /// Si hay que cambiar una tecla, se cambia acá y en ningún otro lado.
 ///
 ///  WASD / flechas · Mover        Mouse · Mirar
-///  F · Linterna                  1 / 2 · Filtros       Q · Quitar filtro
+///  F · Linterna                  1 / 2 · Filtros          Shift · Correr
 ///  Esc · Pausa
 ///
 /// CÓMO FUNCIONA
@@ -52,14 +52,15 @@ public static class EntradaCrater
         return v;
     }
 
-    /// <summary>Correr sólo con R2 / RT en joystick; Shift y L3 no aceleran.</summary>
-    public static bool Correr => Gamepad.current != null && Gamepad.current.rightTrigger.ReadValue() > .5f;
+    /// <summary>Correr con Shift o R2 / RT; L3 no acelera.</summary>
+    public static bool Correr => (Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed))
+        || (Gamepad.current != null && Gamepad.current.rightTrigger.ReadValue() > .5f);
 
     /// <summary>Prender o apagar la linterna (F o RB).</summary>
     public static bool Linterna =>
         Presionada(Key.F) || (Gamepad.current != null && Gamepad.current.rightShoulder.wasPressedThisFrame);
 
-    /// <summary>Equipar el filtro 'indice' (0 = CUERPO con 1 o X, 1 = HUECO con 2 o Y).</summary>
+    /// <summary>Equipar el filtro 'indice' (0 = SOL con 1 o X, 1 = LUNA con 2 o Y).</summary>
     public static bool Filtro(int indice)
     {
         if (indice == 0 && (Presionada(Key.Digit1) || Presionada(Key.Numpad1))) return true;
@@ -69,9 +70,9 @@ public static class EntradaCrater
         return indice == 0 ? g.buttonWest.wasPressedThisFrame : indice == 1 && g.buttonNorth.wasPressedThisFrame;
     }
 
-    /// <summary>Volver a la luz blanca (Q o B).</summary>
+    /// <summary>Volver a la luz blanca (B en mando; los filtros también se agotan solos).</summary>
     public static bool QuitarFiltro =>
-        Presionada(Key.Q) || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame);
+        Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame;
 
     /// <summary>Saltear la animación que se esté viendo (Espacio, Enter o A). No se anuncia con texto.</summary>
     public static bool Saltar =>
@@ -113,6 +114,14 @@ public static class EntradaCrater
     /// <summary>True sólo en el frame en que se apretó la tecla.</summary>
     public static bool Presionada(Key tecla) =>
         Keyboard.current != null && Keyboard.current[tecla].wasPressedThisFrame;
+
+    /// <summary>Último dispositivo usado; conectar un mando no cambia los carteles por sí solo.</summary>
+    public static bool UsandoMando => Gamepad.current != null && Gamepad.current.lastUpdateTime >
+        System.Math.Max(Keyboard.current != null ? Keyboard.current.lastUpdateTime : 0,
+            Mouse.current != null ? Mouse.current.lastUpdateTime : 0);
+    public static bool Interactuar => Saltar;
+    public static string BotonInteractuar => UsandoMando ? "A (×)" : "Espacio";
+    public static string BotonLinterna => UsandoMando ? "RB (R1)" : "F";
 
     public static bool ClicIzquierdo =>
         Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;

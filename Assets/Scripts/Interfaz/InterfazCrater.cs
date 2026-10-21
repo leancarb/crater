@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +23,10 @@ public class InterfazCrater : MonoBehaviour
 {
     [SerializeField] LinternaController linterna;
     [SerializeField] Font fuente;
+    Font fuenteTitulo;
+    [Tooltip("Prueba visual: desmarcar para volver a la fuente anterior en el HUD.")]
+    public bool usarFuenteNuevaEnHUD = false;
+    TipografiaTitulo espaciadoTitulo;
     [Header("Créditos (si faltan, se arman en texto)")]
     [SerializeField] Texture2D logoFacultad;   // en Assets/Art/Creditos, una imagen que diga "fadu" o "uba"
     [SerializeField] Texture2D logoCatedra;    // en Assets/Art/Creditos, una imagen que diga "campos" o "catedra"
@@ -49,6 +53,8 @@ public class InterfazCrater : MonoBehaviour
     Text textoTitulo;
     Text textoSubtitulo;
     GameObject panelPausa;
+    Slider deslizadorLuminosidad;
+    Text textoLuminosidad;
     CanvasGroup tarjetaCatedra;   // el logo de UBA FADU, el de la Cátedra Campos Trilnick y el año
 
     // se guarda la corrutina en curso para cortarla si llega otra indicación
@@ -58,6 +64,7 @@ public class InterfazCrater : MonoBehaviour
     string ultimoEstado;
     string ultimosFiltros;
     bool filtrosSucios = true;
+    bool ultimoMando;
 
     void OnEnable()
     {
@@ -77,10 +84,16 @@ public class InterfazCrater : MonoBehaviour
     void Awake()
     {
         if (fuente == null) fuente = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        fuenteTitulo = Resources.Load<Font>("Fonts/CCElephantmenGreatest Bold");
         Construir();
     }
 
-    void Update() => ActualizarLinterna();
+    void Update()
+    {
+        bool mando=EntradaCrater.UsandoMando;
+        if(mando!=ultimoMando){ultimoMando=mando;filtrosSucios=true;}
+        ActualizarLinterna();
+    }
     public void MostrarInteraccionOpcional(string mensaje)
     {
         if(textoOpcional==null || mensaje==ultimoOpcional)return;
@@ -183,9 +196,16 @@ public class InterfazCrater : MonoBehaviour
     /// <summary>"CRÁTER", el título.</summary>
     void PonerPalabraCrater()
     {
-        textoTitulo.font = fuente;
-        textoTitulo.fontSize = 78;
-        textoTitulo.text = "CRÁTER";
+        textoTitulo.font = fuenteTitulo != null ? fuenteTitulo : fuente;
+        textoTitulo.fontStyle = FontStyle.Normal;
+        textoTitulo.fontSize = 110;
+        textoTitulo.text = "CRATER";
+        textoTitulo.enabled = false;
+        textoTitulo.color = new Color(1f, 1f, 1f, 0f);
+        textoTitulo.material = null;
+        espaciadoTitulo.enabled = true;
+        var sombra = textoTitulo.GetComponent<Shadow>();
+        if (sombra != null) sombra.enabled = false;
     }
 
     /// <summary>
@@ -229,17 +249,23 @@ public class InterfazCrater : MonoBehaviour
                 yield return MostrarTarjeta(saltar);
                 continue;
             }
+            MostrarVelo(Color.white, 1f);
+            espaciadoTitulo.enabled = false;
+            textoTitulo.material = null;
             textoTitulo.text = linea;
             textoTitulo.font = fuente;
             textoTitulo.fontSize = linea.Length > 16 ? 40 : 78;
             if (linea == "CRÁTER") PonerPalabraCrater();
-            textoTitulo.color = new Color(ColorTextoSobreBlanco.r, ColorTextoSobreBlanco.g, ColorTextoSobreBlanco.b, 0f);
+            var tinta = linea == "CRÁTER" ? Color.black : ColorTextoSobreBlanco;
+            textoTitulo.color = new Color(tinta.r, tinta.g, tinta.b, 0f);
             yield return FundirTexto(textoTitulo, 0f, 1f, 1.2f);
             for (float t = 0f; t < 2.8f && (saltar == null || !saltar()); t += Time.unscaledDeltaTime) yield return null;
             yield return FundirTexto(textoTitulo, 1f, 0f, saltar != null && saltar() ? 0.2f : 1.2f);
         }
 
+        MostrarVelo(Color.white, 1f);
         PonerPalabraCrater();
+        textoTitulo.color = new Color(0f, 0f, 0f, 0f);
         textoSubtitulo.text = "R · Volver a empezar     Esc · Salir";
         textoSubtitulo.color = new Color(ColorTextoSobreBlanco.r, ColorTextoSobreBlanco.g, ColorTextoSobreBlanco.b, 0f);
         StartCoroutine(FundirTexto(textoSubtitulo, 0f, 1f, 2f));
@@ -276,14 +302,76 @@ public class InterfazCrater : MonoBehaviour
     public void MostrarPausa(bool visible)
     {
         if (panelPausa != null) panelPausa.SetActive(visible);
+        if (deslizadorLuminosidad != null)
+        {
+            deslizadorLuminosidad.SetValueWithoutNotify(OpcionesCrater.Brillo);
+            ActualizarTextoLuminosidad();
+            var eventos = UnityEngine.EventSystems.EventSystem.current;
+            if (eventos != null && visible) eventos.SetSelectedGameObject(deslizadorLuminosidad.gameObject);
+            else if (eventos != null && eventos.currentSelectedGameObject == deslizadorLuminosidad.gameObject)
+                eventos.SetSelectedGameObject(null);
+        }
         if (textoControles != null) textoControles.text =
             "WASD / Stick izq. · Moverse      Mouse / Stick der. · Mirar\n" +
-            "R2 / RT · Correr      F / RB · Linterna      Filtros · 2 segundos\n" +
-            "1 / X (□) · SOL      2 / Y (△) · LUNA      Q / B (○) · Luz blanca\n\n" +
+            "Espacio / A (×) · Recoger      Shift / R2 / RT · Correr\n" +
+            "F / RB (R1) · Linterna      Filtros · 3 segundos\n" +
+            "1 / X (□) · SOL      2 / Y (△) · LUNA      Blanca automática a los 3 s\n\n" +
             "Piedras talladas · " + piezasOpcionales + "/6\n\n" +
             "H / ↑ · Ayudas escritas: " + (OpcionesCrater.AyudasEscritas ? "sí" : "no") + "\n\n" +
             "Esc / Start / B (○) · Seguir\nR / Y (△) · Reiniciar      X / X (□) · Salir";
     }
+
+    void ConstruirLuminosidad(Transform raiz)
+    {
+        if (UnityEngine.EventSystems.EventSystem.current == null)
+        {
+            var eventos = new GameObject("EventosInterfaz", typeof(UnityEngine.EventSystems.EventSystem),
+                typeof(UnityEngine.InputSystem.UI.InputSystemUIInputModule));
+            eventos.transform.SetParent(transform, false);
+        }
+        var titulo = CrearTexto(Crear("TituloPausa", raiz, new Vector2(.2f,.82f), new Vector2(.8f,.9f)),
+            30, TextAnchor.MiddleCenter, Color.white);
+        titulo.text = "PAUSA";
+        textoLuminosidad = CrearTexto(Crear("ValorLuminosidad", raiz, new Vector2(.2f,.27f), new Vector2(.8f,.32f)),
+            24, TextAnchor.MiddleCenter, Color.white);
+        var control = Crear("Luminosidad", raiz, new Vector2(.24f,.19f), new Vector2(.76f,.24f));
+        control.AddComponent<Image>().color = Color.clear; // Área cómoda para clic y arrastre.
+        deslizadorLuminosidad = control.AddComponent<Slider>();
+        var pista = Crear("Pista", control.transform, new Vector2(0,.35f), new Vector2(1,.65f)).AddComponent<Image>();
+        pista.color = new Color(.3f,.3f,.3f); // Recibe clics y arrastres a través del Slider padre.
+        var zonaRelleno = Crear("ZonaRelleno", control.transform, new Vector2(0,.35f), new Vector2(1,.65f));
+        var relleno = Crear("Relleno", zonaRelleno.transform, Vector2.zero, Vector2.one).AddComponent<Image>();
+        relleno.color = new Color(.85f,.85f,.85f); relleno.raycastTarget = false;
+        var zonaManija = Crear("ZonaManija", control.transform, Vector2.zero, Vector2.one);
+        var manija = Crear("Manija", zonaManija.transform, Vector2.zero, Vector2.one).AddComponent<Image>();
+        manija.color = Color.white;
+        var rt = manija.rectTransform; rt.sizeDelta = new Vector2(28,0);
+        deslizadorLuminosidad.fillRect = relleno.rectTransform;
+        deslizadorLuminosidad.handleRect = rt;
+        deslizadorLuminosidad.targetGraphic = manija;
+        deslizadorLuminosidad.minValue = OpcionesCrater.BrilloMinimo;
+        deslizadorLuminosidad.maxValue = OpcionesCrater.BrilloMaximo;
+        deslizadorLuminosidad.wholeNumbers = false;
+        deslizadorLuminosidad.SetValueWithoutNotify(OpcionesCrater.Brillo);
+        deslizadorLuminosidad.onValueChanged.AddListener(CambiarLuminosidad);
+        var ayuda = CrearTexto(Crear("AyudaLuminosidad", raiz, new Vector2(.18f,.11f), new Vector2(.82f,.17f)),
+            20, TextAnchor.MiddleCenter, new Color(.75f,.75f,.75f));
+        ayuda.text = "Luminosidad: arrastrá con el mouse o usá ← → / flechitas\nSe guarda al volver al juego";
+        ActualizarTextoLuminosidad();
+    }
+
+    void CambiarLuminosidad(float valor)
+    {
+        OpcionesCrater.EstablecerBrillo(valor);
+        ActualizarTextoLuminosidad();
+    }
+
+    void ActualizarTextoLuminosidad()
+    {
+        if (textoLuminosidad != null && deslizadorLuminosidad != null)
+            textoLuminosidad.text = $"LUMINOSIDAD  {Mathf.RoundToInt(deslizadorLuminosidad.normalizedValue * 100f)} %";
+    }
+
 
     static IEnumerator FundirTexto(Text texto, float desde, float hasta, float duracion)
     {
@@ -368,7 +456,7 @@ public class InterfazCrater : MonoBehaviour
     /// <summary>"SOL     LUNA" con colores (rich text); el filtro puesto a color pleno. Sin teclas: las enseñan los murales.</summary>
     string DescribirFiltros()
     {
-        var sb = new StringBuilder();
+        var sb = new StringBuilder(EntradaCrater.UsandoMando ? "B (○) · Normal" : "");
         for (int i = 0; i < linterna.filtros.Count; i++)
         {
             var f = linterna.filtros[i];
@@ -376,7 +464,8 @@ public class InterfazCrater : MonoBehaviour
             bool actual = f == linterna.FiltroActual;
             string hex = ColorUtility.ToHtmlStringRGB(actual ? f.color : Color.Lerp(f.color, Color.gray, 0.55f));
             if (sb.Length > 0) sb.Append("     ");
-            sb.Append($"<color=#{hex}>{f.nombreVisible}</color>");
+            string boton=EntradaCrater.UsandoMando ? (i==0 ? "X (□)" : "Y (△)") : (i+1).ToString();
+            sb.Append($"<color=#{hex}>{boton} · {f.nombreVisible}</color>");
         }
         return sb.ToString();
     }
@@ -386,7 +475,7 @@ public class InterfazCrater : MonoBehaviour
     /// <summary>Arma el Canvas entero. Las posiciones son anclas relativas (0 a 1) de la pantalla.</summary>
     void Construir()
     {
-        var canvasGO = new GameObject("HUD_CRATER", typeof(Canvas), typeof(CanvasScaler));
+        var canvasGO = new GameObject("HUD_CRATER", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         canvasGO.transform.SetParent(transform, false);
         var canvas = canvasGO.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -446,11 +535,13 @@ public class InterfazCrater : MonoBehaviour
         anillo.raycastTarget = false;
         anillo.enabled = false;
 
-        // título / cierre
-        textoTitulo = CrearTexto(Crear("Titulo", raiz, new Vector2(0.1f, 0.45f), new Vector2(0.9f, 0.62f)),
+        // Título y cierre tipográficos en blanco y negro.
+        textoTitulo = CrearTexto(Crear("Titulo", raiz, new Vector2(0.1f, 0.40f), new Vector2(0.9f, 0.58f)),
             78, TextAnchor.MiddleCenter, new Color(1f, 1f, 1f, 0f));
         textoSubtitulo = CrearTexto(Crear("Subtitulo", raiz, new Vector2(0.1f, 0.2f), new Vector2(0.9f, 0.44f)),
             26, TextAnchor.UpperCenter, new Color(0.85f, 0.85f, 0.85f, 0f));
+        espaciadoTitulo = textoTitulo.gameObject.AddComponent<TipografiaTitulo>();
+        espaciadoTitulo.enabled = false;
         textoTitulo.enabled = false;
         textoSubtitulo.enabled = false;
 
@@ -458,9 +549,10 @@ public class InterfazCrater : MonoBehaviour
         panelPausa = Crear("Pausa", raiz, Vector2.zero, Vector2.one);
         var fondoPausa = panelPausa.AddComponent<Image>();
         fondoPausa.color = new Color(0f, 0f, 0f, 0.78f);
-        // en la pausa sólo están los controles, en un gris apagado: sin menú de opciones
-        textoControles = CrearTexto(Crear("Controles", panelPausa.transform, new Vector2(0.15f, 0.3f), new Vector2(0.85f, 0.7f)),
-            22, TextAnchor.MiddleCenter, new Color(0.42f, 0.42f, 0.42f));
+        // Controles y calibración de luminosidad, con tipografía legible.
+        textoControles = CrearTexto(Crear("Controles", panelPausa.transform, new Vector2(0.12f, 0.36f), new Vector2(0.88f, 0.79f)),
+            22, TextAnchor.MiddleCenter, new Color(0.75f, 0.75f, 0.75f));
+        ConstruirLuminosidad(panelPausa.transform);
         panelPausa.SetActive(false);
 
         // créditos: la tarjeta de la facultad y la cátedra, con sus logos (negro sobre blanco)
@@ -535,8 +627,11 @@ public class InterfazCrater : MonoBehaviour
     Text CrearTexto(GameObject go, int tamanio, TextAnchor alineacion, Color color)
     {
         var texto = go.AddComponent<Text>();
-        texto.font = fuente;
-        texto.fontSize = tamanio;
+        bool esHUD = go.name == "Interaccion_Opcional" || go.name == "Prompt" ||
+            go.name == "Estado" || go.name == "Filtros" || go.name == "Controles" || go.name == "Subtitulo";
+        bool probarFuente = usarFuenteNuevaEnHUD && esHUD && fuenteTitulo != null;
+        texto.font = probarFuente ? fuenteTitulo : fuente;
+        texto.fontSize = probarFuente ? Mathf.RoundToInt(tamanio * .73f) : tamanio;
         texto.alignment = alineacion;
         texto.color = color;
         texto.raycastTarget = false;
@@ -601,3 +696,4 @@ public class InterfazCrater : MonoBehaviour
         return circulo;
     }
 }
+

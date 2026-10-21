@@ -23,6 +23,7 @@ public class ObeliscoDelEclipse : MonoBehaviour
     public Renderer eclipse;
     public Renderer eclipseRegreso;
     public Light luz;
+    public TestigoDeSello arosCompletos;
     public Color colorEclipse = new Color(0.85f, 0.92f, 1f);
     public float emisionApagado = 0.03f;
     public float intensidadLuz = 30f;
@@ -83,6 +84,7 @@ public class ObeliscoDelEclipse : MonoBehaviour
             }
         }
         AvanzarColumnas();
+        if(arosCompletos!=null && SeisColumnasCompletas()) arosCompletos.Encender();
         IluminarColumnas(luzColumnasSol, columnasSol);
         IluminarColumnas(luzColumnasLuna, columnasLuna);
         if (!Encendido && sol != null && luna != null && sol.Encendido && luna.Encendido &&
@@ -94,6 +96,14 @@ public class ObeliscoDelEclipse : MonoBehaviour
             Aplicar();
         }
         if (brillo >= 1f && puerta != null && !puerta.Abierta) puerta.Abrir();
+    }
+
+    bool SeisColumnasCompletas()
+    {
+        if(columnasSol==null||columnasLuna==null||columnasSol.Length!=3||columnasLuna.Length!=3)return false;
+        foreach(var c in columnasSol)if(c==null||!c.Encendido||c.Nivel<.99f)return false;
+        foreach(var c in columnasLuna)if(c==null||!c.Encendido||c.Nivel<.99f)return false;
+        return true;
     }
 
     bool EnLaRotonda()

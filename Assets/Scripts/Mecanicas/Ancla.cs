@@ -47,6 +47,8 @@ public class Ancla : ReceptorDeLuz
     {
         if (acentos != null)
             foreach (var r in acentos) if (r != null && !escalas.ContainsKey(r.transform)) escalas.Add(r.transform, r.transform.localScale);
+        if (!permanente && retencion > 0f && GetComponent<CuentaAtrasAncla>() == null)
+            gameObject.AddComponent<CuentaAtrasAncla>();
         AlActualizar(0f);
     }
 

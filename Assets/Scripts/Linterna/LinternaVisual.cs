@@ -20,7 +20,7 @@ public class LinternaVisual : MonoBehaviour
 
     [Header("Pose")]
     // posición del modelo respecto de la cámara: abajo a la derecha, adelante
-    public Vector3 posicionReposo = new Vector3(0.23f, -0.24f, 0.42f);
+    public Vector3 posicionReposo = new Vector3(0.26f, -0.35f, 0.66f);
     // cuánto se desplaza el modelo cuando el jugador mueve la mirada (inercia)
     public float balanceo = 0.0018f;
     // qué tan rápido vuelve a la pose (más alto = más rígido)

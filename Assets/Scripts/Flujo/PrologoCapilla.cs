@@ -26,9 +26,10 @@ public class PrologoCapilla : MonoBehaviour
     [SerializeField] GameObject crater;
     [Tooltip("Piezas del borde: suben desde abajo de la tierra.")]
     [SerializeField] Transform[] bordes;
-    [Tooltip("Tapa de tierra sobre el pozo: se abre desde el centro y en el epílogo vuelve a cerrarse.")]
+    [Tooltip("Tapa de tierra sobre el pozo: se retira bajo el terreno y en el epílogo vuelve a cerrarse.")]
     [SerializeField] Transform tapa;
     [SerializeField] Transform puerta;
+    [SerializeField] Light[] lucesApertura;
     [SerializeField] Renderer[] contornoPuerta;
     [SerializeField] Renderer destello;
     [Tooltip("Pasto aplastado donde estaba el cráter. Sólo en el epílogo.")]
@@ -83,7 +84,7 @@ public class PrologoCapilla : MonoBehaviour
 
     float volumenPajaros;
     float[] alturasVisibles;
-    Vector3 escalaTapa;
+    Vector3 escalaTapa, posicionTapa, retiradaTapa;
     Collider colliderTapa;
     Vector3 escalaDestello, posicionDestello;
     bool cinematicaHecha;
@@ -108,6 +109,14 @@ public class PrologoCapilla : MonoBehaviour
         if (tapa != null)
         {
             escalaTapa = tapa.localScale;
+            posicionTapa = tapa.position;
+            // Retirar la tierra desde la boca hacia el fondo, sin reducir el disco.
+            Vector3 haciaFondo = puerta != null ? posicionTapa - puerta.position : Vector3.forward;
+            haciaFondo.y = 0f;
+            if (haciaFondo.sqrMagnitude < .001f) haciaFondo = Vector3.forward;
+            var superficie = tapa.GetComponent<Renderer>();
+            float diametro = superficie != null ? Mathf.Max(superficie.bounds.size.x, superficie.bounds.size.z) : escalaTapa.x;
+            retiradaTapa = haciaFondo.normalized * (diametro + .5f);
             colliderTapa = tapa.GetComponent<Collider>();
         }
         if (destello != null)
@@ -350,6 +359,8 @@ public class PrologoCapilla : MonoBehaviour
 
     void AplicarRevelado(float r)
     {
+        if (lucesApertura != null) foreach (var luz in lucesApertura)
+            if (luz != null) { luz.enabled = r > .01f; luz.intensity = 80f * Suave(Mathf.Clamp01(r)); }
         if (bordes != null)
         {
             for (int i = 0; i < bordes.Length; i++)
@@ -366,10 +377,11 @@ public class PrologoCapilla : MonoBehaviour
 
         if (tapa != null)
         {
-            // la tierra se abre desde el centro, apenas empieza a subir el borde
+            // La tapa mantiene su tamaño y se retira bajo el terreno del fondo.
+            // Así se revela primero la boca de la escalera, sin encoger el círculo.
             float k = Suave(Mathf.Clamp01(r / 0.6f));
             tapa.gameObject.SetActive(k < 0.999f);
-            tapa.localScale = new Vector3(escalaTapa.x * (1f - k), escalaTapa.y, escalaTapa.z * (1f - k));
+            tapa.position = posicionTapa + retiradaTapa * k + Vector3.down * Suave(Mathf.Clamp01(k * 4f));
             // sólo se puede pisar cerrada (en el epílogo)
             if (colliderTapa != null) colliderTapa.enabled = k <= 0.001f;
         }
@@ -474,3 +486,4 @@ public class PrologoCapilla : MonoBehaviour
 
     static float Suave(float k) => Mathf.SmoothStep(0f, 1f, k);
 }
+

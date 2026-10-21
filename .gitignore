@@ -118,3 +118,7 @@ InitTestScene*.unity*
 
 # Build compilado (99 MB) - no va al repo
 /versions/
+
+# Copias locales y conflictos temporales de Unity Version Control
+/Backups/
+*.private.*

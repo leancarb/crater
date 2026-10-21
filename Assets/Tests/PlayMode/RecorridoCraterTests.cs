@@ -70,6 +70,14 @@ public class RecorridoCraterTests
         Assert.That(c.Objetivo,Is.EqualTo(p),"no se alcanza/ve la pieza "+p.identificador);
         Assert.That(p.Recoger(),Is.True);Assert.That(p.Recoger(),Is.False);
     }
+    IEnumerator RecogerPrincipal(string nombre)
+    {
+        var objeto=Buscar<Recogible>(nombre);
+        fps.MirarHacia(objeto.PuntoInteraccion.position);yield return Esperar(.2f);
+        var coleccion=Object.FindFirstObjectByType<ColeccionPiedras>();
+        Assert.That(coleccion.ObjetoRecogible,Is.EqualTo(objeto),"recogida consciente: "+nombre);
+        Assert.That(objeto.Recoger(linterna),Is.True);
+    }
     IEnumerator Recorrido(bool lunaPrimero,int cantidad=0)
     {
         piezasDeseadas=cantidad;
@@ -110,6 +118,7 @@ public class RecorridoCraterTests
 
         // Umbral: los murales de los controles y, más adelante, la linterna y la compuerta
         yield return Caminar(S(new Vector3(1.5f, 0f, -8.5f)));
+        yield return RecogerPrincipal("Recogible_Linterna");
         Assert.That(linterna.Disponible, Is.True, "no se pudo recoger la linterna");
         Assert.That(flujo.EtapaActual, Is.EqualTo(FlujoJuegoCrater.Etapa.EncenderLinterna));
         linterna.Encender(true);
@@ -229,7 +238,7 @@ public class RecorridoCraterTests
         for (float t = 0; t < 15 && !tituloVisible; t += Time.unscaledDeltaTime)
         {
             tituloVisible = Object.FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None)
-                .Any(texto => texto.text == "CRÁTER" && texto.enabled && texto.color.a > 0.8f);
+                .Any(texto => texto.text == "CRATER" && texto.enabled && texto.color.a > 0.8f);
             yield return null;
         }
         Assert.That(tituloVisible, Is.True, "los créditos no son visibles");
@@ -256,6 +265,7 @@ public class RecorridoCraterTests
         fps.MirarHacia(O(-28f, -0.5f) + Vector3.up * 1.55f);
         Capturar("02b_Entrada_Sol");
         yield return Caminar(O(-23f, 1f));
+        yield return RecogerPrincipal("Recogible_Cuerpo");
         Assert.That(linterna.EstaDesbloqueado(cuerpo), Is.True, "no se pudo recoger CUERPO");
         yield return Equipar(cuerpo);
         Capturar("03_Sol_Ensenar");
@@ -319,6 +329,7 @@ public class RecorridoCraterTests
         fps.MirarHacia(E(28f, -0.5f) + Vector3.up * 1.55f);
         Capturar("04b_Entrada_Luna");
         yield return Caminar(E(23.5f, 1f));
+        yield return RecogerPrincipal("Recogible_Hueco");
         Assert.That(linterna.EstaDesbloqueado(hueco), Is.True, "no se pudo recoger HUECO");
         yield return Equipar(hueco);
         Capturar("05_Luna_Ensenar");
@@ -523,7 +534,9 @@ public class RecorridoCraterTests
         Assert.That(puente.Solido, Is.True, $"{nombre} no apareció");
 
         MirarHacia(despues);
-        yield return Caminar(despues);
+        float velocidadAnterior=fps.velocidad;
+        if(nombre=="Puente_N_Borde")fps.velocidad*=fps.multiplicadorCorrer;
+        try { yield return Caminar(despues); } finally {fps.velocidad=velocidadAnterior;}
         Assert.That(jugador.transform.position.y, Is.GreaterThan(-0.5f), $"el jugador se cayó cruzando {nombre}");
     }
 
@@ -576,11 +589,11 @@ public class RecorridoCraterTests
         {
             Vector3 p=c.bounds.center;p.y=0;
             Vector3 centro=o.centro;centro.y=0;
-            Assert.That(Vector3.Distance(p,centro),Is.EqualTo(6.5f).Within(.03f));
+            Assert.That(Vector3.Distance(p,centro),Is.EqualTo(8.8f).Within(.03f));
             Assert.That(columnas.Any(r=>Vector2.Distance(new Vector2(r.bounds.center.x,r.bounds.center.z),new Vector2(-p.x,p.z))<.03f),Is.True);
             Assert.That(Mathf.Abs(p.x),Is.GreaterThan(3f),"una columna invade el eje entrada/Cruce");
         }
-        foreach(float radio in new[]{3.5f,8.8f})
+        foreach(float radio in new[]{3.5f,10.5f})
         {
             Vector3 centro=o.centro;centro.y=radio<4f?-1.15f:.05f;
             cc.enabled=false;jugador.transform.position=centro+Vector3.back*radio;fps.ReiniciarMovimiento();cc.enabled=true;
@@ -861,7 +874,7 @@ public class RecorridoCraterTests
             Key(UnityEngine.InputSystem.Key.F); yield return null; yield return null;
             Assert.That(linterna.Encendida, Is.True);
             Soltar(); yield return null;
-            Key(UnityEngine.InputSystem.Key.Digit1); yield return null; yield return null;
+            Key(UnityEngine.InputSystem.Key.Digit2); yield return null; yield return null;
             Assert.That(linterna.FiltroActual, Is.SameAs(linterna.filtros[0]));
             Soltar(); yield return null;
             var sello = Buscar<Ancla>("Sello_Oeste");
@@ -1194,3 +1207,4 @@ public class RecorridoCraterTests
         return encontrado;
     }
 }
+

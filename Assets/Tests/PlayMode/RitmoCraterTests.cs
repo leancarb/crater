@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -44,16 +44,13 @@ public class RitmoCraterTests
     }
 
     [UnityTest]
-    public IEnumerator SolYLunaDuranDosSegundosRespetanPausaYVuelvenALuzBlanca()
+    public IEnumerator SolYLunaDuranTresSegundosRespetanPausaYVuelvenALuzBlanca()
     {
         jugador.enabled = false;
         foreach (var filtro in linterna.filtros)
         {
             yield return Equipar(filtro);
-            Assert.That(linterna.TiempoFiltroRestante, Is.EqualTo(2f).Within(.1f));
-            Assert.That(linterna.AnguloActual, Is.EqualTo(28f), "El área que activa anclas sigue acotada.");
-            Assert.That(linterna.spot.spotAngle, Is.EqualTo(44f));
-            Assert.That(linterna.spot.innerSpotAngle, Is.LessThan(6f));
+            Assert.That(linterna.TiempoFiltroRestante, Is.EqualTo(3f).Within(.1f));
             yield return new WaitForSeconds(1.25f);
             Assert.That(linterna.FiltroActual, Is.SameAs(filtro));
             var pausa = Object.FindFirstObjectByType<PausaCrater>();
@@ -66,7 +63,7 @@ public class RitmoCraterTests
             yield return new WaitForSecondsRealtime(.15f);
             Assert.That(linterna.TiempoFiltroRestante, Is.EqualTo(restante).Within(.001f));
             pausa.Reanudar();
-            yield return new WaitForSeconds(.85f);
+            yield return new WaitForSeconds(1.85f);
             Assert.That(linterna.FiltroActual, Is.Null);
             Assert.That(linterna.Encendida, Is.True);
             Assert.That(linterna.spot.color, Is.EqualTo(linterna.colorBase));
@@ -74,16 +71,16 @@ public class RitmoCraterTests
         yield return Equipar(linterna.filtros[0]);
         yield return new WaitForSeconds(.3f);
         linterna.Encender(false);
-        yield return new WaitForSeconds(1.85f);
-        Assert.That(linterna.FiltroActual, Is.Null, "Apagar no debe congelar el filtro ni renovar sus dos segundos.");
+        yield return new WaitForSeconds(2.85f);
+        Assert.That(linterna.FiltroActual, Is.Null, "Apagar no debe congelar el filtro ni renovar sus tres segundos.");
         linterna.Encender(true);
         Assert.That(linterna.FiltroActual, Is.Null);
         yield return Equipar(linterna.filtros[0]);
-        Assert.That(linterna.TiempoFiltroRestante, Is.GreaterThan(1.9f), "Puede activarse de nuevo después de volver a luz blanca.");
+        Assert.That(linterna.TiempoFiltroRestante, Is.GreaterThan(2.9f), "Puede activarse de nuevo después de volver a luz blanca.");
     }
 
     [UnityTest]
-    public IEnumerator ElJugadorCaminaACuatroSinSprintConShiftNiL3YSoloCorreConR2()
+    public IEnumerator ElJugadorCaminaACuatroYCorreConShiftOR2SinSprintEnL3()
     {
         var teclado = InputSystem.AddDevice<Keyboard>(); teclado.MakeCurrent();
         var mando = InputSystem.AddDevice<Gamepad>(); mando.MakeCurrent();
@@ -99,7 +96,7 @@ public class RitmoCraterTests
             {
                 InputSystem.QueueStateEvent(teclado, shift ? new KeyboardState(Key.W, Key.LeftShift) : new KeyboardState(Key.W));
                 yield return new WaitForSeconds(.6f);
-                Assert.That(new Vector2(cc.velocity.x, cc.velocity.z).magnitude, Is.EqualTo(4f).Within(.15f));
+                Assert.That(new Vector2(cc.velocity.x, cc.velocity.z).magnitude, Is.EqualTo(shift?5.6f:4f).Within(.15f));
             }
             InputSystem.QueueStateEvent(teclado, new KeyboardState());
             InputSystem.QueueStateEvent(mando, new GamepadState { leftStick = Vector2.up }.WithButton(GamepadButton.LeftStick));
@@ -167,7 +164,7 @@ public class RitmoCraterTests
             {
                 var direccion = caso.Item3 - jugador.transform.position; direccion.y = 0;
                 if (direccion.magnitude < .12f) break;
-                cc.Move(direccion.normalized * Mathf.Min(jugador.velocidad * Time.deltaTime, direccion.magnitude) + Vector3.down * 2 * Time.deltaTime);
+                cc.Move(direccion.normalized * Mathf.Min(jugador.velocidad * (caso.Item1=="Puente_N_Borde"?jugador.multiplicadorCorrer:1f) * Time.deltaTime, direccion.magnitude) + Vector3.down * 2 * Time.deltaTime);
                 yield return null;
                 Assert.That(jugador.transform.position.y, Is.GreaterThan(-.5f), caso.Item1 + ": se cayó cruzando");
             }

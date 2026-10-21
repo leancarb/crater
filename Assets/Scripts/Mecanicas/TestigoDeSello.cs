@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 /// <summary>
 /// Un tallado junto a la puerta de los sellos que se enciende cuando su sello
@@ -22,6 +22,9 @@ public class TestigoDeSello : MonoBehaviour
     [Tooltip("Opcional: una luz que se prende con el sello, para verlo de lejos.")]
     public Light luz;
     public float intensidadLuz = 30f;
+    [Tooltip("Segundo foco de la columna, integrado en el techo y sincronizado con el piso.")]
+    public Light luzSuperior;
+    public float intensidadLuzSuperior = 45f;
 
     [Tooltip("El obelisco espera el regreso a la rotonda y llama a Encender.") ]
     public bool manual;
@@ -53,6 +56,11 @@ public class TestigoDeSello : MonoBehaviour
         {
             luz.intensity = intensidadLuz * nivel;
             luz.enabled = nivel > 0.01f;
+        }
+        if(luzSuperior!=null)
+        {
+            luzSuperior.intensity=intensidadLuzSuperior*nivel;
+            luzSuperior.enabled=nivel>.01f;
         }
         foreach (var r in renderers)
         {

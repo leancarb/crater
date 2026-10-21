@@ -2,6 +2,7 @@ Shader "Crater/CieloSinNiebla"
 {
     Properties
     {
+        [HideInInspector] _ImitarFondo("Imitar fondo exterior",Float)=0
         _BaseMap("Textura", 2D) = "white" {}
         [HDR] _BaseColor("Color", Color) = (1,1,1,1)
         [HideInInspector] _Surface("Surface", Float) = 0
@@ -32,20 +33,23 @@ Shader "Crater/CieloSinNiebla"
             #pragma fragment Frag
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Assets/Shaders/CieloExteriorComun.hlsl"
             TEXTURE2D(_BaseMap);
             SAMPLER(sampler_BaseMap);
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
                 half4 _BaseColor;
+                float _ImitarFondo;
             CBUFFER_END
             struct Attributes { float4 positionOS:POSITION; float2 uv:TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
-            struct Varyings { float4 positionCS:SV_POSITION; float2 uv:TEXCOORD0; UNITY_VERTEX_OUTPUT_STEREO };
+            struct Varyings { float4 positionCS:SV_POSITION; float2 uv:TEXCOORD0; float3 mundo:TEXCOORD1; UNITY_VERTEX_OUTPUT_STEREO };
             Varyings Vert(Attributes input)
             {
                 Varyings output=(Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 output.positionCS=TransformObjectToHClip(input.positionOS.xyz);
+                output.mundo=TransformObjectToWorld(input.positionOS.xyz);
                 output.uv=TRANSFORM_TEX(input.uv,_BaseMap);
                 return output;
             }
@@ -54,7 +58,9 @@ Shader "Crater/CieloSinNiebla"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 // El cielo exterior no pertenece a la niebla de las salas.
                 // La profundidad sigue ocultándolo detrás de techos y paredes.
-                return SAMPLE_TEXTURE2D(_BaseMap,sampler_BaseMap,input.uv)*_BaseColor;
+                half4 tinta=_BaseColor;
+                if(_ImitarFondo>.5) tinta.rgb=ColorCieloBrumoso(input.mundo,_BaseColor.rgb);
+                return SAMPLE_TEXTURE2D(_BaseMap,sampler_BaseMap,input.uv)*tinta;
             }
             ENDHLSL
         }
