@@ -39,6 +39,8 @@ public class InterfazCrater : MonoBehaviour
     // piezas del Canvas, creadas en Construir()
     Text textoControles;
     Text textoOpcional;
+    Text textoPiedraRecogida;
+    float finConfirmacionPiedra;
     int piezasOpcionales;
     string ultimoOpcional;
     Text textoPrompt;
@@ -114,12 +116,15 @@ public class InterfazCrater : MonoBehaviour
         if(mando!=ultimoMando){ultimoMando=mando;filtrosSucios=true;}
         ActualizarLinterna();
         ActualizarTiempoFiltro();
+        textoPiedraRecogida.transform.parent.gameObject.SetActive(Time.time < finConfirmacionPiedra);
     }
     public void MostrarInteraccionOpcional(string mensaje)
     {
         if(textoOpcional==null || mensaje==ultimoOpcional)return;
         ultimoOpcional=mensaje;textoOpcional.text=mensaje;textoOpcional.enabled=!string.IsNullOrEmpty(mensaje);
     }
+    public void ConfirmarPiedraRecogida() => finConfirmacionPiedra = Time.time + 1.8f;
+
     public void ActualizarColeccion(int cantidad,int total)
     {
         piezasOpcionales=cantidad;
@@ -508,6 +513,13 @@ public class InterfazCrater : MonoBehaviour
         var raiz = canvasGO.transform;
         textoOpcional=CrearTexto(Crear("Interaccion_Opcional",raiz,new Vector2(.2f,.17f),new Vector2(.8f,.23f)), 22, TextAnchor.MiddleCenter, ColorApagado);
         textoOpcional.enabled=false;
+        var confirmacion = Crear("ConfirmacionPiedra", raiz, new Vector2(.34f,.25f), new Vector2(.66f,.29f));
+        var fondoConfirmacion = confirmacion.AddComponent<UnityEngine.UI.Image>();
+        fondoConfirmacion.color = new Color(.02f,.025f,.03f,.95f); fondoConfirmacion.raycastTarget = false;
+        textoPiedraRecogida = CrearTexto(Crear("Mensaje", confirmacion.transform, Vector2.zero, Vector2.one),
+            22, TextAnchor.MiddleCenter, Color.white);
+        textoPiedraRecogida.text = "Piedra tallada recogida";
+        confirmacion.SetActive(false);
 
         // indicación inferior
         var promptGO = Crear("Prompt", raiz, new Vector2(0.15f, 0.06f), new Vector2(0.85f, 0.2f));
