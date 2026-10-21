@@ -16,7 +16,7 @@ public class CraterRevisionTests
     }
 
     [Test]
-    public void ElRefuerzoDeCompuertaFavoreceLosGravesSinRecortarLaSenal()
+    public void LaCompuertaPriorizaMediosAudiblesSinRecortarLaSenal()
     {
         var go = new GameObject("PruebaGraves");
         try
@@ -31,7 +31,8 @@ public class CraterRevisionTests
                 Assert.That(muestras.Max(v => Mathf.Abs(v)), Is.LessThan(.2f));
                 return muestras.Skip(4410).Average(v => (double)v * v);
             }
-            Assert.That(Energia(50f), Is.GreaterThan(Energia(2000f) * 1.8));
+            Assert.That(Energia(800f), Is.GreaterThan(Energia(50f) * 1.8));
+            Assert.That(Energia(800f), Is.GreaterThan(Energia(6000f) * 1.1));
         }
         finally { UnityEngine.Object.DestroyImmediate(go); }
     }
