@@ -44,39 +44,20 @@ public class RitmoCraterTests
     }
 
     [UnityTest]
-    public IEnumerator SolYLunaDuranTresSegundosRespetanPausaYVuelvenALuzBlanca()
+    public IEnumerator FiltroSostenidoRespetaPausaYSueltaAlReanudar()
     {
-        jugador.enabled = false;
-        foreach (var filtro in linterna.filtros)
+        jugador.enabled=false;var mouse=InputSystem.AddDevice<Mouse>();
+        foreach(var f in linterna.filtros)linterna.Desbloquear(f);
+        try
         {
-            yield return Equipar(filtro);
-            Assert.That(linterna.TiempoFiltroRestante, Is.EqualTo(3f).Within(.1f));
-            yield return new WaitForSeconds(1.25f);
-            Assert.That(linterna.FiltroActual, Is.SameAs(filtro));
-            var pausa = Object.FindFirstObjectByType<PausaCrater>();
-            pausa.Pausar(); yield return null;
-            var controles = Object.FindObjectsByType<UnityEngine.UI.Text>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-                .Single(t => t.name == "Controles");
-            Assert.That(controles.text, Does.Contain("H / ↑").And.Contain("R2 / RT").And.Not.Contain("Cruceta"));
-            Assert.That(controles.font.HasCharacter('↑'), Is.True, "La fuente debe poder dibujar la flecha arriba.");
-            float restante = linterna.TiempoFiltroRestante;
-            yield return new WaitForSecondsRealtime(.15f);
-            Assert.That(linterna.TiempoFiltroRestante, Is.EqualTo(restante).Within(.001f));
-            pausa.Reanudar();
-            yield return new WaitForSeconds(1.85f);
-            Assert.That(linterna.FiltroActual, Is.Null);
-            Assert.That(linterna.Encendida, Is.True);
-            Assert.That(linterna.spot.color, Is.EqualTo(linterna.colorBase));
+            InputSystem.QueueStateEvent(mouse,new MouseState().WithButton(MouseButton.Left));yield return null;
+            var filtro=linterna.filtros[0];Assert.That(linterna.FiltroActual,Is.SameAs(filtro));
+            var pausa=Object.FindFirstObjectByType<PausaCrater>();pausa.Pausar();yield return null;
+            InputSystem.QueueStateEvent(mouse,new MouseState());yield return new WaitForSecondsRealtime(.1f);
+            Assert.That(linterna.FiltroActual,Is.SameAs(filtro));
+            pausa.Reanudar();yield return null;Assert.That(linterna.FiltroActual,Is.Null);
         }
-        yield return Equipar(linterna.filtros[0]);
-        yield return new WaitForSeconds(.3f);
-        linterna.Encender(false);
-        yield return new WaitForSeconds(2.85f);
-        Assert.That(linterna.FiltroActual, Is.Null, "Apagar no debe congelar el filtro ni renovar sus tres segundos.");
-        linterna.Encender(true);
-        Assert.That(linterna.FiltroActual, Is.Null);
-        yield return Equipar(linterna.filtros[0]);
-        Assert.That(linterna.TiempoFiltroRestante, Is.GreaterThan(2.9f), "Puede activarse de nuevo después de volver a luz blanca.");
+        finally{InputSystem.RemoveDevice(mouse);}
     }
 
     [UnityTest]
@@ -123,7 +104,7 @@ public class RitmoCraterTests
     }
 
     [UnityTest]
-    public IEnumerator CadaParejaExigeApuntarPorSeparadoYPermiteCruzarConUnPulsoSolar()
+    public IEnumerator CadaParejaExigeApuntarPorSeparadoYPermiteCruzarConFiltroSostenido()
     {
         jugador.enabled = false;
         var casos = new[] {
@@ -170,7 +151,8 @@ public class RitmoCraterTests
             }
             Assert.That(Vector2.Distance(new Vector2(jugador.transform.position.x, jugador.transform.position.z),
                 new Vector2(caso.Item3.x, caso.Item3.z)), Is.LessThan(.2f), caso.Item1 + ": no llegó a la otra orilla");
-            Assert.That(linterna.FiltroActual, Is.Null, "El filtro debe agotarse sin mantenerlo activo artificialmente.");
+            Assert.That(linterna.FiltroActual, Is.SameAs(linterna.filtros[0]), "El filtro no se agota mientras se usa.");
+            linterna.VolverALuzBlanca();
         }
     }
 }

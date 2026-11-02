@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -30,7 +30,7 @@ public class FarolTituloTests
             var visual=prefab.GetComponentInChildren<LinternaVisual>(true);
             Assert.That(visual.modelo,Is.EqualTo(modelo));
             Assert.That(visual.lentes,Does.Contain(difusor));
-            Assert.That(visual.linterna.duracionFiltro,Is.EqualTo(3f));
+            Assert.That(visual.linterna.duracionFiltro,Is.EqualTo(0f));
         }
     }
 }

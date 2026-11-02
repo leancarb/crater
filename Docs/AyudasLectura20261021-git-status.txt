@@ -1,0 +1,48 @@
+ M Assets/Editor/ConstructorCrater.CorreccionDocente.cs
+ M Assets/Editor/ConstructorCrater.Detalles.cs
+ M Assets/Editor/ConstructorCrater.Espacio.cs
+ M Assets/Editor/ConstructorCrater.Murales.cs
+ M Assets/Editor/ConstructorCrater.Nivel.cs
+ M Assets/Editor/ConstructorCrater.RotondaRevision.cs
+ M Assets/Editor/ConstructorCrater.cs
+ M Assets/Editor/GeneradorAudioCrater.cs
+ M Assets/Editor/ValidarProyectoCrater.cs
+ M Assets/Materials/CoronaEclipse.mat
+ M Assets/Materials/DiscoLuna.mat
+ M Assets/Materials/DiscoSol.mat
+ M Assets/Materials/Exterior_CieloBrumoso.mat
+ M Assets/Materials/PinturaHueso.mat
+ M Assets/Models/Facetado/MallasFacetadas.asset
+ M Assets/Prefabs/Jugador.prefab
+ M Assets/Prefabs/Recogible_Filtro.prefab
+ M Assets/Prefabs/Reja.prefab
+ M Assets/Scenes/CraterVerticalSlice.unity
+ M Assets/Scenes/CraterVerticalSlice/OcclusionCullingData.asset
+ M Assets/Scripts/Flujo/EclipseFinalController.cs
+ M Assets/Scripts/Flujo/FlujoJuegoCrater.cs
+ M Assets/Scripts/Interfaz/InterfazCrater.cs
+ M Assets/Scripts/Mecanicas/ColeccionPiedras.cs
+ M Assets/Scripts/Mecanicas/MateriaHueca.cs
+ M Assets/Tests/EditMode/CraterRevisionTests.cs
+ M Assets/Tests/PlayMode/CorreccionDocenteCompletaTests.cs
+ M Assets/Tests/PlayMode/ExploracionCraterTests.cs
+ M Docs/AI/UnityProjectContext.md
+?? Assets/Editor/ConstructorCrater.Placas.cs
+?? Assets/Editor/ConstructorCrater.Placas.cs.meta
+?? Assets/Materials/Placa_Pizarra.mat
+?? Assets/Materials/Placa_Pizarra.mat.meta
+?? Assets/Materials/Trazo_Instruccion.mat
+?? Assets/Materials/Trazo_Instruccion.mat.meta
+?? Assets/Scripts/Flujo/GuiaCresta.cs
+?? Assets/Scripts/Flujo/GuiaCresta.cs.meta
+?? Assets/Tests/EditMode/PlacasInstruccionTests.cs
+?? Assets/Tests/EditMode/PlacasInstruccionTests.cs.meta
+?? Assets/Tests/PlayMode/CanalesLecturaPlayTests.cs
+?? Assets/Tests/PlayMode/CanalesLecturaPlayTests.cs.meta
+?? Assets/Tests/PlayMode/PlacasLecturaPlayTests.cs
+?? Assets/Tests/PlayMode/PlacasLecturaPlayTests.cs.meta
+?? Docs/AyudasLectura20261021-git-status.txt
+?? Docs/AyudasLectura20261021.md
+?? Docs/PlacasInstruccion20261021.md
+?? Docs/PlacasInstruccion20261021.tsv
+?? Docs/Previews/PlacasInstruccion/

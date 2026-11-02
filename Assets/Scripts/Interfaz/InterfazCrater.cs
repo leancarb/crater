@@ -1,11 +1,11 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
 /// HUD mínimo. Se construye en runtime para no depender de referencias frágiles
-/// en la escena: indicaciones, estado de la linterna, mira con barra de carga,
+/// en la escena: indicaciones, estado de la linterna, respuesta visual en los receptores,
 /// velos de fundido, título, pausa, anillo de diamante y créditos.
 ///
 /// CÓMO FUNCIONA
@@ -33,27 +33,17 @@ public class InterfazCrater : MonoBehaviour
 
     const float DuracionFundidoPrompt = 0.35f;
     static readonly Color ColorApagado = new Color(0.6f, 0.6f, 0.6f);
-    static readonly Color ColorBloqueado = new Color(0.8f, 0.2f, 0.15f);
     static readonly Color ColorTextoSobreBlanco = new Color(0.14f, 0.14f, 0.16f);
 
     // piezas del Canvas, creadas en Construir()
     Text textoControles;
     Text textoOpcional;
-    Text textoPiedraRecogida;
-    float finConfirmacionPiedra;
     int piezasOpcionales;
     string ultimoOpcional;
     Text textoPrompt;
     CanvasGroup grupoPrompt;   // CanvasGroup permite fundir el alfa de todo un bloque de UI
     Text textoEstado;
     Text textoFiltros;
-    Image fondoTiempoFiltro;
-    Image barraTiempoFiltro;
-    Text textoRetornoBlanco;
-    float finAvisoBlanco;
-    Image mira;
-    Image fondoCarga;
-    Image barraCarga;
     Image velo;
     Image anillo;
     Text textoTitulo;
@@ -78,30 +68,14 @@ public class InterfazCrater : MonoBehaviour
         if (linterna == null) return;
         linterna.AlDesbloquearFiltro += EnsuciarFiltros;
         linterna.AlEquiparFiltro += EnsuciarFiltros;
-        linterna.AlAgotarseFiltro += AvisarRetornoBlanco;
     }
     void OnDisable()
     {
         if (linterna == null) return;
         linterna.AlDesbloquearFiltro -= EnsuciarFiltros;
         linterna.AlEquiparFiltro -= EnsuciarFiltros;
-        linterna.AlAgotarseFiltro -= AvisarRetornoBlanco;
     }
     void EnsuciarFiltros(FiltroDefinicion filtro) => filtrosSucios = true;
-    void AvisarRetornoBlanco() => finAvisoBlanco = Time.time + 1.8f;
-
-    void ActualizarTiempoFiltro()
-    {
-        bool activo = linterna != null && linterna.Disponible && linterna.FiltroActual != null;
-        fondoTiempoFiltro.gameObject.SetActive(activo);
-        if (activo)
-        {
-            barraTiempoFiltro.fillAmount = Mathf.Clamp01(linterna.TiempoFiltroRestante / linterna.duracionFiltro);
-            barraTiempoFiltro.color = Color.Lerp(linterna.ColorActual, Color.white, .65f);
-        }
-        bool aviso = linterna != null && linterna.Disponible && linterna.FiltroActual == null && Time.time < finAvisoBlanco;
-        textoRetornoBlanco.transform.parent.gameObject.SetActive(aviso);
-    }
 
     void Awake()
     {
@@ -115,16 +89,12 @@ public class InterfazCrater : MonoBehaviour
         bool mando=EntradaCrater.UsandoMando;
         if(mando!=ultimoMando){ultimoMando=mando;filtrosSucios=true;}
         ActualizarLinterna();
-        ActualizarTiempoFiltro();
-        textoPiedraRecogida.transform.parent.gameObject.SetActive(Time.time < finConfirmacionPiedra);
     }
     public void MostrarInteraccionOpcional(string mensaje)
     {
         if(textoOpcional==null || mensaje==ultimoOpcional)return;
         ultimoOpcional=mensaje;textoOpcional.text=mensaje;textoOpcional.enabled=!string.IsNullOrEmpty(mensaje);
     }
-    public void ConfirmarPiedraRecogida() => finConfirmacionPiedra = Time.time + 1.8f;
-
     public void ActualizarColeccion(int cantidad,int total)
     {
         piezasOpcionales=cantidad;
@@ -340,8 +310,8 @@ public class InterfazCrater : MonoBehaviour
         if (textoControles != null) textoControles.text =
             "WASD / Stick izq. · Moverse      Mouse / Stick der. · Mirar\n" +
             "Espacio / A (×) · Recoger      Shift / R2 / RT · Correr\n" +
-            "F / RB (R1) · Farol      Filtros · 3 segundos\n" +
-            "1 / X (□) · SOL      2 / Y (△) · LUNA      Blanca automática a los 3 s\n\n" +
+            "F / X (□) · Farol      Mantener presionado para usar filtros\n" +
+            "Izquierdo / RB (R1) · SOL      Derecho / LB (L1) · LUNA\nSoltar · LUZ BLANCA\n\n" +
             "Piedras talladas · " + piezasOpcionales + "/6\n\n" +
             "H / ↑ · Ayudas escritas: " + (OpcionesCrater.AyudasEscritas ? "sí" : "no") + "\n\n" +
             "Esc / Start / B (○) · Seguir\nR / Y (△) · Reiniciar      X / X (□) · Salir";
@@ -417,7 +387,7 @@ public class InterfazCrater : MonoBehaviour
 
     // ---------------------------------------------------------------- estado de la linterna
 
-    /// <summary>Estado arriba a la derecha y mira con barra de carga en el centro.</summary>
+    /// <summary>Estado del farol arriba a la derecha; la respuesta de interacción ocurre en el mundo.</summary>
     void ActualizarLinterna()
     {
         if (linterna == null) return;
@@ -425,12 +395,7 @@ public class InterfazCrater : MonoBehaviour
         bool disponible = linterna.Disponible;
         textoEstado.enabled = disponible;
         textoFiltros.enabled = disponible;
-        mira.enabled = disponible;
-        if (!disponible)
-        {
-            fondoCarga.gameObject.SetActive(false);
-            return;
-        }
+        if (!disponible) return;
 
         string estado;
         Color color;
@@ -455,7 +420,7 @@ public class InterfazCrater : MonoBehaviour
             textoEstado.text = estado;
             ultimoEstado = estado;
         }
-        textoEstado.color = Color.Lerp(color, Color.white, .65f);
+        textoEstado.color = color;
 
         if (filtrosSucios)
         {
@@ -465,24 +430,12 @@ public class InterfazCrater : MonoBehaviour
             filtrosSucios = false;
         }
 
-        // la mira se agranda y toma el color del haz cuando apunta a un receptor
-        bool apuntando = linterna.Encendida && linterna.HayObjetivo;
-        mira.color = apuntando ? Color.Lerp(color, Color.white, 0.2f) : new Color(1f, 1f, 1f, linterna.Encendida ? 0.45f : 0.2f);
-        mira.rectTransform.localScale = Vector3.one * (apuntando ? 1.6f : 1f);
-
-        // barra: se ve mientras carga, o en rojo si el filtro no sirve para ese receptor
-        bool mostrarCarga = apuntando && linterna.CargaObjetivo > 0f && linterna.CargaObjetivo < 1f
-                            || (apuntando && !linterna.ObjetivoAceptaFiltro);
-        fondoCarga.gameObject.SetActive(mostrarCarga);
-        if (!mostrarCarga) return;
-        barraCarga.fillAmount = linterna.ObjetivoAceptaFiltro ? linterna.CargaObjetivo : 1f;
-        barraCarga.color = linterna.ObjetivoAceptaFiltro ? color : ColorBloqueado;
     }
 
     /// <summary>"SOL     LUNA" con colores (rich text); el filtro puesto a color pleno. Sin teclas: las enseñan los murales.</summary>
     string DescribirFiltros()
     {
-        var sb = new StringBuilder(EntradaCrater.UsandoMando ? "B (○) · Normal" : "");
+        var sb = new StringBuilder();
         for (int i = 0; i < linterna.filtros.Count; i++)
         {
             var f = linterna.filtros[i];
@@ -490,8 +443,8 @@ public class InterfazCrater : MonoBehaviour
             bool actual = f == linterna.FiltroActual;
             string hex = ColorUtility.ToHtmlStringRGB(actual ? f.color : Color.Lerp(f.color, Color.gray, 0.55f));
             if (sb.Length > 0) sb.Append("     ");
-            string boton=EntradaCrater.UsandoMando ? (i==0 ? "X (□)" : "Y (△)") : (i+1).ToString();
-            sb.Append($"<color=#{hex}>{boton} · {f.nombreVisible}</color>");
+            string boton=EntradaCrater.BotonFiltro(i);
+            sb.Append($"<color=#{hex}>{boton} sostenido · {f.nombreVisible}</color>");
         }
         return sb.ToString();
     }
@@ -513,13 +466,6 @@ public class InterfazCrater : MonoBehaviour
         var raiz = canvasGO.transform;
         textoOpcional=CrearTexto(Crear("Interaccion_Opcional",raiz,new Vector2(.2f,.17f),new Vector2(.8f,.23f)), 22, TextAnchor.MiddleCenter, ColorApagado);
         textoOpcional.enabled=false;
-        var confirmacion = Crear("ConfirmacionPiedra", raiz, new Vector2(.34f,.25f), new Vector2(.66f,.29f));
-        var fondoConfirmacion = confirmacion.AddComponent<UnityEngine.UI.Image>();
-        fondoConfirmacion.color = new Color(.02f,.025f,.03f,.95f); fondoConfirmacion.raycastTarget = false;
-        textoPiedraRecogida = CrearTexto(Crear("Mensaje", confirmacion.transform, Vector2.zero, Vector2.one),
-            22, TextAnchor.MiddleCenter, Color.white);
-        textoPiedraRecogida.text = "Piedra tallada recogida";
-        confirmacion.SetActive(false);
 
         // indicación inferior
         var promptGO = Crear("Prompt", raiz, new Vector2(0.15f, 0.06f), new Vector2(0.85f, 0.2f));
@@ -533,48 +479,6 @@ public class InterfazCrater : MonoBehaviour
             26, TextAnchor.UpperRight, Color.white);
         textoFiltros = CrearTexto(Crear("Filtros", raiz, new Vector2(0.5f, 0.855f), new Vector2(0.97f, 0.9f)),
             20, TextAnchor.UpperRight, Color.white);
-
-        // Indicador periférico: el reloj se deriva del filtro real y también se detiene al pausar.
-        var tiempoGO = Crear("TiempoFiltro", raiz, new Vector2(.875f,.905f), new Vector2(.97f,.912f));
-        fondoTiempoFiltro = tiempoGO.AddComponent<UnityEngine.UI.Image>();
-        fondoTiempoFiltro.color = new Color(.02f,.025f,.03f,.95f);
-        fondoTiempoFiltro.raycastTarget = false;
-        barraTiempoFiltro = Crear("Restante", tiempoGO.transform, Vector2.zero, Vector2.one).AddComponent<UnityEngine.UI.Image>();
-        barraTiempoFiltro.sprite = CrearBlanco();
-        barraTiempoFiltro.type = UnityEngine.UI.Image.Type.Filled;
-        barraTiempoFiltro.fillMethod = UnityEngine.UI.Image.FillMethod.Horizontal;
-        barraTiempoFiltro.fillOrigin = 0;
-        barraTiempoFiltro.raycastTarget = false;
-        tiempoGO.SetActive(false);
-        var avisoGO = Crear("RetornoBlanco", raiz, new Vector2(.73f,.813f), new Vector2(.975f,.85f));
-        var fondoAviso = avisoGO.AddComponent<UnityEngine.UI.Image>();
-        fondoAviso.color = new Color(.02f,.025f,.03f,.95f); fondoAviso.raycastTarget = false;
-        textoRetornoBlanco = CrearTexto(Crear("Mensaje", avisoGO.transform, Vector2.zero, Vector2.one),
-            20, TextAnchor.MiddleCenter, Color.white);
-        textoRetornoBlanco.text = "Filtro agotado · LUZ BLANCA";
-        avisoGO.SetActive(false);
-
-        // mira y carga
-        var miraGO = Crear("Mira", raiz, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
-        ((RectTransform)miraGO.transform).sizeDelta = new Vector2(7f, 7f);
-        mira = miraGO.AddComponent<Image>();
-        mira.sprite = CrearCirculo();
-        mira.raycastTarget = false;
-
-        var fondoGO = Crear("FondoCarga", raiz, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
-        var fondoRT = (RectTransform)fondoGO.transform;
-        fondoRT.sizeDelta = new Vector2(120f, 6f);
-        fondoRT.anchoredPosition = new Vector2(0f, -28f);
-        fondoCarga = fondoGO.AddComponent<Image>();
-        fondoCarga.color = new Color(0f, 0f, 0f, 0.55f);
-        fondoCarga.raycastTarget = false;
-        var barraGO = Crear("Carga", fondoGO.transform, Vector2.zero, Vector2.one);
-        barraCarga = barraGO.AddComponent<Image>();
-        barraCarga.sprite = CrearBlanco();   // Filled necesita un sprite
-        barraCarga.type = Image.Type.Filled;
-        barraCarga.fillMethod = Image.FillMethod.Horizontal;
-        barraCarga.raycastTarget = false;
-        fondoGO.SetActive(false);
 
         // velo de fundidos
         velo = Crear("Velo", raiz, Vector2.zero, Vector2.one).AddComponent<Image>();
@@ -749,4 +653,3 @@ public class InterfazCrater : MonoBehaviour
         return circulo;
     }
 }
-

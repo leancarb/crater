@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -683,7 +683,7 @@ public static partial class ConstructorCrater
         var fuenteLinterna = linternaGO.AddComponent<AudioSource>();
         ConfigurarAudio(fuenteLinterna, null, 0.5f, true, false);
         var linterna = linternaGO.AddComponent<LinternaController>();
-        linterna.duracionFiltro = 3f;
+        linterna.duracionFiltro = 0f;
         linterna.spot = spot;
         linterna.capaReceptores = LayerMask.GetMask(CapaAncla, CapaReceptor);
         linterna.capaObstaculos = LayerMask.GetMask("Default");

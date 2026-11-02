@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -874,7 +874,7 @@ public class RecorridoCraterTests
             Key(UnityEngine.InputSystem.Key.F); yield return null; yield return null;
             Assert.That(linterna.Encendida, Is.True);
             Soltar(); yield return null;
-            Key(UnityEngine.InputSystem.Key.Digit1); yield return null; yield return null;
+            Key(UnityEngine.InputSystem.Key.Digit2); yield return null; yield return null;
             Assert.That(linterna.FiltroActual, Is.SameAs(linterna.filtros[0]));
             Soltar(); yield return null;
             var sello = Buscar<Ancla>("Sello_Oeste");

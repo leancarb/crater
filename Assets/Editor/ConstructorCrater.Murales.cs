@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -659,7 +659,8 @@ public static partial class ConstructorCrater
     static void PanelLuzBlanca(Kit k, Lienzo l)
     {
         var h = l.En(k.pinturaHueso);
-        Tecla(h, -0.85f, 0f, 0.3f, 0.3f, Letra('1'));
+        Anillo(h,new Vector2(-.85f,0),.12f,.16f);
+        Linea(h,new Vector2(-.85f,.02f),new Vector2(-.85f,.22f),.035f);
         var punta = Linterna(h, new Vector2(-0.52f, 0f), 0f, 0.3f);
         Cono(h, punta, 0f, 0.72f, 14f);
         // la luz blanca despierta el ancla: un aro con su brillo alrededor
@@ -674,11 +675,20 @@ public static partial class ConstructorCrater
         }
     }
 
+    // El botón coloreado indica cuál se mantiene presionado; la figura inferior conserva el filtro.
+    static void DibujoMouseSostenido(List<Vector3> h,List<Vector3> acento,bool derecho)
+    {
+        Marco(h,-1.04f,.02f,-.72f,.48f,.025f);
+        Linea(h,new Vector2(-1.04f,.26f),new Vector2(-.72f,.26f),.025f);
+        Linea(h,new Vector2(-.88f,.26f),new Vector2(-.88f,.48f),.025f);
+        Rect(acento,derecho?-.86f:-1.02f,.29f,derecho?-.74f:-.90f,.45f);
+    }
+
     static void PanelFiltroSol(Kit k, Lienzo l)
     {
         var s = l.En(k.pinturaSol);
         var h = l.En(k.pinturaHueso);
-        FiguraEn(s,Figura.Sol,-.88f,.22f,.3f);
+        DibujoMouseSostenido(h,s,false);
         FiguraEn(s, Figura.Sol, -0.88f, -0.25f, 0.34f);
         var punta = Linterna(h, new Vector2(-0.55f, 0.32f), -28f, 0.28f);
         Cono(s, punta, -28f, 0.95f, 15f);
@@ -693,7 +703,7 @@ public static partial class ConstructorCrater
     {
         var u = l.En(k.pinturaLuna);
         var h = l.En(k.pinturaHueso);
-        FiguraEn(u,Figura.LunaCreciente,-.88f,.22f,.3f);
+        DibujoMouseSostenido(h,u,true);
         FiguraEn(u, Figura.LunaCreciente, -0.88f, -0.25f, 0.34f);
         var punta = Linterna(h, new Vector2(-0.55f, 0f), 0f, 0.28f);
         Cono(u, punta, 0f, 0.9f, 20f);

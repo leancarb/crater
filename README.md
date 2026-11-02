@@ -2,28 +2,34 @@
 
 Exploración en primera persona dentro de un cráter. Desde una estación de observación, un
 eclipse revela un cráter en el valle que sólo existe mientras dura la totalidad.
-Adentro, la linterna es la única herramienta: con luz blanca abre el Umbral, con
+Adentro, el farol es la única herramienta: con
 el filtro **SOL** enciende anclas de basalto que tienden puentes de luz, y con
 el filtro **LUNA** disuelve rejas. Al final hay que apagarla y dejar que los ojos se
 acostumbren a la oscuridad: así se abre el techo y entra la luz del fin del eclipse.
 
-Unity 6000.3 · URP (Forward+) · Input System.
+Unity 6000.3.23f1 · URP (Forward+) · Input System.
+
+Versión publicada el 2/11/2026 desde el proyecto de trabajo `Desktop/crater`.
+Incluye el inicio elevado con bajada lateral, el farol central, la respuesta de
+anclas y rejas sin retícula ni barra roja, y los nueve murales blancos con relieve
+y proporciones originales. La escena y los recursos generados ya están incluidos:
+abrir `Assets/Scenes/CraterVerticalSlice.unity` sin reconstruir para jugar.
 
 ## Controles
 
 | Acción | Teclado y mouse | Joystick |
 |---|---|---|
 | Moverse / mirar | WASD · mouse | stick izq. · stick der. |
-| Movimiento | 4 m/s, sin sprint | 4 m/s; R2 / RT para correr a 5,6 m/s |
-| Linterna | F | RB |
-| Filtro SOL / LUNA | 1 / 2 | X / Y |
-| Luz blanca | Q | B |
+| Caminar / correr | 4 m/s; Shift para correr a 5,6 m/s | 4 m/s; R2 / RT para correr a 5,6 m/s |
+| Farol | F | X de Xbox / cuadrado |
+| Mantener SOL / LUNA | Clic izquierdo / derecho | RB (R1) / LB (L1) |
+| Luz blanca | Soltar el botón del filtro | Soltar el botón del filtro |
 | Pausa / seguir | Esc | Start / Options; B / círculo sigue |
 | Reiniciar / salir (en pausa) | R / X | Y / triángulo; X / cuadrado |
 | Ayudas escritas (en pausa) | H | ↑ |
 | Saltar animaciones | Espacio | A / cruz |
 
-SOL y LUNA duran **2 segundos efectivos** después de la transición; luego vuelven automáticamente a luz blanca. Se pueden activar de nuevo y la pausa conserva el tiempo restante. Las parejas de anclas requieren apuntar a cada una.
+SOL y LUNA se mantienen mientras se sostiene el botón. Al soltar, el farol vuelve a blanco con una transición de 0,35 s. Las parejas de anclas requieren apuntar a cada una.
 
 ## Recorrido
 
@@ -31,7 +37,7 @@ SOL y LUNA duran **2 segundos efectivos** después de la transición; luego vuel
 |---|---|
 | 00 Estación (prólogo) | Arranque en una loma exterior con vista a la estación. El eclipse avanza al caminar (o en 80 s quieto). En el mirador se abre un pozo con entrada en el suelo; la mirada sigue libre |
 | 01 Explanada | El fondo del pozo: se baja por la escalera de la boca del cráter, sin cortes; un pasillo con murales del lore sigue al Umbral |
-| 02 Umbral | Murales que enseñan cada control sin texto, en el momento en que se usa; sostener la luz sobre un ancla abre la compuerta |
+| 02 Umbral | Pasaje con arte; conserva su arquitectura, con el ancla y la primera compuerta retiradas |
 | 03 Rotonda | Sala circular ampliada a 37,5 m con plaza hundida redonda de 1,2 m y una escalinata anular continua; las alas se entran por la mitad de cada costado, en cualquier orden. Oeste (SOL): puente, puerta permanente y anclas del techo. Este (LUNA): elección entre dos rejas, trampilla y escotilla. Cada una termina en un sello que abre un atajo |
 | 04 Cruce | Nicho con ancla cubierta, puente descentrado e isla segura entre dos tramos para observar y combinar filtros |
 | 05 Cresta | Se cierra a la espalda. Paredes, piso y techo reflejan el foco, recortado en cada superficie. Apagar la linterna y adaptarse: aparecen tallados ocultos y se abre el techo |
@@ -41,7 +47,7 @@ SOL y LUNA duran **2 segundos efectivos** después de la transición; luego vuel
 
 El GDD es un documento vivo. El estado vigente está en **[Docs/EstadoActualCrater.md](Docs/EstadoActualCrater.md)** y la revisión contemplativa del 6/10/2026 en **[Docs/RevisionContemplativa.md](Docs/RevisionContemplativa.md)**. Los documentos de rediseños anteriores y sus capturas son históricos; varias de sus propuestas se revirtieron.
 
-Se conservan los modelos y la paleta restaurados, las alas anteriores y el Cruce nuevo. La primera ancla SOL y la gruta O1 establecen una respuesta suave al haz y un lugar de descanso con tres tallados resonantes opcionales. LUNA conserva dos entradas a ciegas: el desvío cuenta una pequeña historia de reparación; la ruta principal desciende y asciende por rampas protegidas. La rotonda tiene una apertura física desde la que se observa el eclipse exterior. Al regresar de las alas, las caras SOL/LUNA del obelisco se encienden gradualmente; con ambas se completa el eclipse y se abre el Cruce. La cámara y el movimiento permanecen libres y la pausa congela las señales.
+Se conservan los modelos y la paleta restaurados, las alas anteriores y el Cruce nuevo. La primera ancla SOL y la gruta O1 establecen una respuesta suave al haz y un lugar de descanso con tres tallados resonantes opcionales. LUNA conserva dos entradas a ciegas: el desvío cuenta una pequeña historia de reparación; la ruta principal desciende y asciende por rampas protegidas. La rotonda tiene una apertura física desde la que se observa el eclipse exterior y el farol recogible en el centro. El obelisco visible se retiró; su controlador conserva la progresión de las seis columnas y la apertura del Cruce. La cámara y el movimiento permanecen libres y la pausa congela las señales.
 
 El edificio exterior es una estación de observación secular. Los nombres de algunos archivos, grupos y referencias serializadas mantienen `Capilla` por compatibilidad.
 

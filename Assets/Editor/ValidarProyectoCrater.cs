@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -70,8 +70,8 @@ public static class ValidarProyectoCrater
         Comprobar(jugador != null && jugador.TryGetComponent<JugadorFPS>(out var movimiento) && movimiento.velocidad == 4f && movimiento.multiplicadorCorrer == 1.4f,
             "La velocidad base debe ser 4 m/s y Shift o R2 / RT deben multiplicarla por 1,4.", problemas);
         var linternaPrefab = jugador != null ? jugador.GetComponentInChildren<LinternaController>(true) : null;
-        Comprobar(linternaPrefab != null && linternaPrefab.duracionFiltro == 3f,
-            "Los filtros deben durar 3 segundos efectivos.", problemas);
+        Comprobar(linternaPrefab != null && linternaPrefab.duracionFiltro == 0f,
+            "Los filtros se sostienen con el botón, sin temporizador.", problemas);
 
         if (System.IO.File.Exists(ConstructorCrater.RutaEscena))
             ValidarEscena(cuerpo, hueco, problemas);
@@ -92,6 +92,7 @@ public static class ValidarProyectoCrater
         try
         {
             var objetos = escena.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Transform>(true)).Select(t => t.gameObject).ToArray();
+            ValidarInicioElevado(objetos, problemas);
             T[] Todos<T>() where T : Component => objetos.Select(go => go.GetComponent<T>()).Where(c => c != null).ToArray();
             ValidarMurales(objetos, problemas);
             ValidarPlaytest(objetos, problemas);
@@ -169,7 +170,7 @@ public static class ValidarProyectoCrater
             Comprobar(compuertas.Where(c => c.name != "Cierre_Cresta" && !c.name.StartsWith("Losa_Red_")).All(c => c.receptores.Count > 0 && c.receptores.All(r => r != null)),
                 "Hay una compuerta sin receptores (sólo el cierre de la Cresta puede no tenerlos).", problemas);
             Comprobar(Compuerta("Cierre_Cresta") != null, "Falta el cierre de la Cresta.", problemas);
-            foreach (var nombre in new[] { "Compuerta_Umbral", "Puerta_Sellos", "Atajo_Oeste", "Atajo_Este" })
+            foreach (var nombre in (GameObject.Find("Inicio_Elevado_Kit") != null ? new[] { "Puerta_Sellos", "Atajo_Oeste", "Atajo_Este" } : new[] { "Compuerta_Umbral", "Puerta_Sellos", "Atajo_Oeste", "Atajo_Este" }))
                 Comprobar(Compuerta(nombre) != null && TieneOyentes(Compuerta(nombre).alAbrirse), $"Falta {nombre} o no avisa al flujo del juego.", problemas);
             var sellos = Compuerta("Puerta_Sellos");
             Comprobar(sellos != null && sellos.receptores.Count == 2 && sellos.receptores.All(r => r != null && r.permanente),
@@ -184,7 +185,7 @@ public static class ValidarProyectoCrater
             Comprobar(obeliscos.Length==1 && obelisco.jugador!=null && obelisco.puerta==sellos &&
                 obelisco.sol!=null && obelisco.luna!=null && obelisco.sol.manual && obelisco.luna.manual &&
                 obelisco.sol.sello!=null && obelisco.luna.sello!=null && obelisco.sol.sello!=obelisco.luna.sello &&
-                obelisco.eclipse!=null && obelisco.eclipseRegreso!=null && obelisco.luz!=null && obelisco.resonanciaSol!=null && obelisco.resonanciaLuna!=null,
+                (GameObject.Find("Inicio_Elevado_Kit")!=null || (obelisco.eclipse!=null && obelisco.eclipseRegreso!=null && obelisco.luz!=null)) && obelisco.resonanciaSol!=null && obelisco.resonanciaLuna!=null,
                 "El obelisco debe comunicar ambos sellos y abrir el Cruce con referencias completas.",problemas);
             if (obelisco != null)
             {
@@ -288,10 +289,10 @@ public static class ValidarProyectoCrater
             puerta.sonido.GetComponent<GravesCompuerta>() != null), "Falta el cuerpo grave de la compuerta sintetizada del Cruce.", problemas);
         var lampara = objetos.FirstOrDefault(o => o.name == "Lampara_Ancla_Umbral");
         var luzLampara = lampara != null ? lampara.transform.Find("Luz")?.GetComponent<Renderer>() : null;
-        Comprobar(luzLampara != null && luzLampara.sharedMaterial != null && luzLampara.sharedMaterial.IsKeywordEnabled("_EMISSION"),
+        Comprobar(GameObject.Find("Inicio_Elevado_Kit") != null || (luzLampara != null && luzLampara.sharedMaterial != null && luzLampara.sharedMaterial.IsKeywordEnabled("_EMISSION")),
             "La lámpara funcional del ancla del Umbral debe conservar emisión.", problemas);
         var obelisco = objetos.Select(o => o.GetComponent<ObeliscoDelEclipse>()).FirstOrDefault(c => c != null);
-        Comprobar(obelisco != null && obelisco.eclipse != null && obelisco.eclipse.sharedMaterial.IsKeywordEnabled("_EMISSION") &&
+        Comprobar(obelisco != null && (GameObject.Find("Inicio_Elevado_Kit") != null || (obelisco.eclipse != null && obelisco.eclipse.sharedMaterial.IsKeywordEnabled("_EMISSION"))) &&
             obelisco.fundidoResonancia >= .5f && obelisco.fundidoResonancia <= 1f,
             "El obelisco debe conservar emisión y un fundido de resonancia entre 0,5 y 1 s.", problemas);
     }
@@ -334,4 +335,26 @@ public static class ValidarProyectoCrater
     {
         if (!condicion) problemas.Add(mensaje);
     }
+    static void ValidarInicioElevado(GameObject[] objetos, List<string> problemas)
+    {
+        if (!objetos.Any(o => o.name == "Inicio_Elevado_Kit")) return;
+        Comprobar(!objetos.Any(o => o.name == "Ancla_Umbral" || o.name == "Compuerta_Umbral"),
+            "El nuevo inicio conserva el Umbral abierto, sin su ancla ni compuerta.", problemas);
+        Comprobar(objetos.Any(o => o.name == "Piso_Umbral") && objetos.Any(o => o.name == "Techo_Umbral"),
+            "Hay que conservar la arquitectura del Umbral.", problemas);
+        var centro = objetos.Select(o => o.GetComponent<ObeliscoDelEclipse>()).FirstOrDefault(c => c != null);
+        var farol = objetos.Select(o => o.GetComponent<Recogible>()).FirstOrDefault(r => r != null && r.filtro == null);
+        Comprobar(centro != null && farol != null &&
+            Vector2.Distance(new Vector2(farol.transform.position.x, farol.transform.position.z), new Vector2(centro.centro.x, centro.centro.z)) < .05f,
+            "El farol debe ocupar el centro donde estaba el obelisco.", problemas);
+        var cuerpo = objetos.FirstOrDefault(o => o.name == "Anillo_Obelisco");
+        Comprobar(cuerpo != null && cuerpo.GetComponent<Renderer>() == null && cuerpo.GetComponent<Collider>() == null,
+            "El obelisco central no debe seguir visible ni bloquear el farol.", problemas);
+        var spawn = objetos.FirstOrDefault(o => o.name == "SpawnValle");
+        Comprobar(spawn != null && Mathf.Abs(spawn.transform.localPosition.z - ConstructorCrater.InicioElevadoZ) < .01f &&
+            objetos.Any(o => o.name == "Reborde_Crater_Antiguo" && o.GetComponent<MeshCollider>() != null),
+            "Falta el inicio elevado o el reborde transitable del cráter.", problemas);
+    }
 }
+
+

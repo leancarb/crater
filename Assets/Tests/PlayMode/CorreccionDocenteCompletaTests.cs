@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -63,7 +63,7 @@ public class CorreccionDocenteCompletaTests
         Assert.That(GameObject.Find("Ensenanza_Cresta_Espera"),Is.Not.Null);
         foreach(string n in new[]{"Lectura_Primer_Puente","Lectura_Cruce","Lectura_Cresta","Guia_Piso_Cresta"})
             Assert.That(GameObject.Find(n),Is.Null);
-        Assert.That(LinternaController.Instancia.duracionFiltro,Is.EqualTo(3));
+        Assert.That(LinternaController.Instancia.duracionFiltro,Is.EqualTo(0));
     }
     [Test] public void ElExteriorOrientaConRocasSinPorticoNiMarcas()
     {

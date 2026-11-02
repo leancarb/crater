@@ -114,7 +114,6 @@ public class Compuerta : MonoBehaviour
         GuardarOrigen();
         Abierta = true;
         if (sonido != null) sonido.Play();
-        if (Application.isPlaying) FindFirstObjectByType<JugadorFPS>()?.SacudirPorCompuerta(paso.center);
         alAbrirse?.Invoke();
     }
 

@@ -61,14 +61,14 @@ public class LinternaVisual : MonoBehaviour
         // 1 - e^(-s·dt) da un suavizado que se siente igual a cualquier cantidad de FPS
         float k = 1f - Mathf.Exp(-suavizado * delta);
         desvio = Vector3.Lerp(desvio, objetivoDesvio, k);
-        bajada = Mathf.Lerp(bajada, linterna.CambiandoFiltro ? 1f : 0f, k * 0.8f);
+        bajada = Mathf.Lerp(bajada, linterna.CambiandoFiltro ? 1f : 0f, 1f - Mathf.Exp(-16f * delta));
 
         // durante el cambio de filtro baja un poco y se inclina, como si se estuviera cambiando la lente
         modelo.localPosition = posicionReposo + desvio + new Vector3(0f, -0.14f, -0.05f) * bajada;
         modelo.localRotation = Quaternion.Euler(bajada * 28f, 0f, bajada * -12f) * rotacionBase;
 
         // la lente toma el color del haz y brilla (emisión) sólo con la luz encendida
-        Color c = linterna.Encendida ? linterna.ColorActual : new Color(0.05f, 0.04f, 0.03f);
+        Color c = linterna.Encendida ? (linterna.spot != null ? linterna.spot.color : linterna.ColorActual) : new Color(0.05f, 0.04f, 0.03f);
         float brillo = linterna.Encendida && !linterna.CambiandoFiltro ? 3f : 0f;
         foreach (var lente in lentes)
         {

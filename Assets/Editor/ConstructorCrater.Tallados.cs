@@ -197,6 +197,8 @@ public static partial class ConstructorCrater
         Figura[] soles = { Figura.SolSobreLuna0, Figura.SolSobreLuna1, Figura.SolSobreLuna2, Figura.SolSobreLuna3 };
         int n = i / 2;
         if (i % 2 == 0 || n >= lunas.Length) return;
+        centroIzq.y=Mathf.Min(centroIzq.y-.25f,AlturaValle-.95f);
+        centroDer.y=Mathf.Min(centroDer.y-.25f,AlturaValle-.95f);
         IluminarTalladoEscalera(Glifo(paredIzq, $"Luna_Escalera_{n}", lunas[n], centroIzq, Vector3.right, 1.2f, k.pinturaLuna, separar: false), false);
         IluminarTalladoEscalera(Glifo(paredDer, $"Sol_Escalera_{n}", soles[n], centroDer, Vector3.left, 1.2f, k.pinturaSol, separar: false), true);
     }

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
@@ -68,6 +68,32 @@ public abstract class ReceptorDeLuz : MonoBehaviour
     /// </summary>
     public bool Tapado => Time.time < tapadoHasta;
     float tapadoHasta = -1f;
+
+    float inicioRespuestaIncompatible = -10f;
+    float inicioConfirmacionVisual = -10f;
+
+    /// <summary>Aviso exclusivamente visual; no carga, activa ni modifica la retención.</summary>
+    public void AvisarFiltroIncompatible()
+    {
+        // Un pulso lento por aproximación; sostener el haz permite repetirlo con una pausa.
+        if (Time.time - inicioRespuestaIncompatible >= 1.6f) inicioRespuestaIncompatible = Time.time;
+    }
+
+    protected float RespuestaIncompatible => PulsoVisual(inicioRespuestaIncompatible, .8f);
+    protected float ConfirmacionVisual => PulsoVisual(inicioConfirmacionVisual, .45f);
+
+    static float PulsoVisual(float inicio, float duracion)
+    {
+        float t = (Time.time - inicio) / duracion;
+        if (t <= 0 || t >= 1) return 0;
+        float onda = Mathf.Sin(t * Mathf.PI);
+        return onda * onda;
+    }
+
+    protected void LimpiarRespuestaVisual()
+    {
+        inicioRespuestaIncompatible = inicioConfirmacionVisual = -10f;
+    }
 
     public void AvisarTapado() => tapadoHasta = Time.time + 0.12f;
 
@@ -141,6 +167,7 @@ public abstract class ReceptorDeLuz : MonoBehaviour
     protected virtual void Activar()
     {
         Activo = true;
+        inicioConfirmacionVisual = Time.time;
         alActivarse?.Invoke();
     }
 

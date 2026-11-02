@@ -107,7 +107,7 @@ public class FlujoJuegoCrater : MonoBehaviour
     {
         if (EtapaActual == Etapa.EncenderLinterna && encendida)
         {
-            if (compuertaUmbral != null && compuertaUmbral.Abierta)
+            if (compuertaUmbral == null || compuertaUmbral.Abierta)
             {
                 AvanzarAExplorar();
                 return;
@@ -167,3 +167,4 @@ public class FlujoJuegoCrater : MonoBehaviour
 
     public void Finalizar() => EtapaActual = Etapa.Finalizado;
 }
+

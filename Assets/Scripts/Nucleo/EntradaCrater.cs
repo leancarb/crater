@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 /// Si hay que cambiar una tecla, se cambia acá y en ningún otro lado.
 ///
 ///  WASD / flechas · Mover        Mouse · Mirar
-///  F · Linterna                  1 / 2 · Filtros          Shift · Correr
+///  F · Farol                     Clic sostenido · Filtros          Shift · Correr
 ///  Esc · Pausa
 ///
 /// CÓMO FUNCIONA
@@ -22,7 +22,7 @@ public static class EntradaCrater
     /// <summary>Equivalencia con el eje "Mouse X" del Input Manager viejo.</summary>
     const float EscalaMouse = 0.1f;
     // el stick da un valor de -1 a 1 (no un desplazamiento): se multiplica por el tiempo
-    const float EscalaJoystick = 40f;
+    const float EscalaJoystick = 32f;
 
     /// <summary>Dirección de caminata: x = costado, y = adelante. Largo máximo 1.</summary>
     public static Vector2 Movimiento()
@@ -54,25 +54,24 @@ public static class EntradaCrater
 
     /// <summary>Correr con Shift o R2 / RT; L3 no acelera.</summary>
     public static bool Correr => (Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed))
-        || (Gamepad.current != null && Gamepad.current.rightTrigger.ReadValue() >= .35f);
+        || (Gamepad.current != null && Gamepad.current.rightTrigger.ReadValue() > .5f);
 
-    /// <summary>Prender o apagar la linterna (F o RB).</summary>
+    /// <summary>Prender o apagar el farol (F o X de Xbox / cuadrado).</summary>
     public static bool Linterna =>
-        Presionada(Key.F) || (Gamepad.current != null && Gamepad.current.rightShoulder.wasPressedThisFrame);
+        Presionada(Key.F) || (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame);
 
-    /// <summary>Equipar el filtro 'indice' (0 = SOL con 1 o X, 1 = LUNA con 2 o Y).</summary>
+    /// <summary>Filtro sostenido: SOL con izquierdo/R1; LUNA con derecho/L1.</summary>
     public static bool Filtro(int indice)
     {
-        if (indice == 0 && (Presionada(Key.Digit1) || Presionada(Key.Numpad1))) return true;
-        if (indice == 1 && (Presionada(Key.Digit2) || Presionada(Key.Numpad2))) return true;
-        var g = Gamepad.current;
-        if (g == null) return false;
-        return indice == 0 ? g.buttonWest.wasPressedThisFrame : indice == 1 && g.buttonNorth.wasPressedThisFrame;
+        var m = Mouse.current; var g = Gamepad.current;
+        return indice == 0 ? (m != null && m.leftButton.isPressed) || (g != null && g.rightShoulder.isPressed)
+            : indice == 1 && ((m != null && m.rightButton.isPressed) || (g != null && g.leftShoulder.isPressed));
     }
 
-    /// <summary>Volver a la luz blanca (B en mando; los filtros también se agotan solos).</summary>
-    public static bool QuitarFiltro =>
-        Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame;
+    // Compatibilidad con consumidores anteriores: se vuelve a blanca al soltar.
+    public static bool QuitarFiltro => false;
+    public static string BotonFiltro(int indice) => UsandoMando
+        ? (indice == 0 ? "RB (R1)" : "LB (L1)") : (indice == 0 ? "Clic izquierdo" : "Clic derecho");
 
     /// <summary>Saltear la animación que se esté viendo (Espacio, Enter o A). No se anuncia con texto.</summary>
     public static bool Saltar =>
@@ -121,7 +120,7 @@ public static class EntradaCrater
             Mouse.current != null ? Mouse.current.lastUpdateTime : 0);
     public static bool Interactuar => Saltar;
     public static string BotonInteractuar => UsandoMando ? "A (×)" : "Espacio";
-    public static string BotonLinterna => UsandoMando ? "RB (R1)" : "F";
+    public static string BotonLinterna => UsandoMando ? "X (□)" : "F";
 
     public static bool ClicIzquierdo =>
         Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;

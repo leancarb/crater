@@ -18,25 +18,21 @@ public class RotondaCartelesTests
     {
         Object.FindFirstObjectByType<PausaCrater>()?.Reanudar();yield return null;
     }
-    [UnityTest] public IEnumerator LasTeclasUnoDosSeleccionanSolYLunaYLaBlancaVuelveSola()
+    [UnityTest] public IEnumerator LasTeclasUnoDosYaNoSeleccionanFiltros()
     {
         var teclado=InputSystem.AddDevice<Keyboard>();teclado.MakeCurrent();
         var l=LinternaController.Instancia;l.Recoger();l.Encender(true);
         foreach(var f in l.filtros)l.Desbloquear(f);
         try
         {
-            foreach(var caso in new[]{(Key.Digit1,0),(Key.Digit2,1),(Key.Numpad1,0),(Key.Numpad2,1)})
+            foreach(var tecla in new[]{Key.Digit1,Key.Digit2,Key.Numpad1,Key.Numpad2})
             {
-                InputSystem.QueueStateEvent(teclado,new KeyboardState(caso.Item1));yield return null;yield return null;
-                Assert.That(l.FiltroActual,Is.SameAs(caso.Item2<0?null:l.filtros[caso.Item2]),caso.Item1.ToString());
+                InputSystem.QueueStateEvent(teclado,new KeyboardState(tecla));yield return null;
+                Assert.That(l.FiltroActual,Is.Null);
                 InputSystem.QueueStateEvent(teclado,new KeyboardState());yield return null;
-                while(l.CambiandoFiltro) yield return null;
             }
-            yield return new WaitForSeconds(3.2f);
-            Assert.That(l.FiltroActual,Is.Null);
-            Assert.That(EntradaCrater.QuitarFiltro,Is.False);
         }
-        finally {InputSystem.RemoveDevice(teclado);}
+        finally{InputSystem.RemoveDevice(teclado);}
     }
     [Test] public void LosDibujosIluminanLaEscaleraSinEmisionHDRExcesiva()
     {
@@ -60,7 +56,7 @@ public class RotondaCartelesTests
         var control=ts.Single(t=>t.name=="Control_Mover");
         Assert.That(control.parent.name,Is.EqualTo("Cartel_Controles_Inicio"));
         var inicio=ts.Single(t=>t.name=="SpawnValle");
-        Assert.That(Vector3.Dot((control.position-inicio.position).normalized,inicio.forward),Is.GreaterThan(.8f));
+        Assert.That(Mathf.Abs(Vector3.Dot((control.position-inicio.position).normalized,inicio.right)),Is.GreaterThan(.6f));
         var o=Object.FindFirstObjectByType<ObeliscoDelEclipse>();
         var columnas=ts.Select(t=>t.GetComponent<Renderer>()).Where(r=>r!=null&&r.name.StartsWith("Anillo_Columna_")&&r.GetComponent<Collider>()!=null).ToArray();
         Assert.That(columnas.Length,Is.EqualTo(6));
@@ -70,12 +66,10 @@ public class RotondaCartelesTests
             Assert.That(c.bounds.max.y,Is.EqualTo(7).Within(.01f));
             Assert.That(Vector2.Distance(new Vector2(c.bounds.center.x,c.bounds.center.z),new Vector2(o.centro.x,o.centro.z)),Is.EqualTo(8.8f).Within(.03f));
         }
-        Assert.That(ts.Count(t=>t.name=="Obelisco_Eclipse"),Is.EqualTo(1));
-        Assert.That(ts.Any(t=>t.name.StartsWith("Anillo_Columna_")&&t.GetComponent<Renderer>()!=null&&t.GetComponent<Collider>()==null),Is.False,"Sin símbolos antiguos flotando");
-        var cuerpo=ts.Single(t=>t.name=="Anillo_Obelisco").GetComponent<Renderer>();
-        Assert.That(cuerpo.bounds.max.y,Is.EqualTo(5.75f).Within(.01f));
-        foreach(var r in new[]{o.sol.renderers.Single(),o.luna.renderers.Single(),o.eclipse,o.eclipseRegreso})
-            Assert.That(cuerpo.bounds.Contains(r.bounds.center),Is.True,"Tallado incrustado dentro del fuste: "+r.name);
+        Assert.That(ts.Count(t=>t.name=="Obelisco_Eclipse"),Is.Zero);
+        var cuerpo=ts.Single(t=>t.name=="Anillo_Obelisco");
+        Assert.That(cuerpo.GetComponent<Renderer>(),Is.Null);Assert.That(cuerpo.GetComponent<Collider>(),Is.Null);
+        Assert.That(o.sol.renderers,Is.Empty);Assert.That(o.luna.renderers,Is.Empty);
         foreach(var t in o.columnasSol.Concat(o.columnasLuna))
         {
             Assert.That(t.renderers.Any(r=>r.name=="Aro_Luminoso_Piso"),Is.True);

@@ -7,8 +7,8 @@ using UnityEngine;
 ///
 /// Reglas:
 ///  - F enciende y apaga.
-///  - 1 / 2 equipan SOL y LUNA. Sólo uno a la vez. Cambiar tarda 'demoraDeCambio'.
-///  - Cada filtro dura 3 segundos efectivos; después vuelve a luz blanca. 1 permite volver antes.
+///  - Clic izquierdo/derecho o R1/L1 sostienen SOL/LUNA. Cambiar tarda 'demoraDeCambio'.
+///  - Al soltar el botón del filtro vuelve a luz blanca con una transición breve, sin temporizador.
 ///  - Cada frame busca los receptores dentro del cono y les avisa que están iluminados.
 ///
 /// CÓMO FUNCIONA
@@ -34,7 +34,7 @@ public class LinternaController : MonoBehaviour
     [Tooltip("Capas que bloquean el haz (paredes, piso, compuertas). Dejar sin los receptores.")]
     public LayerMask capaObstaculos = 1;   // 1 = capa Default (bit 0)
 
-    [Header("Filtros (en orden de tecla: 1, 2)")]
+    [Header("Filtros (SOL y LUNA, por botón sostenido)")]
     public List<FiltroDefinicion> filtros = new List<FiltroDefinicion>();
     [Tooltip("Filtros que el jugador ya encontró. Empieza vacío.")]
     public List<FiltroDefinicion> filtrosDesbloqueados = new List<FiltroDefinicion>();
@@ -46,9 +46,9 @@ public class LinternaController : MonoBehaviour
     public float intensidadBase = 650f;
 
     [Header("Ajustes")]
-    public float demoraDeCambio = 0.6f;
-    [Tooltip("Segundos efectivos del filtro después del cambio; al terminar vuelve a luz blanca.")]
-    [Min(.1f)] public float duracionFiltro = 3f;
+    public float demoraDeCambio = 0.35f;
+    // Campo serializado conservado para compatibilidad; ya no gobierna la duración.
+    [HideInInspector] public float duracionFiltro = 0f;
     [Tooltip("Si está tildado, la linterna no responde hasta llamar a Recoger().")]
     public bool requiereRecogerla = true;
 
@@ -74,15 +74,15 @@ public class LinternaController : MonoBehaviour
     // eventos de C#: otros scripts se suscriben con += (ver FlujoJuegoCrater.Vincular)
     public event Action<bool> AlCambiarEncendido;
     public event Action AlRecogerLinterna;
-    public event Action AlAgotarseFiltro;
     public event Action<FiltroDefinicion> AlDesbloquearFiltro;
     public event Action<FiltroDefinicion> AlEquiparFiltro;
 
     bool yaRecogida;
     float finDelCambio;
-    float finDelFiltro;
-    public float TiempoFiltroRestante => FiltroActual != null
-        ? Mathf.Max(0f, finDelFiltro - Mathf.Max(Time.time, finDelCambio)) : 0f;
+    public float TiempoFiltroRestante => 0f;
+    bool controlandoFiltroSostenido;
+    bool solAnterior, lunaAnterior;
+    int ultimoFiltroSostenido;
     AudioSource audioSource;
     AudioSource zumbidoA, zumbidoB, zumbidoObjetivo;
     float volumenZumbido;
@@ -124,15 +124,12 @@ public class LinternaController : MonoBehaviour
 
         if (CambiandoFiltro && Time.time >= finDelCambio)
             CambiandoFiltro = false;
-        if (FiltroActual != null && Time.time >= finDelFiltro)
-        {
-            VolverALuzBlanca();
-            AlAgotarseFiltro?.Invoke();
-        }
+
 
         // durante el cambio de filtro la luz baja casi a cero: el cambio se ve y se siente
         if (spot != null)
         {
+            spot.color = Color.Lerp(spot.color, ColorActual, 1f - Mathf.Exp(-16f * Time.deltaTime));
             // MoveTowards: la intensidad se acerca al objetivo de a poco, sin saltos
             float objetivo = CambiandoFiltro ? IntensidadActual * 0.08f : IntensidadActual;
             // Mantener legible la pintura y la respuesta del tallado cercano: limitar iluminancia, conservando
@@ -160,20 +157,28 @@ public class LinternaController : MonoBehaviour
         if (EntradaCrater.Linterna)
             Encender(!Encendida);
 
-        for (int i = 0; i < Mathf.Min(2, filtros.Count); i++)
-            if (EntradaCrater.Filtro(i)) IntentarEquipar(i);
-
-        if (EntradaCrater.QuitarFiltro)
-            EquiparFiltro(null);
+        ProcesarFiltrosSostenidos(EntradaCrater.Filtro(0), EntradaCrater.Filtro(1));
     }
 
-    /// <summary>Tecla 2 o 3: equipa ese filtro si ya lo encontró; si ya estaba puesto, vuelve a luz blanca.</summary>
-    void IntentarEquipar(int indice)
+    /// <summary>El último botón presionado tiene prioridad; soltarlo recupera el otro si sigue sostenido.</summary>
+    public void ProcesarFiltrosSostenidos(bool sol, bool luna)
     {
-        if (indice < 0 || indice >= filtros.Count) return;
-        var f = filtros[indice];
-        if (!filtrosDesbloqueados.Contains(f)) return;   // todavía no lo encontró
-        EquiparFiltro(FiltroActual == f ? null : f);
+        if (sol && !solAnterior) ultimoFiltroSostenido = 0;
+        if (luna && !lunaAnterior) ultimoFiltroSostenido = 1;
+        solAnterior = sol; lunaAnterior = luna;
+        FiltroDefinicion Elegir(int indice) => indice < filtros.Count && EstaDesbloqueado(filtros[indice]) ? filtros[indice] : null;
+        var fSol = sol ? Elegir(0) : null;
+        var fLuna = luna ? Elegir(1) : null;
+        var solicitado = fSol != null && fLuna != null ? (ultimoFiltroSostenido == 0 ? fSol : fLuna) : fSol ?? fLuna;
+        if (!Encendida || !Disponible) solicitado = null;
+        if (solicitado != null) controlandoFiltroSostenido = true;
+        if (!controlandoFiltroSostenido || solicitado == FiltroActual) return;
+        CambiandoFiltro = false; // Soltar durante el cambio también debe quitar el filtro.
+        EquiparFiltro(solicitado);
+        if (solicitado == null)
+        {
+            controlandoFiltroSostenido = false;
+        }
     }
 
     /// <summary>Cambia el filtro. Sólo uno a la vez, con demora. Null = luz blanca.</summary>
@@ -182,7 +187,6 @@ public class LinternaController : MonoBehaviour
         if (CambiandoFiltro || f == FiltroActual) return;
         CambiandoFiltro = true;
         finDelCambio = Time.time + demoraDeCambio;
-        finDelFiltro = f != null ? finDelCambio + duracionFiltro : 0f;
         AplicarFiltro(f);
         AlEquiparFiltro?.Invoke(f);
 
@@ -205,7 +209,7 @@ public class LinternaController : MonoBehaviour
     {
         FiltroActual = f;
         if (spot == null) return;
-        spot.color = ColorActual;
+        if (!CambiandoFiltro) spot.color = ColorActual;
         spot.spotAngle = AnguloActual;
         spot.innerSpotAngle = AnguloActual * (f == null ? .12f : .55f);
         spot.range = AlcanceActual;
@@ -347,7 +351,11 @@ public class LinternaController : MonoBehaviour
 
             // 4. se le avisa sólo si el filtro actual es el suyo
             HayObjetivo = true;
-            if (!receptor.AceptaFiltro(FiltroActual)) continue;
+            if (!receptor.AceptaFiltro(FiltroActual))
+            {
+                receptor.AvisarFiltroIncompatible();
+                continue;
+            }
             ObjetivoAceptaFiltro = true;
             receptor.RecibirLuz(FiltroActual, delta);
             CargaObjetivo = Mathf.Max(CargaObjetivo, receptor.Carga);

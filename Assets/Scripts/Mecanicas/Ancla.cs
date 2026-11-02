@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// FILTRO I · CUERPO.
@@ -32,7 +32,7 @@ public class Ancla : ReceptorDeLuz
     float ultimaActivacion = -10f;
     readonly System.Collections.Generic.Dictionary<Transform, Vector3> escalas = new System.Collections.Generic.Dictionary<Transform, Vector3>();
     float vibracion;
-    float nivelAplicado = float.NaN;
+    float nivelAplicado = float.NaN, confirmacionAplicada = float.NaN;
 
     static readonly int IdBase = Shader.PropertyToID("_BaseColor");
     static readonly int IdEmision = Shader.PropertyToID("_EmissionColor");
@@ -69,6 +69,8 @@ public class Ancla : ReceptorDeLuz
         // tapada por una reja: la linterna la ve pero la luz no llega. Titila apagada
         if (!Activo && Tapado)
             nivel = Mathf.Max(nivel, 0.08f + 0.04f * Mathf.Sin(Time.time * 4f));
+        // El tono propio orienta sin una señal roja en pantalla.
+        if (!Activo) nivel = Mathf.Max(nivel, .16f * RespuestaIncompatible);
         Nivel = Mathf.MoveTowards(Nivel, nivel, delta * (nivel > Nivel ? 8f : 3f));
         nivel = Nivel;
         float vibracionAnterior = vibracion;
@@ -85,13 +87,14 @@ public class Ancla : ReceptorDeLuz
         }
 
         // La simulación y el sonido siguen avanzando; el material quieto conserva su estado.
-        if (nivel == nivelAplicado) return;
-        nivelAplicado = nivel;
+        float confirmacion = .10f * ConfirmacionVisual;
+        if (nivel == nivelAplicado && confirmacion == confirmacionAplicada) return;
+        nivelAplicado = nivel; confirmacionAplicada = confirmacion;
         // ??= crea el bloque la primera vez (AlActualizar puede llamarse antes que Awake de otros)
         bloque ??= new MaterialPropertyBlock();
         Color c = Color.Lerp(colorApagada, colorEncendida, nivel);
         // nivel² hace que el brillo arranque suave y se dispare al final de la carga
-        Color emision = colorEncendida * (0.04f + emisionMaxima * nivel * nivel);
+        Color emision = colorEncendida * (0.04f + emisionMaxima * nivel * nivel) * (1 + confirmacion);
         if (acentos != null)
         {
             foreach (var r in acentos)
@@ -107,7 +110,7 @@ public class Ancla : ReceptorDeLuz
         // la luz puntual ilumina el entorno del ancla; apagada no gasta rendimiento
         if (brillo != null)
         {
-            brillo.intensity = intensidadLuz * nivel;
+            brillo.intensity = intensidadLuz * nivel * (1 + confirmacion);
             brillo.enabled = nivel > 0.01f;
         }
     }
@@ -123,6 +126,7 @@ public class Ancla : ReceptorDeLuz
     }
     void OnDisable()
     {
+        LimpiarRespuestaVisual();
         foreach (var e in escalas) if (e.Key != null) e.Key.localScale = e.Value;
         if (resonancia != null) { resonancia.Stop(); resonancia.volume = 0; }
     }

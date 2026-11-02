@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -88,7 +88,7 @@ public class MateriaHueca : ReceptorDeLuz
         }
 
         // tapa algo que la linterna busca: el sello late, para decir "primero yo"
-        float pulsoTapada = Tapado && Solido ? 0.35f + 0.35f * Mathf.Sin(Time.time * 12f) : 0f;
+        float pulsoTapada = Tapado && Solido ? .06f + .04f * Mathf.Sin(Time.time * 4f) : 0f;
 
         // transparencia: el alfa del color base baja hasta 'opacidadMinima'
         var linterna = LinternaController.Instancia;
@@ -96,6 +96,9 @@ public class MateriaHueca : ReceptorDeLuz
             linterna.FiltroActual.canal == FiltroDefinicion.Canal.Hueco;
         float alfa = Mathf.Lerp(luna ? opacidadConLuna : 1f, opacidadMinima, Disolucion);
         float brilloSello = Mathf.Lerp(0.6f, 3f, Mathf.Max(Mathf.Max(Carga, Disolucion), pulsoTapada)) * alfa;
+        // Pulso sólo en las barras de su color; nunca altera alfa, carga ni colisión.
+        brilloSello += .22f * RespuestaIncompatible * alfa;
+        brilloSello *= 1 + .10f * ConfirmacionVisual;
         bool cambioVisual = alfa != alfaAplicado || brilloSello != brilloAplicado;
         alfaAplicado = alfa; brilloAplicado = brilloSello;
         for (int i = 0; cambioVisual && i < renderers.Length; i++)
@@ -154,6 +157,7 @@ public class MateriaHueca : ReceptorDeLuz
 
     void OnDisable()
     {
+        LimpiarRespuestaVisual();
         jugadoresDentro = 0;
         tiempoSiseo = 0f;
         if (siseo != null) siseo.Stop();

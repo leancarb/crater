@@ -50,7 +50,6 @@ public class ColeccionPiedras : MonoBehaviour
         if(luzRecogida!=null){luzRecogida.transform.position=pieza.transform.position+Vector3.up*.2f;luzRecogida.intensity=2;}
         pieza.gameObject.SetActive(false);
         interfaz?.ActualizarColeccion(Cantidad, Total);
-        interfaz?.ConfirmarPiedraRecogida();
         AlCambiar?.Invoke();
         return true;
     }

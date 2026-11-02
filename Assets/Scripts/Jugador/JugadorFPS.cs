@@ -58,7 +58,6 @@ public class JugadorFPS : MonoBehaviour
     float ciclo;               // fase del paso: avanza con la velocidad
     int framesIgnorados = 3;
     int ultimoPaso;
-    float finTemblorCompuerta, amplitudTemblorCompuerta;
 
     void Awake()
     {
@@ -72,24 +71,6 @@ public class JugadorFPS : MonoBehaviour
         if (PausaCrater.EnPausa) return;   // en pausa no se mira ni se camina
         Mirar();
         Mover(Time.deltaTime);
-    }
-
-    /// <summary>Confirmación cercana de apertura; no cambia la mirada ni toma control.</summary>
-    public void SacudirPorCompuerta(Vector3 origen)
-    {
-        if (camara == null || !isActiveAndEnabled || PausaCrater.EnPausa) return;
-        float cercania = Mathf.Clamp01(1f - Vector3.Distance(camara.position, origen) / 12f);
-        if (cercania <= 0) return;
-        amplitudTemblorCompuerta = .008f * cercania;
-        finTemblorCompuerta = Time.time + .3f;
-    }
-
-    void LateUpdate()
-    {
-        if (camara == null || PausaCrater.EnPausa) return;
-        float resto = Mathf.Clamp01((finTemblorCompuerta - Time.time) / .3f);
-        camara.localPosition += new Vector3(Mathf.Sin(Time.time * 75f), Mathf.Sin(Time.time * 93f), 0)
-            * (amplitudTemblorCompuerta * resto);
     }
 
     void Mirar()

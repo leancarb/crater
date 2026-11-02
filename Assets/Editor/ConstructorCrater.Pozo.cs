@@ -45,7 +45,7 @@ public static partial class ConstructorCrater
     {
         var pozo = Grupo(g, "Pozo");
         float suelo = AlturaValle - 0.1f;           // la cara de arriba de la tierra del valle
-        float borde = AlturaValle + 0.2f;           // las paredes asoman un poco: el labio del cráter
+        float borde = AlturaValle - 0.18f;           // las paredes asoman un poco: el labio del cráter
         float piso = CentroPozo.y;
 
         // el fondo: la Explanada. Del lado norte sigue el pasillo plano hasta el Umbral
@@ -81,8 +81,8 @@ public static partial class ConstructorCrater
         Caja(pozo, "Masa_Norte_Pasaje", -2.05f, piso + 4f, -34.3f, 2.05f, masa, -23.3f, k.basalto);
 
         // la zona de entrada: todo el pozo. Pasar la puerta (o caerse adentro) cambia el ambiente
-        refs.zonaPuertaCrater = Zona(pozo, "Zona_Puerta_Crater", new Vector3(CentroPozo.x, (piso + AlturaValle + 0.6f) / 2f, CentroPozo.z),
-            new Vector3(16f, AlturaValle + 0.6f - piso, 16f));
+        refs.zonaPuertaCrater = Zona(pozo, "Zona_Puerta_Crater", new Vector3(CentroPozo.x, piso + 3f, -35.5f),
+            new Vector3(16f, 6f, 8f));
     }
 
     /// <summary>
@@ -138,7 +138,7 @@ public static partial class ConstructorCrater
             float z0 = InicioEscalera + i * largo / tramos, z1 = z0 + largo / tramos;
             float lineaArriba = arriba - (z0 - InicioEscalera) / largo * caida;
             float lineaMedio = arriba - ((z0 + z1) / 2f - InicioEscalera) / largo * caida;
-            float tope = arriba + 0.45f;
+            float tope = arriba - 0.08f;
             Transform Tramo(float lado)
             {
                 float x0 = lado < 0f ? -MitadEscalera - 0.6f : MitadEscalera, x1 = x0 + 0.6f;

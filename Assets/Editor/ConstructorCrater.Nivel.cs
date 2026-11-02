@@ -97,6 +97,7 @@ public static partial class ConstructorCrater
         FacetarEscena(kit);
         AplicarCorreccionDocente(kit, nivel);
         ConstruirExploracion(kit, nivel, refs);
+        AplicarInicioElevado(kit, nivel);
         ConfigurarSombrasYSuperficies(kit, refs);
         // Variante Silo archivada: se activa sólo desde su menú optativo.
         PrepararOclusion(escena);
@@ -417,7 +418,7 @@ public static partial class ConstructorCrater
 
         var solGO = new GameObject("Sol_Epilogo");
         solGO.transform.SetParent(g, false);
-        solGO.transform.rotation = g.rotation * Quaternion.Euler(12f, 0f, 0f);
+        solGO.transform.rotation = g.rotation * Quaternion.Euler(9f, 0f, 0f);
         refs.sol = solGO.AddComponent<Light>();
         refs.sol.type = LightType.Directional;
         // mañana en el prólogo; en el epílogo CieloEclipse lo baja al atardecer
@@ -439,24 +440,8 @@ public static partial class ConstructorCrater
         var crater = Grupo(g, "Crater_Valle");
         refs.craterValle = crater.gameObject;
         Vector3 centro = g.TransformPoint(CraterEnLaCapilla);
-        const float radio = RadioPozo + 0.9f;
-        const int piezas = 20;
-
-        var azar = new System.Random(19);
-        float Azar(float min, float max) => min + (float)azar.NextDouble() * (max - min);
+        // El reborde circular de tierra reemplaza los bloques decorativos exteriores.
         var bordes = new List<Transform>();
-        for (int i = 0; i < piezas; i++)
-        {
-            float ang = i * 360f / piezas;
-            // hueco hacia la capilla (sur): ahí está la puerta
-            if (Mathf.Abs(Mathf.DeltaAngle(ang, 270f)) < 12f) continue;
-            var dir = new Vector3(Mathf.Cos(ang * Mathf.Deg2Rad), 0f, Mathf.Sin(ang * Mathf.Deg2Rad));
-            float alto = Azar(0.25f, 0.4f);
-            var roca = Bloque(crater, $"Borde_{i:00}", centro + dir * Azar(radio - 0.2f, radio + 0.4f) + Vector3.up * (alto / 2f - 0.1f),
-                new Vector3(Azar(2.6f, 3.4f), alto, Azar(0.6f, 0.9f)), i % 3 == 0 ? k.basaltoMedio : k.basalto, false);
-            roca.transform.rotation = Quaternion.LookRotation(-dir);
-            bordes.Add(roca.transform);
-        }
         bordes.AddRange(refs.paredesEscalera);
         refs.bordesCrater = bordes.ToArray();
         refs.lucesApertura = LucesDelBorde(crater);
