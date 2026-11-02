@@ -1,0 +1,43 @@
+{
+  "status": "completed",
+  "duration": 11.16,
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "inconclusive": 0
+  },
+  "results": [
+    {
+      "FullName": "IteracionNoviembreTests.ExteriorSeOcultaAbajoYSeRestauraSinDesactivarColisiones",
+      "Status": "Passed",
+      "Duration": 1.6713407,
+      "Message": null
+    },
+    {
+      "FullName": "IteracionNoviembreTests.RecogerFarolCierraEntradaYEnciendeLobby",
+      "Status": "Passed",
+      "Duration": 3.8318636,
+      "Message": null
+    },
+    {
+      "FullName": "IteracionNoviembreTests.SaltoEsBajoYNoInteractua",
+      "Status": "Passed",
+      "Duration": 1.2555892,
+      "Message": null
+    },
+    {
+      "FullName": "IteracionNoviembreTests.SaltoNoCruzaHuecoDePuzzle",
+      "Status": "Passed",
+      "Duration": 2.2153379,
+      "Message": null
+    },
+    {
+      "FullName": "IteracionNoviembreTests.SaltoNoSuperaPretil",
+      "Status": "Passed",
+      "Duration": 2.1501511,
+      "Message": null
+    }
+  ]
+}

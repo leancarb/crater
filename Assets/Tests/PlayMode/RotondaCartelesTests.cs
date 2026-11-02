@@ -124,7 +124,8 @@ public class RotondaCartelesTests
         Assert.That(vioApertura,Is.True);
         Assert.That(Quaternion.Angle(j.camara.rotation,miradaOriginal),Is.LessThan(.1f));
         var luces=Object.FindObjectsByType<Light>(FindObjectsSortMode.None).Where(l=>l.name=="Luz_Borde_Apertura").ToArray();
-        Assert.That(luces.Length,Is.EqualTo(4));Assert.That(luces.All(l=>l.enabled&&l.intensity>0),Is.True);
+        Assert.That(luces.Length,Is.Zero,"La apertura se ilumina desde los tallados; sin focos flotantes en el borde");
+        Assert.That(Object.FindObjectsByType<Light>(FindObjectsSortMode.None).Any(l=>l.transform.parent!=null && (l.transform.parent.name.StartsWith("Sol_Escalera_")||l.transform.parent.name.StartsWith("Luna_Escalera_")) && l.intensity>0),Is.True);
         Assert.That(p.Reproduciendo,Is.False);Assert.That(j.enabled,Is.True);Assert.That(j.movimientoBloqueado,Is.False);
         Assert.That(Vector3.Distance(j.camara.localPosition,camaraOriginal),Is.LessThan(.001f));
     }

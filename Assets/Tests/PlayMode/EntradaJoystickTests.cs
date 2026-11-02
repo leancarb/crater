@@ -22,15 +22,15 @@ public class EntradaJoystickTests
 
     [UnityTest] public IEnumerator ElMandoMueveYAccionaLasHerramientas()
     {
-        yield return Estado(new GamepadState { leftStick = Vector2.up }.WithButton(GamepadButton.RightShoulder));
+        yield return Estado(new GamepadState { leftStick = Vector2.up }.WithButton(GamepadButton.West));
         Assert.That(EntradaCrater.Movimiento().y, Is.GreaterThan(0.9f));
         Assert.That(EntradaCrater.Linterna, Is.True);
-        yield return Estado(new GamepadState().WithButton(GamepadButton.West));
+        yield return Estado(new GamepadState().WithButton(GamepadButton.RightShoulder));
         Assert.That(EntradaCrater.Filtro(0), Is.True);
-        yield return Estado(new GamepadState().WithButton(GamepadButton.North));
+        yield return Estado(new GamepadState().WithButton(GamepadButton.LeftShoulder));
         Assert.That(EntradaCrater.Filtro(1), Is.True);
         yield return Estado(new GamepadState().WithButton(GamepadButton.East));
-        Assert.That(EntradaCrater.QuitarFiltro, Is.True);
+        Assert.That(EntradaCrater.QuitarFiltro, Is.False);
         yield return Estado(new GamepadState().WithButton(GamepadButton.LeftStick));
         Assert.That(EntradaCrater.Correr, Is.False, "L3 no activa sprint");
         yield return Estado(new GamepadState { rightTrigger = 1f });
@@ -44,6 +44,6 @@ public class EntradaJoystickTests
         yield return Estado(new GamepadState().WithButton(GamepadButton.North)); Assert.That(EntradaCrater.Reiniciar, Is.True);
         yield return Estado(new GamepadState().WithButton(GamepadButton.West)); Assert.That(EntradaCrater.Salir, Is.True);
         yield return Estado(new GamepadState().WithButton(GamepadButton.DpadUp)); Assert.That(EntradaCrater.AlternarAyudas, Is.True);
-        yield return Estado(new GamepadState().WithButton(GamepadButton.South)); Assert.That(EntradaCrater.Saltar, Is.True);
+        yield return Estado(new GamepadState().WithButton(GamepadButton.East)); Assert.That(EntradaCrater.Saltar, Is.True);
     }
 }

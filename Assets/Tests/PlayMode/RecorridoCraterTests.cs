@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -884,13 +884,13 @@ public class RecorridoCraterTests
             Key(UnityEngine.InputSystem.Key.Escape); yield return null; yield return null;
             Assert.That(PausaCrater.EnPausa, Is.True);
             Soltar(); yield return null;
-            Key(UnityEngine.InputSystem.Key.Space); yield return null; yield return null;
+            Key(UnityEngine.InputSystem.Key.E); yield return null; yield return null;
             Assert.That(CinematicaDeSello.Reproduciendo, Is.False, "la señal no debe tomar control ni requerir salto");
             Soltar(); yield return null;
             Key(UnityEngine.InputSystem.Key.Escape); yield return null; yield return null;
             Soltar(); yield return null;
             UnityEngine.InputSystem.InputSystem.QueueStateEvent(mando,
-                new UnityEngine.InputSystem.LowLevel.GamepadState().WithButton(UnityEngine.InputSystem.LowLevel.GamepadButton.South));
+                new UnityEngine.InputSystem.LowLevel.GamepadState().WithButton(UnityEngine.InputSystem.LowLevel.GamepadButton.East));
             yield return null; yield return Esperar(0.3f);
             Assert.That(CinematicaDeSello.Reproduciendo, Is.False);
             Assert.That(fps.enabled, Is.True);
@@ -903,7 +903,7 @@ public class RecorridoCraterTests
             var luna = Buscar<MateriaHueca>("Sello_Este");
             luna.RecibirLuz(linterna.filtros[1], 1); luna.Avanzar(1);
             yield return Esperar(0.2f);
-            Key(UnityEngine.InputSystem.Key.Space); yield return null;
+            Key(UnityEngine.InputSystem.Key.E); yield return null;
             var obelisco = Object.FindFirstObjectByType<ObeliscoDelEclipse>();
             yield return Esperar(obelisco.DuracionSol+obelisco.DuracionLuna+1.7f);
             Soltar(); yield return null;

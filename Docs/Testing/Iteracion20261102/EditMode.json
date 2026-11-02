@@ -1,0 +1,211 @@
+{
+  "status": "completed",
+  "duration": 4.08,
+  "summary": {
+    "total": 33,
+    "passed": 33,
+    "failed": 0,
+    "skipped": 0,
+    "inconclusive": 0
+  },
+  "results": [
+    {
+      "FullName": "ColeccionCraterTests.IdentificadorEIndiceSoloSeRegistranUnaVez",
+      "Status": "Passed",
+      "Duration": 0.0182534,
+      "Message": null
+    },
+    {
+      "FullName": "ColeccionCraterTests.RechazaIndicesFueraDelConjunto(-1)",
+      "Status": "Passed",
+      "Duration": 0.0008436,
+      "Message": null
+    },
+    {
+      "FullName": "ColeccionCraterTests.RechazaIndicesFueraDelConjunto(6)",
+      "Status": "Passed",
+      "Duration": 0.0002141,
+      "Message": null
+    },
+    {
+      "FullName": "ColeccionCraterTests.RechazaPiezasAjenasYSinIdentificador",
+      "Status": "Passed",
+      "Duration": 0.0005922,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.AdaptacionDebeHabilitarseExplicitamente",
+      "Status": "Passed",
+      "Duration": 0.0022144,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.CambiarDeFiltroTieneDemora",
+      "Status": "Passed",
+      "Duration": 0.0014821,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.CompuertaSeAbreCuandoSusReceptoresEstanActivos",
+      "Status": "Passed",
+      "Duration": 0.0033356,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.CompuertaSostenidaSeCierraCuandoSeApagaSuAncla",
+      "Status": "Passed",
+      "Duration": 0.0028583,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.DesbloquearFiltroNoAgregaDuplicados",
+      "Status": "Passed",
+      "Duration": 0.0041341,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.LinternaNoSeEnciendeSinRecogerla",
+      "Status": "Passed",
+      "Duration": 0.0005865,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.MateriaHuecaNoSeCierraSobreElJugador",
+      "Status": "Passed",
+      "Duration": 0.0033205,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.MateriaHuecaSolidaNoSeAbreAlAcercarse",
+      "Status": "Passed",
+      "Duration": 0.0004675,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.PuenteEmpiezaInsolidoYAparecePorCompletoConSusAnclas",
+      "Status": "Passed",
+      "Duration": 0.0017373,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.PuenteNecesitaTodasSusAnclas",
+      "Status": "Passed",
+      "Duration": 0.0005318,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.ReceptorRetieneLaActivacionYDespuesSeApaga",
+      "Status": "Passed",
+      "Duration": 0.0004869,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.ReceptorSinCanalAceptaLaLuzBlanca",
+      "Status": "Passed",
+      "Duration": 0.0002572,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.ReceptorSoloAceptaElFiltroCorrecto",
+      "Status": "Passed",
+      "Duration": 0.0003284,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.RecogerLinternaSoloAvisaUnaVez",
+      "Status": "Passed",
+      "Duration": 0.0005215,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.RecogibleDesbloqueaSuFiltroYSeDesactiva",
+      "Status": "Passed",
+      "Duration": 0.0006988,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.SelloPermanenteNoSeApagaNunca",
+      "Status": "Passed",
+      "Duration": 0.0003767,
+      "Message": null
+    },
+    {
+      "FullName": "CraterGameplayTests.SoloExistenLosDosFiltrosDelVerticalSlice",
+      "Status": "Passed",
+      "Duration": 0.0020197,
+      "Message": null
+    },
+    {
+      "FullName": "CraterRevisionTests.ElProyectoDePlaytestSuperaElValidador",
+      "Status": "Passed",
+      "Duration": 1.2215123,
+      "Message": null
+    },
+    {
+      "FullName": "CraterRevisionTests.ElRefuerzoDeCompuertaFavoreceLosGravesSinRecortarLaSenal",
+      "Status": "Passed",
+      "Duration": 0.0161838,
+      "Message": null
+    },
+    {
+      "FullName": "CraterRevisionTests.LasSombrasSeLimitanAlEntornoActivo",
+      "Status": "Passed",
+      "Duration": 0.0030618,
+      "Message": null
+    },
+    {
+      "FullName": "CraterRevisionTests.LosMaterialesGeneradosRespetanLaEspecificacion",
+      "Status": "Passed",
+      "Duration": 0.0039975,
+      "Message": null
+    },
+    {
+      "FullName": "CraterRevisionTests.LosOchoMuralesGuardadosTienenPNGQuadYUVSinDeformar",
+      "Status": "Passed",
+      "Duration": 0.2652724,
+      "Message": null
+    },
+    {
+      "FullName": "CraterRevisionTests.ReconstruirNoSobrescribeUnaGrabacionPersonalizada",
+      "Status": "Passed",
+      "Duration": 0.1876725,
+      "Message": null
+    },
+    {
+      "FullName": "CraterRevisionTests.RegenerarAudioConservaTodosLosWavExistentes",
+      "Status": "Passed",
+      "Duration": 1.8180158,
+      "Message": null
+    },
+    {
+      "FullName": "FarolTituloTests.ElFarolConservaSuDifusorYNoAgregaColisiones(\"Jugador\")",
+      "Status": "Passed",
+      "Duration": 0.0034813,
+      "Message": null
+    },
+    {
+      "FullName": "FarolTituloTests.ElFarolConservaSuDifusorYNoAgregaColisiones(\"Recogible_Linterna\")",
+      "Status": "Passed",
+      "Duration": 0.0001302,
+      "Message": null
+    },
+    {
+      "FullName": "FarolTituloTests.LaFuenteDelTituloIncluyeLaPalabraConAcento",
+      "Status": "Passed",
+      "Duration": 0.0103736,
+      "Message": null
+    },
+    {
+      "FullName": "PlacasInstruccionTests.NarrativaSinPlacaNiEmision",
+      "Status": "Passed",
+      "Duration": 0.2019327,
+      "Message": null
+    },
+    {
+      "FullName": "PlacasInstruccionTests.TodasLasPlacasTienenSoporteBotonYContrasteMate",
+      "Status": "Passed",
+      "Duration": 0.1900208,
+      "Message": null
+    }
+  ]
+}

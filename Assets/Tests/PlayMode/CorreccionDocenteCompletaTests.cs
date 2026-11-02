@@ -12,6 +12,12 @@ public class CorreccionDocenteCompletaTests
         yield return SceneManager.LoadSceneAsync("CraterVerticalSlice");yield return null;
         var p=Object.FindFirstObjectByType<PausaCrater>();p.Reanudar();
     }
+    [UnityTearDown] public IEnumerator RestaurarControlador()
+    {
+        var jugador=Object.FindFirstObjectByType<JugadorFPS>();
+        if(jugador!=null)jugador.GetComponent<CharacterController>().enabled=true;
+        yield return null;
+    }
     [UnityTest] public IEnumerator CadaColumnaEnciendePisoYTechoEnLaMismaTransicion()
     {
         var o=Object.FindFirstObjectByType<ObeliscoDelEclipse>();
@@ -49,10 +55,13 @@ public class CorreccionDocenteCompletaTests
             jugador.GetComponent<CharacterController>().enabled=false;jugador.transform.position=pie;
             jugador.MirarHacia((a.PuntoDeImpacto+b.PuntoDeImpacto)*.5f);
             var panel=GameObject.Find(c.Item2).transform;
+            // La placa está apartada del haz. Se lee mirando hacia ella, luego se apuntan las anclas.
+            jugador.MirarHacia(panel.position);
             var visible=cam.WorldToViewportPoint(panel.position);
             Assert.That(visible.z,Is.GreaterThan(0),c.Item2);
             Assert.That(visible.x,Is.InRange(.05f,.95f),c.Item2);Assert.That(visible.y,Is.InRange(.05f,.95f),c.Item2);
-            Assert.That(panel.GetComponentInChildren<Renderer>().bounds.min.y,Is.GreaterThan(1.9f));
+            Assert.That(panel.Find("PlacaInstruccion/Fondo_Placa").position.y,Is.EqualTo(1.6f).Within(.01f));
+            jugador.MirarHacia((a.PuntoDeImpacto+b.PuntoDeImpacto)*.5f);
             Physics.SyncTransforms();
             foreach(var receptor in new[]{a,b})
                 foreach(var hit in Physics.RaycastAll(cam.transform.position,(receptor.PuntoDeImpacto-cam.transform.position).normalized,Vector3.Distance(receptor.PuntoDeImpacto,cam.transform.position),~0,QueryTriggerInteraction.Ignore))

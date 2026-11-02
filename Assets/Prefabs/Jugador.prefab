@@ -862,6 +862,8 @@ MonoBehaviour:
   velocidad: 4
   multiplicadorCorrer: 1.4
   gravedad: -18
+  alturaSalto: 0.4
+  velocidadMaximaEnSalto: 2
   suavizado: 8
   movimientoBloqueado: 0
   camara: {fileID: 4368139536976273029}

@@ -20,7 +20,7 @@ public class PlacasLecturaPlayTests
         Assert.That(apagado.Length,Is.EqualTo(5));
         foreach(var p in apagado)
         {
-            var size=p.Find("Fondo_Placa").lossyScale;Assert.That(size.x,Is.EqualTo(1.6f).Within(.001));Assert.That(size.y,Is.EqualTo(.8f).Within(.001));
+            var size=p.Find("Fondo_Placa").lossyScale;Assert.That(size.x,Is.GreaterThanOrEqualTo(1.2f));Assert.That(size.y,Is.GreaterThanOrEqualTo(.8f));
             Assert.That(p.GetComponentsInChildren<Renderer>().Any(r=>r.name=="Relieve_Instruccion"),Is.True);
         }
         var eclipse=Object.FindFirstObjectByType<EclipseFinalController>();

@@ -1,8 +1,10 @@
 # CRÁTER — Game Design Document
 
-> Versión 0.7 · Vertical slice · Unity 6 (6000.3) + URP (Forward+) · PC, teclado/mouse y joystick
+> Versión 0.8 · Vertical slice · Unity 6 (6000.3) + URP (Forward+) · PC, teclado/mouse y joystick
 >
-> Documento vivo de esta copia independiente. El GDD se ajusta a las decisiones de diseño que se prueban en el juego; no es una especificación congelada. Estado vigente del 6/10/2026: `Docs/EstadoActualCrater.md` y `Docs/RevisionContemplativa.md`. Los documentos de revisiones anteriores son históricos. Los detalles de implementación están en el `README.md`.
+> La iteración del 2/11/2026 y `Docs/Iteracion20261102.md` prevalecen sobre las descripciones históricas posteriores de obelisco/atajo/controles.
+>
+> Documento vivo de esta copia independiente. El GDD se ajusta a las decisiones de diseño que se prueban en el juego; no es una especificación congelada. Estado vigente del 2/11/2026: `Docs/EstadoActualCrater.md` y `Docs/RevisionContemplativa.md`. Los documentos de revisiones anteriores son históricos. Los detalles de implementación están en el `README.md`.
 
 ---
 
@@ -11,15 +13,15 @@
 **En una frase:** durante un eclipse, un cráter que sólo existe bajo esa luz se abre frente a una estación de observación; adentro, una linterna con filtros le enseña al jugador a ver, hasta que descubre que para salir tiene que apagarla.
 
 **Género:** puzzle ambiental en primera persona, contemplativo.
-**Tono:** contemplativo, de asombro y descubrimiento. Sin combate ni amenazas. Caerse en un abismo lleva a una gruta cálida, desde donde se vuelve caminando por una escalera.
+**Tono:** contemplativo, de asombro y descubrimiento. Sin combate ni amenazas. Caerse en un abismo lleva a una gruta roja oscura, desde donde se vuelve caminando por una escalera.
 **Duración:** vertical slice (≈ 15–25 min).
 
 ### Pilares
 
 1. **La luz es el verbo.** Toda interacción pasa por el haz: iluminar es actuar.
 2. **Ver es un acto, no un dato.** Cada filtro es una forma de mirar la materia; el final obliga a mirar *sin* herramienta.
-3. **Ritmo contenido.** Sin salto. La velocidad base es 4 m/s, sin sprint en teclado; R2 / RT permite correr en joystick a 5,6 m/s. La tensión viene de entender, no de reaccionar.
-4. **Interfaz mínima.** El estado de la linterna arriba a la derecha y la mira con la barra de carga. Las indicaciones breves son una ayuda opcional (H en pausa), desactivada por defecto. El resto lo dicen el color, el sonido y el mundo. La estación de observación no tiene indicaciones.
+3. **Ritmo contenido.** Salto corto de 0,4 m, sin acceso a atajos de puzzles; velocidad base 4 m/s y carrera con Shift o R2/RT a 5,6 m/s. La tensión viene de entender, no de reaccionar.
+4. **Interfaz mínima.** El estado de la linterna arriba a la derecha sin mira ni barra de carga. Las indicaciones breves son una ayuda opcional (H en pausa), desactivada por defecto. El resto lo dicen el color, el sonido y el mundo. La estación de observación no tiene indicaciones.
 
 ---
 
@@ -61,23 +63,24 @@ La herramienta que nos permite ver también define lo que vemos. La linterna ens
 | Acción | Teclado y mouse | Joystick |
 |---|---|---|
 | Moverse / mirar | WASD · mouse | stick izq. · stick der. |
-| Movimiento | 4 m/s, sin sprint | 4 m/s; R2 / RT para correr a 5,6 m/s |
-| Linterna | F | RB |
-| Filtro sol / luna | 1 / 2 | X / Y |
-| Luz blanca | Q | B |
+| Caminar / correr | 4 m/s; Shift 5,6 m/s | 4 m/s; R2/RT 5,6 m/s |
+| Farol | F | X / cuadrado |
+| Mantener SOL / LUNA | Clic izquierdo / derecho | R1 / L1 |
+| Luz blanca | Soltar filtro | Soltar filtro |
 | Pausa (R reinicia, X sale; H alterna ayudas escritas) | Esc | Start |
-| Saltar animaciones | Espacio / Enter | A / cruz |
+| Salto corto | Espacio | A / cruz |
+| Recoger / omitir animaciones | E | B / círculo |
 
 ### 3.2 Linterna
 
-- Se encuentra en el Umbral. Luz blanca: abre la compuerta del Umbral.
+- Se encuentra en el centro oscuro de la Rotonda. Recogerlo cierra la entrada y enciende gradualmente la sala y sus accesos.
 - La luz blanca alumbra bastante más y más lejos que con cualquier filtro: con un filtro puesto se ve menos, así que dan ganas de volver a la luz blanca (Q).
 - **Un filtro a la vez.** Cambiar tarda 0,6 s y durante el cambio el haz casi se apaga.
 - Ilumina todos los receptores dentro del cono con línea de vista; cargarlos lleva 0,4 s.
 
 ### 3.3 Filtros
 
-Cada activación de SOL o LUNA dura **2 segundos efectivos** tras el cambio de filtro de 0,6 s y vuelve automáticamente a luz blanca. La pausa detiene este tiempo. Apagar la linterna no lo reinicia; una vez de vuelta en blanco se puede volver a activar. Las parejas de anclas están separadas para requerir dos direcciones de mirada, con tiempo de carga de 0,4 s cada una y retención suficiente para cruzar a velocidad base.
+SOL y LUNA duran mientras se sostiene su botón. Soltar vuelve a blanco con una transición de 0,35 s. Ambos usan cono de 28° y alcance de 18,75 m. El salto limita velocidad horizontal en el aire a 2 m/s para no cruzar los huecos de puzzles.
 
 | # | Filtro | Color | Receptor | Qué hace |
 |---|---|---|---|---|
@@ -197,7 +200,7 @@ Los documentos `RevisionIntegral.md`, `RedisenioV2.md` y `AlasYCruceNuevo.md` re
 
 ## Exploración y colección opcional — ampliación vigente
 
-Seis piedras pequeñas componen un halo por sectores. Sus motivos proceden del lenguaje gráfico del juego, sin atribución cultural inventada. Se recogen mirando y usando Espacio/Enter o A (×), con aviso contextual breve independiente de las ayudas de progreso. La pausa muestra x/6; cada pieza aparece en un conjunto lateral de la rotonda. No son anclas, filtros ni sellos.
+Seis piedras pequeñas componen un halo por sectores. Sus motivos proceden del lenguaje gráfico del juego, sin atribución cultural inventada. Se recogen mirando y usando E o B (○), con aviso contextual breve independiente de las ayudas de progreso. La pausa muestra x/6; cada pieza aparece en un conjunto lateral de la rotonda. No son anclas, filtros ni sellos.
 
 Las ubicaciones y reglas están en `Docs/ExploracionYConjunto.md`. Todas se alcanzan caminando; la exterior admite regreso por la escalera abierta. El cierre de Cresta termina la oportunidad de explorar. Caídas conservan la colección, reiniciar la escena la borra, y no hay guardado adicional entre partidas. El recorrido principal no exige ninguna pieza.
 

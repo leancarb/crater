@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -309,7 +309,7 @@ public class InterfazCrater : MonoBehaviour
         }
         if (textoControles != null) textoControles.text =
             "WASD / Stick izq. · Moverse      Mouse / Stick der. · Mirar\n" +
-            "Espacio / A (×) · Recoger      Shift / R2 / RT · Correr\n" +
+            "E / B (○) · Recoger      Espacio / A (×) · Saltar      Shift / R2 / RT · Correr\n" +
             "F / X (□) · Farol      Mantener presionado para usar filtros\n" +
             "Izquierdo / RB (R1) · SOL      Derecho / LB (L1) · LUNA\nSoltar · LUZ BLANCA\n\n" +
             "Piedras talladas · " + piezasOpcionales + "/6\n\n" +

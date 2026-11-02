@@ -222,13 +222,12 @@ public class PrologoCapilla : MonoBehaviour
     {
         Reproduciendo = true;
         saltar = false;
-        if (jugador != null) jugador.movimientoBloqueado = true;
+        // La revelación no bloquea locomoción ni cámara.
         float desde = cielo != null ? cielo.Progreso : 0f;
-        // No se gira la cámara. Si el jugador mira a otro lado, la totalidad
-        // espera: su momento clave siempre puede observarse al volver a mirar.
+        // La totalidad avanza con cámara y locomoción libres, incluso si se mira a otro lado.
         for (float t = 0; t < pausaTotalidad && !saltar;)
         {
-            if (!PausaCrater.EnPausa && EclipseEnVista)
+            if (!PausaCrater.EnPausa)
             {
                 t += Time.deltaTime;
                 if (cielo != null) cielo.Progreso = Mathf.Lerp(desde, 1f, Suave(Mathf.Clamp01(t / pausaTotalidad)));

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
@@ -73,10 +73,10 @@ public static class EntradaCrater
     public static string BotonFiltro(int indice) => UsandoMando
         ? (indice == 0 ? "RB (R1)" : "LB (L1)") : (indice == 0 ? "Clic izquierdo" : "Clic derecho");
 
-    /// <summary>Saltear la animación que se esté viendo (Espacio, Enter o A). No se anuncia con texto.</summary>
+    /// <summary>Omitir una animación o interactuar con E / B; separado del salto.</summary>
     public static bool Saltar =>
-        Presionada(Key.Space) || Presionada(Key.Enter)
-        || (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame);
+        Presionada(Key.E)
+        || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame);
 
     /// <summary>Pausa (Esc o Start).</summary>
     public static bool Pausa =>
@@ -118,8 +118,9 @@ public static class EntradaCrater
     public static bool UsandoMando => Gamepad.current != null && Gamepad.current.lastUpdateTime >
         System.Math.Max(Keyboard.current != null ? Keyboard.current.lastUpdateTime : 0,
             Mouse.current != null ? Mouse.current.lastUpdateTime : 0);
+    public static bool Salto => Presionada(Key.Space) || (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame);
     public static bool Interactuar => Saltar;
-    public static string BotonInteractuar => UsandoMando ? "A (×)" : "Espacio";
+    public static string BotonInteractuar => UsandoMando ? "B (○)" : "E";
     public static string BotonLinterna => UsandoMando ? "X (□)" : "F";
 
     public static bool ClicIzquierdo =>

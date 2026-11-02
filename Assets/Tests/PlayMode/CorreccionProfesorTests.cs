@@ -37,12 +37,12 @@ public class CorreccionProfesorTests
         try
         {
             InputSystem.QueueStateEvent(teclado,new KeyboardState());yield return null;
-            Assert.That(Texto,Does.Contain("Espacio"));
+            Assert.That(Texto,Does.Contain("E"));
             var pausa=Object.FindFirstObjectByType<PausaCrater>();pausa.Pausar();
-            InputSystem.QueueStateEvent(teclado,new KeyboardState(Key.Space));yield return null;yield return null;
+            InputSystem.QueueStateEvent(teclado,new KeyboardState(Key.E));yield return null;yield return null;
             Assert.That(objeto.Recogido,Is.False,"La pausa bloquea la recogida");
             InputSystem.QueueStateEvent(teclado,new KeyboardState());yield return null;pausa.Reanudar();yield return null;
-            InputSystem.QueueStateEvent(teclado,new KeyboardState(Key.Space));yield return null;yield return null;
+            InputSystem.QueueStateEvent(teclado,new KeyboardState(Key.E));yield return null;yield return null;
             Assert.That(objeto.Recogido,Is.True);Assert.That(l.Disponible,Is.True);Assert.That(l.Encendida,Is.False);
             Assert.That(Texto,Does.Contain("F · Encender"));
             InputSystem.QueueStateEvent(teclado,new KeyboardState());yield return null;
@@ -60,12 +60,12 @@ public class CorreccionProfesorTests
         {
             Mirar(objeto);c.jugador.MirarHacia(c.camara.transform.position+(c.camara.transform.position-objeto.PuntoInteraccion.position)*10);
             yield return null;yield return null;
-            InputSystem.QueueStateEvent(mando,new GamepadState().WithButton(GamepadButton.South));yield return null;yield return null;
+            InputSystem.QueueStateEvent(mando,new GamepadState().WithButton(GamepadButton.East));yield return null;yield return null;
             Assert.That(objeto.Recogido,Is.False,"No se recoge sin mirarlo");
             InputSystem.QueueStateEvent(mando,new GamepadState());yield return null;
             c.jugador.MirarHacia(objeto.PuntoInteraccion.position);yield return null;yield return null;
-            Assert.That(c.ObjetoRecogible,Is.SameAs(objeto));Assert.That(Texto,Does.Contain("A (×)"));
-            InputSystem.QueueStateEvent(mando,new GamepadState().WithButton(GamepadButton.South));yield return null;yield return null;
+            Assert.That(c.ObjetoRecogible,Is.SameAs(objeto));Assert.That(Texto,Does.Contain("B (○)"));
+            InputSystem.QueueStateEvent(mando,new GamepadState().WithButton(GamepadButton.East));yield return null;yield return null;
             Assert.That(objeto.Recogido,Is.True);Assert.That(l.EstaDesbloqueado(objeto.filtro),Is.True);
         }
         finally{InputSystem.RemoveDevice(mando);}

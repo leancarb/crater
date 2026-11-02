@@ -1,0 +1,37 @@
+{
+  "status": "completed",
+  "duration": 4.95,
+  "summary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "inconclusive": 0
+  },
+  "results": [
+    {
+      "FullName": "CorreccionDocenteCompletaTests.CadaColumnaEnciendePisoYTechoEnLaMismaTransicion",
+      "Status": "Passed",
+      "Duration": 2.3607118,
+      "Message": null
+    },
+    {
+      "FullName": "CorreccionDocenteCompletaTests.ElExteriorOrientaConRocasSinPorticoNiMarcas",
+      "Status": "Passed",
+      "Duration": 0.8310905,
+      "Message": null
+    },
+    {
+      "FullName": "CorreccionDocenteCompletaTests.LasLeccionesSeLeenDesdeSueloSeguroYNoTapanLasAnclas",
+      "Status": "Passed",
+      "Duration": 0.8537847,
+      "Message": null
+    },
+    {
+      "FullName": "CorreccionDocenteCompletaTests.PerderFocoNoPausaPeroLaPausaManualSigueFuncionando",
+      "Status": "Passed",
+      "Duration": 0.8678779,
+      "Message": null
+    }
+  ]
+}

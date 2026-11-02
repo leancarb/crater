@@ -22,12 +22,12 @@ public class ExploracionCraterTests
             var cara = losa.Find("PinturaMural");
             Assert.That(cara, Is.Not.Null);
             var material = cara.GetComponent<Renderer>().sharedMaterial;
-            Assert.That(material.GetTexture("_BaseMap").name, Is.EqualTo($"mural_explanada_{(i <= 4 ? "izq" : "der")}_{(i - 1) % 4 + 1:00}"));
+            Assert.That(material.GetTexture("_BaseMap"), Is.Null,"Tinta mate extraída del PNG en geometría, sin losa rectangular");
+            Assert.That(losa.Find("Narrativa"),Is.Not.Null);
             Assert.That(material.IsKeywordEnabled("_EMISSION"), Is.False);
             // En Play Unity combina los buffers estáticos; validar el área visible del renderer.
             Assert.That(cara.GetComponent<MeshFilter>().sharedMesh, Is.Not.Null);
-            var dimensiones = cara.GetComponent<Renderer>().bounds.size;
-            Assert.That(Mathf.Max(dimensiones.x, dimensiones.z) / dimensiones.y, Is.EqualTo(1.5f).Within(.001f));
+            Assert.That(cara.GetComponent<MeshFilter>().sharedMesh.vertexCount,Is.GreaterThan(0));
         }
         var mural = objetos.Single(t => t.name == "Lore_2");
         Situar(c, new Vector3(0, .05f, mural.position.z - 1.8f), mural.position);
@@ -67,7 +67,7 @@ public class ExploracionCraterTests
         var k=InputSystem.AddDevice<Keyboard>();
         try
         {
-            InputSystem.QueueStateEvent(k,new KeyboardState(Key.Space));yield return null;yield return null;
+            InputSystem.QueueStateEvent(k,new KeyboardState(Key.E));yield return null;yield return null;
             InputSystem.QueueStateEvent(k,new KeyboardState());yield return null;
             Capturar(c.camara,"02_Prototipo_Recogida");
             Assert.That(c.Cantidad,Is.EqualTo(1));Assert.That(p.gameObject.activeSelf,Is.False);
@@ -86,7 +86,7 @@ public class ExploracionCraterTests
         {
             InputSystem.QueueStateEvent(mando,new GamepadState());yield return null;yield return null;
             Capturar(c.camara,"14_Pieza_Contexto_Mando");
-            InputSystem.QueueStateEvent(mando,new GamepadState().WithButton(GamepadButton.South));yield return null;yield return null;
+            InputSystem.QueueStateEvent(mando,new GamepadState().WithButton(GamepadButton.East));yield return null;yield return null;
             InputSystem.QueueStateEvent(mando,new GamepadState());yield return null;
             Assert.That(c.Cantidad,Is.EqualTo(2));Assert.That(otra.gameObject.activeSelf,Is.False);Assert.That(otra.Recoger(),Is.False);
         }
@@ -137,7 +137,7 @@ public class ExploracionCraterTests
         {
             InputSystem.QueueStateEvent(g,new GamepadState());yield return null;yield return null;
             Assert.That(Object.FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None).Any(t=>t.text.Contains("A (×) · Escuchar")),Is.True);
-            InputSystem.QueueStateEvent(g,new GamepadState().WithButton(GamepadButton.South));yield return null;yield return null;
+            InputSystem.QueueStateEvent(g,new GamepadState().WithButton(GamepadButton.East));yield return null;yield return null;
             InputSystem.QueueStateEvent(g,new GamepadState());yield return null;
             Assert.That(ct.VecesEscuchado,Is.EqualTo(2));Assert.That(ct.Reproduciendo,Is.True);
             Assert.That(ct.luz.intensity,Is.GreaterThan(3.9f),"la reescucha no debe apagar el lugar");

@@ -1,5 +1,14 @@
 # CRÁTER — estado vigente
 
+## Estado vigente — 2/11/2026
+
+Prevalece `Iteracion20261102.md` sobre los apartados históricos siguientes. Inicio elevado descentrado (+4m y 25° de desvío), bajada con pretiles de 1,3 m, lomadas laterales que encuadran eclipse de 9,5°. Farol central: Rotonda oscura antes de recogerlo, después cierra la entrada y enciende luces/accesos en 2,5 s. La piedra exterior pasa al lado interior del cierre de la Rotonda; atajo inicial desactivado. Renderizadores exteriores ocultos bajo 7,5 m y restaurados al regresar. Tutorial en placas claras con soporte y botón del dispositivo; narrativa mate sin losa; siluetas sólidas, grutas rojas y guía de perspectiva hacia el farol. Cámara y locomoción libres durante la revelación.
+
+Controles actuales: F/X para farol; sostener clic izquierdo/R1 SOL, derecho/L1 LUNA; soltar devuelve blanco. Espacio/A salta 0,4 m, E/B recoge y omite animaciones, Shift/RT corre. No hay respawn. El salto no agrega alcance a los puzzles: velocidad aérea 2 m/s, escalón automático deshabilitado durante el salto.
+
+## Historial previo (conservar como referencia)
+
+
 6 de octubre de 2026. Este documento y `ExploracionYConjunto.md` prevalecen sobre documentos y capturas de diseños posteriormente revertidos. La escena se genera desde código; el Editor contiene la revisión actual. No se produjo un EXE en esta iteración.
 
 ## Recorrido y escala

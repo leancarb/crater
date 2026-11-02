@@ -9,11 +9,13 @@ acostumbren a la oscuridad: así se abre el techo y entra la luz del fin del ecl
 
 Unity 6000.3.23f1 · URP (Forward+) · Input System.
 
-Versión publicada el 2/11/2026 desde el proyecto de trabajo `Desktop/crater`.
+Base publicada el 2/11/2026 desde el proyecto de trabajo `Desktop/crater`.
 Incluye el inicio elevado con bajada lateral, el farol central, la respuesta de
 anclas y rejas sin retícula ni barra roja, y los nueve murales blancos con relieve
 y proporciones originales. La escena y los recursos generados ya están incluidos:
 abrir `Assets/Scenes/CraterVerticalSlice.unity` sin reconstruir para jugar.
+
+La iteración local posterior de diseño, arte y salto está documentada en [Docs/Iteracion20261102.md](Docs/Iteracion20261102.md), con capturas y resultados de validación. Esta iteración todavía no tiene push.
 
 ## Controles
 
@@ -27,7 +29,8 @@ abrir `Assets/Scenes/CraterVerticalSlice.unity` sin reconstruir para jugar.
 | Pausa / seguir | Esc | Start / Options; B / círculo sigue |
 | Reiniciar / salir (en pausa) | R / X | Y / triángulo; X / cuadrado |
 | Ayudas escritas (en pausa) | H | ↑ |
-| Saltar animaciones | Espacio | A / cruz |
+| Salto corto (0,4 m) | Espacio | A / cruz |
+| Recoger / omitir animaciones | E | B / círculo |
 
 SOL y LUNA se mantienen mientras se sostiene el botón. Al soltar, el farol vuelve a blanco con una transición de 0,35 s. Las parejas de anclas requieren apuntar a cada una.
 
@@ -117,7 +120,7 @@ La escena del Editor sigue `Docs/EstadoActualCrater.md`. `Docs/AlasYCruceNuevo.m
 La especificación vigente está en `Docs/EstadoActualCrater.md`: alas anteriores, Cruce nuevo, subsuelo ampliado, eclipse visible y bajada corregida.
 
 
-La ampliación actual está en `Docs/ExploracionYConjunto.md`: seis piedras opcionales, progreso en pausa y acontecimiento ambiental en la rotonda. Espacio/Enter o A (×) recoge y permite reescuchar. Reiniciar la escena borra la colección; las recuperaciones la conservan. No se añade guardado entre partidas ni dependencia externa.
+La ampliación actual está en `Docs/ExploracionYConjunto.md`: seis piedras opcionales, progreso en pausa y acontecimiento ambiental en la rotonda. E o B (○) recoge y permite reescuchar. Reiniciar la escena borra la colección; las recuperaciones la conservan. No se añade guardado entre partidas ni dependencia externa.
 
 Revisión posterior: `Docs/LegibilidadYEpilogo.md` prevalece sobre el regreso con huella/guiño y sol en su posición inicial. El epílogo cierra todas las aberturas sin rastro, cambia el sol a atardecer en otra dirección y mantiene créditos. También se revisó la legibilidad de los detalles opcionales.
 

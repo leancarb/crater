@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Controlador de primera persona. Caminata ágil sin salto. Carrera opcional sólo con R2 / RT del joystick.
+/// Controlador de primera persona: caminata, carrera Shift / RT y salto corto de 0,4 m.
 ///
 /// Poner en: un GameObject con CharacterController, con la Camera como hijo.
 ///
@@ -19,9 +19,13 @@ public class JugadorFPS : MonoBehaviour
 {
     [Header("Movimiento")]
     public float velocidad = 4f;
-    [Tooltip("Multiplicador de carrera sólo para R2 / RT del joystick.")]
+    [Tooltip("Multiplicador de carrera con Shift o R2 / RT del joystick.")]
     public float multiplicadorCorrer = 1.4f;
     public float gravedad = -18f;
+    public float alturaSalto = .4f;
+    public float velocidadMaximaEnSalto = 2f;
+    bool saltando;
+    float escalonNormal;
     [Tooltip("Suavizado del arranque y la frenada. Más alto = más ágil.")]
     public float suavizado = 8f;
     [Tooltip("Impide caminar durante la apertura del cráter; conserva el control de la mirada.")]
@@ -62,6 +66,7 @@ public class JugadorFPS : MonoBehaviour
     void Awake()
     {
         cc = GetComponent<CharacterController>();
+        escalonNormal=cc.stepOffset;
         if (camara == null && Camera.main != null) camara = Camera.main.transform;
         if (camara != null) camaraBase = camara.localPosition;
     }
@@ -102,12 +107,16 @@ public class JugadorFPS : MonoBehaviour
         velocidadActual = movimientoBloqueado ? Vector3.zero : Vector3.Lerp(velocidadActual, deseada, 1f - Mathf.Exp(-suavizado * delta));
 
         // en el piso, una caída chica constante lo mantiene pegado (bajando rampas, por ejemplo)
-        if (cc.isGrounded && caida < 0f) caida = -2f;
+        if (cc.isGrounded && caida < 0f){caida=-2f;saltando=false;cc.stepOffset=escalonNormal;}
+        if(!movimientoBloqueado && cc.isGrounded && EntradaCrater.Salto)
+        {caida=Mathf.Sqrt(-2*gravedad*alturaSalto);saltando=true;cc.stepOffset=0;}
+        if(saltando)velocidadActual=Vector3.ClampMagnitude(velocidadActual,velocidadMaximaEnSalto);
         caida += gravedad * delta;
 
         Vector3 total = velocidadActual;
         total.y = caida;
-        cc.Move(total * delta);
+        var contacto=cc.Move(total * delta);
+        if((contacto&CollisionFlags.Above)!=0 && caida>0)caida=0;
 
         Cabecear(delta);
     }
