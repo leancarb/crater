@@ -89,12 +89,11 @@ public class CraterRevisionTests
                 var cara = losa.Find("PinturaMural");
                 var malla = cara.GetComponent<MeshFilter>().sharedMesh;
                 var textura = cara.GetComponent<Renderer>().sharedMaterial.GetTexture("_BaseMap");
-                Assert.That(textura.width, Is.EqualTo(1728));
-                Assert.That(textura.height, Is.EqualTo(1152));
-                Assert.That(malla.bounds.size.x, Is.EqualTo(2.1f).Within(.0001f));
-                Assert.That(malla.bounds.size.y, Is.EqualTo(1.4f).Within(.0001f));
-                CollectionAssert.AreEqual(new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right }, malla.uv);
-                Assert.That(malla.normals.All(n => Vector3.Dot(n, Vector3.back) > .999f), Is.True);
+                Assert.That(malla.vertexCount,Is.GreaterThan(0));
+                Assert.That(malla.bounds.size.x,Is.InRange(.5f,2.101f));
+                Assert.That(malla.bounds.size.y,Is.InRange(.5f,1.401f));
+                Assert.That(losa.Find("Losa_Piedra"),Is.Null);
+                Assert.That(losa.Find("Narrativa"),Is.Not.Null);
                 Assert.That(cara.GetComponent<Collider>(), Is.Null);
                 Assert.That(Vector3.Dot(losa.forward, i <= 4 ? Vector3.left : Vector3.right), Is.GreaterThan(.999f));
             }

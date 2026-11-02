@@ -10,11 +10,14 @@ public class MotivoPorPerspectiva : MonoBehaviour
     float presencia;
     static readonly int Emision=Shader.PropertyToID("_EmissionColor");
     public bool Alineado {get;private set;}
+    public LineRenderer guia;
+    public Transform destino;
     float siguiente;
     void Update()
     {
         if(mirada==null)return;
         Alineado=Vector3.Distance(mirada.position,puntoDeVista)<2f && Vector3.Dot(mirada.forward,(transform.position-mirada.position).normalized)>.9f;
+        if(guia!=null){guia.enabled=Alineado && destino!=null && destino.gameObject.activeInHierarchy;if(guia.enabled){guia.SetPosition(0,transform.position);guia.SetPosition(1,destino.position);}}
         presencia=Mathf.MoveTowards(presencia,Alineado?1:0,Time.deltaTime*2);
         if(fragmentos!=null){bloque ??= new MaterialPropertyBlock();foreach(var r in fragmentos)if(r!=null){r.GetPropertyBlock(bloque);bloque.SetColor(Emision,new Color(1,.87f,.65f)*presencia*1.3f);r.SetPropertyBlock(bloque);}}
         if(Alineado && Time.time>siguiente && !PausaCrater.EnPausa){nota?.Play();siguiente=Time.time+12;}

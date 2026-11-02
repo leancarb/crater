@@ -311,16 +311,12 @@ public static class ValidarProyectoCrater
             var material = cara != null ? cara.GetComponent<Renderer>()?.sharedMaterial : null;
             string imagen = $"mural_explanada_{(i <= 4 ? "izq" : "der")}_{(i - 1) % 4 + 1:00}";
             string ruta = $"Assets/Art/Murals/{imagen}.png";
-            Comprobar(losa.childCount == 2 && losa.Find("Losa_Piedra") != null && malla != null && malla.vertexCount == 4,
-                $"{nombre}: conservar piedra y un único quad pintado.", problemas);
-            Comprobar(malla != null && Mathf.Abs(malla.bounds.size.x / malla.bounds.size.y - 1.5f) < .001f,
-                $"{nombre}: la cara debe conservar la proporción 3:2.", problemas);
-            Comprobar(material != null && material.shader.name == "Universal Render Pipeline/Lit" &&
-                AssetDatabase.GetAssetPath(material.GetTexture("_BaseMap")) == ruta &&
-                material.GetColor("_BaseColor") == Color.white && material.GetFloat("_Smoothness") == .05f &&
-                material.GetFloat("_Metallic") == 0f && !material.IsKeywordEnabled("_EMISSION") &&
-                material.GetColor("_EmissionColor").maxColorComponent == 0f,
-                $"{nombre}: PNG incorrecto o PinturaMural no es mate/sin emisión.", problemas);
+            Comprobar(losa.Find("Narrativa")!=null && losa.Find("Losa_Piedra")==null,
+                $"{nombre}: la historia debe quedar directa sobre pared, sin losa.",problemas);
+            Comprobar(malla!=null && malla.vertexCount>0 && malla.bounds.size.x<=2.101f && malla.bounds.size.y<=1.401f,
+                $"{nombre}: dibujo ausente o proporción incorrecta.",problemas);
+            Comprobar(material!=null && !material.IsKeywordEnabled("_EMISSION") && material.GetColor("_EmissionColor").maxColorComponent==0,
+                $"{nombre}: la historia debe ser mate.",problemas);
             var importador = AssetImporter.GetAtPath(ruta) as TextureImporter;
             Comprobar(importador != null && importador.sRGBTexture && importador.mipmapEnabled && importador.npotScale == TextureImporterNPOTScale.None &&
                 importador.wrapMode == TextureWrapMode.Clamp && importador.filterMode == FilterMode.Bilinear &&

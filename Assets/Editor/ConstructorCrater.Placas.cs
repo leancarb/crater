@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -23,8 +23,8 @@ public static partial class ConstructorCrater
     }
     static void PrepararMaterialesLectura()
     {
-        placaPizarra=MateLiso("Placa_Pizarra","#2E3540",.1f);
-        trazoInstruccion=MateLiso("Trazo_Instruccion","#F4F1EA",.05f);
+        placaPizarra=MateLiso("Placa_Pizarra","#D1CEC1",.1f);
+        trazoInstruccion=MateLiso("Trazo_Instruccion","#222831",.05f);
         MateLiso("PinturaHueso","#948C7A",.08f);
     }
     static float PisoDePlaca(Transform padre,string nombre,Vector3 punto)
@@ -59,8 +59,9 @@ public static partial class ConstructorCrater
     {
         if(placaPizarra==null||trazoInstruccion==null)PrepararMaterialesLectura();
         float piso=PisoDePlaca(padre,nombre,posicion);posicion.y=piso+(nombre=="Pista_Trampilla_E2"?1.8f:1.6f);
+        dibujo=(kk,l)=>PanelAccionMinimal(nombre,kk,l);
         bool apagar=nombre.StartsWith("Apagar_")||nombre.Contains("Oscuridad");
-        if(apagar){tamano=new Vector2(1.6f,.8f);dibujo=PanelApagarLaLuz;}
+        if(apagar){tamano=new Vector2(1.6f,.8f);dibujo=(kk,l)=>PanelAccionMinimal(nombre,kk,l);}
         var tinta=new Kit{pinturaHueso=trazoInstruccion,pinturaSol=trazoInstruccion,pinturaLuna=trazoInstruccion};
         var lienzo=new Lienzo();float anterior=minimoTrazoInstruccion;
         try{minimoTrazoInstruccion=.04f;dibujo(tinta,lienzo);}finally{minimoTrazoInstruccion=anterior;}
@@ -98,13 +99,41 @@ public static partial class ConstructorCrater
         foco.transform.localPosition=new Vector3(0,1.05f,-2.4f);foco.transform.LookAt(raiz.position);
         var luz=foco.AddComponent<Light>();luz.type=LightType.Spot;luz.color=Hex("#F4F1EA");
         luz.intensity=14;luz.spotAngle=35;luz.innerSpotAngle=24;luz.range=3;luz.shadows=LightShadows.None;
-        if(nombre=="Control_Mover"||nombre=="Ensenanza_Dos_Anclas")
         {
             float alto=Mathf.Max(.05f,1.6f-tamano.y*.5f);
             CajaDePlaca(placa,"Poste_Placa",new Vector3(0,-tamano.y*.5f-alto*.5f,.04f),new Vector3(.08f,alto,.08f),placaPizarra,true);
         }
+        var etiqueta=new GameObject("Boton_Dispositivo");etiqueta.transform.SetParent(placa,false);
+        etiqueta.transform.localPosition=new Vector3(0,-tamano.y*.3f,-.055f);
+        var texto=etiqueta.AddComponent<TextMesh>();texto.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        texto.fontSize=48;texto.characterSize=.035f;texto.anchor=TextAnchor.MiddleCenter;texto.color=Hex("#222831");
+        etiqueta.AddComponent<EtiquetaTutorial>().accion=nombre;
         return raiz;
     }
+    static void PanelAccionMinimal(string n,Kit k,Lienzo l)
+    {
+        var v=l.En(k.pinturaHueso);
+        if(n.Contains("Mover"))Persona(v,0,-.1f,.55f,0,0);
+        else if(n.Contains("Mirar")){Anillo(v,new Vector2(0,.15f),.15f,.19f);Disco(v,0,.15f,.07f,12);}
+        else if(n.Contains("Combinacion"))
+        {
+            FiguraEn(v,Figura.LunaCreciente,-.38f,.15f,.45f);
+            Flecha(v,new Vector2(-.1f,.15f),new Vector2(.1f,.15f),.04f);
+            FiguraEn(v,Figura.Sol,.38f,.15f,.45f);
+        }
+        else if(n.Contains("Anclas"))
+        {
+            foreach(float x in new[]{-.24f,.24f})Anillo(v,new Vector2(x,.15f),.12f,.17f);
+            var punta=Linterna(v,new Vector2(-.65f,.15f),0,.14f);Cono(v,punta,0,.3f,12);
+        }
+        else if(n.Contains("Ancla_Puerta"))Anillo(v,new Vector2(0,.15f),.16f,.23f);
+        else if(n.Contains("Cresta")||n.Contains("Apagar")||n.Contains("Oscuridad"))
+        {OjoCerrado(v,0,.15f,.6f);IconoPower(v,new Vector2(.43f,.15f),.12f);}
+        else if(n.Contains("FiltroSol"))FiguraEn(v,Figura.Sol,0,.15f,.6f);
+        else if(n.Contains("FiltroLuna"))FiguraEn(v,Figura.LunaCreciente,0,.15f,.6f);
+        else {IconoPower(v,new Vector2(0,.15f),.22f);}
+    }
+
     static List<Vector3> RelieveDeDibujo(List<Vector3> original)
     {
         var v=new List<Vector3>();

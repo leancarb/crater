@@ -662,10 +662,10 @@ public static partial class ConstructorCrater
         C("Muro_Gruta_Lejos", -ancho / 2f, -3.3f, largoAbismo, ancho / 2f, -0.3f, largoAbismo + 0.3f);
         C("Muro_Gruta_Izq", -ancho / 2f - 0.3f, -3.3f, -5.7f, -ancho / 2f, -0.3f, largoAbismo);
         C("Muro_Gruta_Der", ancho / 2f, -3.3f, -5.7f, ancho / 2f + 0.3f, -0.3f, largoAbismo);
-        Luz(red, "Luz_Gruta", P(0f, -1.1f, -2f), LuzCalida, 32f, 8f, true);
+        Luz(red, "Luz_Gruta", P(0f, -1.1f, -2f), new Color(.55f,.015f,.01f), 10f, 3f, true);
         Losa(k, red, "Mural_Gruta_" + nombre, P(nombre == "O1" ? 0f : -ancho * 0.2f, -1.5f, -5.7f),
             red.forward, Mathf.Min(3f, ancho * 0.4f), 1.6f, PanelValleEclipse);
-        Luz(red, "Luz_Pie_Escalera", P(ladoEscalera, -1.3f, -0.2f), LuzCalida, 18f, 4f, true);
+        Luz(red, "Luz_Pie_Escalera", P(ladoEscalera, -1.3f, -0.2f), new Color(.55f,.015f,.01f), 6f, 2.5f, true);
         if (nombre == "O1") ConstruirRinconGruta(k, red, ancho);
         HuecoDeEscalera(k, red, nombre, ladoEscalera);
     }

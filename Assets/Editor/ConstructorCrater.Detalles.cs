@@ -28,7 +28,7 @@ public static partial class ConstructorCrater
             reaccion.resonancia.minDistance = 1;
             reaccion.resonancia.maxDistance = 5;
         }
-        Luz(red, "Luz_Rincon_O1", P(x, -1.8f, -4.2f), LuzCalida, 6, 3, false);
+        Luz(red, "Luz_Rincon_O1", P(x, -1.8f, -4.2f), new Color(.55f,.015f,.01f), 6, 2.5f, true);
     }
 
     static void DetallesDelRecorrido(Kit k, Transform nivel)

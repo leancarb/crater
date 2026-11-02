@@ -97,6 +97,7 @@ public static partial class ConstructorCrater
         FacetarEscena(kit);
         AplicarCorreccionDocente(kit, nivel);
         ConstruirExploracion(kit, nivel, refs);
+        AplicarEsteticaLectura(kit);
         AplicarInicioElevado(kit, nivel);
         ConfigurarSombrasYSuperficies(kit, refs);
         // Variante Silo archivada: se activa sólo desde su menú optativo.

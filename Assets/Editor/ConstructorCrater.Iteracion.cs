@@ -6,6 +6,9 @@ public static partial class ConstructorCrater
 {
     static void IteracionDiseno(Kit k,Transform nivel)
     {
+        // También se usa desde la actualización local: reemplazar, nunca acumular sistemas.
+        foreach(var t in nivel.GetComponentsInChildren<Transform>(true).Where(t=>t.name=="Cierre_Entrada_Templo"||t.name=="Llegada_Rotonda"||t.name=="Visibilidad_Exterior").ToArray())
+            Object.DestroyImmediate(t.gameObject);
         var exterior=nivel.Find("06_Capilla");
         var inicio=exterior.Find("Inicio_Elevado_Kit");
         for(int tramo=1;tramo<CaminoBajadaInicial.Length;tramo++)
@@ -21,11 +24,15 @@ public static partial class ConstructorCrater
                 baranda.transform.rotation=exterior.rotation*Quaternion.LookRotation(new Vector3(d.x,0,d.y));
             }
         }
-        // Hombros bajos y abiertos al eje: no invaden la silueta solar.
-        foreach(float lado in new[]{-1f,1f})for(int i=0;i<7;i++)
+        // Cerrar los encuentros de las barandas sin invadir el sendero.
+        for(int i=1;i<CaminoBajadaInicial.Length-1;i++)foreach(float lado in new[]{-1f,1f})
         {
-            float z=85+i*7;float x=lado*9;
-            CajaLocal(inicio,"Lomada_Encuadre_Eclipse",new Vector3(x,AlturaInicioElevado(x,z)+.35f,z),new Vector3(5,.7f,8),k.tierra);
+            var p=CaminoBajadaInicial[i];var da=(p-CaminoBajadaInicial[i-1]).normalized;var db=(CaminoBajadaInicial[i+1]-p).normalized;
+            var a=p+new Vector2(-da.y,da.x)*lado*3.4f;var b=p+new Vector2(-db.y,db.x)*lado*3.4f;
+            if(Vector2.Distance(a,b)<.01f)continue;
+            var c=(a+b)*.5f;var delta=b-a;
+            var union=CajaLocal(inicio,"Pretil_Encuentro",new Vector3(c.x,AlturaInicioElevado(c.x,c.y)+.65f,c.y),new Vector3(.35f,1.3f,delta.magnitude+.2f),k.piedra);
+            union.transform.rotation=exterior.rotation*Quaternion.LookRotation(new Vector3(delta.x,0,delta.y));
         }
         var spawn=exterior.Find("SpawnValle");spawn.localPosition=new Vector3(4,AlturaInicioElevado(4,184)+.05f,184);
         spawn.localRotation=Quaternion.Euler(0,155,0);
@@ -43,12 +50,31 @@ public static partial class ConstructorCrater
         var llegada=Grupo(nivel,"Llegada_Rotonda").gameObject.AddComponent<LlegadaRotonda>();
         llegada.farol=Object.FindFirstObjectByType<LinternaController>();llegada.entrada=puerta;
         var rotonda=BuscarObjetoDocente("03_Rotonda");
+        var centro=EspacioCrater.Punto(CentroRotonda);
         llegada.luces=Object.FindObjectsByType<Light>(FindObjectsInactive.Include,FindObjectsSortMode.None)
-            .Where(l=>l.intensity>0 && (l.transform.IsChildOf(rotonda)||l.name=="Luz_Pasillo_O"||l.name=="Luz_Pasillo_E")&&!l.transform.IsChildOf(recogible.transform)).ToArray();
+            .Where(l=>l.type!=LightType.Directional && l.name!="Luz_Abertura_Rotonda" && l.intensity>0 &&
+                (l.transform.IsChildOf(rotonda)||l.name=="Luz_Pasillo_O"||l.name=="Luz_Pasillo_E"||
+                 (l.transform.position.y<7.5f && Vector2.Distance(new Vector2(l.transform.position.x,l.transform.position.z),new Vector2(centro.x,centro.z))<RadioRotonda*EspacioCrater.Escala)) &&
+                l.GetComponentInParent<LinternaController>()==null && !l.transform.IsChildOf(recogible.transform)).ToArray();
+        var cieloLobby=BuscarObjetoDocente("Luz_Abertura_Rotonda");if(cieloLobby!=null)cieloLobby.GetComponent<Light>().intensity=6;
         var pieza=BuscarObjetoDocente("Pieza_exterior_mirador");
-        if(pieza!=null)pieza.position=EspacioCrater.Punto(new Vector3(-4,.3f,-12));
+        if(pieza!=null)pieza.position=EspacioCrater.Punto(new Vector3(-4,.3f,0));
         var atajo=Object.FindFirstObjectByType<AtajoOcultoInicio>();if(atajo!=null)atajo.gameObject.SetActive(false);
         var vis=Grupo(nivel,"Visibilidad_Exterior").gameObject.AddComponent<VisibilidadExterior>();
-        vis.paisaje=exterior.GetComponentsInChildren<Renderer>(true).Where(r=>!r.name.Contains("Disco")&&!r.name.Contains("Corona")&&!r.name.Contains("Cielo")).ToArray();
+        var motivo=Object.FindFirstObjectByType<MotivoPorPerspectiva>();
+        if(motivo!=null)
+        {
+            var linea=motivo.GetComponent<LineRenderer>();
+            if(linea==null)linea=motivo.gameObject.AddComponent<LineRenderer>();
+            linea.positionCount=2;linea.startWidth=.035f;linea.endWidth=.07f;
+            linea.sharedMaterial=Emisivo(Opaco("Guia_Farol_Perspectiva",new Color(.5f,.4f,.2f),0),new Color(1,.8f,.5f));
+            linea.enabled=false;motivo.guia=linea;motivo.destino=recogible.PuntoInteraccion;
+        }
+        var cartel=BuscarObjetoDocente("Control_Mover");
+        var mirar=BuscarObjetoDocente("Control_Mirar");if(mirar!=null)Object.DestroyImmediate(mirar.gameObject);
+        if(cartel!=null)PlacaInstruccion(k,cartel.parent,"Control_Mirar",cartel.position+cartel.right*3.3f,-cartel.forward,new Vector2(1.4f,.9f),PanelMover);
+        vis.paisaje=Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include,FindObjectsSortMode.None).Where(r=>
+            (r.transform.IsChildOf(exterior)||r.name=="Roca_Cierre_Valle"||r.bounds.min.y>=8.7f||r.transform.parent?.name=="Guia_Exterior_Eclipse")
+            && !r.name.Contains("Disco")&&!r.name.Contains("Corona")&&!r.name.Contains("Cielo")).ToArray();
     }
 }

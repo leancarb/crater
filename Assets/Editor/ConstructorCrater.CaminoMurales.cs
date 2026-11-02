@@ -144,6 +144,7 @@ public static partial class ConstructorCrater
             }
             if(candidato==null || candidato.GetComponentInParent<ReceptorDeLuz>()!=null ||
                 candidato.GetComponentInParent<TestigoDeSello>()!=null || candidato.GetComponentInParent<Compuerta>()!=null)continue;
+            if(candidato.Find("PlacaInstruccion")!=null){candidato.position+=normal*1.3f;continue;}
             retirar.Add(candidato.gameObject);
         }
         foreach(var go in retirar)if(go!=null)

@@ -25,7 +25,7 @@ public static partial class ConstructorCrater
             float centro = 3*Mathf.Sin((z-80)*Mathf.PI/70);
             float banco = Mathf.Exp(-Mathf.Pow((Mathf.Abs(x-centro)-7)/2.5f,2));
             float tramo = Mathf.SmoothStep(0,1,(z-80)/8)*Mathf.SmoothStep(0,1,(150-z)/8);
-            return anterior+1.25f*banco*tramo;
+            return anterior+(1.25f+1.1f*Mathf.SmoothStep(0,1,(140-z)/15))*banco*tramo;
         }
         float cota = AlturaRelieve(0,150);
         float fueraX = Mathf.Max(0,Mathf.Abs(x)-9);
@@ -58,7 +58,8 @@ public static partial class ConstructorCrater
             throw new System.InvalidOperationException("Abrí la escena CraterVerticalSlice antes de actualizar.");
         contenedorMallas = AssetDatabase.LoadMainAssetAtPath(RutaMallasFacetadas);
         Material M(string nombre) => AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/" + nombre + ".mat");
-        var k = new Kit { tierra = M("Tierra"), piedra = M("PiedraClara"), pinturaHueso = M("PinturaHueso") };
+        var k = new Kit { tierra = M("Tierra"), piedra = M("PiedraClara"), basalto = M("BasaltoOscuro"),
+            pinturaHueso = M("PinturaHueso"), audio = GeneradorAudioCrater.CargarExistentes() };
         // El terreno existente es la referencia de material: no crea ni modifica materiales.
         k.tierra = GameObject.Find("Lomas_Valle").GetComponent<Renderer>().sharedMaterial;
         AplicarInicioElevado(k, nivel.transform);

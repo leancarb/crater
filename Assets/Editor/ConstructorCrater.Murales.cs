@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -91,6 +91,7 @@ public static partial class ConstructorCrater
     // Se conservan LoreSolYLuna...LoreVuelta para poder recuperar el arte procedural.
     static void LosaConPNG(Kit k, Transform padre, string nombre, Vector3 enLaPared, Vector3 afuera, string imagen)
     {
+        if(imagen.StartsWith("mural_explanada")){NarrativaDesdePNG(k,padre,nombre,enLaPared,afuera,imagen);return;}
         string ruta = $"Assets/Art/Murals/{imagen}.png";
         AssetDatabase.ImportAsset(ruta);
         var importador = AssetImporter.GetAtPath(ruta) as TextureImporter;
@@ -165,13 +166,13 @@ public static partial class ConstructorCrater
     static void Losa(Kit k, Transform padre, string nombre, Vector3 enLaPared, Vector3 afuera, float ancho, float alto,
                      System.Action<Kit, Lienzo> dibujo)
     {
+        if(EsMuralDeInstruccion(nombre)){PlacaInstruccion(k,padre,nombre,enLaPared,afuera,new Vector2(ancho,alto),dibujo);return;}
         var losa = new GameObject(nombre).transform;
         losa.SetParent(padre, false);
         // el origen queda en la cara de la losa; +Z local entra en la pared. La losa sobresale
         // 15 cm, más que el relieve de la pared facetada (9 cm), así la pared no la tapa;
         // la losa misma casi no tiene relieve (PerfilLosa)
         losa.SetPositionAndRotation(enLaPared + afuera * 0.15f, Quaternion.LookRotation(-afuera));
-        Bloque(losa, "Losa_Piedra", losa.TransformPoint(new Vector3(0f, 0f, 0.08f)), new Vector3(ancho, alto, 0.2f), k.piedra);
 
         // el marco va al final: así el orden de las capas es el del dibujo (lo primero, atrás)
         var lienzo = new Lienzo();
@@ -187,8 +188,6 @@ public static partial class ConstructorCrater
                 Linea(lienzo.En(k.pinturaHueso),new Vector2(lado*(mx-.12f),my-.11f),new Vector2(lado*(mx-.12f),my-.3f),.025f);
             }
         }
-        else
-            FrisoEscalonadoEn(lienzo.En(k.pinturaHueso),-mx,-my+.07f,Mathf.Min(ancho-.2f,2f));
 
         for (int c = 0; c < lienzo.capas.Count; c++)
         {
@@ -208,7 +207,6 @@ public static partial class ConstructorCrater
             Estatico(go);
         }
     }
-
     /// <summary>
     /// El arte del ala oeste que faltaba: sobre el tabique de las anclas del techo, el
     /// dibujo del puente que tienden; en la pared sur de esa sala, un friso de chakanas.
@@ -907,17 +905,14 @@ public static partial class ConstructorCrater
     /// <summary>Alguien de 'alto' metros parado en (x, suelo), con las piernas abiertas 'zancada' e inclinado 'inclinacion'.</summary>
     static void Persona(List<Vector3> v, float x, float suelo, float alto, float zancada, float inclinacion, bool brazoArriba = false)
     {
-        float g = alto * 0.07f;
-        var cadera = new Vector2(x, suelo + alto * 0.45f);
-        var cuello = new Vector2(x + inclinacion, suelo + alto * 0.8f);
-        var hombro = Vector2.Lerp(cadera, cuello, 0.85f);
-        Disco(v, cuello.x + inclinacion * 0.3f, cuello.y + alto * 0.11f, alto * 0.1f, 8);
-        Linea(v, cadera, cuello, g);
-        Linea(v, cadera, new Vector2(x - zancada, suelo), g);
-        Linea(v, cadera, new Vector2(x + zancada, suelo), g);
-        Linea(v, hombro, new Vector2(x - zancada * 0.8f - alto * 0.04f, cadera.y + alto * 0.02f), g * 0.85f);
-        var mano = brazoArriba ? hombro + new Vector2(alto * 0.18f, alto * 0.05f) : new Vector2(x + zancada * 0.8f + alto * 0.04f, cadera.y + alto * 0.02f);
-        Linea(v, hombro, mano, g * 0.85f);
+        float cx=x+inclinacion;
+        Rect(v,cx-alto*.10f,suelo+alto*.80f,cx+alto*.10f,suelo+alto);
+        Tri(v,new Vector2(cx-alto*.18f,suelo+alto*.75f),new Vector2(cx-alto*.25f,suelo+alto*.3f),new Vector2(cx+alto*.25f,suelo+alto*.3f));
+        Tri(v,new Vector2(cx-alto*.18f,suelo+alto*.75f),new Vector2(cx+alto*.25f,suelo+alto*.3f),new Vector2(cx+alto*.18f,suelo+alto*.75f));
+        Rect(v,cx-alto*.18f,suelo,cx-alto*.04f,suelo+alto*.35f);
+        Rect(v,cx+alto*.04f,suelo,cx+alto*.18f,suelo+alto*.35f);
+        Linea(v,new Vector2(cx-alto*.18f,suelo+alto*.68f),new Vector2(cx-alto*.37f,suelo+alto*.42f),alto*.12f);
+        Linea(v,new Vector2(cx+alto*.18f,suelo+alto*.68f),new Vector2(cx+alto*.37f,suelo+alto*(brazoArriba?.78f:.42f)),alto*.12f);
     }
 
     /// <summary>Una linterna que mira hacia 'grados' (0 = derecha) desde 'mango'. Devuelve la punta.</summary>
