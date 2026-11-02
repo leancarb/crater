@@ -43,6 +43,7 @@ Material:
     - _Cutoff: 0.5
     - _DstBlend: 0
     - _DstBlendAlpha: 0
+    - _ImitarFondo: 0
     - _QueueOffset: 0
     - _SampleGI: 0
     - _SrcBlend: 1

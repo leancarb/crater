@@ -34,6 +34,36 @@ public static class GeneradorAudioCrater
         public AudioClip[] pasos, pasosTierra, pasosMadera, pasosMetal;
     }
 
+    public static Clips CargarExistentes()
+    {
+        AudioClip Leer(string n) => AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Grabado/"+n+".wav") ?? AssetDatabase.LoadAssetAtPath<AudioClip>(Carpeta+"/"+n+".wav") ?? throw new System.IO.FileNotFoundException(n);
+        var c=new Clips {tonosAncla=new AudioClip[6],pasos=new AudioClip[4],pasosTierra=new AudioClip[4],pasosMadera=new AudioClip[4],pasosMetal=new AudioClip[4]};
+        c.resonanciaSuave=Leer("resonancia_suave");
+        c.puenteAparecer=Leer("puente_aparecer");
+        c.puenteDisolver=Leer("puente_disolver");
+        c.siseoReja=Leer("reja_siseo");
+        c.compuerta=Leer("compuerta_piedra");
+        c.recoger=Leer("recoger");
+        c.linternaEncender=Leer("linterna_encender");
+        c.linternaApagar=Leer("linterna_apagar");
+        c.equiparCuerpo=Leer("filtro_cuerpo_equipar");
+        c.equiparHueco=Leer("filtro_hueco_equipar");
+        c.zumbidoCuerpo=Leer("filtro_cuerpo_zumbido");
+        c.zumbidoHueco=Leer("filtro_hueco_zumbido");
+        c.ambienteCrater=Leer("ambiente_crater");
+        c.vientoOculo=Leer("viento_oculo");
+        c.exteriorCapilla=Leer("exterior_capilla");
+        c.pajaros=Leer("capilla_pajaros");
+        c.graveEclipse=Leer("eclipse_grave");
+        c.anilloDiamante=Leer("anillo_diamante");
+        c.campana=Leer("capilla_campana");
+        c.destelloPuerta=Leer("puerta_destello");
+        c.musicaCreditos=Leer("creditos");
+        for(int i=0;i<6;i++)c.tonosAncla[i]=Leer("ancla_tono_"+(i+1));
+        for(int i=0;i<4;i++){c.pasos[i]=Leer("paso_"+(i+1));c.pasosTierra[i]=Leer("paso_tierra_"+(i+1));c.pasosMadera[i]=Leer("paso_madera_"+(i+1));c.pasosMetal[i]=Leer("paso_metal_"+(i+1));}
+        return c;
+    }
+
     public static Clips GenerarTodo()
     {
         if (!AssetDatabase.IsValidFolder("Assets/Audio")) AssetDatabase.CreateFolder("Assets", "Audio");

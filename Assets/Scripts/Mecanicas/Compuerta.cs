@@ -49,7 +49,17 @@ public class Compuerta : MonoBehaviour
     Bounds paso;               // el volumen que ocupa la losa cerrada (sostenida)
     MaterialPropertyBlock bloque;
 
-    void Awake() => GuardarOrigen();
+    public bool iniciaAbierta;
+    void Awake()
+    {
+        GuardarOrigen();
+        if(iniciaAbierta){Abierta=true;Progreso=1;transform.localPosition=origen+desplazamiento;}
+    }
+    public void Cerrar()
+    {
+        if(!Abierta || JugadorEnElPaso())return;
+        Abierta=false;if(sonido!=null)sonido.Play();
+    }
 
     // puede llamarse desde Awake o desde Abrir (en los tests, Abrir puede llegar antes que Awake)
     void GuardarOrigen()

@@ -173,6 +173,7 @@ public static partial class ConstructorCrater
         AplicarRevisionCaminoMurales(k,nivel,inicio);
         TrasladarFarolAlCentro(k,nivel);
         AjustarPuertaSolVisible(k,nivel);
+        IteracionDiseno(k,nivel);
         var linterna=Object.FindFirstObjectByType<LinternaController>();
         linterna.duracionFiltro=0;
         PrefabUtility.RecordPrefabInstancePropertyModifications(linterna);
@@ -276,7 +277,7 @@ public static partial class ConstructorCrater
         progreso.eclipse=null;progreso.eclipseRegreso=null;progreso.luz=null;EditorUtility.SetDirty(progreso);
 
         Vector3 centro=EspacioCrater.Punto(CentroRotonda);
-        var farol=Object.FindObjectsByType<Recogible>(FindObjectsInactive.Include,FindObjectsSortMode.None).Single(r=>r.filtro==null);
+        var farol=Object.FindObjectsByType<Recogible>(FindObjectsInactive.Include,FindObjectsSortMode.None).Single(r=>r.name=="Recogible_Linterna");
         farol.transform.SetPositionAndRotation(new Vector3(centro.x,-.35f,centro.z),Quaternion.identity);
         PrefabUtility.RecordPrefabInstancePropertyModifications(farol.transform);
         var existente=BuscarObjetoDocente("Apoyo_Farol_Central");

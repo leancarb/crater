@@ -419,7 +419,7 @@ Light:
   m_Intensity: 650
   m_Range: 24
   m_SpotAngle: 52
-  m_InnerSpotAngle: 6.24
+  m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
     m_Type: 2

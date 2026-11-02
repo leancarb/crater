@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -108,7 +108,7 @@ public static partial class ConstructorCrater
 
         ConfigurarCapas();
 
-        var kit = new Kit { audio = GeneradorAudioCrater.GenerarTodo() };
+        var kit = new Kit { audio = GeneradorAudioCrater.CargarExistentes() };
         kit.cuerpo = ConfigurarFiltro(RutaFiltroCuerpo, "SOL", FiltroDefinicion.Canal.Cuerpo,
             new Color(1f, 0.6f, 0.24f), "Enciende las anclas de basalto. Dos anclas encendidas tienden un puente de luz.",
             kit.audio.equiparCuerpo, kit.audio.zumbidoCuerpo);

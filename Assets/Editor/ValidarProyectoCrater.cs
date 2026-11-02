@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -167,7 +167,7 @@ public static class ValidarProyectoCrater
             // todas las compuertas se abren con receptores, salvo el cierre de la Cresta (lo cierra la zona)
             var compuertas = Todos<Compuerta>();
             Compuerta Compuerta(string nombre) => compuertas.FirstOrDefault(c => c.name == nombre);
-            Comprobar(compuertas.Where(c => c.name != "Cierre_Cresta" && !c.name.StartsWith("Losa_Red_")).All(c => c.receptores.Count > 0 && c.receptores.All(r => r != null)),
+            Comprobar(compuertas.Where(c => c.name != "Cierre_Cresta" && c.name != "Cierre_Entrada_Templo" && !c.name.StartsWith("Losa_Red_")).All(c => c.receptores.Count > 0 && c.receptores.All(r => r != null)),
                 "Hay una compuerta sin receptores (sólo el cierre de la Cresta puede no tenerlos).", problemas);
             Comprobar(Compuerta("Cierre_Cresta") != null, "Falta el cierre de la Cresta.", problemas);
             foreach (var nombre in (GameObject.Find("Inicio_Elevado_Kit") != null ? new[] { "Puerta_Sellos", "Atajo_Oeste", "Atajo_Este" } : new[] { "Compuerta_Umbral", "Puerta_Sellos", "Atajo_Oeste", "Atajo_Este" }))
