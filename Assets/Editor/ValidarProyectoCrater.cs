@@ -299,30 +299,26 @@ public static class ValidarProyectoCrater
 
     static void ValidarMurales(GameObject[] objetos, List<string> problemas)
     {
-        for (int i = 1; i <= 8; i++)
+        var carteles=objetos.Select(o=>o.GetComponent<CartelTutorial>()).Where(c=>c!=null).ToArray();
+        Comprobar(carteles.Length==12,"Debe haber 11 acciones de tutorial y la copia de recoger junto a la piedra.",problemas);
+        for(int i=1;i<=11;i++)Comprobar(carteles.Any(c=>c.accion==i),"Falta cartel de acción "+i,problemas);
+        foreach(var c in carteles)
         {
-            string nombre = "Lore_" + i;
-            var losas = objetos.Where(o => o.name == nombre).ToArray();
-            Comprobar(losas.Length == 1, $"Debe existir una única losa {nombre}.", problemas);
-            if (losas.Length != 1) continue;
-            var losa = losas[0].transform;
-            var cara = losa.Find("PinturaMural");
-            var malla = cara != null ? cara.GetComponent<MeshFilter>()?.sharedMesh : null;
-            var material = cara != null ? cara.GetComponent<Renderer>()?.sharedMaterial : null;
-            string imagen = $"mural_explanada_{(i <= 4 ? "izq" : "der")}_{(i - 1) % 4 + 1:00}";
-            string ruta = $"Assets/Art/Murals/{imagen}.png";
-            Comprobar(losa.Find("Narrativa")!=null && losa.Find("Losa_Piedra")==null,
-                $"{nombre}: la historia debe quedar directa sobre pared, sin losa.",problemas);
-            Comprobar(malla!=null && malla.vertexCount>0 && malla.bounds.size.x<=2.101f && malla.bounds.size.y<=1.401f,
-                $"{nombre}: dibujo ausente o proporción incorrecta.",problemas);
-            Comprobar(material!=null && !material.IsKeywordEnabled("_EMISSION") && material.GetColor("_EmissionColor").maxColorComponent==0,
-                $"{nombre}: la historia debe ser mate.",problemas);
-            var importador = AssetImporter.GetAtPath(ruta) as TextureImporter;
-            Comprobar(importador != null && importador.sRGBTexture && importador.mipmapEnabled && importador.npotScale == TextureImporterNPOTScale.None &&
-                importador.wrapMode == TextureWrapMode.Clamp && importador.filterMode == FilterMode.Bilinear &&
-                importador.maxTextureSize == 2048 && importador.textureCompression == TextureImporterCompression.CompressedHQ,
-                $"{nombre}: import settings fuera de la especificación.", problemas);
+            Comprobar(c.transform.parent.Find("Soporte_Cartel")!=null,"Cartel sin soporte: "+c.name,problemas);
+            Comprobar(c.GetComponent<Renderer>().sharedMaterial.shader.name=="Crater/TextoMundo","El glifo debe respetar profundidad.",problemas);
         }
+        var murales=objetos.Select(o=>o.GetComponent<Renderer>()).Where(r=>r!=null&&r.sharedMaterial!=null&&r.sharedMaterial.name.StartsWith("Historia_")).ToArray();
+        Comprobar(murales.Length==12,"Deben montarse los doce murales de historia.",problemas);
+        foreach(var r in murales)
+        {
+            var m=r.sharedMaterial;var tex=m.GetTexture("_BaseMap");
+            Comprobar(tex!=null && Mathf.Abs(tex.width/(float)tex.height-2)<.005f,"Historia fuera de proporción 2:1.",problemas);
+            Comprobar(Mathf.Abs(r.transform.lossyScale.x/r.transform.lossyScale.y-2)<.005f,"Historia deformada: "+m.name,problemas);
+            Comprobar(!m.IsKeywordEnabled("_EMISSION")&&m.GetColor("_EmissionColor").maxColorComponent==0,"La historia debe ser mate.",problemas);
+            var imp=AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(tex)) as TextureImporter;
+            Comprobar(imp!=null&&imp.sRGBTexture&&imp.mipmapEnabled&&imp.textureCompression==TextureImporterCompression.CompressedHQ,"Import settings de historia incorrectos.",problemas);
+        }
+        Comprobar(!objetos.Any(o=>o.name=="Murales_Runicos"),"Quedan murales de mecánica anteriores.",problemas);
     }
 
     static bool TieneOyentes(UnityEventBase evento) => evento != null && evento.GetPersistentEventCount() > 0;

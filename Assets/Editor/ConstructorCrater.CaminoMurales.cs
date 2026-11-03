@@ -32,7 +32,7 @@ public static partial class ConstructorCrater
         sol.rotation = exterior.rotation * Quaternion.Euler(9, 0, 0);
         AjustarRematesDelPozo();
         DibujarSenderoInicial(k, inicio);
-        ConstruirMuralesRunicos(nivel);
+        // El montaje vigente de historia y tutorial se ejecuta al final de la construcción.
         var farol = Object.FindFirstObjectByType<LinternaController>();
         farol.demoraDeCambio = .35f;
         PrefabUtility.RecordPrefabInstancePropertyModifications(farol);

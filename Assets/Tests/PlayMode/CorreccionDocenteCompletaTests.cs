@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -45,8 +45,8 @@ public class CorreccionDocenteCompletaTests
     [Test] public void LasLeccionesSeLeenDesdeSueloSeguroYNoTapanLasAnclas()
     {
         var jugador=Object.FindFirstObjectByType<JugadorFPS>();var cam=jugador.camara.GetComponent<Camera>();
-        var casos=new[]{(EspacioCrater.Punto(new Vector3(-26.5f,.015f,12)),"Ensenanza_Dos_Anclas","Ancla_O_Ensenar_A","Ancla_O_Ensenar_B"),
-            (EspacioCrater.Punto(new Vector3(-2,.015f,29.5f)),"Ensenanza_Cruce_Combinacion","Ancla_N_Vista","Ancla_N_Oculta")};
+        var casos=new[]{(EspacioCrater.Punto(new Vector3(-26.5f,.015f,12)),"Cartel_08_DosAnclas","Ancla_O_Ensenar_A","Ancla_O_Ensenar_B"),
+            (EspacioCrater.Punto(new Vector3(-2,.015f,29.5f)),"Cartel_10_Combinar","Ancla_N_Vista","Ancla_N_Oculta")};
         foreach(var c in casos)
         {
             var pie=c.Item1;
@@ -60,7 +60,7 @@ public class CorreccionDocenteCompletaTests
             var visible=cam.WorldToViewportPoint(panel.position);
             Assert.That(visible.z,Is.GreaterThan(0),c.Item2);
             Assert.That(visible.x,Is.InRange(.05f,.95f),c.Item2);Assert.That(visible.y,Is.InRange(.05f,.95f),c.Item2);
-            Assert.That(panel.Find("PlacaInstruccion/Fondo_Placa").position.y,Is.EqualTo(1.6f).Within(.01f));
+            Assert.That(panel.position.y,Is.EqualTo(1.5f).Within(.01f));
             jugador.MirarHacia((a.PuntoDeImpacto+b.PuntoDeImpacto)*.5f);
             Physics.SyncTransforms();
             foreach(var receptor in new[]{a,b})
@@ -68,8 +68,8 @@ public class CorreccionDocenteCompletaTests
                     Assert.That(hit.transform.IsChildOf(panel),Is.False,"La lección no bloquea el haz");
         }
         jugador.GetComponent<CharacterController>().enabled=true;
-        Assert.That(GameObject.Find("Ensenanza_Cresta_Reflejo"),Is.Not.Null);
-        Assert.That(GameObject.Find("Ensenanza_Cresta_Espera"),Is.Not.Null);
+        Assert.That(GameObject.Find("Cartel_11_Cresta"),Is.Not.Null);
+        Assert.That(GameObject.Find("Cartel_11_Cresta"),Is.Not.Null);
         foreach(string n in new[]{"Lectura_Primer_Puente","Lectura_Cruce","Lectura_Cresta","Guia_Piso_Cresta"})
             Assert.That(GameObject.Find(n),Is.Null);
         Assert.That(LinternaController.Instancia.duracionFiltro,Is.EqualTo(0));

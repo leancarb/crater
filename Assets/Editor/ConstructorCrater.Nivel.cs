@@ -99,6 +99,7 @@ public static partial class ConstructorCrater
         ConstruirExploracion(kit, nivel, refs);
         AplicarEsteticaLectura(kit);
         AplicarInicioElevado(kit, nivel);
+        AplicarCartelesHistoria(kit,nivel);
         ConfigurarSombrasYSuperficies(kit, refs);
         // Variante Silo archivada: se activa sólo desde su menú optativo.
         PrepararOclusion(escena);
@@ -594,11 +595,11 @@ public static partial class ConstructorCrater
 
         var ambiente = sistemas.AddComponent<AudioSource>();
         // Se conserva el clip protegido, pero se retira el bucle global que sonaba como oleaje.
-        ConfigurarAudio(ambiente, k.audio.ambienteCrater, 0f, true, false);
+        ConfigurarAudio(ambiente, k.audio.vientoOculo, 0f, true, false);
         var exterior = sistemas.AddComponent<AudioSource>();
-        ConfigurarAudio(exterior, k.audio.exteriorCapilla, 0.9f, true, false);
+        ConfigurarAudio(exterior, k.audio.exteriorCapilla, 0.28f, true, false);
         var pajaros = sistemas.AddComponent<AudioSource>();
-        ConfigurarAudio(pajaros, k.audio.pajaros, 0.85f, true, false);
+        ConfigurarAudio(pajaros, k.audio.pajaros, 0.24f, true, false);
         var musica = sistemas.AddComponent<AudioSource>();
         ConfigurarAudio(musica, k.audio.musicaCreditos, 0f, true, false);
         var grave = sistemas.AddComponent<AudioSource>();
@@ -629,6 +630,7 @@ public static partial class ConstructorCrater
         Asignar(eclipse, "luzDelCrater", refs.luna);
         Asignar(eclipse, "solEpilogo", refs.sol);
         Asignar(eclipse, "ambienteCrater", ambiente);
+        var mezcla=new SerializedObject(eclipse);mezcla.FindProperty("volumenCrater").floatValue=.10f;mezcla.ApplyModifiedPropertiesWithoutUndo();
         Asignar(eclipse, "ambienteExterior", exterior);
         Asignar(eclipse, "techo", refs.techoCresta);
         Asignar(eclipse, "prologo", prologo);
@@ -654,7 +656,7 @@ public static partial class ConstructorCrater
         Asignar(prologo, "guino", refs.guino);
         Asignar(prologo, "pajaros", pajaros);
         Asignar(prologo, "graveEclipse", grave);
-        var apertura=CrearFuenteHija(sistemas.transform,"Apertura_Tierra",k.audio.compuerta,.8f);
+        var apertura=CrearFuenteHija(sistemas.transform,"Apertura_Tierra",k.audio.compuerta,.35f);
         apertura.transform.position=refs.puertaValle.position;
         apertura.minDistance=14;apertura.maxDistance=45;apertura.priority=32;
         apertura.pitch=.8f; // El clip existente de 3,2 s acompaña los 4 s de apertura.

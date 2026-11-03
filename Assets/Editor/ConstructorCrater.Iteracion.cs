@@ -38,7 +38,14 @@ public static partial class ConstructorCrater
         spawn.localRotation=Quaternion.Euler(0,155,0);
         var jugador=Object.FindFirstObjectByType<JugadorFPS>();jugador.transform.SetPositionAndRotation(spawn.position,spawn.rotation);
         var cielo=new SerializedObject(Object.FindFirstObjectByType<CieloEclipse>());
-        cielo.FindProperty("diametroAngular").floatValue=9.5f;cielo.ApplyModifiedPropertiesWithoutUndo();
+        cielo.FindProperty("diametroAngular").floatValue=7f;cielo.ApplyModifiedPropertiesWithoutUndo();
+        var mirador=BuscarObjetoDocente("Zona_Mirador");
+        mirador.position=exterior.TransformPoint(new Vector3(0,1.5f,80));
+        var prologo=new SerializedObject(Object.FindFirstObjectByType<PrologoCapilla>());
+        prologo.FindProperty("pausaTotalidad").floatValue=1.2f;
+        prologo.FindProperty("revelado").floatValue=2.4f;
+        prologo.FindProperty("duracionEntrada").floatValue=1.2f;
+        prologo.FindProperty("volumenGrave").floatValue=.18f;prologo.ApplyModifiedPropertiesWithoutUndo();
         var recogible=Object.FindObjectsByType<Recogible>(FindObjectsInactive.Include,FindObjectsSortMode.None).Single(r=>r.name=="Recogible_Linterna");
         var entrada=Grupo(nivel,"Cierre_Entrada_Templo");
         entrada.position=EspacioCrater.Punto(new Vector3(0,2,-3.2f));
@@ -46,7 +53,7 @@ public static partial class ConstructorCrater
         losa.name="Losa_Entrada";losa.transform.localScale=new Vector3(15,4,.45f);losa.GetComponent<Renderer>().sharedMaterial=k.basalto;
         var puerta=entrada.gameObject.AddComponent<Compuerta>();puerta.iniciaAbierta=true;puerta.abrirSoloPorOrden=true;
         puerta.desplazamiento=Vector3.down*4.5f;puerta.duracion=1.2f;
-        puerta.sonido=CrearFuenteHija(entrada,"Cierre_Piedra",k.audio.compuerta,.7f);
+        puerta.sonido=CrearFuenteHija(entrada,"Cierre_Piedra",k.audio.compuerta,.4f);
         var llegada=Grupo(nivel,"Llegada_Rotonda").gameObject.AddComponent<LlegadaRotonda>();
         llegada.farol=Object.FindFirstObjectByType<LinternaController>();llegada.entrada=puerta;
         var rotonda=BuscarObjetoDocente("03_Rotonda");
@@ -75,6 +82,7 @@ public static partial class ConstructorCrater
         if(cartel!=null)PlacaInstruccion(k,cartel.parent,"Control_Mirar",cartel.position+cartel.right*3.3f,-cartel.forward,new Vector2(1.4f,.9f),PanelMover);
         vis.paisaje=Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include,FindObjectsSortMode.None).Where(r=>
             (r.transform.IsChildOf(exterior)||r.name=="Roca_Cierre_Valle"||r.bounds.min.y>=8.7f||r.transform.parent?.name=="Guia_Exterior_Eclipse")
+            && r.GetComponentInParent<JugadorFPS>()==null
             && !r.name.Contains("Disco")&&!r.name.Contains("Corona")&&!r.name.Contains("Cielo")).ToArray();
     }
 }

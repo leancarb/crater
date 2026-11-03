@@ -1,0 +1,183 @@
+Archivo	Tipo
+Assets/Art/Carteles.meta	Salida del constructor
+Assets/Art/Carteles/01.png	Salida del constructor
+Assets/Art/Carteles/01.png.meta	Salida del constructor
+Assets/Art/Carteles/02.png	Salida del constructor
+Assets/Art/Carteles/02.png.meta	Salida del constructor
+Assets/Art/Carteles/03.png	Salida del constructor
+Assets/Art/Carteles/03.png.meta	Salida del constructor
+Assets/Art/Carteles/04.png	Salida del constructor
+Assets/Art/Carteles/04.png.meta	Salida del constructor
+Assets/Art/Carteles/05.png	Salida del constructor
+Assets/Art/Carteles/05.png.meta	Salida del constructor
+Assets/Art/Carteles/06.png	Salida del constructor
+Assets/Art/Carteles/06.png.meta	Salida del constructor
+Assets/Art/Carteles/07.png	Salida del constructor
+Assets/Art/Carteles/07.png.meta	Salida del constructor
+Assets/Art/Carteles/08.png	Salida del constructor
+Assets/Art/Carteles/08.png.meta	Salida del constructor
+Assets/Art/Carteles/09.png	Salida del constructor
+Assets/Art/Carteles/09.png.meta	Salida del constructor
+Assets/Art/Carteles/10.png	Salida del constructor
+Assets/Art/Carteles/10.png.meta	Salida del constructor
+Assets/Art/Carteles/11.png	Salida del constructor
+Assets/Art/Carteles/11.png.meta	Salida del constructor
+Assets/Art/Murals/Historia.meta	Salida del constructor
+Assets/Art/Murals/Historia/01.png	Salida del constructor
+Assets/Art/Murals/Historia/01.png.meta	Salida del constructor
+Assets/Art/Murals/Historia/02.png	Salida del constructor
+Assets/Art/Murals/Historia/02.png.meta	Salida del constructor
+Assets/Art/Murals/Historia/03.png	Salida del constructor
+Assets/Art/Murals/Historia/03.png.meta	Salida del constructor
+Assets/Art/Murals/Historia/04.png	Salida del constructor
+Assets/Art/Murals/Historia/04.png.meta	Salida del constructor
+Assets/Art/Murals/Historia/05.png	Salida del constructor
+Assets/Art/Murals/Historia/05.png.meta	Salida del constructor
+Assets/Art/Murals/Historia/06.png	Salida del constructor
+Assets/Art/Murals/Historia/06.png.meta	Salida del constructor
+Assets/Art/Murals/Historia/07.png	Salida del constructor
+Assets/Art/Murals/Historia/07.png.meta	Salida del constructor
+Assets/Art/Murals/Historia/08.png	Salida del constructor
+Assets/Art/Murals/Historia/08.png.meta	Salida del constructor
+Assets/Art/Murals/Historia/09.png	Salida del constructor
+Assets/Art/Murals/Historia/09.png.meta	Salida del constructor
+Assets/Art/Murals/Historia/10.png	Salida del constructor
+Assets/Art/Murals/Historia/10.png.meta	Salida del constructor
+Assets/Art/Murals/Historia/11.png	Salida del constructor
+Assets/Art/Murals/Historia/11.png.meta	Salida del constructor
+Assets/Art/Murals/Historia/12.png	Salida del constructor
+Assets/Art/Murals/Historia/12.png.meta	Salida del constructor
+Assets/Art/Shaders/CieloSinNiebla.shader	Código
+Assets/Art/Shaders/TextoMundo.shader	Código
+Assets/Art/Shaders/TextoMundo.shader.meta	Salida del constructor
+Assets/Editor/ConstructorCrater.CaminoMurales.cs	Código
+Assets/Editor/ConstructorCrater.CartelesHistoria.cs	Código
+Assets/Editor/ConstructorCrater.CartelesHistoria.cs.meta	Salida del constructor
+Assets/Editor/ConstructorCrater.Iteracion.cs	Código
+Assets/Editor/ConstructorCrater.Murales.cs	Código
+Assets/Editor/ConstructorCrater.Nivel.cs	Código
+Assets/Editor/ConstructorCrater.Placas.cs	Código
+Assets/Editor/ConstructorCrater.cs	Código
+Assets/Editor/ValidarProyectoCrater.cs	Código
+Assets/Materials/Cartel_01.mat	Salida del constructor
+Assets/Materials/Cartel_01.mat.meta	Salida del constructor
+Assets/Materials/Cartel_02.mat	Salida del constructor
+Assets/Materials/Cartel_02.mat.meta	Salida del constructor
+Assets/Materials/Cartel_03.mat	Salida del constructor
+Assets/Materials/Cartel_03.mat.meta	Salida del constructor
+Assets/Materials/Cartel_04.mat	Salida del constructor
+Assets/Materials/Cartel_04.mat.meta	Salida del constructor
+Assets/Materials/Cartel_05.mat	Salida del constructor
+Assets/Materials/Cartel_05.mat.meta	Salida del constructor
+Assets/Materials/Cartel_06.mat	Salida del constructor
+Assets/Materials/Cartel_06.mat.meta	Salida del constructor
+Assets/Materials/Cartel_07.mat	Salida del constructor
+Assets/Materials/Cartel_07.mat.meta	Salida del constructor
+Assets/Materials/Cartel_08.mat	Salida del constructor
+Assets/Materials/Cartel_08.mat.meta	Salida del constructor
+Assets/Materials/Cartel_09.mat	Salida del constructor
+Assets/Materials/Cartel_09.mat.meta	Salida del constructor
+Assets/Materials/Cartel_10.mat	Salida del constructor
+Assets/Materials/Cartel_10.mat.meta	Salida del constructor
+Assets/Materials/Cartel_11.mat	Salida del constructor
+Assets/Materials/Cartel_11.mat.meta	Salida del constructor
+Assets/Materials/CoronaEclipse.mat	Salida del constructor
+Assets/Materials/DiscoLuna.mat	Salida del constructor
+Assets/Materials/DiscoSol.mat	Salida del constructor
+Assets/Materials/Fondo_Boton_Xbox.mat	Salida del constructor
+Assets/Materials/Fondo_Boton_Xbox.mat.meta	Salida del constructor
+Assets/Materials/Glifo_Cartel.mat	Salida del constructor
+Assets/Materials/Glifo_Cartel.mat.meta	Salida del constructor
+Assets/Materials/Historia_01.mat	Salida del constructor
+Assets/Materials/Historia_01.mat.meta	Salida del constructor
+Assets/Materials/Historia_02.mat	Salida del constructor
+Assets/Materials/Historia_02.mat.meta	Salida del constructor
+Assets/Materials/Historia_03.mat	Salida del constructor
+Assets/Materials/Historia_03.mat.meta	Salida del constructor
+Assets/Materials/Historia_04.mat	Salida del constructor
+Assets/Materials/Historia_04.mat.meta	Salida del constructor
+Assets/Materials/Historia_05.mat	Salida del constructor
+Assets/Materials/Historia_05.mat.meta	Salida del constructor
+Assets/Materials/Historia_06.mat	Salida del constructor
+Assets/Materials/Historia_06.mat.meta	Salida del constructor
+Assets/Materials/Historia_07.mat	Salida del constructor
+Assets/Materials/Historia_07.mat.meta	Salida del constructor
+Assets/Materials/Historia_08.mat	Salida del constructor
+Assets/Materials/Historia_08.mat.meta	Salida del constructor
+Assets/Materials/Historia_09.mat	Salida del constructor
+Assets/Materials/Historia_09.mat.meta	Salida del constructor
+Assets/Materials/Historia_10.mat	Salida del constructor
+Assets/Materials/Historia_10.mat.meta	Salida del constructor
+Assets/Materials/Historia_11.mat	Salida del constructor
+Assets/Materials/Historia_11.mat.meta	Salida del constructor
+Assets/Materials/Historia_12.mat	Salida del constructor
+Assets/Materials/Historia_12.mat.meta	Salida del constructor
+Assets/Materials/Marco_Cartel.mat	Salida del constructor
+Assets/Materials/Marco_Cartel.mat.meta	Salida del constructor
+Assets/Materials/TalladoCresta.mat	Salida del constructor
+Assets/Materials/Trazo_Instruccion.mat	Salida del constructor
+Assets/Models/Facetado/MallasFacetadas.asset	Salida del constructor
+Assets/Prefabs/Recogible_Filtro.prefab	Salida del constructor
+Assets/Prefabs/Reja.prefab	Salida del constructor
+Assets/Scenes/CraterVerticalSlice.unity	Salida del constructor
+Assets/Scenes/CraterVerticalSlice/OcclusionCullingData.asset	Salida del constructor
+Assets/Scripts/Flujo/PrologoCapilla.cs	Código
+Assets/Scripts/Interfaz/CartelTutorial.cs	Código
+Assets/Scripts/Interfaz/CartelTutorial.cs.meta	Salida del constructor
+Assets/Scripts/Interfaz/InterfazCrater.cs	Código
+Assets/Scripts/Linterna/LinternaController.cs	Código
+Assets/Scripts/Nucleo/EntradaCrater.cs	Código
+Assets/Tests/EditMode/PlacasInstruccionTests.cs	Código
+Assets/Tests/PlayMode/CartelesYCieloTests.cs	Código
+Assets/Tests/PlayMode/CartelesYCieloTests.cs.meta	Salida del constructor
+Assets/Tests/PlayMode/CorreccionDocenteCompletaTests.cs	Código
+Assets/Tests/PlayMode/CorreccionEclipseAudioTests.cs	Código
+Assets/Tests/PlayMode/CorreccionProfesorTests.cs	Código
+Assets/Tests/PlayMode/ExploracionCraterTests.cs	Código
+Assets/Tests/PlayMode/FiltrosSostenidosPlayTests.cs	Código
+Assets/Tests/PlayMode/PlacasLecturaPlayTests.cs	Código
+Assets/Tests/PlayMode/RotondaCartelesTests.cs	Código
+Docs/CartelesYMurales20261102.md	Documentación y evidencia
+Docs/EstadoActualCrater.md	Documentación y evidencia
+Docs/Previews/CartelesYMurales20261102/01_CartelTeclado.png	Documentación y evidencia
+Docs/Previews/CartelesYMurales20261102/01b_Cartel_FarolBlanco.png	Documentación y evidencia
+Docs/Previews/CartelesYMurales20261102/02_CartelMando.png	Documentación y evidencia
+Docs/Previews/CartelesYMurales20261102/02b_Boton_B_Xbox.png	Documentación y evidencia
+Docs/Previews/CartelesYMurales20261102/03_Pasaje_Historia_01_08.png	Documentación y evidencia
+Docs/Previews/CartelesYMurales20261102/04_Lobby_Carteles_Historia_Farol.png	Documentación y evidencia
+Docs/Previews/CartelesYMurales20261102/05_Entrada_Cresta.png	Documentación y evidencia
+Docs/Previews/CartelesYMurales20261102/06_Eclipse_Interior.png	Documentación y evidencia
+Docs/Previews/CartelesYMurales20261102/07_Exterior_Profundidad_Luna.png	Documentación y evidencia
+Docs/Testing/CartelesYMurales20261102/ArchivosTocados.tsv	Documentación y evidencia
+Docs/Testing/CartelesYMurales20261102/EditMode.json	Documentación y evidencia
+Docs/Testing/CartelesYMurales20261102/PlayMode.json	Documentación y evidencia
+Docs/Testing/CartelesYMurales20261102/PlayModePrimera.json	Documentación y evidencia
+Docs/Testing/CartelesYMurales20261102/huellas-antes.json	Documentación y evidencia
+Docs/Testing/CartelesYMurales20261102/huellas-despues.json	Documentación y evidencia
+Docs/Testing/CartelesYMurales20261102/reconstruccion-final.json	Documentación y evidencia
+Docs/Testing/CartelesYMurales20261102/regresiones-final.json	Documentación y evidencia
+Docs/Testing/CartelesYMurales20261102/validador-final.json	Documentación y evidencia
+GDD.md	Documentación y evidencia
+README.md	Documentación y evidencia
+images/historia/Ancient Eclipse Doorway with Lantern Bearer.png	Arte fuente
+images/historia/Ancient Portal Beneath Sun and Moon.png	Arte fuente
+images/historia/Andean Canyon Bridge Traveler.png	Arte fuente
+images/historia/Andean Eclipse Observation Station.png	Arte fuente
+images/historia/Andean Observatory Under Sun and Moon.png	Arte fuente
+images/historia/Andean Temple Lantern and Eclipse.png	Arte fuente
+images/historia/Andean Traveler at the Sun Station.png	Arte fuente
+images/historia/Celestial Cycle Over Observation Station.png	Arte fuente
+images/historia/Eclipse Gateway and Lantern Traveler.png	Arte fuente
+images/historia/Lantern Light Reveals Ancient Crater Glyphs.png	Arte fuente
+images/historia/Solar Eclipse Observation Station.png	Arte fuente
+images/historia/Sun and Moon Stepped Emblem.png	Arte fuente
+images/tutorial/Ancient Artifact Pickup Icon.png	Arte fuente
+images/tutorial/Directional Figure Icon Sign.png	Arte fuente
+images/tutorial/Jump Over the Obstacle Icon.png	Arte fuente
+images/tutorial/Lantern Beam Breaking Through Barriers.png	Arte fuente
+images/tutorial/Lantern Beam Keycap Journey.png	Arte fuente
+images/tutorial/Lantern Bearer with Light Beam.png	Arte fuente
+images/tutorial/Lantern Light Builds a Bridge.png	Arte fuente
+images/tutorial/Lantern Off, Eye Watching.png	Arte fuente
+images/tutorial/Lantern Puzzle Bridge Diagram.png	Arte fuente
+images/tutorial/Lantern Runner Approaches the Bridge.png	Arte fuente

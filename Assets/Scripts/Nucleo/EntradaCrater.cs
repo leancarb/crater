@@ -71,7 +71,7 @@ public static class EntradaCrater
     // Compatibilidad con consumidores anteriores: se vuelve a blanca al soltar.
     public static bool QuitarFiltro => false;
     public static string BotonFiltro(int indice) => UsandoMando
-        ? (indice == 0 ? "RB (R1)" : "LB (L1)") : (indice == 0 ? "Clic izquierdo" : "Clic derecho");
+        ? (indice == 0 ? "RB" : "LB") : (indice == 0 ? "Clic izquierdo" : "Clic derecho");
 
     /// <summary>Omitir una animación o interactuar con E / B; separado del salto.</summary>
     public static bool Saltar =>
@@ -120,8 +120,8 @@ public static class EntradaCrater
             Mouse.current != null ? Mouse.current.lastUpdateTime : 0);
     public static bool Salto => Presionada(Key.Space) || (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame);
     public static bool Interactuar => Saltar;
-    public static string BotonInteractuar => UsandoMando ? "B (○)" : "E";
-    public static string BotonLinterna => UsandoMando ? "X (□)" : "F";
+    public static string BotonInteractuar => UsandoMando ? "B" : "E";
+    public static string BotonLinterna => UsandoMando ? "X" : "F";
 
     public static bool ClicIzquierdo =>
         Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;

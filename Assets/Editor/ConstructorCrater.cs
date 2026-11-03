@@ -239,7 +239,7 @@ public static partial class ConstructorCrater
         kit.pinturaSol = Opaco("PinturaSol", new Color(0.66f, 0.33f, 0.11f), 0.08f);
         kit.pinturaLuna = Opaco("PinturaLuna", new Color(0.38f, 0.5f, 0.76f), 0.08f);
         kit.pinturaHueso = Opaco("PinturaHueso", new Color(0.58f, 0.55f, 0.48f), 0.08f);
-        kit.tallaCresta = Emisivo(Opaco("TalladoCresta", new Color(0.62f, 0.66f, 0.74f), 0.1f), ColorLuna * 0.06f);
+        kit.tallaCresta = Opaco("TalladoCresta", new Color(0.62f, 0.66f, 0.74f), 0.1f);
 
         kit.adobe = Opaco("CapillaAdobe", new Color(0.62f, 0.4f, 0.24f), 0.15f);
         kit.paja = Opaco("CapillaTechoPaja", new Color(0.3f, 0.21f, 0.1f), 0.05f);
@@ -275,6 +275,9 @@ public static partial class ConstructorCrater
 
         foreach (var guid in AssetDatabase.FindAssets("t:Material", new[] { "Assets/Materials" }))
             Validar(AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid)));
+        kit.corona.renderQueue=1001;kit.discoSol.renderQueue=1002;kit.discoLuna.renderQueue=1003;
+        foreach(var m in new[]{kit.corona,kit.discoSol,kit.discoLuna})
+        {m.SetFloat("_ZWrite",0);EditorUtility.SetDirty(m);}
 
         // restos de una versión anterior (el cielo estrellado)
         AssetDatabase.DeleteAsset(CarpetaMateriales + "CieloEstrellado.mat");

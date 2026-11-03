@@ -412,7 +412,7 @@ public static partial class ConstructorCrater
         }
 
         // el fondo: el ojo encandilado, el ojo cerrado y las estrellas que aparecen
-        Dibujo("Fondo", new Vector3(0f, 5.4f, 99f), Vector3.back, v =>
+        Dibujo("Apagar_Fondo", new Vector3(0f, 5.4f, 99f), Vector3.back, v =>
         {
             OjoAbierto(v, -2.6f, 0f, 1.5f);
             for (int i = 0; i < 10; i++)
@@ -430,7 +430,7 @@ public static partial class ConstructorCrater
             foreach (float lado in new[] { -1f, 1f })
             {
                 bool figura = (z < 87f) == (lado < 0f);
-                Dibujo($"{(lado < 0f ? "Izq" : "Der")}_{z:0}", new Vector3(lado * 12f, 4.6f, z), lado < 0f ? Vector3.right : Vector3.left, v =>
+                Dibujo($"Apagar_{(lado < 0f ? "Izq" : "Der")}_{z:0}", new Vector3(lado * 12f, 4.6f, z), lado < 0f ? Vector3.right : Vector3.left, v =>
                 {
                     if (figura)
                     {

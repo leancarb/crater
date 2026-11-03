@@ -15,22 +15,22 @@ anclas y rejas sin retícula ni barra roja, y los nueve murales blancos con reli
 y proporciones originales. La escena y los recursos generados ya están incluidos:
 abrir `Assets/Scenes/CraterVerticalSlice.unity` sin reconstruir para jugar.
 
-La iteración local posterior de diseño, arte y salto está documentada en [Docs/Iteracion20261102.md](Docs/Iteracion20261102.md), con capturas y resultados de validación. Esta iteración todavía no tiene push.
+La iteración local posterior de diseño, arte y salto está documentada en [Docs/Iteracion20261102.md](Docs/Iteracion20261102.md), con capturas y resultados de validación. La integración posterior de 12 carteles con iconos Xbox y 12 murales de historia, más las correcciones de entrada, cielo, farol y audio, está en [Docs/CartelesYMurales20261102.md](Docs/CartelesYMurales20261102.md). Estas iteraciones todavía no tienen push.
 
 ## Controles
 
 | Acción | Teclado y mouse | Joystick |
 |---|---|---|
 | Moverse / mirar | WASD · mouse | stick izq. · stick der. |
-| Caminar / correr | 4 m/s; Shift para correr a 5,6 m/s | 4 m/s; R2 / RT para correr a 5,6 m/s |
-| Farol | F | X de Xbox / cuadrado |
-| Mantener SOL / LUNA | Clic izquierdo / derecho | RB (R1) / LB (L1) |
+| Caminar / correr | 4 m/s; Shift para correr a 5,6 m/s | 4 m/s; RT para correr a 5,6 m/s |
+| Farol | F | X |
+| Mantener SOL / LUNA | Clic izquierdo / derecho | RB / LB |
 | Luz blanca | Soltar el botón del filtro | Soltar el botón del filtro |
-| Pausa / seguir | Esc | Start / Options; B / círculo sigue |
-| Reiniciar / salir (en pausa) | R / X | Y / triángulo; X / cuadrado |
+| Pausa / seguir | Esc | Start; B sigue |
+| Reiniciar / salir (en pausa) | R / X | Y; X |
 | Ayudas escritas (en pausa) | H | ↑ |
-| Salto corto (0,4 m) | Espacio | A / cruz |
-| Recoger / omitir animaciones | E | B / círculo |
+| Salto corto (0,4 m) | Espacio | A |
+| Recoger / omitir animaciones | E | B |
 
 SOL y LUNA se mantienen mientras se sostiene el botón. Al soltar, el farol vuelve a blanco con una transición de 0,35 s. Las parejas de anclas requieren apuntar a cada una.
 

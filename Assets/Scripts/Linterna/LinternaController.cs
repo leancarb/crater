@@ -134,12 +134,16 @@ public class LinternaController : MonoBehaviour
             float objetivo = CambiandoFiltro ? IntensidadActual * 0.08f : IntensidadActual;
             // Mantener legible la pintura y la respuesta del tallado cercano: limitar iluminancia, conservando
             // potencia a distancia y el alcance del haz y de los receptores.
-            if (FiltroActual != null && Physics.Raycast(spot.transform.position, spot.transform.forward,
+            if (Physics.Raycast(spot.transform.position, spot.transform.forward,
                 out var superficie, 20f, capaObstaculos, QueryTriggerInteraction.Ignore))
             {
-                float distancia = Mathf.Max(0.4f, superficie.distance);
-                float distanciaReferencia = FiltroActual == null ? 20f : 8f;
-                objetivo *= Mathf.Min(1f, distancia * distancia / (distanciaReferencia * distanciaReferencia));
+                bool cartel=superficie.collider.transform.parent!=null&&superficie.collider.transform.parent.GetComponentInChildren<CartelTutorial>()!=null;
+                if(FiltroActual!=null||cartel)
+                {
+                    float distancia = Mathf.Max(0.4f, superficie.distance);
+                    float distanciaReferencia = FiltroActual == null ? 20f : 8f;
+                    objetivo *= Mathf.Min(1f, distancia * distancia / (distanciaReferencia * distanciaReferencia));
+                }
             }
             spot.intensity = Mathf.MoveTowards(spot.intensity, objetivo, IntensidadActual * 6f * Time.deltaTime);
         }

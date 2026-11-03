@@ -1,0 +1,665 @@
+{
+  "success": true,
+  "command": "command test_status",
+  "data": {
+    "command": "test_status",
+    "parameters": {},
+    "result": {
+      "status": "completed",
+      "duration": 507.59,
+      "summary": {
+        "total": 91,
+        "passed": 71,
+        "failed": 20,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "results": [
+        {
+          "FullName": "AnclasCarreraArosTests.ElSegundoPuentePermiteCorrerPeroNoAlcanzaCaminando",
+          "Status": "Passed",
+          "Duration": 9.2502266,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "AnclasCarreraArosTests.LasParejasSolaresSeAbrenACuarentaYCincoGradosYElBordeCuelgaDelTecho",
+          "Status": "Passed",
+          "Duration": 0.7643308,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "AnclasCarreraArosTests.LosArosEsperanLasSeisColumnasYNoSobresalenDelTecho",
+          "Status": "Passed",
+          "Duration": 3.4709526,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "AudioPlaytestTests.ElZumbidoSaleSuavementeYSeCruzaAlCambiarDeFiltro",
+          "Status": "Passed",
+          "Duration": 2.8280787,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "AudioPlaytestTests.LaResonanciaDelObeliscoDesvaneceSuColaYRespetaPausa",
+          "Status": "Passed",
+          "Duration": 1.7776083,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CartelesYCieloTests.AstroQuedaDetrasDeLaMontana",
+          "Status": "Passed",
+          "Duration": 0.8465424,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CartelesYCieloTests.EntradaDuranteAperturaConservaEclipseFarolYAudioInterior",
+          "Status": "Passed",
+          "Duration": 6.2958463,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CartelesYCieloTests.FarolBlancoNoQuemaLaPlacaDeCercaNiReduceElAlcance",
+          "Status": "Passed",
+          "Duration": 1.2111559,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CartelesYCieloTests.GlifosCambianDeDispositivoYQuedanDentroDelRecuadro",
+          "Status": "Passed",
+          "Duration": 0.8178765,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CartelesYCieloTests.TextoNoAtraviesaParedes",
+          "Status": "Passed",
+          "Duration": 0.8440336,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CompuertaFeedbackPlayTests.AbrirConfirmaConTemblorCortoSinCambiarLaMirada",
+          "Status": "Failed",
+          "Duration": 1.1987934,
+          "Message": "  Expected: in range (0,0001,0,012)\r\n  But was:  0.0f\r\n",
+          "StackTrace": "at CompuertaFeedbackPlayTests+<AbrirConfirmaConTemblorCortoSinCambiarLaMirada>d__0.MoveNext () [0x001c4] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\CompuertaFeedbackPlayTests.cs:22\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "ConfirmacionPiedraPlayTests.RecogerConfirmaSinAyudasYUnDuplicadoNoRepiteLaConfirmacion",
+          "Status": "Failed",
+          "Duration": 0.8352871,
+          "Message": "System.InvalidOperationException : Sequence contains no matching element",
+          "StackTrace": "  at System.Linq.Enumerable.Single[TSource] (System.Collections.Generic.IEnumerable`1[T] source, System.Func`2[T,TResult] predicate) [0x00070] in <e1f614c5eede4689988594bcb9796955>:0 \r\n  at ConfirmacionPiedraPlayTests+<RecogerConfirmaSinAyudasYUnDuplicadoNoRepiteLaConfirmacion>d__0.MoveNext () [0x00089] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\ConfirmacionPiedraPlayTests.cs:15 \r\n  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44 "
+        },
+        {
+          "FullName": "CorreccionDocenteCompletaTests.CadaColumnaEnciendePisoYTechoEnLaMismaTransicion",
+          "Status": "Passed",
+          "Duration": 1.4923302,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CorreccionDocenteCompletaTests.ElExteriorOrientaConRocasSinPorticoNiMarcas",
+          "Status": "Passed",
+          "Duration": 0.7829841,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CorreccionDocenteCompletaTests.LasLeccionesSeLeenDesdeSueloSeguroYNoTapanLasAnclas",
+          "Status": "Passed",
+          "Duration": 0.7982045,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CorreccionDocenteCompletaTests.PerderFocoNoPausaPeroLaPausaManualSigueFuncionando",
+          "Status": "Passed",
+          "Duration": 0.7940901,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CorreccionEclipseAudioTests.ElBucleGlobalNoVuelveAlEntrarNiTrasUnaTransicion",
+          "Status": "Failed",
+          "Duration": 6.7589331,
+          "Message": "System.InvalidOperationException : Sequence contains no matching element",
+          "StackTrace": "  at System.Linq.Enumerable.Single[TSource] (System.Collections.Generic.IEnumerable`1[T] source, System.Func`2[T,TResult] predicate) [0x00070] in <e1f614c5eede4689988594bcb9796955>:0 \r\n  at CorreccionEclipseAudioTests+<ElBucleGlobalNoVuelveAlEntrarNiTrasUnaTransicion>d__8.MoveNext () [0x00031] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\CorreccionEclipseAudioTests.cs:86 \r\n  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44 "
+        },
+        {
+          "FullName": "CorreccionEclipseAudioTests.ElSolMantieneElHorizonteExteriorYSeVeEnLaPlaza",
+          "Status": "Failed",
+          "Duration": 6.8027397,
+          "Message": "  el sol exterior quedó alto\r\n  Expected: 14 +/- 0.100000001f\r\n  But was:  9.00000095f\r\n",
+          "StackTrace": "at CorreccionEclipseAudioTests+<ElSolMantieneElHorizonteExteriorYSeVeEnLaPlaza>d__7.MoveNext () [0x00031] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\CorreccionEclipseAudioTests.cs:39\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "CorreccionEclipseAudioTests.LaAperturaLlegaAlMiradorYNoCompiteConElGrave",
+          "Status": "Failed",
+          "Duration": 7.9851867,
+          "Message": "  la apertura se atenúa antes de llegar al mirador\r\n  Expected: less than or equal to 14.0f\r\n  But was:  35.5342598f\r\n",
+          "StackTrace": "at CorreccionEclipseAudioTests+<LaAperturaLlegaAlMiradorYNoCompiteConElGrave>d__9.MoveNext () [0x00124] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\CorreccionEclipseAudioTests.cs:117\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "CorreccionProfesorTests.ElFarolSeRecogeConConfirmacionYEnseniaElEncendido",
+          "Status": "Passed",
+          "Duration": 0.8814597,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CorreccionProfesorTests.ElFiltroUsaLaMismaAccionEnMandoYSoloCercaYEnVista",
+          "Status": "Passed",
+          "Duration": 0.8583539,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CorreccionProfesorTests.LaCuentaAtrasEsVisibleYElPuenteAvisaAntesDeCaer",
+          "Status": "Passed",
+          "Duration": 0.8259864,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "EntradaJoystickTests.ElMandoMueveYAccionaLasHerramientas",
+          "Status": "Passed",
+          "Duration": 0.0300497,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "EntradaJoystickTests.LaPausaTieneTodasLasAccionesSinTeclado",
+          "Status": "Passed",
+          "Duration": 0.0288652,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "ExploracionCraterTests.ConjuntoEsperaLaVueltaRespetaPausaYAdmiteReescuchaConMando",
+          "Status": "Passed",
+          "Duration": 18.8110459,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "ExploracionCraterTests.CosteDeEfectosEnUnaVistaRealDelJugador",
+          "Status": "Passed",
+          "Duration": 7.9504181,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "ExploracionCraterTests.LaLuzBlancaMantienePotenciaYLasVelasConservanSombras",
+          "Status": "Passed",
+          "Duration": 8.1954668,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "ExploracionCraterTests.MuralesPNGSeConservanEnJuegoSinEmision",
+          "Status": "Passed",
+          "Duration": 8.1251923,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "ExploracionCraterTests.ReflejoSeCapturaSoloAlAcercarseYElRelieveRespondeAlAngulo",
+          "Status": "Passed",
+          "Duration": 10.9454832,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "ExploracionCraterTests.UnaPiezaRespondeAUnaAccionExistenteYNoSeDuplica",
+          "Status": "Passed",
+          "Duration": 15.3159049,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "FiltroHUDPlayTests.ElRelojRespetaCambioTresSegundosPausaYRetornoAutomatico",
+          "Status": "Failed",
+          "Duration": 0.8791387,
+          "Message": "System.InvalidOperationException : Sequence contains no matching element",
+          "StackTrace": "  at System.Linq.Enumerable.Single[TSource] (System.Collections.Generic.IEnumerable`1[T] source, System.Func`2[T,TResult] predicate) [0x00070] in <e1f614c5eede4689988594bcb9796955>:0 \r\n  at FiltroHUDPlayTests+<ElRelojRespetaCambioTresSegundosPausaYRetornoAutomatico>d__0.MoveNext () [0x000a3] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\FiltroHUDPlayTests.cs:17 \r\n  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44 "
+        },
+        {
+          "FullName": "FiltrosSostenidosPlayTests.MandoUsaHombrosYBotonXParaElFarol",
+          "Status": "Passed",
+          "Duration": 0.8705045,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "FiltrosSostenidosPlayTests.MouseMantieneMasDeTresSegundosYSueltaDuranteElCambio",
+          "Status": "Passed",
+          "Duration": 1.3713992,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "FiltrosSostenidosPlayTests.MuralesMateYEntradaMasAdelanteSinCajas",
+          "Status": "Passed",
+          "Duration": 0.9073172,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "FiltrosSostenidosPlayTests.PuertaSolVisibleMientrasSeActivaElAncla",
+          "Status": "Passed",
+          "Duration": 1.638877,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "FiltrosSostenidosPlayTests.SoltarFiltroAnimaElRegresoABlanco",
+          "Status": "Passed",
+          "Duration": 1.8613794,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "FiltrosSostenidosPlayTests.TalladosQuedanBajoElBordeAlAbrir",
+          "Status": "Passed",
+          "Duration": 0.8773889,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "GatilloCamaraPlayTests.GatilloAnalogicoYStickRespondenSinActivarCarreraConL3",
+          "Status": "Failed",
+          "Duration": 0.0273129,
+          "Message": "  Expected: True\r\n  But was:  False\r\n",
+          "StackTrace": "at GatilloCamaraPlayTests+<GatilloAnalogicoYStickRespondenSinActivarCarreraConL3>d__0.MoveNext () [0x000ee] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\GatilloCamaraPlayTests.cs:17\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "InicioElevadoPlayTests.BajadaContinuaYFarolSinPuertaDeUmbral",
+          "Status": "Passed",
+          "Duration": 3.0723161,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "InicioElevadoPlayTests.LasSeisColumnasSiguenAbriendoElCruceSinObeliscoVisible",
+          "Status": "Passed",
+          "Duration": 2.8691556,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "IteracionNoviembreTests.ExteriorSeOcultaAbajoYSeRestauraSinDesactivarColisiones",
+          "Status": "Passed",
+          "Duration": 0.8878261,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "IteracionNoviembreTests.RecogerFarolCierraEntradaYEnciendeLobby",
+          "Status": "Passed",
+          "Duration": 3.8362673,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "IteracionNoviembreTests.SaltoEsBajoYNoInteractua",
+          "Status": "Passed",
+          "Duration": 1.2765728,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "IteracionNoviembreTests.SaltoNoCruzaHuecoDePuzzle",
+          "Status": "Passed",
+          "Duration": 2.2692399,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "IteracionNoviembreTests.SaltoNoSuperaPretil",
+          "Status": "Passed",
+          "Duration": 2.2606377,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "LegibilidadEpilogoTests.DetallesTienenRespuestaYSeVenDesdeSueloSeguro",
+          "Status": "Passed",
+          "Duration": 15.9755864,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "LegibilidadEpilogoTests.RegresoCierraLasAberturasSinMarcasYCambiaElSol",
+          "Status": "Passed",
+          "Duration": 7.6654943,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "LuminosidadCraterTests.ElMouseCambiaLaExposicionEnPausaYSeGuardaAlSeguir",
+          "Status": "Passed",
+          "Duration": 0.919152,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "LuminosidadCraterTests.ElSliderAceptaNavegacionYLosTextosEntran",
+          "Status": "Passed",
+          "Duration": 0.8692671,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "LuminosidadCraterTests.ParteMasClaroYMigraSinPerderUnAjusteExplicito",
+          "Status": "Passed",
+          "Duration": 0.8482307,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "MontanasEncuadreTests.ElCentroDelFondoEsBajoYNoTapaElDiscoSolarDesdeElMirador",
+          "Status": "Passed",
+          "Duration": 0.8969899,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "MontanasEncuadreTests.LasMontanasQuedanSobreElTechoYConBaseCerrada",
+          "Status": "Passed",
+          "Duration": 0.8302903,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "PlacasLecturaPlayTests.LosTalladosLatentesSeConservanSinPlacasNiEmision",
+          "Status": "Passed",
+          "Duration": 0.8434878,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RecorridoCraterTests.ElAnclaYElTalladoRespondenAlHazSinCambiarElProgreso",
+          "Status": "Passed",
+          "Duration": 16.2753557,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RecorridoCraterTests.ElAtajoOcultoSoloAcortaLaAproximacion",
+          "Status": "Failed",
+          "Duration": 0.9354735,
+          "Message": "System.NullReferenceException : Object reference not set to an instance of an object",
+          "StackTrace": "  at RecorridoCraterTests+<ElAtajoOcultoSoloAcortaLaAproximacion>d__37.MoveNext () [0x00048] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:620 \r\n  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44 "
+        },
+        {
+          "FullName": "RecorridoCraterTests.ElEclipseAvanzaQuietoYElMiradorConservaLaMirada",
+          "Status": "Failed",
+          "Duration": 0.8560654,
+          "Message": "  Expected: True\r\n  But was:  False\r\n",
+          "StackTrace": "at RecorridoCraterTests+<ElEclipseAvanzaQuietoYElMiradorConservaLaMirada>d__22.MoveNext () [0x00078] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:421\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "RecorridoCraterTests.ElExteriorTrasLaEstacionTieneSueloContinuo",
+          "Status": "Failed",
+          "Duration": 15.8446424,
+          "Message": "no se pudo llegar a (-38.00, 9.00, 17.50): el jugador quedó en (-33.03, 8.94, 11.36). Colliders cerca: Roca_Cierre_Valle@(-44.81, 24.93, 15.47), Terreno@(0.00, 8.90, -31.50), Jugador@(-33.03, 9.84, 11.36)",
+          "StackTrace": "at RecorridoCraterTests+<Caminar>d__27.MoveNext () [0x00174] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:498\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "RecorridoCraterTests.ElFinalFuncionaConColeccionCompleta",
+          "Status": "Failed",
+          "Duration": 46.0067966,
+          "Message": "  llegar al mirador no abrió el cráter\r\n  Expected: True\r\n  But was:  False\r\n",
+          "StackTrace": "at RecorridoCraterTests+<Recorrido>d__17.MoveNext () [0x002bc] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:101\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "RecorridoCraterTests.ElFinalFuncionaConColeccionParcial",
+          "Status": "Failed",
+          "Duration": 46.0192882,
+          "Message": "  llegar al mirador no abrió el cráter\r\n  Expected: True\r\n  But was:  False\r\n",
+          "StackTrace": "at RecorridoCraterTests+<Recorrido>d__17.MoveNext () [0x002bc] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:101\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "RecorridoCraterTests.ElJoystickPausaYReanudaSinTeclado",
+          "Status": "Passed",
+          "Duration": 1.0212012,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RecorridoCraterTests.ElRecorridoCompletoSePuedeJugar",
+          "Status": "Failed",
+          "Duration": 46.0507471,
+          "Message": "  llegar al mirador no abrió el cráter\r\n  Expected: True\r\n  But was:  False\r\n",
+          "StackTrace": "at RecorridoCraterTests+<Recorrido>d__17.MoveNext () [0x002bc] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:101\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "RecorridoCraterTests.ElRecorridoConLunaPrimeroSePuedeJugar",
+          "Status": "Failed",
+          "Duration": 46.0425368,
+          "Message": "  llegar al mirador no abrió el cráter\r\n  Expected: True\r\n  But was:  False\r\n",
+          "StackTrace": "at RecorridoCraterTests+<Recorrido>d__17.MoveNext () [0x002bc] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:101\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "RecorridoCraterTests.ElReflejoApareceGradualmenteRespetaPausaYReiniciaAlApagar",
+          "Status": "Passed",
+          "Duration": 1.3196992,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RecorridoCraterTests.ElReflejoSeRecortaEnLasCuatroParedes",
+          "Status": "Passed",
+          "Duration": 1.4682053,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RecorridoCraterTests.LaBajadaTieneLateralesCerradosYTalladosPegados",
+          "Status": "Passed",
+          "Duration": 0.9619695,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RecorridoCraterTests.LaOscuridadRespondeProntoYLaAdaptacionSigueGradual",
+          "Status": "Passed",
+          "Duration": 4.0671094,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RecorridoCraterTests.LaPlazaCircularTienePisoEnTodasLasDirecciones",
+          "Status": "Passed",
+          "Duration": 0.9124327,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RecorridoCraterTests.LaRotondaMuestraAmbosPendientesYAbrirNoExigeQuedarse",
+          "Status": "Failed",
+          "Duration": 6.6022448,
+          "Message": "UnityEngine.UnassignedReferenceException : The variable eclipseRegreso of ObeliscoDelEclipse has not been assigned.\nYou probably need to assign the eclipseRegreso variable of the ObeliscoDelEclipse script in the inspector.",
+          "StackTrace": "  at UnityEngine.Object+MarshalledUnityObject.TryThrowEditorNullExceptionObject (UnityEngine.Object unityObj, System.String parameterName) [0x000cd] in <4188a0f79dff4b4191dbeaff03bfe462>:0 \r\n  at UnityEngine.Bindings.ThrowHelper.ThrowNullReferenceException (System.Object obj) [0x00010] in <4188a0f79dff4b4191dbeaff03bfe462>:0 \r\n  at UnityEngine.Renderer.Internal_GetPropertyBlock (UnityEngine.MaterialPropertyBlock dest) [0x00015] in <4188a0f79dff4b4191dbeaff03bfe462>:0 \r\n  at UnityEngine.Renderer.GetPropertyBlock (UnityEngine.MaterialPropertyBlock properties) [0x00001] in <4188a0f79dff4b4191dbeaff03bfe462>:0 \r\n  at RecorridoCraterTests+<LaRotondaMuestraAmbosPendientesYAbrirNoExigeQuedarse>d__40.MoveNext () [0x00322] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:747 \r\n  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44 "
+        },
+        {
+          "FullName": "RecorridoCraterTests.LaRotondaMuestraLunaPrimeroSinTomarLaMirada",
+          "Status": "Failed",
+          "Duration": 1.1766625,
+          "Message": "System.IndexOutOfRangeException : Index was outside the bounds of the array.",
+          "StackTrace": "  at RecorridoCraterTests.<ComprobarSenalesLibres>g__FotoCara|39_2 (System.String nombre, RecorridoCraterTests+<>c__DisplayClass39_0& ) [0x00011] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:673 \r\n  at RecorridoCraterTests+<ComprobarSenalesLibres>d__39.MoveNext () [0x002b6] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:686 \r\n  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44 "
+        },
+        {
+          "FullName": "RecorridoCraterTests.LaRotondaMuestraSolPrimeroSinTomarLaMirada",
+          "Status": "Failed",
+          "Duration": 1.1763338,
+          "Message": "System.IndexOutOfRangeException : Index was outside the bounds of the array.",
+          "StackTrace": "  at RecorridoCraterTests.<ComprobarSenalesLibres>g__FotoCara|39_2 (System.String nombre, RecorridoCraterTests+<>c__DisplayClass39_0& ) [0x00011] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:673 \r\n  at RecorridoCraterTests+<ComprobarSenalesLibres>d__39.MoveNext () [0x002b6] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:686 \r\n  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44 "
+        },
+        {
+          "FullName": "RecorridoCraterTests.LasColumnasSonSimetricasYElPasoQuedaLibre",
+          "Status": "Failed",
+          "Duration": 18.2135818,
+          "Message": "no se pudo llegar a (-3.03, -1.15, 19.00): el jugador quedó en (-3.05, -1.16, 19.79). Colliders cerca: Piso_Plaza_Hundida@(0.00, -1.35, 20.75), Losa_Cartel@(-2.30, 0.30, 19.37), Jugador@(-3.05, -0.26, 19.79)",
+          "StackTrace": "at RecorridoCraterTests+<Caminar>d__27.MoveNext () [0x00174] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:498\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "RecorridoCraterTests.LasCuatroCaidasVuelvenPorEscaleraSinRespawn",
+          "Status": "Passed",
+          "Duration": 13.8748325,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RecorridoCraterTests.LasRejasNoRepitenElSiseoAlMantenerLaLuz",
+          "Status": "Passed",
+          "Duration": 1.7238066,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RecorridoCraterTests.LosPasosCambianConElSueloYL3NoActivaCarrera",
+          "Status": "Passed",
+          "Duration": 6.6121738,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RecorridoCraterTests.PisoYTechoReflejanYElOculoMuestraElCieloReal",
+          "Status": "Failed",
+          "Duration": 1.2743836,
+          "Message": "  el techo o terreno tapa el eclipse real\r\n  Expected: False\r\n  But was:  True\r\n",
+          "StackTrace": "at RecorridoCraterTests+<PisoYTechoReflejanYElOculoMuestraElCieloReal>d__50.MoveNext () [0x002cd] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:1115\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "RecorridoCraterTests.TecladoMouseMandoYPausaConservanControlDuranteLosSellos",
+          "Status": "Failed",
+          "Duration": 0.9783064,
+          "Message": "  Expected: same as <Filtro_Cuerpo (FiltroDefinicion)>\r\n  But was:  null\r\n",
+          "StackTrace": "at RecorridoCraterTests+<TecladoMouseMandoYPausaConservanControlDuranteLosSellos>d__46.MoveNext () [0x00315] in C:\\Users\\carbo\\Desktop\\crater\\Assets\\Tests\\PlayMode\\RecorridoCraterTests.cs:878\r\nat UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\\Library\\PackageCache\\com.unity.test-framework@bd7f943e9647\\UnityEngine.TestRunner\\NUnitExtensions\\Attributes\\TestEnumerator.cs:44\r\n"
+        },
+        {
+          "FullName": "RespuestaEntornoPlayTests.HudSinReticulaNiBarraDeCarga",
+          "Status": "Passed",
+          "Duration": 0.8913993,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RespuestaEntornoPlayTests.PulsoDeAnclaNoCargaNiActiva",
+          "Status": "Passed",
+          "Duration": 1.1222094,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RespuestaEntornoPlayTests.PulsoDeRejaConservaColorYColision",
+          "Status": "Passed",
+          "Duration": 0.3168172,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RitmoCraterTests.CadaParejaExigeApuntarPorSeparadoYPermiteCruzarConFiltroSostenido",
+          "Status": "Passed",
+          "Duration": 22.3033936,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RitmoCraterTests.ElJugadorCaminaACuatroYCorreConShiftOR2SinSprintEnL3",
+          "Status": "Passed",
+          "Duration": 3.3466885,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RitmoCraterTests.FiltroSostenidoRespetaPausaYSueltaAlReanudar",
+          "Status": "Passed",
+          "Duration": 1.0499276,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RotondaCartelesTests.CartelesYGeometriaRespondenALaRevision",
+          "Status": "Passed",
+          "Duration": 0.932943,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RotondaCartelesTests.LaAperturaSeIluminaSinMoverLaCamara",
+          "Status": "Passed",
+          "Duration": 12.0215932,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RotondaCartelesTests.LasTeclasUnoDosYaNoSeleccionanFiltros",
+          "Status": "Passed",
+          "Duration": 0.9631097,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RotondaCartelesTests.LaTapaSeRetiraSinAchicarseYRecuperaSuCierre",
+          "Status": "Passed",
+          "Duration": 0.9244842,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RotondaCartelesTests.LosDibujosIluminanLaEscaleraSinEmisionHDRExcesiva",
+          "Status": "Passed",
+          "Duration": 0.9008862,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TipografiaCraterTests.ElFinalUsaLaFuenteNegraSobreBlancoSinImagen",
+          "Status": "Passed",
+          "Duration": 1.7410044,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TipografiaCraterTests.ElHudUsaLaFuenteNuevaYConservaLosSimbolosDeControles",
+          "Status": "Passed",
+          "Duration": 0.0225524,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TipografiaCraterTests.ElInicioUsaLaFuenteBlancaSobreNegroSinImagen",
+          "Status": "Passed",
+          "Duration": 0.16796,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "TipografiaCraterTests.LaPruebaDelHudSePuedeDesactivarSinCambiarElTitulo",
+          "Status": "Passed",
+          "Duration": 0.0218731,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\Users\\carbo\\Desktop\\crater"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

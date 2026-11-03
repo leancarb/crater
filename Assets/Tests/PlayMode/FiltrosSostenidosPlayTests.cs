@@ -100,24 +100,15 @@ public class FiltrosSostenidosPlayTests
 
     [UnityTest] public IEnumerator MuralesMateYEntradaMasAdelanteSinCajas()
     {
-        var murales=GameObject.Find("Murales_Runicos");Assert.That(murales.transform.childCount,Is.EqualTo(9));
+        var murales=GameObject.Find("Historia_Nueva");Assert.That(murales.transform.childCount,Is.EqualTo(12));
         foreach(var r in murales.GetComponentsInChildren<Renderer>())
         {
             Assert.That(r.sharedMaterial.IsKeywordEnabled("_EMISSION"),Is.False);
-            Assert.That(r.sharedMaterial.GetTexture("_BaseMap"),Is.Not.Null);
-            var imagen=(Texture2D)r.sharedMaterial.GetTexture("_BaseMap");
-            Assert.That(r.transform.lossyScale.x/r.transform.lossyScale.y,Is.EqualTo(imagen.width/(float)imagen.height).Within(.005f),r.name);
-            Assert.That(r.sharedMaterial.GetFloat("_AlphaClip"),Is.EqualTo(1));
-            Assert.That(r.sharedMaterial.IsKeywordEnabled("_NORMALMAP"),Is.True);
-            Assert.That(r.sharedMaterial.GetTexture("_BumpMap"),Is.Not.Null);
-            Assert.That(r.sharedMaterial.GetFloat("_Parallax"),Is.EqualTo(.008f).Within(.0001f));
-            Assert.That(r.GetComponent<Collider>(),Is.Null);
+            var imagen=(Texture2D)r.sharedMaterial.GetTexture("_BaseMap");Assert.That(imagen,Is.Not.Null);
+            Assert.That(r.transform.lossyScale.x/r.transform.lossyScale.y,Is.EqualTo(imagen.width/(float)imagen.height).Within(.005f));
+            Assert.That(r.sharedMaterial.GetFloat("_AlphaClip"),Is.EqualTo(1));Assert.That(r.GetComponent<Collider>(),Is.Null);
         }
-        var sol=GameObject.Find("Mural_Runico_Ala SOL construir un paso").transform;
-        Assert.That(sol.lossyScale.x,Is.GreaterThan(15));Assert.That(sol.lossyScale.y,Is.GreaterThan(5));
-        Assert.That(GameObject.Find("Friso_O2_0"),Is.Null);
-        Assert.That(Object.FindObjectsByType<Transform>(FindObjectsSortMode.None).Count(t=>t.name.StartsWith("Estrellas_E2_")),Is.EqualTo(6));
-        Assert.That(GameObject.Find("Luna_E2"),Is.Not.Null);
+        Assert.That(GameObject.Find("Murales_Runicos"),Is.Null);
         var crater=GameObject.Find("Crater_Valle");
         Assert.That(crater.GetComponentsInChildren<Transform>().Any(t=>t.name.StartsWith("Borde_")),Is.False);
         Assert.That(crater.GetComponentsInChildren<Light>(true).Any(l=>l.name=="Luz_Borde_Apertura"),Is.False);

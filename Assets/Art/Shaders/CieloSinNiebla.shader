@@ -24,7 +24,7 @@ Shader "Crater/CieloSinNiebla"
             Name "Cielo"
             Tags { "LightMode"="SRPDefaultUnlit" }
             Blend [_SrcBlend] [_DstBlend], [_SrcBlendAlpha] [_DstBlendAlpha]
-            ZWrite [_ZWrite]
+            ZWrite Off
             ZTest LEqual
             Cull [_Cull]
             HLSLPROGRAM
@@ -49,6 +49,13 @@ Shader "Crater/CieloSinNiebla"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 output.positionCS=TransformObjectToHClip(input.positionOS.xyz);
+                // Los astros siempre están detrás de la geometría, incluso si una montaña
+                // está más lejos que la esfera usada para representar el cielo.
+                #if UNITY_REVERSED_Z
+                output.positionCS.z=0;
+                #else
+                output.positionCS.z=output.positionCS.w;
+                #endif
                 output.mundo=TransformObjectToWorld(input.positionOS.xyz);
                 output.uv=TRANSFORM_TEX(input.uv,_BaseMap);
                 return output;

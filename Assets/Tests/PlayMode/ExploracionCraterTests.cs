@@ -22,7 +22,7 @@ public class ExploracionCraterTests
             var cara = losa.Find("PinturaMural");
             Assert.That(cara, Is.Not.Null);
             var material = cara.GetComponent<Renderer>().sharedMaterial;
-            Assert.That(material.GetTexture("_BaseMap"), Is.Null,"Tinta mate extraída del PNG en geometría, sin losa rectangular");
+            Assert.That(material.GetTexture("_BaseMap"), Is.Not.Null,"Tinta transparente de historia sobre la pared");
             Assert.That(losa.Find("Narrativa"),Is.Not.Null);
             Assert.That(material.IsKeywordEnabled("_EMISSION"), Is.False);
             // En Play Unity combina los buffers estáticos; validar el área visible del renderer.
@@ -33,7 +33,7 @@ public class ExploracionCraterTests
         Situar(c, new Vector3(0, .05f, mural.position.z - 1.8f), mural.position);
         yield return new WaitForSeconds(.4f);
         Capturar(c.camara, "Materiales_Pasaje");
-        var umbral = objetos.Single(t => t.name == "Control_Mover");
+        var umbral = objetos.Single(t => t.name == "Cartel_01_Mover");
         Situar(c, umbral.position - umbral.forward * 4f - Vector3.up * 1.7f, umbral.position);
         yield return new WaitForSeconds(.4f);
         Capturar(c.camara, "Materiales_Umbral");
@@ -136,7 +136,7 @@ public class ExploracionCraterTests
         try
         {
             InputSystem.QueueStateEvent(g,new GamepadState());yield return null;yield return null;
-            Assert.That(Object.FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None).Any(t=>t.text.Contains("A (×) · Escuchar")),Is.True);
+            Assert.That(Object.FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None).Any(t=>t.text.Contains("B · Escuchar")),Is.True);
             InputSystem.QueueStateEvent(g,new GamepadState().WithButton(GamepadButton.East));yield return null;yield return null;
             InputSystem.QueueStateEvent(g,new GamepadState());yield return null;
             Assert.That(ct.VecesEscuchado,Is.EqualTo(2));Assert.That(ct.Reproduciendo,Is.True);

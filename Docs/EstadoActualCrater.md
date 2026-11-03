@@ -2,9 +2,13 @@
 
 ## Estado vigente — 2/11/2026
 
-Prevalece `Iteracion20261102.md` sobre los apartados históricos siguientes. Inicio elevado descentrado (+4m y 25° de desvío), bajada con pretiles de 1,3 m, lomadas laterales que encuadran eclipse de 9,5°. Farol central: Rotonda oscura antes de recogerlo, después cierra la entrada y enciende luces/accesos en 2,5 s. La piedra exterior pasa al lado interior del cierre de la Rotonda; atajo inicial desactivado. Renderizadores exteriores ocultos bajo 7,5 m y restaurados al regresar. Tutorial en placas claras con soporte y botón del dispositivo; narrativa mate sin losa; siluetas sólidas, grutas rojas y guía de perspectiva hacia el farol. Cámara y locomoción libres durante la revelación.
+Prevalece `CartelesYMurales20261102.md` sobre la iteración anterior y los apartados históricos. Se conserva el inicio elevado, la bajada lateral y el farol central. Apertura libre adelantada (Zona_Mirador Z=80, 88 × 4 × 2 m; totalidad 1,2 s + revelación 2,4 s), entrada pendiente hasta completar la apertura y eclipse interior a 75°, diámetro aparente 7°. Astros al fondo de la profundidad, ocultos por montañas/paredes. El modelo del farol queda excluido del ocultamiento exterior.
 
-Controles actuales: F/X para farol; sostener clic izquierdo/R1 SOL, derecho/L1 LUNA; soltar devuelve blanco. Espacio/A salta 0,4 m, E/B recoge y omite animaciones, Shift/RT corre. No hay respawn. El salto no agrega alcance a los puzzles: velocidad aérea 2 m/s, escalón automático deshabilitado durante el salto.
+Tutorial: 11 acciones en 12 carteles físicos 4:3, soporte y luz local tenue, glifo medido según el recuadro de cada imagen y último dispositivo. Botones Xbox superpuestos en Unity, sin modificar PNG. Historia: doce tintas transparentes 2:1 sin placa ni marco; los cinco tallados latentes de la Cresta se conservan. Glifos con profundidad y luz blanca cercana ajustada para no quemar carteles.
+
+Controles actuales: F/X para farol; sostener clic izquierdo/RB SOL, derecho/LB LUNA; soltar devuelve blanco. Espacio/A salta 0,4 m, E/B recoge y omite animaciones, Shift/RT corre a 5,6 m/s (caminar 4). No hay respawn. El salto no agrega alcance a los puzzles: velocidad aérea 2 m/s, escalón automático deshabilitado durante el salto.
+
+Exterior y pájaros reducidos a 0,28/0,24; interior `viento_oculo` a 0,10 y mezcla de entrada de 1,2 s. WAV y PNG originales protegidos sin modificar. Validación y capturas en `CartelesYMurales20261102.md`. Sin push ni check-in de Unity Version Control.
 
 ## Historial previo (conservar como referencia)
 

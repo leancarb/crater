@@ -309,12 +309,12 @@ public class InterfazCrater : MonoBehaviour
         }
         if (textoControles != null) textoControles.text =
             "WASD / Stick izq. · Moverse      Mouse / Stick der. · Mirar\n" +
-            "E / B (○) · Recoger      Espacio / A (×) · Saltar      Shift / R2 / RT · Correr\n" +
-            "F / X (□) · Farol      Mantener presionado para usar filtros\n" +
-            "Izquierdo / RB (R1) · SOL      Derecho / LB (L1) · LUNA\nSoltar · LUZ BLANCA\n\n" +
+            "E / B · Recoger      Espacio / A · Saltar      Shift / RT · Correr\n" +
+            "F / X · Farol      Mantener presionado para usar filtros\n" +
+            "Izquierdo / RB · SOL      Derecho / LB · LUNA\nSoltar · LUZ BLANCA\n\n" +
             "Piedras talladas · " + piezasOpcionales + "/6\n\n" +
             "H / ↑ · Ayudas escritas: " + (OpcionesCrater.AyudasEscritas ? "sí" : "no") + "\n\n" +
-            "Esc / Start / B (○) · Seguir\nR / Y (△) · Reiniciar      X / X (□) · Salir";
+            "Esc / Start / B · Seguir\nR / Y · Reiniciar      X / X · Salir";
     }
 
     void ConstruirLuminosidad(Transform raiz)

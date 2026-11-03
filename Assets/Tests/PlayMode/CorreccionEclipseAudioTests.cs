@@ -81,15 +81,18 @@ public class CorreccionEclipseAudioTests
     }
 
     [UnityTest]
-    public IEnumerator ElBucleGlobalNoVuelveAlEntrarNiTrasUnaTransicion()
+    public IEnumerator ElNuevoAmbienteInteriorNoReiniciaElDronAnterior()
     {
-        var ambiente=Object.FindObjectsByType<AudioSource>(FindObjectsSortMode.None).Single(a=>a.clip!=null&&a.clip.name=="ambiente_crater");
-        Assert.That(ambiente.isPlaying,Is.False);
+        bool DronAnteriorSuena()=>Object.FindObjectsByType<AudioSource>(FindObjectsSortMode.None).Any(a=>a.clip!=null&&a.clip.name=="ambiente_crater"&&a.isPlaying);
+        var e=Object.FindFirstObjectByType<EclipseFinalController>();
+        var ambiente=(AudioSource)typeof(EclipseFinalController).GetField("ambienteCrater",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(e);
+        Assert.That(DronAnteriorSuena(),Is.False);Assert.That(ambiente.clip.name,Is.EqualTo("viento_oculo"));
         prologo.SendMessage("EntrarSinTransicion");yield return null;
-        Assert.That(ambiente.isPlaying,Is.False);
+        Assert.That(ambiente.isPlaying,Is.True);Assert.That(ambiente.volume,Is.EqualTo(.1f).Within(.001));
         Object.FindFirstObjectByType<EclipseFinalController>().MezclarAlCrater(.2f);
         yield return new WaitForSeconds(.3f);
-        Assert.That(ambiente.isPlaying,Is.False,"el crossfade volvió a iniciar el oleaje");
+        Assert.That(DronAnteriorSuena(),Is.False,"el crossfade volvió a iniciar el dron anterior");
+        Assert.That(ambiente.isPlaying,Is.True);Assert.That(ambiente.volume,Is.EqualTo(.1f).Within(.001));
         var cavidad=Object.FindFirstObjectByType<CavidadResonante>();
         Situar(cavidad.transform.position-Vector3.up);
         yield return new WaitForSeconds(1);
@@ -108,13 +111,14 @@ public class CorreccionEclipseAudioTests
         prologo.IniciarCinematica();
         var apertura=GameObject.Find("Apertura_Tierra").GetComponent<AudioSource>();
         var grave=Object.FindObjectsByType<AudioSource>(FindObjectsSortMode.None).Single(a=>a.clip!=null&&a.clip.name=="eclipse_grave");
+        Assert.That(apertura.volume,Is.LessThanOrEqualTo(.35f));
         bool escuchado=false;float maxRms=0,primerRms=0;var muestras=new float[2048];
         for(float t=0;t<9;t+=Time.deltaTime)
         {
             if(apertura.isPlaying)
             {
                 escuchado=true;
-                Assert.That(Vector3.Distance(apertura.transform.position,jugador.camara.position),Is.LessThanOrEqualTo(apertura.minDistance),"la apertura se atenúa antes de llegar al mirador");
+                Assert.That(Vector3.Distance(apertura.transform.position,jugador.camara.position),Is.LessThan(apertura.maxDistance),"el mirador debe quedar dentro del alcance del sonido");
                 AudioListener.GetOutputData(muestras,0);
                 float rms=Mathf.Sqrt(muestras.Sum(x=>x*x)/muestras.Length);
                 if(primerRms==0)primerRms=rms;maxRms=Mathf.Max(maxRms,rms);

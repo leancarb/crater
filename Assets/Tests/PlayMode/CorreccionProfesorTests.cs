@@ -64,7 +64,7 @@ public class CorreccionProfesorTests
             Assert.That(objeto.Recogido,Is.False,"No se recoge sin mirarlo");
             InputSystem.QueueStateEvent(mando,new GamepadState());yield return null;
             c.jugador.MirarHacia(objeto.PuntoInteraccion.position);yield return null;yield return null;
-            Assert.That(c.ObjetoRecogible,Is.SameAs(objeto));Assert.That(Texto,Does.Contain("B (○)"));
+            Assert.That(c.ObjetoRecogible,Is.SameAs(objeto));Assert.That(Texto,Does.Contain("B"));
             InputSystem.QueueStateEvent(mando,new GamepadState().WithButton(GamepadButton.East));yield return null;yield return null;
             Assert.That(objeto.Recogido,Is.True);Assert.That(l.EstaDesbloqueado(objeto.filtro),Is.True);
         }

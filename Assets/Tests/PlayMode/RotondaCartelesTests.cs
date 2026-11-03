@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -53,8 +53,8 @@ public class RotondaCartelesTests
     {
         var ts=Object.FindObjectsByType<Transform>(FindObjectsInactive.Include,FindObjectsSortMode.None);
         Assert.That(ts.Any(t=>t.name=="Control_LuzBlanca"||t.name.StartsWith("Architecture_")||t.name=="ArquitecturaModular"),Is.False);
-        var control=ts.Single(t=>t.name=="Control_Mover");
-        Assert.That(control.parent.name,Is.EqualTo("Cartel_Controles_Inicio"));
+        var control=ts.Single(t=>t.name=="Cartel_01_Mover");
+        Assert.That(control.parent.name,Is.EqualTo("Carteles_Tutorial"));
         var inicio=ts.Single(t=>t.name=="SpawnValle");
         Assert.That(Mathf.Abs(Vector3.Dot((control.position-inicio.position).normalized,inicio.right)),Is.GreaterThan(.6f));
         var o=Object.FindFirstObjectByType<ObeliscoDelEclipse>();

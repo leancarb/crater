@@ -258,16 +258,7 @@ public static partial class ConstructorCrater
             Object.DestroyImmediate(t.gameObject);
             NarrativaDesdePNG(k,padre,"Lore_"+i,p,normal,$"mural_explanada_{(i<=4?"izq":"der")}_{(i-1)%4+1:00}");
         }
-        var latentes=BuscarObjetoDocente("MotivosLatentes_Cresta");
-        if(latentes!=null)
-        {
-            foreach(var t in latentes.Cast<Transform>().Where(t=>t.name.StartsWith("Apagar_")||t.name=="Fondo"||t.name.StartsWith("Izq_")||t.name.StartsWith("Der_")).ToArray())
-            {
-                var n=t.name.StartsWith("Apagar_")?t.name:"Apagar_"+t.name;var normal=-t.forward;
-                var punto=t.Find("Plano_Pared")!=null?t.Find("Plano_Pared").position:t.position-normal*.14f;
-                Object.DestroyImmediate(t.gameObject);PlacaInstruccion(k,latentes,n,punto,normal,new Vector2(1.6f,.8f),PanelApagarLaLuz);
-            }
-        }
+        // Los tallados Apagar_* son narrativa latente: conservar su geometría, sin placas ni teclas.
         foreach(var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include,FindObjectsSortMode.None).Where(t=>t.name=="Soporte_Ensenanza_Sol"||t.name=="Soporte_Combinacion"||t.name=="Soporte_Cartel").ToArray())
             Object.DestroyImmediate(t.gameObject);
         var eclipse=Object.FindFirstObjectByType<EclipseFinalController>();

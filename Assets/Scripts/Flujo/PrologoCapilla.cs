@@ -89,6 +89,7 @@ public class PrologoCapilla : MonoBehaviour
     Vector3 escalaDestello, posicionDestello;
     bool cinematicaHecha;
     bool entrando;
+    bool entradaSolicitada;
     bool viendoExteriorDesdeElCrater;
     bool saltar;
     float tiempoExterior;
@@ -151,6 +152,8 @@ public class PrologoCapilla : MonoBehaviour
     {
         if (Activo && !cinematicaHecha && !PausaCrater.EnPausa) AvanzarEclipse(Time.deltaTime);
         if (Reproduciendo && !PausaCrater.EnPausa && EntradaCrater.Saltar) saltar = true;
+        if(Activo && cinematicaHecha && !EnElCrater && !entrando &&
+            (entradaSolicitada || (jugador!=null && jugador.transform.position.y<6f)))EntrarAlCrater();
         if (EnElCrater && !entrando && jugador != null && puerta != null && cielo != null)
         {
             // El retorno opcional por la escalera también debe recuperar el horizonte.
@@ -263,7 +266,9 @@ public class PrologoCapilla : MonoBehaviour
     /// <summary>Conectado a la zona de la puerta del cráter del valle.</summary>
     public void EntrarAlCrater()
     {
-        if (!Activo || EnElCrater || entrando || Reproduciendo || !cinematicaHecha) return;
+        if (!Activo || EnElCrater || entrando || !cinematicaHecha) return;
+        if(Reproduciendo){entradaSolicitada=true;return;}
+        entradaSolicitada=false;
         StartCoroutine(Entrar());
     }
 
@@ -276,6 +281,7 @@ public class PrologoCapilla : MonoBehaviour
         entrando = true;
         Activo = false;
         EnElCrater = true;
+        cielo?.MostrarEnSubsuelo();
         flujo?.IniciarCrater();
         eclipse?.MezclarAlCrater(duracionEntrada);
 

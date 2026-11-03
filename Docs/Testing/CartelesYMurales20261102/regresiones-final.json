@@ -1,0 +1,63 @@
+{
+  "success": true,
+  "command": "command test_status",
+  "data": {
+    "command": "test_status",
+    "parameters": {},
+    "result": {
+      "status": "completed",
+      "duration": 10.67,
+      "summary": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "results": [
+        {
+          "FullName": "CartelesYCieloTests.AstroQuedaDetrasDeLaMontana",
+          "Status": "Passed",
+          "Duration": 1.594791,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CartelesYCieloTests.EntradaDuranteAperturaConservaEclipseFarolYAudioInterior",
+          "Status": "Passed",
+          "Duration": 6.2729292,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CartelesYCieloTests.FarolBlancoNoQuemaLaPlacaDeCercaNiReduceElAlcance",
+          "Status": "Passed",
+          "Duration": 1.1699359,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CartelesYCieloTests.GlifosCambianDeDispositivoYQuedanDentroDelRecuadro",
+          "Status": "Passed",
+          "Duration": 0.7875598,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CartelesYCieloTests.TextoNoAtraviesaParedes",
+          "Status": "Passed",
+          "Duration": 0.8036992,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\Users\\carbo\\Desktop\\crater"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

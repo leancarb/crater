@@ -1,0 +1,266 @@
+{
+  "success": true,
+  "command": "command run_tests",
+  "data": {
+    "command": "run_tests",
+    "parameters": {
+      "mode": "editor",
+      "timeout": "180"
+    },
+    "result": {
+      "Summary": {
+        "Total": 33,
+        "Passed": 33,
+        "Failed": 0,
+        "Skipped": 0,
+        "Inconclusive": 0
+      },
+      "Results": [
+        {
+          "FullName": "ColeccionCraterTests.IdentificadorEIndiceSoloSeRegistranUnaVez",
+          "Status": "Passed",
+          "Duration": 0.0185539,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "ColeccionCraterTests.RechazaIndicesFueraDelConjunto(-1)",
+          "Status": "Passed",
+          "Duration": 0.0007323,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "ColeccionCraterTests.RechazaIndicesFueraDelConjunto(6)",
+          "Status": "Passed",
+          "Duration": 0.0001877,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "ColeccionCraterTests.RechazaPiezasAjenasYSinIdentificador",
+          "Status": "Passed",
+          "Duration": 0.0004895,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.AdaptacionDebeHabilitarseExplicitamente",
+          "Status": "Passed",
+          "Duration": 0.0017924,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.CambiarDeFiltroTieneDemora",
+          "Status": "Passed",
+          "Duration": 0.0010072,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.CompuertaSeAbreCuandoSusReceptoresEstanActivos",
+          "Status": "Passed",
+          "Duration": 0.0016152,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.CompuertaSostenidaSeCierraCuandoSeApagaSuAncla",
+          "Status": "Passed",
+          "Duration": 0.0008588,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.DesbloquearFiltroNoAgregaDuplicados",
+          "Status": "Passed",
+          "Duration": 0.0055952,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.LinternaNoSeEnciendeSinRecogerla",
+          "Status": "Passed",
+          "Duration": 0.0003098,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.MateriaHuecaNoSeCierraSobreElJugador",
+          "Status": "Passed",
+          "Duration": 0.0028389,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.MateriaHuecaSolidaNoSeAbreAlAcercarse",
+          "Status": "Passed",
+          "Duration": 0.0004228,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.PuenteEmpiezaInsolidoYAparecePorCompletoConSusAnclas",
+          "Status": "Passed",
+          "Duration": 0.0006213,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.PuenteNecesitaTodasSusAnclas",
+          "Status": "Passed",
+          "Duration": 0.0004672,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.ReceptorRetieneLaActivacionYDespuesSeApaga",
+          "Status": "Passed",
+          "Duration": 0.0005158,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.ReceptorSinCanalAceptaLaLuzBlanca",
+          "Status": "Passed",
+          "Duration": 0.000248,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.ReceptorSoloAceptaElFiltroCorrecto",
+          "Status": "Passed",
+          "Duration": 0.0003159,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.RecogerLinternaSoloAvisaUnaVez",
+          "Status": "Passed",
+          "Duration": 0.0004331,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.RecogibleDesbloqueaSuFiltroYSeDesactiva",
+          "Status": "Passed",
+          "Duration": 0.0006284,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.SelloPermanenteNoSeApagaNunca",
+          "Status": "Passed",
+          "Duration": 0.0004232,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterGameplayTests.SoloExistenLosDosFiltrosDelVerticalSlice",
+          "Status": "Passed",
+          "Duration": 0.0016286,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterRevisionTests.ElProyectoDePlaytestSuperaElValidador",
+          "Status": "Passed",
+          "Duration": 1.0862784,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterRevisionTests.ElRefuerzoDeCompuertaFavoreceLosGravesSinRecortarLaSenal",
+          "Status": "Passed",
+          "Duration": 0.01374,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterRevisionTests.LasSombrasSeLimitanAlEntornoActivo",
+          "Status": "Passed",
+          "Duration": 0.0024664,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterRevisionTests.LosMaterialesGeneradosRespetanLaEspecificacion",
+          "Status": "Passed",
+          "Duration": 0.0025608,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterRevisionTests.LosOchoMuralesGuardadosTienenPNGQuadYUVSinDeformar",
+          "Status": "Passed",
+          "Duration": 0.2093539,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterRevisionTests.ReconstruirNoSobrescribeUnaGrabacionPersonalizada",
+          "Status": "Passed",
+          "Duration": 0.2349381,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "CraterRevisionTests.RegenerarAudioConservaTodosLosWavExistentes",
+          "Status": "Passed",
+          "Duration": 1.6830849,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "FarolTituloTests.ElFarolConservaSuDifusorYNoAgregaColisiones(\"Jugador\")",
+          "Status": "Passed",
+          "Duration": 0.0030135,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "FarolTituloTests.ElFarolConservaSuDifusorYNoAgregaColisiones(\"Recogible_Linterna\")",
+          "Status": "Passed",
+          "Duration": 0.000119,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "FarolTituloTests.LaFuenteDelTituloIncluyeLaPalabraConAcento",
+          "Status": "Passed",
+          "Duration": 0.0097815,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "PlacasInstruccionTests.CartelesSonFisicosMatesYLosGlifosRespetanProfundidad",
+          "Status": "Passed",
+          "Duration": 0.237308,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "PlacasInstruccionTests.HistoriaSinPlacasYLatentesConservados",
+          "Status": "Passed",
+          "Duration": 0.177583,
+          "Message": null,
+          "StackTrace": null
+        }
+      ],
+      "Duration": 4.75,
+      "StatusPath": null,
+      "Mode": "EditMode",
+      "FilterApplied": null,
+      "success": true,
+      "result": null
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\Users\\carbo\\Desktop\\crater"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

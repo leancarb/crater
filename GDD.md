@@ -2,7 +2,7 @@
 
 > Versión 0.8 · Vertical slice · Unity 6 (6000.3) + URP (Forward+) · PC, teclado/mouse y joystick
 >
-> La iteración del 2/11/2026 y `Docs/Iteracion20261102.md` prevalecen sobre las descripciones históricas posteriores de obelisco/atajo/controles.
+> La integración de carteles e historia del 2/11/2026 y `Docs/CartelesYMurales20261102.md` prevalecen sobre las descripciones históricas posteriores de obelisco/atajo/controles.
 >
 > Documento vivo de esta copia independiente. El GDD se ajusta a las decisiones de diseño que se prueban en el juego; no es una especificación congelada. Estado vigente del 2/11/2026: `Docs/EstadoActualCrater.md` y `Docs/RevisionContemplativa.md`. Los documentos de revisiones anteriores son históricos. Los detalles de implementación están en el `README.md`.
 
@@ -20,7 +20,7 @@
 
 1. **La luz es el verbo.** Toda interacción pasa por el haz: iluminar es actuar.
 2. **Ver es un acto, no un dato.** Cada filtro es una forma de mirar la materia; el final obliga a mirar *sin* herramienta.
-3. **Ritmo contenido.** Salto corto de 0,4 m, sin acceso a atajos de puzzles; velocidad base 4 m/s y carrera con Shift o R2/RT a 5,6 m/s. La tensión viene de entender, no de reaccionar.
+3. **Ritmo contenido.** Salto corto de 0,4 m, sin acceso a atajos de puzzles; velocidad base 4 m/s y carrera con Shift o RT a 5,6 m/s. La tensión viene de entender, no de reaccionar.
 4. **Interfaz mínima.** El estado de la linterna arriba a la derecha sin mira ni barra de carga. Las indicaciones breves son una ayuda opcional (H en pausa), desactivada por defecto. El resto lo dicen el color, el sonido y el mundo. La estación de observación no tiene indicaciones.
 
 ---
@@ -63,9 +63,9 @@ La herramienta que nos permite ver también define lo que vemos. La linterna ens
 | Acción | Teclado y mouse | Joystick |
 |---|---|---|
 | Moverse / mirar | WASD · mouse | stick izq. · stick der. |
-| Caminar / correr | 4 m/s; Shift 5,6 m/s | 4 m/s; R2/RT 5,6 m/s |
+| Caminar / correr | 4 m/s; Shift 5,6 m/s | 4 m/s; RT 5,6 m/s |
 | Farol | F | X / cuadrado |
-| Mantener SOL / LUNA | Clic izquierdo / derecho | R1 / L1 |
+| Mantener SOL / LUNA | Clic izquierdo / derecho | RB / LB |
 | Luz blanca | Soltar filtro | Soltar filtro |
 | Pausa (R reinicia, X sale; H alterna ayudas escritas) | Esc | Start |
 | Salto corto | Espacio | A / cruz |
