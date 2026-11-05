@@ -51,11 +51,12 @@ public class CartelesYCieloTests
     }
     [UnityTest] public IEnumerator GlifosCambianDeDispositivoYQuedanDentroDelRecuadro()
     {
-        var carteles=Object.FindObjectsByType<CartelTutorial>(FindObjectsSortMode.None);Assert.That(carteles.Length,Is.EqualTo(10));
+        var carteles=Object.FindObjectsByType<CartelTutorial>(FindObjectsSortMode.None);Assert.That(carteles.Length,Is.EqualTo(11));
         InputSystem.QueueStateEvent(teclado,new KeyboardState(Key.Z));yield return null;yield return null;yield return null;
         Assert.That(carteles.First(c=>c.accion==3).GetComponent<TextMesh>().text,Is.EqualTo("E"));
         Assert.That(carteles.First(c=>c.accion==2).iconoXbox.activeSelf,Is.False);
         InputSystem.QueueStateEvent(mando,new GamepadState().WithButton(GamepadButton.RightShoulder));yield return null;yield return null;yield return null;
+        Assert.That(GameObject.Find("Cartel_15_AnclasTecho_SOL").GetComponentInChildren<CartelTutorial>().GetComponent<TextMesh>().text,Is.EqualTo("RB"));
         Assert.That(carteles.First(c=>c.accion==3).GetComponent<TextMesh>().text,Is.EqualTo("B"));
         Assert.That(CartelTutorial.Glifo(4),Is.EqualTo("X"));
         Assert.That(carteles.First(c=>c.accion==2).iconoXbox.activeSelf,Is.True);

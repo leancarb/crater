@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -21,7 +22,11 @@ public class PlacasInstruccionTests
     [Test] public void CartelesSonFisicosMatesYLosGlifosRespetanProfundidad()
     {
         var glifos=objetos.Select(t=>t.GetComponent<CartelTutorial>()).Where(t=>t!=null).ToArray();
-        Assert.That(glifos.Length,Is.EqualTo(10));
+        Assert.That(glifos.Length,Is.EqualTo(11));
+        var techo=objetos.Single(t=>t.name=="Cartel_15_AnclasTecho_SOL");
+        var imagenTecho=techo.Find("Imagen_Cartel").GetComponent<Renderer>().sharedMaterial.GetTexture("_BaseMap");
+        Assert.That(AssetDatabase.GetAssetPath(imagenTecho),Is.EqualTo("Assets/Art/Carteles/15.png"));
+        Assert.That(techo.GetComponentInChildren<CartelTutorial>().accion,Is.EqualTo(5));
         for(int i=1;i<=11;i++)if(i!=4)Assert.That(glifos.Any(c=>c.accion==i),Is.True,"Acción "+i);
         foreach(var c in glifos)
         {

@@ -1,5 +1,7 @@
 # CRÁTER — estado vigente
 
+Tutorial SOL (5/11): se integra `Lantern Activates the Orange Bridge`, copia identificada `images/carteles/15_anclas_techo.png`, antes del segundo puente del ala SOL. Cartel `Cartel_15_AnclasTecho_SOL`, posición local de diseño `(-17,8;1,5;10,5)` más el desplazamiento del ala, mirando hacia su entrada oeste; glifo de filtro SOL (clic izquierdo/RB). Son once carteles en total. Se conserva la imagen completa 4:3, sin modificar originales ni agregar focos.
+
 Encuadre (5/11): `Encuadre20261105.md` corrige el audio que quedaba fuera de alcance (6 m frente a 6,6 m de observación), amplía la tolerancia de mirada y refuerza el brillo. La respuesta funciona con el círculo algo corrido en pantalla y se mantiene estable ante movimientos pequeños.
 
 Joystick (5/11): `JoystickCruce20261105.md`. Stick derecho con curva radial de potencia 1,5 y escala 72, para barrer las anclas del Cruce con rapidez sin perder precisión cerca del centro. Sin modificar mouse, retenciones, filtro de 3 s ni exigencia de correr en el segundo puente.

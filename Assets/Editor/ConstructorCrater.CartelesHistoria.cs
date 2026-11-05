@@ -88,11 +88,12 @@ public static partial class ConstructorCrater
         go.transform.localScale=new Vector3(medida.x,medida.y,1);Object.DestroyImmediate(go.GetComponent<Collider>());
         var r=go.GetComponent<Renderer>();r.sharedMaterial=material;r.shadowCastingMode=ShadowCastingMode.Off;return raiz;
     }
-    static Transform Cartel(Kit k,Transform padre,string nombre,int accion,Vector3 posicion,Vector3 normal,float piso)
+    static Transform Cartel(Kit k,Transform padre,string nombre,int accion,Vector3 posicion,Vector3 normal,float piso,string ilustracion=null,int? numeroImagen=null)
     {
         const float ancho=1.8f,alto=1.35f;
-        var textura=ImportarArteNuevo("images/tutorial/"+ImagenesTutorial[accion-1]+".png",$"Assets/Art/Carteles/{accion:00}.png",false);
-        var material=Opaco($"Cartel_{accion:00}",Color.white,.05f);material.SetTexture("_BaseMap",textura);EditorUtility.SetDirty(material);
+        string archivo=ilustracion??("images/tutorial/"+ImagenesTutorial[accion-1]+".png");int numero=numeroImagen??accion;
+        var textura=ImportarArteNuevo(archivo,$"Assets/Art/Carteles/{numero:00}.png",false);
+        var material=Opaco($"Cartel_{numero:00}",Color.white,.05f);material.SetTexture("_BaseMap",textura);EditorUtility.SetDirty(material);
         var marco=MateLiso("Marco_Cartel","#332B22",.05f);
         var raiz=Grupo(padre,nombre);raiz.SetPositionAndRotation(posicion,Quaternion.LookRotation(-normal));
         CajaDePlaca(raiz,"Losa_Cartel",new Vector3(0,0,.02f),new Vector3(ancho+.08f,alto+.08f,.06f),marco,true);
@@ -106,7 +107,7 @@ public static partial class ConstructorCrater
         }
         float pie=Mathf.Max(.05f,posicion.y-piso-alto*.5f);
         CajaDePlaca(raiz,"Soporte_Cartel",new Vector3(0,-alto*.5f-pie*.5f,.04f),new Vector3(.12f,pie,.12f),k.piedra,true);
-        var celda=MedirRecuadroTecla("images/tutorial/"+ImagenesTutorial[accion-1]+".png");
+        var celda=MedirRecuadroTecla(archivo);
         var glifo=Grupo(raiz,"Glifo_Tecla");glifo.localPosition=new Vector3((celda.center.x-.5f)*ancho,(celda.center.y-.5f)*alto,-.025f);
         var texto=glifo.gameObject.AddComponent<TextMesh>();var fuente=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         fuente.RequestCharactersInTexture("WASD ESPACIO X F E B SHIFT SOLTAR CLIC IZQ. DER. RT/L1R2→×○□",64);
@@ -176,6 +177,7 @@ public static partial class ConstructorCrater
         Cartel(k,carteles,"Cartel_09_Correr",9,EspacioCrater.Punto(new Vector3(-2.2f,1.5f,44.5f)),Vector3.back,0);
         EnPose(10,"Ensenanza_Cruce_Combinacion","Cartel_10_Combinar");
         EnPose(11,"Ensenanza_Cresta_Reflejo","Cartel_11_Cresta");
+        Cartel(k,carteles,"Cartel_15_AnclasTecho_SOL",5,EspacioCrater.Punto(new Vector3(-17.8f,1.5f,10.5f)+CorrimientoAlaOeste),Vector3.left,0,"images/carteles/15_anclas_techo.png",15);
         for(int i=1;i<=12;i++)
         {
             var textura=ImportarArteNuevo("images/historia/"+ImagenesHistoria[i-1]+".png",$"Assets/Art/Murals/Historia/{i:00}.png",true);

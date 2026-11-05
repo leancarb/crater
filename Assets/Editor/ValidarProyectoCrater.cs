@@ -300,7 +300,7 @@ public static class ValidarProyectoCrater
     static void ValidarMurales(GameObject[] objetos, List<string> problemas)
     {
         var carteles=objetos.Select(o=>o.GetComponent<CartelTutorial>()).Where(c=>c!=null).ToArray();
-        Comprobar(carteles.Length==10,"Deben quedar 10 placas; el farol usa indicaciones contextuales.",problemas);
+        Comprobar(carteles.Length==11,"Deben quedar 11 placas, incluido el tutorial de anclas del techo en SOL; el farol usa indicaciones contextuales.",problemas);
         for(int i=1;i<=11;i++)if(i!=4)Comprobar(carteles.Any(c=>c.accion==i),"Falta cartel de acción "+i,problemas);
         foreach(var c in carteles)
         {
