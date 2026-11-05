@@ -2,7 +2,7 @@
 
 > Versión 0.9 · 5/11/2026 · Vertical slice · Unity 6 (6000.3.23f1) + URP (Forward+) · PC, teclado/mouse y joystick (convención Xbox)
 >
-> Documento vivo: describe el juego tal como está en `main` (`e139b57`). Los detalles técnicos y la evidencia de cada iteración están en `Docs/` (ver §8). Cuando un documento de iteración y este GDD no coinciden, prevalece el documento más reciente de `Docs/`.
+> Documento vivo: describe el juego tal como está en `main` (5/11/2026). Los detalles técnicos y la evidencia de cada iteración están en `Docs/` (ver §8). Cuando un documento de iteración y este GDD no coinciden, prevalece el documento más reciente de `Docs/`.
 
 ---
 
@@ -82,7 +82,7 @@ Los carteles y la pausa muestran las teclas o los botones Xbox según el último
 
 ### 3.3 Filtros
 
-SOL y LUNA se activan **mientras se mantiene** su botón, durante un máximo de **5 segundos**. Soltar, o agotar el tiempo, vuelve a luz blanca con una transición de 0,18 s. Tras agotarlo hay que soltar y volver a presionar. El HUD muestra el nombre del filtro y sus segundos restantes. La pausa congela el tiempo. Ambos filtros usan el mismo cono (28°) y alcance (18,75 m).
+SOL y LUNA se activan **mientras se mantiene** su botón, durante un máximo de **3 segundos**. Soltar, o agotar el tiempo, vuelve a luz blanca con una transición de 0,18 s. Tras agotarlo hay que soltar y volver a presionar. El HUD muestra el nombre del filtro y sus segundos restantes. La pausa congela el tiempo. Ambos filtros usan el mismo cono (28°) y alcance (18,75 m).
 
 | Filtro | Color | Receptor | Qué hace |
 |---|---|---|---|
@@ -185,7 +185,7 @@ Los sonidos se sintetizan en `GeneradorAudioCrater` y pueden reemplazarse por un
 ### Hecho
 - [x] Prólogo caminable: terraza, sendero, lomas, eclipse con estrellas y apertura del cráter sin bloquear al jugador
 - [x] Rotonda oscura con el farol como foco, cierre de la entrada y encendido al recogerlo
-- [x] Filtros sostenidos de 5 s con HUD de segundos, salto corto y nuevo esquema de controles
+- [x] Filtros sostenidos de 3 s con HUD de segundos, salto corto y nuevo esquema de controles
 - [x] Carteles físicos de tutorial con glifos de teclado/Xbox y dibujos de historia en las paredes
 - [x] Grutas rojas de seguridad, Cresta circular con reflejo continuo, anillo de diamante y epílogo
 - [x] Ocultamiento del paisaje exterior al estar en el subsuelo (optimización)
@@ -215,7 +215,7 @@ Los sonidos se sintetizan en `GeneradorAudioCrater` y pueden reemplazarse por un
 | Tema | Documento |
 |---|---|
 | Iteración más reciente: inicio, encuadre, guarda, Cresta | `Docs/Revision20261105.md`, `Docs/Seguimiento20261105.md` |
-| Recorrido, arte, luces, filtros de 5 s, audio, Cresta circular | `Docs/Revision20261104.md`, `Docs/CorreccionBordesEncuadre20261104.md` |
+| Recorrido, arte, luces, filtros sostenidos, audio, Cresta circular | `Docs/Revision20261104.md`, `Docs/CorreccionBordesEncuadre20261104.md` |
 | Cielo estrellado | `Docs/CieloEstrellado20261104.md` |
 | Carteles, historia y correcciones de entrada/cielo/farol | `Docs/CartelesYMurales20261102.md` |
 | Iteración de diseño, arte y jugabilidad (salto, E/B, lobby) | `Docs/Iteracion20261102.md` |
