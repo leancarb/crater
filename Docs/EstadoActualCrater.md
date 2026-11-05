@@ -1,5 +1,7 @@
 # CRÁTER — estado vigente
 
+Créditos (5/11): se retira la tarjeta de la cátedra de la secuencia y se agregan Carbonetti Leandro (Productor, Programador), Lecitra Ezequiel (Artista 3D, Sonidista, Programador), Iezzi Camilo (Game Design, Sonidista y Artista 3D) y Coquét Nicolás (Game Design). Una tarjeta de texto por integrante, conservando las tildes de los nombres.
+
 Último ajuste (5/11): los filtros sostenidos duran un máximo de **3 segundos**, en lugar de 5. Soltar vuelve inmediatamente a luz blanca; al agotarlos hay que soltar antes de volver a activarlos. El contador del HUD usa esa duración.
 
 Seguimiento del 5/11: `Seguimiento20261105.md` prevalece para spawn Z local 197, montañas que permanecen visibles mientras se sigue afuera, cubierta exterior de la rotonda hasta entrar y reflejo único continuo entre paredes y compuerta.

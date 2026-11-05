@@ -70,10 +70,15 @@ public class EclipseFinalController : MonoBehaviour
     [Tooltip("Si el jugador no va al lugar del cráter, los créditos llegan solos.")]
     [SerializeField] float segundosHastaCreditos = 45f;
     [TextArea(1, 3)]
-    [SerializeField] string[] creditos =
+    [SerializeField] string[] creditos = CreditosDelEquipo();
+
+    public static string[] CreditosDelEquipo() => new[]
     {
         "CRÁTER",
-        InterfazCrater.TarjetaCatedra,   // los logos de UBA FADU y de la Cátedra Campos Trilnick, y 2026
+        "Carbonetti Leandro\nProductor, Programador",
+        "Lecitra Ezequiel\nArtista 3D, Sonidista, Programador",
+        "Iezzi Camilo\nGame Design, Sonidista y Artista 3D",
+        "Coquét Nicolás\nGame Design",
     };
 
     // banderas para que cada paso ocurra una sola vez aunque lo llamen de nuevo

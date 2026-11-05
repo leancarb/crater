@@ -592,6 +592,7 @@ public static partial class ConstructorCrater
         pausa.pausarAlPerderFoco = false;
         var flujo = sistemas.AddComponent<FlujoJuegoCrater>();
         var eclipse = sistemas.AddComponent<EclipseFinalController>();
+        ConfigurarCreditosEquipo(eclipse);
 
         var prologo = sistemas.AddComponent<PrologoCapilla>();
 
