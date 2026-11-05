@@ -38,12 +38,12 @@ public class FiltrosSostenidosPlayTests
         yield return null;
     }
 
-    [UnityTest] public IEnumerator MouseAgotaCincoSegundosYRequiereSoltarAntesDeReactivar()
+    [UnityTest] public IEnumerator MouseAgotaTresSegundosYRequiereSoltarAntesDeReactivar()
     {
         InputSystem.QueueStateEvent(mouse,new MouseState().WithButton(MouseButton.Left));yield return null;
         Assert.That(farol.FiltroActual,Is.EqualTo(farol.filtros[0]));
-        Time.timeScale=5;yield return new WaitForSeconds(5.3f);
-        Assert.That(farol.FiltroActual,Is.Null,"Vence a los cinco segundos aunque se mantenga presionado");
+        Time.timeScale=5;yield return new WaitForSeconds(3.3f);
+        Assert.That(farol.FiltroActual,Is.Null,"Vence a los tres segundos aunque se mantenga presionado");
         yield return new WaitForSeconds(.5f);Assert.That(farol.FiltroActual,Is.Null,"No se reactiva hasta soltar");
         InputSystem.QueueStateEvent(mouse,new MouseState());yield return null;
         Assert.That(farol.FiltroActual,Is.Null);

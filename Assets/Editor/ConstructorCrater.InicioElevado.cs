@@ -162,12 +162,12 @@ public static partial class ConstructorCrater
         AjustarPuertaSolVisible(k,nivel);
         IteracionDiseno(k,nivel);
         var linterna=Object.FindFirstObjectByType<LinternaController>();
-        linterna.duracionFiltro=5;
+        linterna.duracionFiltro=3;
         PrefabUtility.RecordPrefabInstancePropertyModifications(linterna);
         var prefab=PrefabUtility.LoadPrefabContents(CarpetaPrefabs+"Jugador.prefab");
         try
         {
-            prefab.GetComponentInChildren<LinternaController>(true).duracionFiltro=5;
+            prefab.GetComponentInChildren<LinternaController>(true).duracionFiltro=3;
             PrefabUtility.SaveAsPrefabAsset(prefab,CarpetaPrefabs+"Jugador.prefab");
         }
         finally{PrefabUtility.UnloadPrefabContents(prefab);}

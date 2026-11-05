@@ -48,7 +48,7 @@ public class LinternaController : MonoBehaviour
 
     [Header("Ajustes")]
     public float demoraDeCambio = 0.18f;
-    [Min(.1f)] public float duracionFiltro = 5f;
+    [Min(.1f)] public float duracionFiltro = 3f;
     [Tooltip("Si está tildado, la linterna no responde hasta llamar a Recoger().")]
     public bool requiereRecogerla = true;
 
