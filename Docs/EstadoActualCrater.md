@@ -1,5 +1,7 @@
 # CRÁTER — estado vigente
 
+Último ajuste (5/11): los filtros sostenidos duran un máximo de **3 segundos**, en lugar de 5. Soltar vuelve inmediatamente a luz blanca; al agotarlos hay que soltar antes de volver a activarlos. El contador del HUD usa esa duración.
+
 Seguimiento del 5/11: `Seguimiento20261105.md` prevalece para spawn Z local 197, montañas que permanecen visibles mientras se sigue afuera, cubierta exterior de la rotonda hasta entrar y reflejo único continuo entre paredes y compuerta.
 
 ## Estado vigente — 5/11/2026

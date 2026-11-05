@@ -48,13 +48,13 @@ public class RevisionNoviembreTests
         }
     }
     Vector2[] ConstructorCamino()=>new[]{new Vector2(14,187),new Vector2(0,184),new Vector2(-12,184),new Vector2(-19,177),new Vector2(-19,165),new Vector2(-12,154),new Vector2(0,150)};
-    [UnityTest] public IEnumerator FiltroVenceEnCincoSegundosRespetaPausaYExigeSoltar()
+    [UnityTest] public IEnumerator FiltroVenceEnTresSegundosRespetaPausaYExigeSoltar()
     {
         var f=Object.FindFirstObjectByType<LinternaController>();f.Recoger();f.Encender(true);foreach(var x in f.filtros)f.Desbloquear(x);
         InputSystem.QueueStateEvent(mouse,new MouseState().WithButton(MouseButton.Left));yield return new WaitForSeconds(.05f);
-        Assert.That(f.FiltroActual,Is.EqualTo(f.filtros[0]),$"entrada={EntradaCrater.Filtro(0)}, mouse={mouse.leftButton.isPressed}, actual={Mouse.current?.deviceId}, esperado={mouse.deviceId}, activo={f.isActiveAndEnabled}, encendido={f.Encendida}, pausa={PausaCrater.EnPausa}, cine={CinematicaDeSello.Reproduciendo}, cambio={f.CambiandoFiltro}, dt={Time.deltaTime}");Assert.That(f.TiempoFiltroRestante,Is.InRange(4.8f,5));
+        Assert.That(f.FiltroActual,Is.EqualTo(f.filtros[0]),$"entrada={EntradaCrater.Filtro(0)}, mouse={mouse.leftButton.isPressed}, actual={Mouse.current?.deviceId}, esperado={mouse.deviceId}, activo={f.isActiveAndEnabled}, encendido={f.Encendida}, pausa={PausaCrater.EnPausa}, cine={CinematicaDeSello.Reproduciendo}, cambio={f.CambiandoFiltro}, dt={Time.deltaTime}");Assert.That(f.TiempoFiltroRestante,Is.InRange(2.8f,3));
         float antes=f.TiempoFiltroRestante;Time.timeScale=0;yield return new WaitForSecondsRealtime(.15f);Assert.That(f.TiempoFiltroRestante,Is.EqualTo(antes).Within(.02));
-        Time.timeScale=5;yield return new WaitForSeconds(5.3f);Assert.That(f.FiltroActual,Is.Null);yield return new WaitForSeconds(.6f);Assert.That(f.FiltroActual,Is.Null);
+        Time.timeScale=5;yield return new WaitForSeconds(3.3f);Assert.That(f.FiltroActual,Is.Null);yield return new WaitForSeconds(.6f);Assert.That(f.FiltroActual,Is.Null);
         InputSystem.QueueStateEvent(mouse,new MouseState());yield return new WaitForSeconds(.05f);InputSystem.QueueStateEvent(mouse,new MouseState().WithButton(MouseButton.Left));yield return new WaitForSeconds(.05f);Assert.That(f.FiltroActual,Is.EqualTo(f.filtros[0]));
         Assert.That(f.demoraDeCambio,Is.EqualTo(.18f).Within(.001));
     }

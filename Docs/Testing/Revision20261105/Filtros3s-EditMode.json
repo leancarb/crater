@@ -1,0 +1,57 @@
+{
+  "success": true,
+  "command": "command run_tests",
+  "data": {
+    "command": "run_tests",
+    "parameters": {
+      "mode": "editor",
+      "filter": "FarolTituloTests",
+      "timeout": "180"
+    },
+    "result": {
+      "Summary": {
+        "Total": 3,
+        "Passed": 3,
+        "Failed": 0,
+        "Skipped": 0,
+        "Inconclusive": 0
+      },
+      "Results": [
+        {
+          "FullName": "FarolTituloTests.ElFarolConservaSuDifusorYNoAgregaColisiones(\"Jugador\")",
+          "Status": "Passed",
+          "Duration": 0.0361446,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "FarolTituloTests.ElFarolConservaSuDifusorYNoAgregaColisiones(\"Recogible_Linterna\")",
+          "Status": "Passed",
+          "Duration": 0.0006369,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "FarolTituloTests.LaFuenteDelTituloIncluyeLaPalabraConAcento",
+          "Status": "Passed",
+          "Duration": 0.0011005,
+          "Message": null,
+          "StackTrace": null
+        }
+      ],
+      "Duration": 4.24,
+      "StatusPath": null,
+      "Mode": "EditMode",
+      "FilterApplied": "testname: FarolTituloTests",
+      "success": true,
+      "result": null
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\Users\\carbo\\Desktop\\crater"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

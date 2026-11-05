@@ -70,8 +70,8 @@ public static class ValidarProyectoCrater
         Comprobar(jugador != null && jugador.TryGetComponent<JugadorFPS>(out var movimiento) && movimiento.velocidad == 4f && movimiento.multiplicadorCorrer == 1.4f,
             "La velocidad base debe ser 4 m/s y Shift o R2 / RT deben multiplicarla por 1,4.", problemas);
         var linternaPrefab = jugador != null ? jugador.GetComponentInChildren<LinternaController>(true) : null;
-        Comprobar(linternaPrefab != null && linternaPrefab.duracionFiltro == 5f,
-            "Los filtros deben durar hasta 5 segundos.", problemas);
+        Comprobar(linternaPrefab != null && linternaPrefab.duracionFiltro == 3f,
+            "Los filtros deben durar hasta 3 segundos.", problemas);
 
         if (System.IO.File.Exists(ConstructorCrater.RutaEscena))
             ValidarEscena(cuerpo, hueco, problemas);
