@@ -39,6 +39,8 @@ public class PrologoCapilla : MonoBehaviour
     [Tooltip("El guiño: la espiral de las anclas tallada sobre la puerta de la capilla. Sólo en el epílogo.")]
     [SerializeField] GameObject guino;
 
+    [SerializeField] GameObject[] soloEnEpilogo;
+
     [Header("Cierre sin rastro en el epílogo")]
     [SerializeField] GameObject[] cierresEpilogo;
     [SerializeField] GameObject[] ocultarEpilogo;
@@ -129,6 +131,7 @@ public class PrologoCapilla : MonoBehaviour
 
     void Start()
     {
+        if(soloEnEpilogo!=null)foreach(var go in soloEnEpilogo)if(go!=null)go.SetActive(false);
         OcultarCrater();
         if (huella != null) huella.SetActive(false);
         if (zonaEpilogo != null) zonaEpilogo.SetActive(false);
@@ -336,6 +339,7 @@ public class PrologoCapilla : MonoBehaviour
     /// <summary>El eclipse terminó: terreno continuo y sin marcas del cráter.</summary>
     public void PrepararEpilogo()
     {
+        if(soloEnEpilogo!=null)foreach(var go in soloEnEpilogo)if(go!=null)go.SetActive(true);
         EnElCrater = false;
         viendoExteriorDesdeElCrater = false;
         if (crater != null) crater.SetActive(false);

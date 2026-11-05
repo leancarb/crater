@@ -21,8 +21,8 @@ public class PlacasInstruccionTests
     [Test] public void CartelesSonFisicosMatesYLosGlifosRespetanProfundidad()
     {
         var glifos=objetos.Select(t=>t.GetComponent<CartelTutorial>()).Where(t=>t!=null).ToArray();
-        Assert.That(glifos.Length,Is.EqualTo(12));
-        for(int i=1;i<=11;i++)Assert.That(glifos.Any(c=>c.accion==i),Is.True,"Acción "+i);
+        Assert.That(glifos.Length,Is.EqualTo(10));
+        for(int i=1;i<=11;i++)if(i!=4)Assert.That(glifos.Any(c=>c.accion==i),Is.True,"Acción "+i);
         foreach(var c in glifos)
         {
             var raiz=c.transform.parent;Assert.That(raiz.Find("Soporte_Cartel"),Is.Not.Null);

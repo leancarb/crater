@@ -1,0 +1,263 @@
+[
+  {
+    "tipo": "tutorial",
+    "nombre": "01_moverse",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Directional Figure Icon Sign.png",
+    "destino": "images/carteles/01_moverse.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "1fd900a286505e77bd84fe005a14e4efe65db324ce722b0e51ce1d9cf1c6af88"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "02_saltar",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Jump Over the Obstacle Icon.png",
+    "destino": "images/carteles/02_saltar.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "9747cb996e4eeeedd99a87ac457ad169cf9deb93ae239b42d96c75b5327eb7e0"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "03_recoger",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Ancient Artifact Pickup Icon.png",
+    "destino": "images/carteles/03_recoger.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "18749197d3833b9096d6844b7573e8511f400d115952ed55b1e16cccd0a09d9c"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "04_farol",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Lantern Bearer with Light Beam.png",
+    "destino": "images/carteles/04_farol.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "40ad426e96844f3469d78229fd878361be7ea9369cc98af38aaf5a2aeab55242"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "06_filtro_luna",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Lantern Beam Breaking Through Barriers.png",
+    "destino": "images/carteles/06_filtro_luna.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "cd0bbfe66f7362bf7805b0a4d98521f25dc8edce729d266b417d0eef87c112d3"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "07_luz_blanca",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Lantern Beam Keycap Journey.png",
+    "destino": "images/carteles/07_luz_blanca.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "7639e5973f01034f632667b86927abe5f4bc990a602100134b82158f9a0b3bfd"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "08_dos_anclas",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Lantern Light Builds a Bridge.png",
+    "destino": "images/carteles/08_dos_anclas.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "d4d98391cb3b40e9b24c98f5ca668dbf9e40be05a6c05269209bb7e7b1aeb83f"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "09_correr",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Lantern Runner Approaches the Bridge.png",
+    "destino": "images/carteles/09_correr.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "f4f3765f3bc7cd0f4b7ccdaff129a71fa2e3b993c9f4aa2b9719f383f5680dc4"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "10_combinar",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Lantern Puzzle Bridge Diagram.png",
+    "destino": "images/carteles/10_combinar.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "aa229ccbe2b6b7adb719bb475bc7aef50c4ba793be144554d9a3cf4eb5ddff2f"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "11_sala_final",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Lantern Off, Eye Watching.png",
+    "destino": "images/carteles/11_sala_final.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "76b2d6cb0920782084c296695e91643eb0aca2da3e7b5c15c03bd2a098addae2"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "12_dos_anclas_separadas",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Lantern Guide Across the Chasm.png",
+    "destino": "images/carteles/12_dos_anclas_separadas.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "014e0a71978d7bfd32679aca2dfedacd2f3f973d77a7a9c59c0a04aa9b0f82cc"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "13_ancla_puerta",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Lantern Beam Activates Lowering Gate.png",
+    "destino": "images/carteles/13_ancla_puerta.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "472b80d5bae13163ece2848f871e6dfd76006534016cbca008ba8a2949e226ed"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "14_mirar_alrededor",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Head-Turning Pathway Icon.png",
+    "destino": "images/carteles/14_mirar_alrededor.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "c62a557a8d954471eb95dd57789739dfc240ffff4d9d82a5e7cfa8a7afe3ac09"
+  },
+  {
+    "tipo": "tutorial",
+    "nombre": "15_anclas_techo",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\tutorial\\Lantern Activates the Orange Bridge.png",
+    "destino": "images/carteles/15_anclas_techo.png",
+    "ancho": 1448,
+    "alto": 1086,
+    "sha256": "0eea0342b7708185771100e2e8ef535d026e0d10d3d584025b5da69f6437c290"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "05_puente",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Andean Canyon Bridge Traveler.png",
+    "destino": "images/murales_historia/05_puente.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "53a2ea3f2085a4e25ca59d175607d7c654f4c266d6360e65150c32f0233cd93c"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "06_puerta",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Ancient Portal Beneath Sun and Moon.png",
+    "destino": "images/murales_historia/06_puerta.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "9fd0c7386b36f61defe1c46332c7be61efef204f338f8875a6ceaaf3cd5ee32d"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "07_puerta_abierta",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Eclipse Gateway and Lantern Traveler.png",
+    "destino": "images/murales_historia/07_puerta_abierta.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "2c318a1b97ac7b625c3484c898fb7ab9e76cbb0f78cd00dc437447b21c05b20a"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "08_regreso",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Andean Traveler at the Sun Station.png",
+    "destino": "images/murales_historia/08_regreso.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "957f039ebf343cd50a16a0f79a38b9d3ebbde30cfd7d2bbf14773ca2d3d19e67"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "09_farol",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Andean Temple Lantern and Eclipse.png",
+    "destino": "images/murales_historia/09_farol.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "8d86d02936377481512b4f888ffe1da60f4a5a48d7fa52ad1b1c08e953d864c0"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "10_dos_caminos",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Sun and Moon Stepped Emblem.png",
+    "destino": "images/murales_historia/10_dos_caminos.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "14c3b625fdc733b44fc2ef7d523b6ec809f5c60396099f9d9cc7a94de595e074"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "11_puerta_sellos",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Ancient Eclipse Doorway with Lantern Bearer.png",
+    "destino": "images/murales_historia/11_puerta_sellos.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "bc95ed0f15fb10201e759a2dff67e11d46f56b036da1d88de33c74b9625b5edf"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "12_ciclo",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Celestial Cycle Over Observation Station.png",
+    "destino": "images/murales_historia/12_ciclo.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "046d43790f6923bfb985916c49f8e1cdf885c251e6bda5cd63d7f10c67459674"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "13_ala_sol",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Ancient Observatory Solar Study.png",
+    "destino": "images/murales_historia/13_ala_sol.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "1a5d68803130e27cb6d48d815d7b780a995a5c7a7c27525fc9d96f5b9425385a"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "14_ala_luna",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Moonlit Observatory Watchers.png",
+    "destino": "images/murales_historia/14_ala_luna.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "4743aecbebe019065e5f4cdef66612233f5105268ba055a35dbf3195194ffd76"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "15_cruce",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Andean Trail Under Sun and Moon.png",
+    "destino": "images/murales_historia/15_cruce.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "5afa27783c976167084fe8701e9ab733450f1b972e6f837ec8e6293ff16b9684"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "16_grutas",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Ancient Cave Feast Pictogram.png",
+    "destino": "images/murales_historia/16_grutas.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "cde73734be615a2c9dd14e29286ecad20c6a573bdadec56bf523679abab72cdd"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "16b_grutas_reparacion",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Andean Stoneworker Repairing Cave Floor.png",
+    "destino": "images/murales_historia/16b_grutas_reparacion.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "6449c27b5acc2fd5df3e90ec0ad39b5ff3a6eccc369abf8ff633235365dcbd5b"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "16c_grutas_descanso",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Andean Cave Counting Scene.png",
+    "destino": "images/murales_historia/16c_grutas_descanso.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "e11ec6123f6c76eb9e83c00adbec8efb7ff347f6a4ea727a0bc03c84ba4dbfe1"
+  },
+  {
+    "tipo": "historia",
+    "nombre": "17_caida",
+    "origen": "C:\\Users\\carbo\\Desktop\\crater\\images\\historia\\Cavefall, Lantern, and Ascent.png",
+    "destino": "images/murales_historia/17_caida.png",
+    "ancho": 1774,
+    "alto": 887,
+    "sha256": "e21a13018d1166b425f9d685b0ed18c17f11923b44231ca9d9a6d9f8d2870972"
+  }
+]

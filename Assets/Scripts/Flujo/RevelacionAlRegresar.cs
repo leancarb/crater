@@ -11,6 +11,7 @@ public class RevelacionAlRegresar : MonoBehaviour
     public void Revelar(){Revelado=true;}
     void Update()
     {
+        bloque ??= new MaterialPropertyBlock();
         presencia=Mathf.MoveTowards(presencia,Revelado?1:0,Time.deltaTime*.25f);
         if(luz!=null)luz.intensity=presencia*5;
         if(tallado!=null){tallado.enabled=presencia>.01f;tallado.GetPropertyBlock(bloque);bloque.SetColor(Emision,new Color(.6f,.74f,1)*presencia*1.2f);tallado.SetPropertyBlock(bloque);}

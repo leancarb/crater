@@ -106,9 +106,6 @@ public static partial class ConstructorCrater
         }
         float pie=Mathf.Max(.05f,posicion.y-piso-alto*.5f);
         CajaDePlaca(raiz,"Soporte_Cartel",new Vector3(0,-alto*.5f-pie*.5f,.04f),new Vector3(.12f,pie,.12f),k.piedra,true);
-        var foco=Grupo(raiz,"Luz_Cartel");foco.localPosition=new Vector3(0,1,-1.6f);foco.LookAt(raiz.position);
-        var luz=foco.gameObject.AddComponent<Light>();luz.type=LightType.Spot;luz.color=Hex("#F4F1EA");
-        luz.intensity=6;luz.range=2.4f;luz.spotAngle=54;luz.innerSpotAngle=38;luz.shadows=LightShadows.None;
         var celda=MedirRecuadroTecla("images/tutorial/"+ImagenesTutorial[accion-1]+".png");
         var glifo=Grupo(raiz,"Glifo_Tecla");glifo.localPosition=new Vector3((celda.center.x-.5f)*ancho,(celda.center.y-.5f)*alto,-.025f);
         var texto=glifo.gameObject.AddComponent<TextMesh>();var fuente=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");

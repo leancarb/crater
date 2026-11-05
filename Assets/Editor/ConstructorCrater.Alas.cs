@@ -89,7 +89,7 @@ public static partial class ConstructorCrater
             C($"Muro_Vuelta_{n}_Interior", 11.3f, -0.3f, 21.6f, 11, 7, 33.7f, k.basalto);
             C($"Muro_Vuelta_{n}_Atajo_Sur", 15, -0.3f, 33.4f, 11, 7, 33.7f, k.basalto);
             // arranca en el anillo: más al sur se metía en la rotonda y tapaba el primer tallado
-            C($"Muro_Vuelta_{n}_Exterior", 8, -0.3f, 24.8f, 7.7f, 7, 38.1f, k.basaltoMedio);
+            C($"Muro_Vuelta_{n}_Exterior", 8, -0.3f, 23.8f, 7.7f, 7, 38.1f, k.basaltoMedio);
             C($"Muro_Vuelta_{n}_Fondo", 15.3f, -0.3f, 37.8f, 7.7f, 7, 38.1f, k.basalto);
             C($"Techo_Vuelta_{n}", 15.3f, 7, 27.6f, 7.7f, 7.3f, 38.1f, k.techo);
             Luz(g, $"Luz_Vuelta_{n}", new Vector3(X(9.5f), 5.5f, 33f), LuzCalida, 40f, 9f, true);

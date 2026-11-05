@@ -18,8 +18,10 @@ using UnityEngine;
 /// del tamaño del círculo del haz) y, sobre el rayo reflejado, una luz de rebote. No es un
 /// espejo real (sería caro): es el efecto que se vería.
 /// </summary>
-public class ParedEspejo : MonoBehaviour
+public partial class ParedEspejo : MonoBehaviour
 {
+    [Tooltip("Tramos de una pared curva; comparte un solo reflejo y una sola comprobación del haz.")]
+    public Collider[] superficiesCirculares;
     [Tooltip("Ancho y alto de la cara reflejante, en metros.")]
     [SerializeField] Vector2 tamanio = new Vector2(24f, 8f);
 
@@ -61,6 +63,8 @@ public class ParedEspejo : MonoBehaviour
         Vector3 normal = -transform.forward;                 // mira hacia la sala
         Vector3 origen = linterna.spot.transform.position;
         Vector3 haz = linterna.spot.transform.forward;
+        if(superficiesCirculares!=null && superficiesCirculares.Length>0){ActualizarCircular(linterna);return;}
+        bloque ??= new MaterialPropertyBlock();
         float distancia = Vector3.Dot(origen - transform.position, normal);
         float hacia = Vector3.Dot(haz, -normal);             // 1 si el haz va derecho a la pared
         if (distancia <= 0.05f || hacia <= 0.05f) { Apagar(); return; }

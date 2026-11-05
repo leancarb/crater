@@ -1,0 +1,70 @@
+{
+  "success": true,
+  "command": "command test_status",
+  "data": {
+    "command": "test_status",
+    "parameters": {},
+    "result": {
+      "status": "completed",
+      "duration": 16.72,
+      "summary": {
+        "total": 6,
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "results": [
+        {
+          "FullName": "BordesYEncuadreTests.BordesCerradosYOrientadosHaciaFuera",
+          "Status": "Passed",
+          "Duration": 2.5342339,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElEncuadreSeBuscaDeCostadoYSePuedeAlinear",
+          "Status": "Passed",
+          "Duration": 1.9444787,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElReflejoSigueLaParedCurvaSinSaltarEntreCaras",
+          "Status": "Passed",
+          "Duration": 1.5103489,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.InicioIzquierdoConTerrazaTransitable",
+          "Status": "Passed",
+          "Duration": 1.2312773,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.NoQuedanFocosDeCartelesNiPuntosFlotantes",
+          "Status": "Passed",
+          "Duration": 1.2164038,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.PresionarElBordeNoImpideRetroceder",
+          "Status": "Passed",
+          "Duration": 8.2460846,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\Users\\carbo\\Desktop\\crater"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

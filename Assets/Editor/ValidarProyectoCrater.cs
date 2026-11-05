@@ -70,8 +70,8 @@ public static class ValidarProyectoCrater
         Comprobar(jugador != null && jugador.TryGetComponent<JugadorFPS>(out var movimiento) && movimiento.velocidad == 4f && movimiento.multiplicadorCorrer == 1.4f,
             "La velocidad base debe ser 4 m/s y Shift o R2 / RT deben multiplicarla por 1,4.", problemas);
         var linternaPrefab = jugador != null ? jugador.GetComponentInChildren<LinternaController>(true) : null;
-        Comprobar(linternaPrefab != null && linternaPrefab.duracionFiltro == 0f,
-            "Los filtros se sostienen con el botón, sin temporizador.", problemas);
+        Comprobar(linternaPrefab != null && linternaPrefab.duracionFiltro == 5f,
+            "Los filtros deben durar hasta 5 segundos.", problemas);
 
         if (System.IO.File.Exists(ConstructorCrater.RutaEscena))
             ValidarEscena(cuerpo, hueco, problemas);
@@ -198,7 +198,7 @@ public static class ValidarProyectoCrater
                         cara != null && c.sello == cara.sello && c.luz != null && c.renderers != null && c.renderers.Length > 0 && c.renderers.All(r => r != null)) &&
                         notas != null && notas.Length == columnas.Length && notas.All(n => n != null && n.clip != null &&
                         !n.loop && !n.playOnAwake && n.spatialBlend == 1f) &&
-                        (luna ? obelisco.luzColumnasLuna : obelisco.luzColumnasSol) != null,
+                        columnas.All(c=>c.luzSuperior!=null),
                         "Cada sello debe encender tres columnas distintas con una nota localizada por columna.", problemas);
                 }
                 Comprobar(obelisco.columnasSol != null && obelisco.columnasLuna != null &&
@@ -266,8 +266,8 @@ public static class ValidarProyectoCrater
         var apoyo = objetos.FirstOrDefault(o => o.name == "Apoyo_Isla_Cruce");
         Comprobar(apoyo != null && Mathf.Abs(apoyo.transform.lossyScale.y - .30f) < .001f, "El apoyo del Cruce debe medir 0,30 m.", problemas);
         var espejos = objetos.Select(o => o.GetComponent<ParedEspejo>()).Where(c => c != null).ToArray();
-        Comprobar(espejos.Length == 6 && espejos.All(p => new SerializedObject(p).FindProperty("intensidadReflejo").floatValue == 4f),
-            "Los seis reflejos deben tener intensidad 4.", problemas);
+        Comprobar(espejos.Length == 4 && espejos.All(p => new SerializedObject(p).FindProperty("intensidadReflejo").floatValue == 4f),
+            "El reflejo circular, la compuerta, el piso y el techo deben tener intensidad 4.", problemas);
         var encuadre = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/Pintura_Encuadre.mat");
         Comprobar(encuadre != null && encuadre.IsKeywordEnabled("_EMISSION") && encuadre.GetColor("_EmissionColor").maxColorComponent == 0f,
             "Pintura_Encuadre requiere _EMISSION y emisión negra en reposo.", problemas);
@@ -300,8 +300,8 @@ public static class ValidarProyectoCrater
     static void ValidarMurales(GameObject[] objetos, List<string> problemas)
     {
         var carteles=objetos.Select(o=>o.GetComponent<CartelTutorial>()).Where(c=>c!=null).ToArray();
-        Comprobar(carteles.Length==12,"Debe haber 11 acciones de tutorial y la copia de recoger junto a la piedra.",problemas);
-        for(int i=1;i<=11;i++)Comprobar(carteles.Any(c=>c.accion==i),"Falta cartel de acción "+i,problemas);
+        Comprobar(carteles.Length==10,"Deben quedar 10 placas; el farol usa indicaciones contextuales.",problemas);
+        for(int i=1;i<=11;i++)if(i!=4)Comprobar(carteles.Any(c=>c.accion==i),"Falta cartel de acción "+i,problemas);
         foreach(var c in carteles)
         {
             Comprobar(c.transform.parent.Find("Soporte_Cartel")!=null,"Cartel sin soporte: "+c.name,problemas);

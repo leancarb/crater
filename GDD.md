@@ -2,7 +2,9 @@
 
 > Versión 0.8 · Vertical slice · Unity 6 (6000.3) + URP (Forward+) · PC, teclado/mouse y joystick
 >
-> La integración de carteles e historia del 2/11/2026 y `Docs/CartelesYMurales20261102.md` prevalecen sobre las descripciones históricas posteriores de obelisco/atajo/controles.
+> La corrección posterior `Docs/CorreccionBordesEncuadre20261104.md` prevalece para el inicio izquierdo, luces y encuadre lateral.
+>
+> Estado vigente: revisión del 4/11/2026 en `Docs/Revision20261104.md` y `Docs/EstadoActualCrater.md`. Incluye filtros de hasta 5 s, estación sólo en el epílogo y Cresta circular. La integración anterior de carteles e historia está documentada en `Docs/CartelesYMurales20261102.md`.
 >
 > Documento vivo de esta copia independiente. El GDD se ajusta a las decisiones de diseño que se prueban en el juego; no es una especificación congelada. Estado vigente del 2/11/2026: `Docs/EstadoActualCrater.md` y `Docs/RevisionContemplativa.md`. Los documentos de revisiones anteriores son históricos. Los detalles de implementación están en el `README.md`.
 
@@ -80,7 +82,7 @@ La herramienta que nos permite ver también define lo que vemos. La linterna ens
 
 ### 3.3 Filtros
 
-SOL y LUNA duran mientras se sostiene su botón. Soltar vuelve a blanco con una transición de 0,35 s. Ambos usan cono de 28° y alcance de 18,75 m. El salto limita velocidad horizontal en el aire a 2 m/s para no cruzar los huecos de puzzles.
+SOL y LUNA duran como máximo 5 segundos mientras se sostiene su botón. Soltar o agotarlo vuelve a blanco con una transición de 0,18 s; tras agotarlo hay que soltar para reactivarlo. El HUD muestra los segundos restantes sin barra roja. Ambos usan cono de 28° y alcance de 18,75 m. El salto limita velocidad horizontal en el aire a 2 m/s para no cruzar los huecos de puzzles.
 
 | # | Filtro | Color | Receptor | Qué hace |
 |---|---|---|---|---|

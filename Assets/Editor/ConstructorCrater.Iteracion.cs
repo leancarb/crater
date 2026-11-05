@@ -11,31 +11,9 @@ public static partial class ConstructorCrater
             Object.DestroyImmediate(t.gameObject);
         var exterior=nivel.Find("06_Capilla");
         var inicio=exterior.Find("Inicio_Elevado_Kit");
-        for(int tramo=1;tramo<CaminoBajadaInicial.Length;tramo++)
-        {
-            var a=CaminoBajadaInicial[tramo-1];var b=CaminoBajadaInicial[tramo];
-            var d=(b-a).normalized;var n=new Vector2(-d.y,d.x);
-            int piezas=Mathf.CeilToInt(Vector2.Distance(a,b)/1.5f);
-            for(int i=0;i<piezas;i++)foreach(float lado in new[]{-1f,1f})
-            {
-                var p=Vector2.Lerp(a,b,(i+.5f)/piezas)+n*lado*3.4f;
-                var baranda=CajaLocal(inicio,"Pretil_Bajada",new Vector3(p.x,AlturaInicioElevado(p.x,p.y)+.65f,p.y),
-                    new Vector3(.35f,1.3f,Vector2.Distance(a,b)/piezas+.12f),k.piedra);
-                baranda.transform.rotation=exterior.rotation*Quaternion.LookRotation(new Vector3(d.x,0,d.y));
-            }
-        }
-        // Cerrar los encuentros de las barandas sin invadir el sendero.
-        for(int i=1;i<CaminoBajadaInicial.Length-1;i++)foreach(float lado in new[]{-1f,1f})
-        {
-            var p=CaminoBajadaInicial[i];var da=(p-CaminoBajadaInicial[i-1]).normalized;var db=(CaminoBajadaInicial[i+1]-p).normalized;
-            var a=p+new Vector2(-da.y,da.x)*lado*3.4f;var b=p+new Vector2(-db.y,db.x)*lado*3.4f;
-            if(Vector2.Distance(a,b)<.01f)continue;
-            var c=(a+b)*.5f;var delta=b-a;
-            var union=CajaLocal(inicio,"Pretil_Encuentro",new Vector3(c.x,AlturaInicioElevado(c.x,c.y)+.65f,c.y),new Vector3(.35f,1.3f,delta.magnitude+.2f),k.piedra);
-            union.transform.rotation=exterior.rotation*Quaternion.LookRotation(new Vector3(delta.x,0,delta.y));
-        }
-        var spawn=exterior.Find("SpawnValle");spawn.localPosition=new Vector3(4,AlturaInicioElevado(4,184)+.05f,184);
-        spawn.localRotation=Quaternion.Euler(0,155,0);
+        CrearBordesNaturales(k,inicio,exterior);
+        var spawn=exterior.Find("SpawnValle");spawn.localPosition=new Vector3(InicioElevadoX,AlturaInicioElevado(InicioElevadoX,InicioElevadoZ)+.05f,InicioElevadoZ);
+        spawn.localRotation=Quaternion.Euler(0,180,0);
         var jugador=Object.FindFirstObjectByType<JugadorFPS>();jugador.transform.SetPositionAndRotation(spawn.position,spawn.rotation);
         var cielo=new SerializedObject(Object.FindFirstObjectByType<CieloEclipse>());
         cielo.FindProperty("diametroAngular").floatValue=7f;cielo.ApplyModifiedPropertiesWithoutUndo();
@@ -69,14 +47,7 @@ public static partial class ConstructorCrater
         var atajo=Object.FindFirstObjectByType<AtajoOcultoInicio>();if(atajo!=null)atajo.gameObject.SetActive(false);
         var vis=Grupo(nivel,"Visibilidad_Exterior").gameObject.AddComponent<VisibilidadExterior>();
         var motivo=Object.FindFirstObjectByType<MotivoPorPerspectiva>();
-        if(motivo!=null)
-        {
-            var linea=motivo.GetComponent<LineRenderer>();
-            if(linea==null)linea=motivo.gameObject.AddComponent<LineRenderer>();
-            linea.positionCount=2;linea.startWidth=.035f;linea.endWidth=.07f;
-            linea.sharedMaterial=Emisivo(Opaco("Guia_Farol_Perspectiva",new Color(.5f,.4f,.2f),0),new Color(1,.8f,.5f));
-            linea.enabled=false;motivo.guia=linea;motivo.destino=recogible.PuntoInteraccion;
-        }
+        if(motivo!=null)motivo.destino=recogible.PuntoInteraccion;
         var cartel=BuscarObjetoDocente("Control_Mover");
         var mirar=BuscarObjetoDocente("Control_Mirar");if(mirar!=null)Object.DestroyImmediate(mirar.gameObject);
         if(cartel!=null)PlacaInstruccion(k,cartel.parent,"Control_Mirar",cartel.position+cartel.right*3.3f,-cartel.forward,new Vector2(1.4f,.9f),PanelMover);

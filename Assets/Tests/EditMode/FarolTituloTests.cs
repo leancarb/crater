@@ -30,7 +30,7 @@ public class FarolTituloTests
             var visual=prefab.GetComponentInChildren<LinternaVisual>(true);
             Assert.That(visual.modelo,Is.EqualTo(modelo));
             Assert.That(visual.lentes,Does.Contain(difusor));
-            Assert.That(visual.linterna.duracionFiltro,Is.EqualTo(0f));
+            Assert.That(visual.linterna.duracionFiltro,Is.EqualTo(5f));
         }
     }
 }

@@ -30,6 +30,9 @@ public class CieloEclipse : MonoBehaviour
     [SerializeField] Transform discoLuna;
     [SerializeField] Renderer corona;
     [SerializeField] Renderer fondoBrumoso;
+    [SerializeField] Renderer estrellas;
+    [SerializeField] float brilloEstrellasDia=.18f;
+    [SerializeField] float brilloEstrellasEclipse=2.2f;
 
     [Header("Tamaño aparente")]
     [Tooltip("Tiene que quedar dentro del plano lejano de la cámara.")]
@@ -134,6 +137,7 @@ public class CieloEclipse : MonoBehaviour
         PrepararReferencias();
         visible = valor;
         if (fondoBrumoso != null) fondoBrumoso.gameObject.SetActive(valor);
+        if (estrellas != null) estrellas.enabled=valor;
         if (valor) UsarDireccionExterior();
         if (discoSol != null) discoSol.gameObject.SetActive(valor);
         if (discoLuna != null) discoLuna.gameObject.SetActive(valor);
@@ -147,6 +151,7 @@ public class CieloEclipse : MonoBehaviour
     {
         PrepararReferencias();
         visible = true;
+        if(estrellas!=null)estrellas.enabled=true;
         if (fondoBrumoso != null) fondoBrumoso.gameObject.SetActive(false);
         GuardarDireccionExterior();
         if (sol != null) sol.transform.rotation = Quaternion.Euler(alturaSolSubsuelo, giroExterior.eulerAngles.y, 0f);
@@ -191,6 +196,13 @@ public class CieloEclipse : MonoBehaviour
         if (cam == null) return;
 
         Vector3 origen = cam.transform.position;
+        if(estrellas!=null)
+        {
+            estrellas.transform.position=origen;bloque ??= new MaterialPropertyBlock();estrellas.GetPropertyBlock(bloque);
+            float presencia=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.08f,.95f,progreso));
+            float brillo=atardecer?.035f:Mathf.Lerp(brilloEstrellasDia,brilloEstrellasEclipse,presencia);
+            bloque.SetColor(IdColor,new Color(brillo,brillo,brillo,1));estrellas.SetPropertyBlock(bloque);
+        }
         if (fondoBrumoso != null && fondoBrumoso.gameObject.activeSelf)
             fondoBrumoso.transform.position = origen;
         Vector3 d = DireccionSol;
@@ -236,12 +248,12 @@ public class CieloEclipse : MonoBehaviour
     void Aplicar()
     {
         if (!visible) return;
+        // Una recompilación durante Play pierde el bloque nativo, aunque conserva
+        // el progreso y el color de cámara. Recuperarlo antes de actualizar ambos discos.
+        PrepararReferencias();
 
-        // la luz casi no baja hasta el final: en un eclipse real el cambio brusco
-        // llega en los últimos minutos
-        float luz = progreso < 0.8f
-            ? Mathf.Lerp(1f, 0.72f, progreso / 0.8f)
-            : Mathf.Lerp(0.72f, 0f, Mathf.SmoothStep(0f, 1f, (progreso - 0.8f) / 0.2f));
+        // La caída empieza durante la aproximación y se acentúa antes de la totalidad.
+        float luz=1f-Mathf.SmoothStep(0f,1f,Mathf.InverseLerp(.12f,1f,progreso));
 
         if (sol != null)
         {

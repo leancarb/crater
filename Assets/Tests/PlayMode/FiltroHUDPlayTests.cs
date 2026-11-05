@@ -8,27 +8,18 @@ using UnityEngine.UI;
 
 public class FiltroHUDPlayTests
 {
-    [UnityTest] public IEnumerator ElRelojRespetaCambioTresSegundosPausaYRetornoAutomatico()
+    [UnityTest] public IEnumerator TextoCuentaCincoSegundosRespetaPausaYVuelveABlanco()
     {
-        yield return SceneManager.LoadSceneAsync("CraterVerticalSlice"); yield return null;
-        Object.FindFirstObjectByType<PausaCrater>().Reanudar();
-        var l = LinternaController.Instancia; l.Recoger(); l.Encender(true);
-        var ui = Object.FindFirstObjectByType<InterfazCrater>();
-        var barra = ui.GetComponentsInChildren<Image>(true).Single(i => i.name == "Restante");
-        var aviso = ui.GetComponentsInChildren<Text>(true).Single(t => t.text == "Filtro agotado · LUZ BLANCA");
-        l.EquiparFiltro(l.filtros[0]); yield return null;
-        Assert.That(barra.fillAmount, Is.EqualTo(1).Within(.02));
-        yield return new WaitForSeconds(l.demoraDeCambio + 1.5f);
-        Assert.That(barra.fillAmount, Is.InRange(.4f,.6f));
-        float antes = barra.fillAmount; Time.timeScale = 0;
-        yield return new WaitForSecondsRealtime(.2f);
-        Assert.That(barra.fillAmount, Is.EqualTo(antes).Within(.02)); Time.timeScale = 1;
-        yield return new WaitForSeconds(1.6f);
-        Assert.That(l.FiltroActual, Is.Null); Assert.That(barra.gameObject.activeInHierarchy, Is.False);
-        Assert.That(aviso.gameObject.activeInHierarchy, Is.True);
-        yield return new WaitForSeconds(1.9f); Assert.That(aviso.gameObject.activeInHierarchy, Is.False);
-        l.EquiparFiltro(l.filtros[1]); yield return null;
-        Assert.That(barra.fillAmount, Is.EqualTo(1).Within(.02));
+        yield return SceneManager.LoadSceneAsync("CraterVerticalSlice");yield return null;
+        var p=Object.FindFirstObjectByType<PausaCrater>();p.Reanudar();p.enabled=false;
+        Object.FindFirstObjectByType<FlujoJuegoCrater>().StopAllCoroutines();
+        Object.FindFirstObjectByType<PrologoCapilla>().StopAllCoroutines();
+        var l=LinternaController.Instancia;l.Recoger();l.Encender(true);
+        var texto=Object.FindFirstObjectByType<InterfazCrater>().GetComponentsInChildren<Text>(true).Single(t=>t.name=="Estado");
+        l.EquiparFiltro(l.filtros[0]);yield return null;yield return null;Assert.That(texto.text,Does.Contain("5 s"));
+        yield return new WaitForSeconds(1.2f);float antes=l.TiempoFiltroRestante;Time.timeScale=0;yield return new WaitForSecondsRealtime(.15f);Assert.That(l.TiempoFiltroRestante,Is.EqualTo(antes));
+        Time.timeScale=5;yield return new WaitForSeconds(4.2f);Assert.That(l.FiltroActual,Is.Null);Assert.That(texto.text,Is.EqualTo("LUZ BLANCA"));
+        l.EquiparFiltro(l.filtros[1]);yield return null;yield return null;Assert.That(texto.text,Does.Contain("5 s"));
     }
-    [UnityTearDown] public IEnumerator Restaurar() { Time.timeScale = 1; yield return null; }
+    [UnityTearDown] public IEnumerator Limpiar(){Time.timeScale=1;yield return null;}
 }

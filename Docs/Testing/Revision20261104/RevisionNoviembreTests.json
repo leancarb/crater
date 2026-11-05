@@ -1,0 +1,91 @@
+{
+  "success": true,
+  "command": "command test_status",
+  "data": {
+    "command": "test_status",
+    "parameters": {},
+    "result": {
+      "status": "completed",
+      "duration": 32,
+      "summary": {
+        "total": 9,
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "results": [
+        {
+          "FullName": "RevisionNoviembreTests.CaminarAtrasEnElSpawnNoPermiteCaer",
+          "Status": "Passed",
+          "Duration": 4.3170251,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RevisionNoviembreTests.ElEncuadreApuntaAlFarolSinLineaYElMuralSeLee",
+          "Status": "Passed",
+          "Duration": 1.6120932,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RevisionNoviembreTests.ElTechoCircularCierraSinHuecosYLaOscuridadConservaElFinal",
+          "Status": "Passed",
+          "Duration": 11.7874949,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RevisionNoviembreTests.EstacionSoloAlFinalYSolEnElTercioDelPaisaje",
+          "Status": "Passed",
+          "Duration": 1.2634508,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RevisionNoviembreTests.FiltroVenceEnCincoSegundosRespetaPausaYExigeSoltar",
+          "Status": "Passed",
+          "Duration": 2.664595,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RevisionNoviembreTests.LaBajadaLateralSePuedeRecorrerHastaLasLomas",
+          "Status": "Passed",
+          "Duration": 5.7294148,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RevisionNoviembreTests.PiedraApoyadaYFarolUsaAyudaContextual",
+          "Status": "Passed",
+          "Duration": 1.4935198,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RevisionNoviembreTests.SalaFinalRedondaReflejaYLasJuntasDelLobbyEstanCerradas",
+          "Status": "Passed",
+          "Duration": 1.5869801,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "RevisionNoviembreTests.VelasEstablesYColumnasEmpiezanAntesDeEntrarAlCentro",
+          "Status": "Passed",
+          "Duration": 1.4944284,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\Users\\carbo\\Desktop\\crater"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

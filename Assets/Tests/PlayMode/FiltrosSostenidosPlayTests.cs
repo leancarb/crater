@@ -38,12 +38,13 @@ public class FiltrosSostenidosPlayTests
         yield return null;
     }
 
-    [UnityTest] public IEnumerator MouseMantieneMasDeTresSegundosYSueltaDuranteElCambio()
+    [UnityTest] public IEnumerator MouseAgotaCincoSegundosYRequiereSoltarAntesDeReactivar()
     {
         InputSystem.QueueStateEvent(mouse,new MouseState().WithButton(MouseButton.Left));yield return null;
         Assert.That(farol.FiltroActual,Is.EqualTo(farol.filtros[0]));
-        Time.timeScale=10;yield return new WaitForSeconds(5);
-        Assert.That(farol.FiltroActual,Is.EqualTo(farol.filtros[0]),"No debe vencer automáticamente");
+        Time.timeScale=5;yield return new WaitForSeconds(5.3f);
+        Assert.That(farol.FiltroActual,Is.Null,"Vence a los cinco segundos aunque se mantenga presionado");
+        yield return new WaitForSeconds(.5f);Assert.That(farol.FiltroActual,Is.Null,"No se reactiva hasta soltar");
         InputSystem.QueueStateEvent(mouse,new MouseState());yield return null;
         Assert.That(farol.FiltroActual,Is.Null);
         Time.timeScale=1;
@@ -86,7 +87,7 @@ public class FiltrosSostenidosPlayTests
 
     [UnityTest] public IEnumerator SoltarFiltroAnimaElRegresoABlanco()
     {
-        Assert.That(farol.demoraDeCambio,Is.EqualTo(.35f).Within(.001f));
+        Assert.That(farol.demoraDeCambio,Is.EqualTo(.18f).Within(.001f));
         InputSystem.QueueStateEvent(mouse,new MouseState().WithButton(MouseButton.Left));
         yield return new WaitForSeconds(.5f);
         Assert.That(farol.FiltroActual,Is.EqualTo(farol.filtros[0]));
@@ -101,7 +102,7 @@ public class FiltrosSostenidosPlayTests
     [UnityTest] public IEnumerator MuralesMateYEntradaMasAdelanteSinCajas()
     {
         var murales=GameObject.Find("Historia_Nueva");Assert.That(murales.transform.childCount,Is.EqualTo(12));
-        foreach(var r in murales.GetComponentsInChildren<Renderer>())
+        foreach(var r in murales.GetComponentsInChildren<Renderer>().Where(r=>r.name=="PinturaMural"))
         {
             Assert.That(r.sharedMaterial.IsKeywordEnabled("_EMISSION"),Is.False);
             var imagen=(Texture2D)r.sharedMaterial.GetTexture("_BaseMap");Assert.That(imagen,Is.Not.Null);

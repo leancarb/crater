@@ -34,12 +34,12 @@ public static partial class ConstructorCrater
         DibujarSenderoInicial(k, inicio);
         // El montaje vigente de historia y tutorial se ejecuta al final de la construcción.
         var farol = Object.FindFirstObjectByType<LinternaController>();
-        farol.demoraDeCambio = .35f;
+        farol.demoraDeCambio = .18f;
         PrefabUtility.RecordPrefabInstancePropertyModifications(farol);
         var prefab = PrefabUtility.LoadPrefabContents(CarpetaPrefabs + "Jugador.prefab");
         try
         {
-            prefab.GetComponentInChildren<LinternaController>(true).demoraDeCambio = .35f;
+            prefab.GetComponentInChildren<LinternaController>(true).demoraDeCambio = .18f;
             PrefabUtility.SaveAsPrefabAsset(prefab, CarpetaPrefabs + "Jugador.prefab");
         }
         finally { PrefabUtility.UnloadPrefabContents(prefab); }
@@ -47,35 +47,7 @@ public static partial class ConstructorCrater
 
     static void DibujarSenderoInicial(Kit k, Transform padre)
     {
-        var puntos = new List<Vector2>(CaminoBajadaInicial);
-        for (float z = 145; z >= 80; z -= 5)
-            puntos.Add(new Vector2(3 * Mathf.Sin((z - 80) * Mathf.PI / 70), z));
-        var v = new List<Vector3>(); var uv = new List<Vector2>();
-        Vector3 P(Vector2 p) => new Vector3(p.x, AlturaInicioElevado(p.x, p.y) + .025f, p.y);
-        for (int i = 1; i < puntos.Count; i++)
-        {
-            var a = puntos[i - 1]; var b = puntos[i];
-            var normal = new Vector2(-(b-a).y, (b-a).x).normalized;
-            int pasos = Mathf.CeilToInt(Vector2.Distance(a, b) / .6f);
-            for (int j = 0; j < pasos; j++)
-            {
-                var p = Vector2.Lerp(a, b, j/(float)pasos);
-                var q = Vector2.Lerp(a, b, (j+1)/(float)pasos);
-                var aa=P(p-normal*1.8f); var bb=P(q-normal*1.8f);
-                var cc=P(q+normal*1.8f); var dd=P(p+normal*1.8f);
-                Triangulo(v,uv,aa,cc,bb,PixelDeFaceta((aa+bb+cc)/3));
-                Triangulo(v,uv,aa,dd,cc,PixelDeFaceta((aa+cc+dd)/3));
-            }
-        }
-        var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/Tierra_Sendero.mat");
-        if (material == null)
-        { material = new Material(k.tierra); AssetDatabase.CreateAsset(material,"Assets/Materials/Tierra_Sendero.mat"); }
-        material.SetColor("_BaseColor", k.tierra.GetColor("_BaseColor") * 1.35f);
-        material.DisableKeyword("_EMISSION"); material.SetColor("_EmissionColor",Color.black);
-        EditorUtility.SetDirty(material);
-        var go = new GameObject("Sendero_Tierra_Clara"); go.transform.SetParent(padre,false);
-        go.AddComponent<MeshFilter>().sharedMesh = MallaPersistenteInicio("Sendero_Tierra_Clara",v,uv);
-        go.AddComponent<MeshRenderer>().sharedMaterial = material; Estatico(go);
+        CrearSenderoDesgastado(k,padre);
     }
 
     static void ConstruirMuralesRunicos(Transform nivel)

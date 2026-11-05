@@ -97,11 +97,9 @@ public class CraterRevisionTests
                 Assert.That(cara.GetComponent<Collider>(), Is.Null);
                 Assert.That(Vector3.Dot(losa.forward, i <= 4 ? Vector3.left : Vector3.right), Is.GreaterThan(.999f));
             }
-            Assert.That(objetos.Single(o => o.name == "Luz_Pasaje").GetComponent<Light>().intensity, Is.EqualTo(14f));
-            // AmpliarSubsuelo compensa la distancia multiplicando intensidad por escala².
-            float compensacion = EspacioCrater.Escala * EspacioCrater.Escala;
-            Assert.That(objetos.Single(o => o.name == "Luz_Murales_Oeste").GetComponent<Light>().intensity, Is.EqualTo(10f * compensacion));
-            Assert.That(objetos.Single(o => o.name == "Luz_Murales_Este").GetComponent<Light>().intensity, Is.EqualTo(12f * compensacion));
+            foreach(string n in new[]{"Luz_Pasaje","Luz_Murales_Oeste","Luz_Murales_Este"})
+                Assert.That(objetos.Any(o=>o.name==n),Is.False,"No deben volver los focos sin soporte");
+
         }
         finally { if (!cargada) UnityEditor.SceneManagement.EditorSceneManager.CloseScene(escena, true); }
     }

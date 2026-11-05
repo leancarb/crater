@@ -1,0 +1,84 @@
+{
+  "success": true,
+  "command": "command test_status",
+  "data": {
+    "command": "test_status",
+    "parameters": {},
+    "result": {
+      "status": "completed",
+      "duration": 25.11,
+      "summary": {
+        "total": 8,
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "results": [
+        {
+          "FullName": "BordesYEncuadreTests.BordesCerradosYOrientadosHaciaFuera",
+          "Status": "Passed",
+          "Duration": 3.4727225,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElEncuadreSeBuscaDeCostadoYSePuedeAlinear",
+          "Status": "Passed",
+          "Duration": 1.8250139,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElLateralIzquierdoDelNuevoSpawnNoPermiteCaer",
+          "Status": "Passed",
+          "Duration": 4.5802771,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElReflejoSigueLaParedCurvaSinSaltarEntreCaras",
+          "Status": "Passed",
+          "Duration": 1.807608,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.InicioIzquierdoConTerrazaTransitable",
+          "Status": "Passed",
+          "Duration": 1.5174917,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.LaCompuertaFinalReflejaSoloCuandoCierraElPaso",
+          "Status": "Passed",
+          "Duration": 1.7559546,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.NoQuedanFocosDeCartelesNiPuntosFlotantes",
+          "Status": "Passed",
+          "Duration": 1.5494453,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.PresionarElBordeNoImpideRetroceder",
+          "Status": "Passed",
+          "Duration": 8.5550657,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\Users\\carbo\\Desktop\\crater"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

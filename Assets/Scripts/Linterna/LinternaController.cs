@@ -8,7 +8,8 @@ using UnityEngine;
 /// Reglas:
 ///  - F enciende y apaga.
 ///  - Clic izquierdo/derecho o R1/L1 sostienen SOL/LUNA. Cambiar tarda 'demoraDeCambio'.
-///  - Al soltar el botón del filtro vuelve a luz blanca con una transición breve, sin temporizador.
+///  - Al soltar, o tras cinco segundos continuos, vuelve a blanco con una transición breve.
+///    Tras agotarlo hay que soltar antes de activarlo otra vez.
 ///  - Cada frame busca los receptores dentro del cono y les avisa que están iluminados.
 ///
 /// CÓMO FUNCIONA
@@ -46,9 +47,8 @@ public class LinternaController : MonoBehaviour
     public float intensidadBase = 650f;
 
     [Header("Ajustes")]
-    public float demoraDeCambio = 0.35f;
-    // Campo serializado conservado para compatibilidad; ya no gobierna la duración.
-    [HideInInspector] public float duracionFiltro = 0f;
+    public float demoraDeCambio = 0.18f;
+    [Min(.1f)] public float duracionFiltro = 5f;
     [Tooltip("Si está tildado, la linterna no responde hasta llamar a Recoger().")]
     public bool requiereRecogerla = true;
 
@@ -79,7 +79,9 @@ public class LinternaController : MonoBehaviour
 
     bool yaRecogida;
     float finDelCambio;
-    public float TiempoFiltroRestante => 0f;
+    float venceFiltro;
+    public float TiempoFiltroRestante => FiltroActual != null && Encendida ? Mathf.Clamp(venceFiltro-Time.time,0,duracionFiltro) : 0f;
+    bool solAgotado,lunaAgotada;
     bool controlandoFiltroSostenido;
     bool solAnterior, lunaAnterior;
     int ultimoFiltroSostenido;
@@ -116,6 +118,14 @@ public class LinternaController : MonoBehaviour
     void Update()
     {
         if (!PausaCrater.EnPausa && !CinematicaDeSello.Reproduciendo) LeerEntrada();
+
+        if(Encendida && FiltroActual!=null && Time.time>=venceFiltro)
+        {
+            if(filtros.Count>0 && FiltroActual==filtros[0])solAgotado=true;
+            if(filtros.Count>1 && FiltroActual==filtros[1])lunaAgotada=true;
+            solAgotado|=solAnterior;lunaAgotada|=lunaAnterior;
+            VolverALuzBlanca();
+        }
 
         // se recalculan en IluminarReceptores
         HayObjetivo = false;
@@ -167,12 +177,14 @@ public class LinternaController : MonoBehaviour
     /// <summary>El último botón presionado tiene prioridad; soltarlo recupera el otro si sigue sostenido.</summary>
     public void ProcesarFiltrosSostenidos(bool sol, bool luna)
     {
+        if(!sol)solAgotado=false;
+        if(!luna)lunaAgotada=false;
         if (sol && !solAnterior) ultimoFiltroSostenido = 0;
         if (luna && !lunaAnterior) ultimoFiltroSostenido = 1;
         solAnterior = sol; lunaAnterior = luna;
         FiltroDefinicion Elegir(int indice) => indice < filtros.Count && EstaDesbloqueado(filtros[indice]) ? filtros[indice] : null;
-        var fSol = sol ? Elegir(0) : null;
-        var fLuna = luna ? Elegir(1) : null;
+        var fSol = sol && !solAgotado ? Elegir(0) : null;
+        var fLuna = luna && !lunaAgotada ? Elegir(1) : null;
         var solicitado = fSol != null && fLuna != null ? (ultimoFiltroSostenido == 0 ? fSol : fLuna) : fSol ?? fLuna;
         if (!Encendida || !Disponible) solicitado = null;
         if (solicitado != null) controlandoFiltroSostenido = true;
@@ -191,6 +203,7 @@ public class LinternaController : MonoBehaviour
         if (CambiandoFiltro || f == FiltroActual) return;
         CambiandoFiltro = true;
         finDelCambio = Time.time + demoraDeCambio;
+        venceFiltro=f!=null ? Time.time+Mathf.Max(.1f,duracionFiltro) : 0;
         AplicarFiltro(f);
         AlEquiparFiltro?.Invoke(f);
 

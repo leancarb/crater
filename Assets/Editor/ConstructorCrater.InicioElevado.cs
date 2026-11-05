@@ -7,12 +7,13 @@ using UnityEngine;
 /// <summary>Base de terreno para sustituir después las rocas por piezas del kit modular.</summary>
 public static partial class ConstructorCrater
 {
-    public const float InicioElevadoZ = 184f;
+    public const float InicioElevadoX = 20f;
+    public const float InicioElevadoZ = 197f;
     public const float FinBajadaInicialZ = 150f;
     public const float DesnivelInicio = 5f;
     // Primero se descubre el objetivo; el sendero se busca hacia la derecha de la vista.
     public static readonly Vector2[] CaminoBajadaInicial = {
-        new Vector2(0,184), new Vector2(-12,184), new Vector2(-19,177),
+        new Vector2(20,197), new Vector2(20,193), new Vector2(14,187), new Vector2(0,184), new Vector2(-12,184), new Vector2(-19,177),
         new Vector2(-19,165), new Vector2(-12,154), new Vector2(0,150)
     };
 
@@ -28,8 +29,8 @@ public static partial class ConstructorCrater
             return anterior+(1.25f+1.1f*Mathf.SmoothStep(0,1,(140-z)/15))*banco*tramo;
         }
         float cota = AlturaRelieve(0,150);
-        float fueraX = Mathf.Max(0,Mathf.Abs(x)-9);
-        float fueraZ = Mathf.Max(179.7f-z,z-193,0);
+        float fueraX = Mathf.Max(-9-x,x-25,0);
+        float fueraZ = Mathf.Max(179.7f-z,z-202,0);
         float meseta = 1-Mathf.SmoothStep(0,1,Mathf.Sqrt(fueraX*fueraX+fueraZ*fueraZ)/4);
         float altura = Mathf.Lerp(anterior,cota+DesnivelInicio,meseta);
         float largo=0;
@@ -128,29 +129,14 @@ public static partial class ConstructorCrater
             var col = t.gameObject.AddComponent<BoxCollider>(); col.center=bRoca.center; col.size=bRoca.size;
             Estatico(t.gameObject);
         }
-        // Antepecho bajo: deja ver el objetivo, pero impide bajar de frente.
-        for(int i=0;i<6;i++)
-            Roca("Borde_Mirador_"+i,-8+i*4,179.5f,new Vector3(4.4f,.95f,2.4f));
-        for(int i=1;i<CaminoBajadaInicial.Length;i++)
-        {
-            var a=CaminoBajadaInicial[i-1];var b=CaminoBajadaInicial[i];
-            var normal=new Vector2(-(b-a).y,(b-a).x).normalized;
-            int piezas=Mathf.CeilToInt(Vector2.Distance(a,b)/5);
-            for(int j=0;j<piezas;j++)foreach(float lado in new[]{-1f,1f})
-            {
-                var p=Vector2.Lerp(a,b,(j+.5f)/piezas)+normal*lado*4.6f;
-                // El frente se reserva a la vista: allí sólo está el borde bajo.
-                if(p.x>-11 && p.y>174 && p.y<181)continue;
-                Roca("Roca_Sendero_"+i+"_"+j+"_"+lado,p.x,p.y,new Vector3(3.2f,1.15f+(j%3)*.25f,4.2f));
-            }
-        }
+        // El borde bajo y los costados se resuelven con las crestas continuas de CrearBordesNaturales.
         for(int i=0;i<5;i++) Roca("Roca_Fondo_"+i,-12+i*6,199,new Vector3(7,5,7));
         // El mirador nuevo queda más atrás: extender también los cerros de los costados.
         foreach(float lado in new[]{-1f,1f})for(int i=0;i<3;i++)
             Roca("Cierre_Lateral_Mirador_"+lado+"_"+i,lado*40,165+i*21,new Vector3(18,32,25));
 
         var spawn = exterior.Find("SpawnValle");
-        spawn.localPosition = new Vector3(0,AlturaInicioElevado(0,InicioElevadoZ)+.05f,InicioElevadoZ);
+        spawn.localPosition = new Vector3(InicioElevadoX,AlturaInicioElevado(InicioElevadoX,InicioElevadoZ)+.05f,InicioElevadoZ);
         spawn.localRotation = Quaternion.Euler(0,180,0);
         var jugador = Object.FindFirstObjectByType<JugadorFPS>();
         jugador.transform.SetPositionAndRotation(spawn.position,spawn.rotation);
@@ -176,12 +162,12 @@ public static partial class ConstructorCrater
         AjustarPuertaSolVisible(k,nivel);
         IteracionDiseno(k,nivel);
         var linterna=Object.FindFirstObjectByType<LinternaController>();
-        linterna.duracionFiltro=0;
+        linterna.duracionFiltro=5;
         PrefabUtility.RecordPrefabInstancePropertyModifications(linterna);
         var prefab=PrefabUtility.LoadPrefabContents(CarpetaPrefabs+"Jugador.prefab");
         try
         {
-            prefab.GetComponentInChildren<LinternaController>(true).duracionFiltro=0;
+            prefab.GetComponentInChildren<LinternaController>(true).duracionFiltro=5;
             PrefabUtility.SaveAsPrefabAsset(prefab,CarpetaPrefabs+"Jugador.prefab");
         }
         finally{PrefabUtility.UnloadPrefabContents(prefab);}

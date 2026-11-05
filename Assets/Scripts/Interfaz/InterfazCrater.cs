@@ -310,7 +310,7 @@ public class InterfazCrater : MonoBehaviour
         if (textoControles != null) textoControles.text =
             "WASD / Stick izq. · Moverse      Mouse / Stick der. · Mirar\n" +
             "E / B · Recoger      Espacio / A · Saltar      Shift / RT · Correr\n" +
-            "F / X · Farol      Mantener presionado para usar filtros\n" +
+            "F / X · Farol      Filtros sostenidos · máximo 5 s\n" +
             "Izquierdo / RB · SOL      Derecho / LB · LUNA\nSoltar · LUZ BLANCA\n\n" +
             "Piedras talladas · " + piezasOpcionales + "/6\n\n" +
             "H / ↑ · Ayudas escritas: " + (OpcionesCrater.AyudasEscritas ? "sí" : "no") + "\n\n" +
@@ -411,7 +411,7 @@ public class InterfazCrater : MonoBehaviour
         }
         else
         {
-            estado = linterna.FiltroActual.nombreVisible;
+            estado = linterna.FiltroActual.nombreVisible+" · "+Mathf.CeilToInt(linterna.TiempoFiltroRestante)+" s";
             color = linterna.FiltroActual.color;
         }
 

@@ -17,7 +17,11 @@ abrir `Assets/Scenes/CraterVerticalSlice.unity` sin reconstruir para jugar.
 
 La iteración local posterior de diseño, arte y salto está documentada en [Docs/Iteracion20261102.md](Docs/Iteracion20261102.md), con capturas y resultados de validación. La integración posterior de 12 carteles con iconos Xbox y 12 murales de historia, más las correcciones de entrada, cielo, farol y audio, está en [Docs/CartelesYMurales20261102.md](Docs/CartelesYMurales20261102.md). Estas iteraciones todavía no tienen push.
 
+La corrección posterior de bordes, inicio izquierdo, luces, encuadre y reflejo está en [Docs/CorreccionBordesEncuadre20261104.md](Docs/CorreccionBordesEncuadre20261104.md). La escena ya está regenerada en ambas copias locales.
+
 ## Controles
+
+La revisión local del 4/11 está en [Docs/Revision20261104.md](Docs/Revision20261104.md): recorrido inicial, iluminación, marcos y frisos, ambiente, filtros de hasta 5 s y sala final circular. Se abre la escena ya regenerada; no requiere reconstruir para jugar.
 
 | Acción | Teclado y mouse | Joystick |
 |---|---|---|
@@ -32,7 +36,7 @@ La iteración local posterior de diseño, arte y salto está documentada en [Doc
 | Salto corto (0,4 m) | Espacio | A |
 | Recoger / omitir animaciones | E | B |
 
-SOL y LUNA se mantienen mientras se sostiene el botón. Al soltar, el farol vuelve a blanco con una transición de 0,35 s. Las parejas de anclas requieren apuntar a cada una.
+SOL y LUNA se mantienen hasta 5 segundos mientras se sostiene el botón. Al soltar o agotarse, el farol vuelve a blanco con una transición de 0,18 s; después de agotarlo hay que soltar antes de reactivarlo. Las parejas de anclas requieren apuntar a cada una.
 
 ## Recorrido
 

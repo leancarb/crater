@@ -16,7 +16,7 @@ public class PlacasLecturaPlayTests
     [UnityTest] public IEnumerator LosTalladosLatentesSeConservanSinPlacasNiEmision()
     {
         var placas=Object.FindObjectsByType<CartelTutorial>(FindObjectsSortMode.None).Select(c=>c.transform.parent).ToArray();
-        Assert.That(placas.Length,Is.EqualTo(12));
+        Assert.That(placas.Length,Is.EqualTo(10));
         var latentes=GameObject.Find("MotivosLatentes_Cresta").transform;
         Assert.That(latentes.childCount,Is.EqualTo(5));
         Assert.That(latentes.GetComponentsInChildren<TextMesh>(),Is.Empty);

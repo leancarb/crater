@@ -1,6 +1,24 @@
 # CRÁTER — estado vigente
 
-## Estado vigente — 2/11/2026
+Seguimiento del 5/11: `Seguimiento20261105.md` prevalece para spawn Z local 197, montañas que permanecen visibles mientras se sigue afuera, cubierta exterior de la rotonda hasta entrar y reflejo único continuo entre paredes y compuerta.
+
+## Estado vigente — 5/11/2026
+
+`Revision20261105.md` prevalece para el inicio: X mundial -20, Z -196,5, con cierre izquierdo seguro y carteles junto al primer tramo. El encuadre del farol pasa al lado derecho, punto `(5;1,62;8)`. La guarda usa dos mallas continuas sin reiniciar el patrón en cada bloque. La sala final conserva su forma circular: pared facetada continua, piso sin abanico de triángulos largos y jambas que cierran el vano. La compuerta móvil también refleja, con intensidad 4 y fundido 0,25 s.
+
+## Estado vigente — 4/11/2026
+
+Cielo: `CieloEstrellado20261104.md` agrega 1300 estrellas, casi imperceptibles de día y progresivamente visibles con el eclipse, en una sola malla. Sol, luna, montañas y techos conservan la ocultación por profundidad.
+
+La corrección posterior `CorreccionBordesEncuadre20261104.md` prevalece para inicio izquierdo (X mundial -14), terraza ampliada, bordes cerrados, carteles sin foco, retiro de puntos flotantes, encuadre lateral y reflejo conformado a la sala circular.
+
+Prevalece `Revision20261104.md` para los ajustes posteriores: spawn desplazado a la izquierda, cierre posterior seguro, sendero de tierra y pretiles naturales, primera lomada más baja. La estación aparece sólo al regresar al final; el sol final se desplaza del azimut 30° al 14° para quedar próximo al tercio derecho.
+
+Se conservan diez carteles físicos: los dos del farol central se retiran y sus acciones usan ayuda contextual gris. Las doce imágenes de historia recuperan un marco rectangular fino; el mural del farol aumenta a 4,8 × 2,4 m locales, sin deformar su proporción. Frisos mates continuos en Umbral/Rotonda, naranja a la izquierda y azul a la derecha. Se ocultan los cuatro símbolos sueltos SOL/LUNA y se retiran siete luces sin soporte visible. Velas sin sombras variables, con llama visible y alcance 2,5 m. La luna acompaña el cielo oscuro también tras recargar scripts. El encuadre apunta al difusor del farol con su agujero despejado, sin línea blanca y refuerza suavemente su luz cenital.
+
+Los filtros se sostienen hasta un máximo de 5 s; soltar o agotarse vuelve a blanca, con cambio de 0,18 s. Hay que soltar después de agotar el filtro antes de reactivarlo. El HUD cuenta segundos. Columnas: radio de inicio 20 m. Oscurecimiento del eclipse desde el 12 % de progreso. La Cresta pasa a ser circular, con reflexión sobre sus paredes, piso y techo y la misma secuencia final. Los ambientes exterior/interior se reemplazan por aire procedural filtrado suave (0,16/0,055); pájaros sintéticos silenciados. Los WAV y PNG originales se conservan.
+
+## Estado anterior — 2/11/2026
 
 Prevalece `CartelesYMurales20261102.md` sobre la iteración anterior y los apartados históricos. Se conserva el inicio elevado, la bajada lateral y el farol central. Apertura libre adelantada (Zona_Mirador Z=80, 88 × 4 × 2 m; totalidad 1,2 s + revelación 2,4 s), entrada pendiente hasta completar la apertura y eclipse interior a 75°, diámetro aparente 7°. Astros al fondo de la profundidad, ocultos por montañas/paredes. El modelo del farol queda excluido del ocultamiento exterior.
 

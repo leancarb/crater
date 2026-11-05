@@ -100,6 +100,7 @@ public static partial class ConstructorCrater
         AplicarEsteticaLectura(kit);
         AplicarInicioElevado(kit, nivel);
         AplicarCartelesHistoria(kit,nivel);
+        AplicarRevisionNoviembre(kit,nivel);
         ConfigurarSombrasYSuperficies(kit, refs);
         // Variante Silo archivada: se activa sólo desde su menú optativo.
         PrepararOclusion(escena);
@@ -116,10 +117,10 @@ public static partial class ConstructorCrater
         {
             if (luz.type == LightType.Directional || luz.GetComponentInParent<LinternaController>() != null
                 || luz.shadows == LightShadows.None) continue;
-            if (luz.name == "Luz_Galeria_E" || luz.name == "Luz_E2" || luz.name == "Luz_Trinchera_E" || luz.name == "Luz_Sello_Este" || luz.name == "Luz_Vela_Entrada")
+            if (luz.name == "Luz_Galeria_E" || luz.name == "Luz_E2" || luz.name == "Luz_Trinchera_E" || luz.name == "Luz_Sello_Este")
             {
                 imprescindibles.Add(luz);
-                luz.shadowCustomResolution = luz.name == "Luz_Vela_Entrada" ? 128 : 256;
+                luz.shadowCustomResolution = 256;
                 continue;
             }
             luces.Add(luz);
@@ -508,6 +509,7 @@ public static partial class ConstructorCrater
             return disco.transform;
         }
 
+        Asignar(cielo, "estrellas", ConstruirEstrellas(cieloGO.transform));
         Asignar(cielo, "sol", refs.sol);
         Asignar(cielo, "discoSol", Disco("DiscoSol", k.discoSol));
         Asignar(cielo, "discoLuna", Disco("DiscoLuna", k.discoLuna));

@@ -197,7 +197,7 @@ public static partial class ConstructorCrater
         float Loma(float cx, float cz, float ancho, float fondo, float alto) =>
             alto * Mathf.Exp(-Mathf.Pow((x - cx) / ancho, 2f) - Mathf.Pow((z - cz) / fondo, 2f));
         float entrada = Mathf.SmoothStep(0f, 1f, (z - 80f) / 8f);
-        return -0.1f + entrada * (Loma(0f, 151f, 35f, 12f, 10f) +
+        return -0.1f + entrada * (Loma(0f, 151f, 35f, 12f, 6.5f) +
             Loma(-5f, 123f, 31f, 9f, 8f) + Loma(7f, 98f, 28f, 10f, 5f));
     }
 

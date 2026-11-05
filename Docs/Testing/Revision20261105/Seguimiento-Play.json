@@ -1,0 +1,91 @@
+{
+  "success": true,
+  "command": "command test_status",
+  "data": {
+    "command": "test_status",
+    "parameters": {},
+    "result": {
+      "status": "completed",
+      "duration": 24.69,
+      "summary": {
+        "total": 9,
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "results": [
+        {
+          "FullName": "BordesYEncuadreTests.BordesCerradosYOrientadosHaciaFuera",
+          "Status": "Passed",
+          "Duration": 2.5870967,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElEncuadreSeBuscaDeCostadoYSePuedeAlinear",
+          "Status": "Passed",
+          "Duration": 1.6025875,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElExteriorBajoNoDesapareceYLaCubiertaSoloAbreAlEntrar",
+          "Status": "Passed",
+          "Duration": 1.337916,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElLateralIzquierdoDelNuevoSpawnNoPermiteCaer",
+          "Status": "Passed",
+          "Duration": 4.3843786,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElReflejoSigueLaParedCurvaSinSaltarEntreCaras",
+          "Status": "Passed",
+          "Duration": 1.7190263,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.InicioIzquierdoConTerrazaTransitable",
+          "Status": "Passed",
+          "Duration": 1.4833628,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.LaCompuertaFinalReflejaSoloCuandoCierraElPaso",
+          "Status": "Passed",
+          "Duration": 1.6972093,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.NoQuedanFocosDeCartelesNiPuntosFlotantes",
+          "Status": "Passed",
+          "Duration": 1.3663059,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.PresionarElBordeNoImpideRetroceder",
+          "Status": "Passed",
+          "Duration": 8.4721915,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\Users\\carbo\\Desktop\\crater"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}
