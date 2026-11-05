@@ -22,7 +22,7 @@ public class GatilloCamaraPlayTests
             InputSystem.QueueStateEvent(g,new GamepadState { rightStick=new Vector2(.7f,0) });
             InputSystem.QueueStateEvent(m,new MouseState()); yield return null;
             Assert.That(EntradaCrater.Mirada().x/Time.unscaledDeltaTime,
-                Is.EqualTo(g.rightStick.ReadValue().x*40f).Within(.01f));
+                Is.EqualTo(EntradaCrater.CurvaMiradaMando(g.rightStick.ReadValue()).x*72f).Within(.01f));
         }
         finally { InputSystem.RemoveDevice(g); InputSystem.RemoveDevice(m); }
     }

@@ -143,6 +143,8 @@ public static partial class ConstructorCrater
         Vector3 ojo=new Vector3(5,1.62f,8),destino=centroOptico.position;
         Vector3 centro=Vector3.Lerp(ojo,destino,.48f);var delta=centro-motivo.transform.position;
         motivo.transform.position+=delta;motivo.puntoDeVista=ojo;motivo.destino=centroOptico;
+        // El encuadre está a 6,6 m del ojo: el alcance anterior de 6 m dejaba muda la confirmación.
+        if(motivo.nota!=null){motivo.nota.minDistance=3;motivo.nota.maxDistance=14;motivo.nota.volume=.10f;}
         // El centro de cada fragmento se recompone sobre la misma línea de vista al farol.
         var giro=Quaternion.LookRotation(centro-ojo);float dist=Vector3.Distance(centro,ojo);
         for(int i=0;i<6;i++)

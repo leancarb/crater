@@ -1,0 +1,112 @@
+{
+  "success": true,
+  "command": "command test_status",
+  "data": {
+    "command": "test_status",
+    "parameters": {},
+    "result": {
+      "status": "completed",
+      "duration": 37.12,
+      "summary": {
+        "total": 12,
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0,
+        "inconclusive": 0
+      },
+      "results": [
+        {
+          "FullName": "BordesYEncuadreTests.BordesCerradosYOrientadosHaciaFuera",
+          "Status": "Passed",
+          "Duration": 2.6364894,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElCirculoRecompuestoRespondeAunqueNoEsteEnElCentroDePantalla",
+          "Status": "Passed",
+          "Duration": 2.4549997,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElCruceSeActivaYSeCruzaCorriendoConJoystick",
+          "Status": "Passed",
+          "Duration": 5.0365983,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElCruceSigueExigiendoCorrerConJoystick",
+          "Status": "Passed",
+          "Duration": 4.882628,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElEncuadreSeBuscaDeCostadoYSePuedeAlinear",
+          "Status": "Passed",
+          "Duration": 1.7047812,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElExteriorBajoNoDesapareceYLaCubiertaSoloAbreAlEntrar",
+          "Status": "Passed",
+          "Duration": 1.380322,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElLateralIzquierdoDelNuevoSpawnNoPermiteCaer",
+          "Status": "Passed",
+          "Duration": 4.3792816,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.ElReflejoSigueLaParedCurvaSinSaltarEntreCaras",
+          "Status": "Passed",
+          "Duration": 1.7161257,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.InicioIzquierdoConTerrazaTransitable",
+          "Status": "Passed",
+          "Duration": 1.3809707,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.LaCompuertaFinalReflejaSoloCuandoCierraElPaso",
+          "Status": "Passed",
+          "Duration": 1.6468563,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.NoQuedanFocosDeCartelesNiPuntosFlotantes",
+          "Status": "Passed",
+          "Duration": 1.4298823,
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "BordesYEncuadreTests.PresionarElBordeNoImpideRetroceder",
+          "Status": "Passed",
+          "Duration": 8.4222603,
+          "Message": null,
+          "StackTrace": null
+        }
+      ]
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\Users\\carbo\\Desktop\\crater"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

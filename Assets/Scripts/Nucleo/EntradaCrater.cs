@@ -22,7 +22,14 @@ public static class EntradaCrater
     /// <summary>Equivalencia con el eje "Mouse X" del Input Manager viejo.</summary>
     const float EscalaMouse = 0.1f;
     // el stick da un valor de -1 a 1 (no un desplazamiento): se multiplica por el tiempo
-    const float EscalaJoystick = 32f;
+    const float EscalaJoystick = 72f;
+
+    /// <summary>Precisión cerca del centro y giro rápido al llevar el stick al borde.</summary>
+    public static Vector2 CurvaMiradaMando(Vector2 stick)
+    {
+        float magnitud=Mathf.Clamp01(stick.magnitude);
+        return magnitud>0 ? stick.normalized*Mathf.Pow(magnitud,1.5f) : Vector2.zero;
+    }
 
     /// <summary>Dirección de caminata: x = costado, y = adelante. Largo máximo 1.</summary>
     public static Vector2 Movimiento()
@@ -48,7 +55,7 @@ public static class EntradaCrater
         // el mouse ya da cuánto se movió desde el frame anterior (delta)
         if (Mouse.current != null) v += Mouse.current.delta.ReadValue() * EscalaMouse;
         // unscaledDeltaTime: el joystick sigue girando la cámara aunque Time.timeScale cambie
-        if (Gamepad.current != null) v += Gamepad.current.rightStick.ReadValue() * (EscalaJoystick * Time.unscaledDeltaTime);
+        if (Gamepad.current != null) v += CurvaMiradaMando(Gamepad.current.rightStick.ReadValue()) * (EscalaJoystick * Time.unscaledDeltaTime);
         return v;
     }
 

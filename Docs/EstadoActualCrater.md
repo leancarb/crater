@@ -1,5 +1,9 @@
 # CRÁTER — estado vigente
 
+Encuadre (5/11): `Encuadre20261105.md` corrige el audio que quedaba fuera de alcance (6 m frente a 6,6 m de observación), amplía la tolerancia de mirada y refuerza el brillo. La respuesta funciona con el círculo algo corrido en pantalla y se mantiene estable ante movimientos pequeños.
+
+Joystick (5/11): `JoystickCruce20261105.md`. Stick derecho con curva radial de potencia 1,5 y escala 72, para barrer las anclas del Cruce con rapidez sin perder precisión cerca del centro. Sin modificar mouse, retenciones, filtro de 3 s ni exigencia de correr en el segundo puente.
+
 Créditos (5/11): se retira la tarjeta de la cátedra de la secuencia y se agregan Carbonetti Leandro (Productor, Programador), Lecitra Ezequiel (Artista 3D, Sonidista, Programador), Iezzi Camilo (Game Design, Sonidista y Artista 3D) y Coquét Nicolás (Game Design). Una tarjeta de texto por integrante, conservando las tildes de los nombres.
 
 Último ajuste (5/11): los filtros sostenidos duran un máximo de **3 segundos**, en lugar de 5. Soltar vuelve inmediatamente a luz blanca; al agotarlos hay que soltar antes de volver a activarlos. El contador del HUD usa esa duración.

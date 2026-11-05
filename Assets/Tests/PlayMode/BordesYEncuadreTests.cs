@@ -108,4 +108,63 @@ public class BordesYEncuadreTests
         Object.FindFirstObjectByType<PrologoCapilla>().SendMessage("EntrarSinTransicion");yield return null;
         Assert.That(tapa.GetComponent<Renderer>().enabled,Is.False);Assert.That(tapa.GetComponent<Collider>().enabled,Is.False);
     }
+    [UnityTest] public IEnumerator ElCirculoRecompuestoRespondeAunqueNoEsteEnElCentroDePantalla()
+    {
+        var m=Object.FindFirstObjectByType<MotivoPorPerspectiva>();var cam=Camera.main;
+        Situar(m.puntoDeVista-Vector3.up*1.62f);cam.transform.position=m.puntoDeVista;cam.transform.LookAt(m.destino.position);cam.transform.Rotate(0,8,0);
+        yield return new WaitForSeconds(.8f);
+        Assert.That(m.Alineado,Is.True,"El círculo puede quedar un poco corrido en pantalla sin perder la alineación");
+        Assert.That(m.luzCenital.intensity,Is.GreaterThan(6));
+        Assert.That(m.nota.maxDistance,Is.GreaterThan(Vector3.Distance(m.nota.transform.position,m.puntoDeVista)+3));
+        Assert.That(m.nota.isPlaying,Is.True,"La resonancia confirma la alineación");
+        Assert.That(m.fragmentos.Any(r=>r.sharedMaterial.IsKeywordEnabled("_EMISSION")),Is.True);
+        var bloque=new MaterialPropertyBlock();m.fragmentos[0].GetPropertyBlock(bloque);Assert.That(bloque.GetColor("_EmissionColor").maxColorComponent,Is.GreaterThan(.3f));
+        Situar(m.puntoDeVista-Vector3.up*1.62f+Vector3.right*.75f);cam.transform.LookAt(m.destino.position);yield return new WaitForSeconds(.2f);Assert.That(m.Alineado,Is.True,"Pequeños movimientos no deben hacer titilar la respuesta");
+        Situar(m.puntoDeVista-Vector3.up*1.62f+Vector3.right*2);cam.transform.LookAt(m.destino.position);yield return new WaitForSeconds(1.1f);Assert.That(m.Alineado,Is.False);Assert.That(m.luzCenital.intensity,Is.LessThan(2));
+    }
+    [UnityTest] public IEnumerator ElCruceSeActivaYSeCruzaCorriendoConJoystick()=>ProbarCruceConJoystick(true);
+    [UnityTest] public IEnumerator ElCruceSigueExigiendoCorrerConJoystick()=>ProbarCruceConJoystick(false);
+    IEnumerator ProbarCruceConJoystick(bool correr)
+    {
+        var mando=InputSystem.AddDevice<Gamepad>();
+        var opcion=typeof(OpcionesCrater).GetProperty("Sensibilidad");float antes=OpcionesCrater.Sensibilidad;
+        bool inversion=j.invertirY;float sensibilidad=j.sensibilidad;
+        try
+        {
+            opcion.SetValue(null,1f);j.invertirY=OpcionesCrater.InvertirY;j.sensibilidad=2.2f;Time.timeScale=1;
+            Situar(EspacioCrater.Punto(new Vector3(0,.05f,44.5f)));j.Orientar(Quaternion.identity);j.movimientoBloqueado=false;
+            var farol=Object.FindFirstObjectByType<LinternaController>();farol.Recoger();farol.Encender(true);foreach(var f in farol.filtros)farol.Desbloquear(f);
+            var puente=Buscar("Puente_N_Borde").GetComponent<PuenteLuz>();
+            var mirar=typeof(JugadorFPS).GetMethod("Mirar",BindingFlags.NonPublic|BindingFlags.Instance);
+            var mover=typeof(JugadorFPS).GetMethod("Mover",BindingFlags.NonPublic|BindingFlags.Instance);
+            Vector2 Stick(Vector3 direccion)
+            {
+                float yaw=Mathf.DeltaAngle(j.camara.eulerAngles.y,Mathf.Atan2(direccion.x,direccion.z)*Mathf.Rad2Deg);
+                float pitch=Mathf.DeltaAngle(j.camara.eulerAngles.x,-Mathf.Atan2(direccion.y,new Vector2(direccion.x,direccion.z).magnitude)*Mathf.Rad2Deg);
+                return Vector2.ClampMagnitude(new Vector2(yaw,-pitch)/15,1);
+            }
+            float inicio=Time.time;
+            foreach(var ancla in puente.anclas)
+            {
+                while(!ancla.Activo&&Time.time-inicio<2.9f)
+                {
+                    InputSystem.QueueStateEvent(mando,new GamepadState{rightStick=Stick(ancla.PuntoDeImpacto-j.camara.position)}.WithButton(GamepadButton.RightShoulder));
+                    yield return null;mirar.Invoke(j,null);
+                }
+                Assert.That(ancla.Activo,Is.True,ancla.name+" debe cargarse dentro de los tres segundos del filtro");
+                Assert.That(ancla.retencion,Is.EqualTo(1.9f));
+            }
+            float destino=EspacioCrater.Punto(new Vector3(0,0,51.8f)).z;float limite=Time.time+3;bool cayo=false;
+            while(j.transform.position.z<destino&&Time.time<limite)
+            {
+                var local=j.transform.InverseTransformDirection(Vector3.forward);
+                InputSystem.QueueStateEvent(mando,new GamepadState{leftStick=new Vector2(local.x,local.z),rightStick=Stick(Vector3.forward),rightTrigger=correr?.9f:0}.WithButton(GamepadButton.RightShoulder));
+                yield return null;mirar.Invoke(j,null);mover.Invoke(j,new object[]{Time.deltaTime});
+                if(j.transform.position.y<-.6f){cayo=true;break;}
+            }
+            if(correr){Assert.That(cayo,Is.False,"El puente no debe desaparecer antes de completar la carrera");Assert.That(j.transform.position.z,Is.GreaterThanOrEqualTo(destino));}
+            else Assert.That(cayo,Is.True,"Caminar no debe alcanzar para cruzar el segundo puente");
+        }
+        finally{opcion.SetValue(null,antes);j.invertirY=inversion;j.sensibilidad=sensibilidad;InputSystem.RemoveDevice(mando);}
+    }
 }
