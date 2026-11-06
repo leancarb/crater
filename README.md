@@ -72,10 +72,12 @@ desde código**. No se editan a mano: se cambia el código y se reconstruye.
 - **Crater › Validar proyecto** — chequea que cada puzzle esté conectado y al alcance del haz.
 - **Crater › Renderizar cambios del valle** — guarda las vistas de las lomas, mirador, plaza, gruta y umbral de la Cresta en `Docs/Previews`.
 - **Crater › Renderizar vistas previas** — guarda capturas en `Assets/Art/Previews/Unity`.
-- **Crater › Construir demo Windows** — valida, compila en `Builds/Windows` y genera `Builds/CRATER_Windows.zip` listo para compartir.
+- **Crater › Construir demo Windows** — valida, compila en `Builds/Windows` y genera el ZIP y `Builds/CRATER_Windows.exe`, un único archivo portable para compartir (empaquetado desde Windows).
 - **Crater › Construir demo macOS** — valida, compila en `Builds/macOS/CRATER.app` y genera `Builds/CRATER_macOS.zip` listo para compartir. Requiere el módulo Mac Build Support de esta versión de Unity, instalable desde Unity Hub.
 
-Compartir el ZIP correspondiente. La otra persona debe descomprimirlo completo y abrir `CRATER.exe` o `CRATER.app`; no necesita Unity. Los ZIP excluyen las carpetas de depuración `DoNotShip` y los símbolos PDB. En macOS incluyen la aplicación completa y los permisos de ejecución.
+Para Windows se puede compartir únicamente `Builds/CRATER_Windows.exe`: doble clic, preparación automática la primera vez y apertura del juego. También se conserva el ZIP. **Crater › Empaquetar Windows en un solo EXE** permite empaquetar un build existente. Ver `Docs/WindowsPortable.md`.
+
+En macOS, compartir el ZIP y descomprimir la aplicación completa; no necesita Unity. Los ZIP excluyen las carpetas de depuración `DoNotShip` y los símbolos PDB; el de macOS conserva los permisos de ejecución.
 
 Dónde tocar:
 
@@ -119,7 +121,7 @@ Esta copia tiene el puente local `com.unity.pipeline` instalado con autorizació
 
 Antes de la revisión se guardó `Backups/CRATER_antes_revision_integral.zip`, con Assets, Packages, ProjectSettings y documentación de esa versión.
 
-La escena del Editor sigue `Docs/EstadoActualCrater.md`. `Docs/AlasYCruceNuevo.md` conserva una etapa histórica de diseños luego parcialmente revertidos. No se recompiló la demo Windows en esta actualización.
+La escena del Editor sigue `Docs/EstadoActualCrater.md`. `Docs/AlasYCruceNuevo.md` conserva una etapa histórica de diseños luego parcialmente revertidos. La distribución portable de Windows se recompiló el 6/11/2026; ver `Docs/WindowsPortable.md`.
 
 La especificación vigente está en `Docs/EstadoActualCrater.md`: alas anteriores, Cruce nuevo, subsuelo ampliado, eclipse visible y bajada corregida.
 

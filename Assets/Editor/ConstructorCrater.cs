@@ -89,6 +89,8 @@ public static partial class ConstructorCrater
         Debug.Log($"[CRÁTER] Build listo: {opciones.locationPathName} ({reporte.summary.totalSize / (1024 * 1024)} MB).");
         string zip = EmpaquetarDemo(destino, ruta);
         Debug.Log($"[CRÁTER] ZIP listo para compartir: {zip}");
+        if (destino == BuildTarget.StandaloneWindows64 && Application.platform == RuntimePlatform.WindowsEditor)
+            Debug.Log("[CRÁTER] EXE único listo para compartir: " + CrearWindowsPortable(zip));
     }
 
     /// <summary>Unity.exe -batchmode -quit -executeMethod ConstructorCrater.ReconstruirDesdeLineaDeComandos</summary>
