@@ -73,6 +73,7 @@ public static partial class ConstructorCrater
         if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone, destino))
             throw new BuildFailedException($"Falta el módulo de compilación para {destino}. Instalalo para esta versión de Unity desde Unity Hub.");
         ValidarProyectoCrater.ValidarDesdeLineaDeComandos();
+        ConfigurarIconoAplicacion();
 
         Directory.CreateDirectory(Path.GetDirectoryName(ruta));
         var opciones = new BuildPlayerOptions
@@ -948,6 +949,7 @@ public static partial class ConstructorCrater
         PlayerSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
         PlayerSettings.resizableWindow = true;
         PlayerSettings.colorSpace = ColorSpace.Linear;
+        ConfigurarIconoAplicacion();
     }
 
     // ================================================================== utilidades

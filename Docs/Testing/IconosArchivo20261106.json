@@ -1,0 +1,14 @@
+{
+  "jugador": {
+    "azul": 36,
+    "ancho": 32,
+    "naranja": 34,
+    "archivo": "C:/Users/carbo/Desktop/crater/Builds/Windows/CRATER.exe"
+  },
+  "portable": {
+    "azul": 26,
+    "ancho": 32,
+    "naranja": 29,
+    "archivo": "C:/Users/carbo/Desktop/crater/Builds/CRATER_Windows.exe"
+  }
+}

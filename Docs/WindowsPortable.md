@@ -14,11 +14,13 @@ El constructor usa el compilador de .NET Framework incluido en Windows; no desca
 ## Verificación del 6/11/2026
 
 - Unity 6000.3.23f1: build de Windows completado con resultado **Success**.
-- EXE portable: **78.927.872 bytes**, aproximadamente 79 MB.
-- SHA-256: `3d19bb67752db56fbb6b9c94dec5e48b7fb253ffdb040842300a3c8c7d98cb15`.
+- EXE portable con ícono: **79.029.760 bytes**, aproximadamente 79 MB.
+- SHA-256: `7535b53493ac417d324d5166ad3f17f87432fc09dd68d27184503a7a0d3d83b5`.
 - Se copió el EXE solo a una carpeta con espacios y caracteres Unicode y se ejecutó la preparación desde allí.
 - Los **178 archivos** extraídos coinciden por SHA-256 con el build empaquetado.
 - Una segunda apertura reutilizó el cache; quitar un archivo generado y volver a abrirlo reparó la extracción.
 - El propio lanzador abrió el jugador Unity desde la carpeta extraída. El arranque se verificó en modo batch, sin gráficos; el proceso de prueba se cerró al terminar.
 
 Esta comprobación cubre el empaquetado y el arranque en esta PC. No incluye un recorrido completo del juego ni una prueba en otra computadora. Los registros de compilación y arranque quedan en `Logs/WindowsPortable20261106`, fuera de Git. El resultado resumido está en `Docs/Testing/WindowsPortable20261106.json`.
+
+Se recompiló posteriormente con el ícono de `images/icon.jpg`; se verificó también en una ventana real del juego. Ver `Docs/IconoWindows20261106.md` y los registros locales de `Logs/IconoWindows20261106`.

@@ -28,6 +28,7 @@ internal static class LanzadorCrater
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         var ventana = new Form { Text = "CRATER", ClientSize = new Size(370, 100),
+            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath),
             FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false,
             MinimizeBox = false, ControlBox = false, StartPosition = FormStartPosition.CenterScreen };
         var texto = new Label { Text = "Preparando CRATER…", AutoSize = true, Location = new Point(22, 18) };

@@ -1,5 +1,7 @@
 # CRÁTER — estado vigente
 
+Ícono Windows (6/11): `images/icon.jpg` se aplica al jugador, al EXE portable y a la ventana de preparación desde los constructores. EXE recompilado; comprobada la identidad del ícono de la ventana real del juego. Ver `Docs/IconoWindows20261106.md`.
+
 Distribución Windows (6/11): `Docs/WindowsPortable.md`. El botón de construcción genera `Builds/CRATER_Windows.exe`, un único archivo para compartir, con preparación automática de sus dependencias en la primera apertura. Se conserva el ZIP y el flujo de macOS.
 
 Tutorial SOL (5/11): se integra `Lantern Activates the Orange Bridge`, copia identificada `images/carteles/15_anclas_techo.png`, antes del segundo puente del ala SOL. Cartel `Cartel_15_AnclasTecho_SOL`, posición local de diseño `(-17,8;1,5;10,5)` más el desplazamiento del ala, mirando hacia su entrada oeste; glifo de filtro SOL (clic izquierdo/RB). Son once carteles en total. Se conserva la imagen completa 4:3, sin modificar originales ni agregar focos.

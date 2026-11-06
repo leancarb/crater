@@ -25,10 +25,12 @@ public static partial class ConstructorCrater
         if (!File.Exists(compilador) || !File.Exists(fuente)) throw new FileNotFoundException("Falta el compilador de Windows o el código del lanzador portable.");
         string destino = Path.GetFullPath("Builds/CRATER_Windows.exe");
         string temporal = Path.ChangeExtension(destino, ".packing.exe");
+        string icono = CrearIconoWindows();
         string Q(string p) => "\"" + p + "\"";
         var inicio = new ProcessStartInfo(compilador) {
             UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true,
             Arguments = "/nologo /target:winexe /platform:x64 /optimize+ /out:" + Q(temporal) +
+                " /win32icon:" + Q(icono) +
                 " /reference:" + Q(Path.Combine(framework, "System.IO.Compression.dll")) +
                 " /reference:" + Q(Path.Combine(framework, "System.Windows.Forms.dll")) +
                 " /reference:" + Q(Path.Combine(framework, "System.Drawing.dll")) +

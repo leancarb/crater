@@ -1,8 +1,9 @@
 {
   "exe": "C:\\Users\\carbo\\Desktop\\crater\\Builds\\Prueba EXE único\\CRATER.exe",
-  "bytes": 78927872,
-  "sha256": "3d19bb67752db56fbb6b9c94dec5e48b7fb253ffdb040842300a3c8c7d98cb15",
-  "carpetaExtraida": "C:\\Users\\carbo\\AppData\\Local\\CRATER\\Portable\\96E7E7AFB40560367F480B9FF360AEA5",
+  "bytes": 79029760,
+  "sha256": "7535b53493ac417d324d5166ad3f17f87432fc09dd68d27184503a7a0d3d83b5",
+  "carpetaExtraida": "C:\\Users\\carbo\\AppData\\Local\\CRATER\\Portable\\8083A2FE23419367C89BF26CA4038E61",
+  "carpetaFisica": "C:\\Users\\carbo\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\CRATER\\Portable\\8083A2FE23419367C89BF26CA4038E61",
   "archivosComparadosConZIP": 178,
   "cacheReutilizada": true,
   "archivoFaltanteReparado": true
