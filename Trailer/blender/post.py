@@ -74,6 +74,7 @@ CREDITS = [
     (at('s8', 16),  at('s8', 106), 'bl', '04 · CRUCE   05 · CRESTA', 'PARA SALIR HAY QUE APAGARLO'),
 ]
 PROXIMAMENTE = at('s9', 140)
+PROX_Y = 0.66       # altura del «PRÓXIMAMENTE» (fraccion del alto)
 
 
 def text_layer(small, big, corner):
@@ -169,7 +170,7 @@ def video(render, out, wav=None, preview=None):
     r = np.sqrt(((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2)
     vign = (1 - 0.32 * np.clip(r - 0.45, 0, 1) ** 1.6)[..., None]
     layers = [(a, b, text_layer(s, g, c)) for a, b, c, s, g in CREDITS]
-    prox = centered_layer('PRÓXIMAMENTE', 22, int(H * 0.66))
+    prox = centered_layer('PRÓXIMAMENTE', 22, int(H * PROX_Y))
     frames = range(TOTAL) if preview is None else preview
     if preview is not None:
         from PIL import Image

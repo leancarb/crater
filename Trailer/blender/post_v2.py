@@ -25,11 +25,12 @@ ps.CREDITS = [
     (at('v7', 16),  at('v7', 100), 'tl', '05 · CRESTA', 'PARA SALIR HAY QUE APAGARLO'),
 ]
 ps.PROXIMAMENTE = at('v8', 110)
+ps.PROX_Y = 0.335
 
 
 def title_layers():
     import numpy as np
-    t = ps.centered_layer('CRÁTER', 132, int(ps.H * 0.36), font='Cinzel-600.ttf', track=34, alpha=246)
+    t = ps.centered_layer('CRÁTER', 132, int(ps.H * 0.17), font='Cinzel-600.ttf', track=34, alpha=246)
     # la luz blanca del fin del eclipse inunda todo entre la Cresta y el epilogo
     blanco = np.ones((ps.H, ps.W, 4), np.float32); blanco[..., :3] = (1.0, 0.985, 0.96)
     return [(at('v7', 132), at('v8', 30), blanco, 22), (at('v8', 34), ps.TOTAL + 100, t, 30)]
